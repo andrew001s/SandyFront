@@ -1,35 +1,17 @@
 import axios from "axios";
 const baseURL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
-export function activateMic(){
-    try{
-        axios.post(`${baseURL}/pause`)
-        return "Microphone activated successfully!";
-    }
-    catch (error) {
-        console.error("Error pausing the microphone:", error);
-        return "Error pausing the microphone.";
-    }
+export async function activateMic() {
+  const response = await axios.post(`${baseURL}/pause`);
+  return response.data;
 }
 
-export function pauseMic(){
-    try{
-        axios.post(`${baseURL}/resume`)
-        return "Microphone paused successfully!";
-    }
-    catch (error) {
-        console.error("Error resuming the microphone:", error);
-        return "Error resuming the microphone.";
-    }
+export async function resumeMic() {
+  const response = await axios.post(`${baseURL}/resume`);
+  return response.data;
 }
 
-export function start(){
-    try{
-        axios.get(`${baseURL}/start`)
-        return "Microphone started successfully!";
-    }
-    catch (error) {
-        console.error("Error starting the microphone:", error);
-        return "Error starting the microphone.";
-    }
+export async function start() {
+  const response = await axios.get(`${baseURL}/start`);
+  return response.data;
 }
