@@ -56,9 +56,9 @@ Asegúrate de tener instalados los siguientes programas:
 
 ## Uso
 Inicia el servidor de desarrollo:
-    ```js
-    npm run dev
-    ```
+```bash
+    npm install
+```
 Abre tu navegador en http://localhost:5173.
 
 Usa los botones de la interfaz para interactuar con la API:
