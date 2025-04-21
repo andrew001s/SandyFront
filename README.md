@@ -56,7 +56,7 @@ Asegúrate de tener instalados los siguientes programas:
 
 ## Uso
 Inicia el servidor de desarrollo:
-    ```bash
+    ```
     npm run dev
     ```
 Abre tu navegador en http://localhost:5173.
