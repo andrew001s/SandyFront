@@ -40,13 +40,13 @@ Asegúrate de tener instalados los siguientes programas:
    git clone https://github.com/andrew001s/SandyFront
    cd SandyFront/SandyFront
 2. Instala las dependencias:
-```bash
+    ```js
     npm install
-```
+    ```
 3. Configura la URL de la API en el archivo .env:
-```ini
-VITE_API_URL="http://<DIRECCION_DE_TU_API>"
-```
+    ```ini
+    VITE_API_URL="http://<DIRECCION_DE_TU_API>"
+    ```
 ## Scripts disponibles
 
 - npm run dev: Inicia el servidor de desarrollo.
@@ -56,11 +56,13 @@ VITE_API_URL="http://<DIRECCION_DE_TU_API>"
 
 ## Uso
 Inicia el servidor de desarrollo:
-
+    ```js
+    npm run dev
+    ```
 Abre tu navegador en http://localhost:5173.
 
 Usa los botones de la interfaz para interactuar con la API:
 
-Start: Inicia el servicio de Sandy Core.
-Pause/Resume: Pausa o reanuda el micrófono del reconocimiento de voz.
+- Start: Inicia el servicio de Sandy Core.
+- Pause/Resume: Pausa o reanuda el micrófono del reconocimiento de voz.
 
