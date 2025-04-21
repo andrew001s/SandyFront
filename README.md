@@ -38,7 +38,7 @@ Asegúrate de tener instalados los siguientes programas:
 
    ```bash
    git clone https://github.com/andrew001s/SandyFront
-   cd SandyFront/SandyFront
+   cd SandyFront
 2. Instala las dependencias:
     ```js
     npm install
