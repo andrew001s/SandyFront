@@ -29,6 +29,7 @@ export const StatusProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useStatus = (): StatusContextProps => {
   const context = useContext(StatusContext);
   if (!context) {
