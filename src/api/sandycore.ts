@@ -15,3 +15,8 @@ export async function start() {
   const response = await axios.get(`${baseURL}/start`);
   return response.data;
 }
+
+export async function stop() {
+  const response = await axios.get(`${baseURL}/stop`);
+  return response.data;
+}

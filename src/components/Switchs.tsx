@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Switch } from "./ui/switch";
 import { activateMic, resumeMic } from "@/api/sandycore";
-import { toast, ToastContainer } from "react-toastify";
 import { useStatus } from "@/context/StatusContext";
+import { toast } from "sonner";
 
 export const Switchs = () => {
   const { status } = useStatus();
@@ -41,7 +41,6 @@ export const Switchs = () => {
 
   return (
     <div className="flex pt-4 items-center space-x-3">
-      <ToastContainer />
       <span>Reconocimiento de Voz:</span>
       <Switch
         disabled={!status}

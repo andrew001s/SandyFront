@@ -2,7 +2,6 @@ import { ConnectionCard } from "@/components/ConnectionCard";
 import { Switchs } from "@/components/Switchs";
 import { Separator } from "@radix-ui/react-separator";
 
-
 function Home() {
   return (
     <div className="flex flex-row space-x-3 justify-center h-screen bg-background -mt-20">
