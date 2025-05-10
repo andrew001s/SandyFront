@@ -3,68 +3,69 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { toast } from "sonner";
-import { useStatus } from "@/context/StatusContext";
+import { useStatusBot } from "@/context/StatusContextBot";
 import { useCallback, useEffect, useState } from "react";
 import { getProfileInfo } from "@/api/fetchProfile";
 import { TailSpin } from "react-loader-spinner";
 import type { ProfileModel } from "@/interfaces/profileInterface";
 import { BsMoonStarsFill } from "react-icons/bs";
+import { useStatus } from "@/context/StatusContext";
 
-export const ConnectionCard = () => {
-  const { status, setStatus } = useStatus();
+export const ConnectionCardBot = () => {
+  const { statusBot, setStatusBot } = useStatusBot();
+  const { status } = useStatus();
   const [profile, setProfile] = useState<ProfileModel | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const fetchProfile = useCallback(async () => {
     try {
-      const profileInfo = await getProfileInfo(false);
+      const profileInfo = await getProfileInfo(true);
       setProfile(profileInfo);
     } catch (error) {
       console.error("Error al obtener el perfil:", error);
       toast.error("No se pudo cargar el perfil");
-      setStatus(false);
+      setStatusBot(false);
     }
-  }, [setStatus]);
+  }, [setStatusBot]);
 
   const handleStart = useCallback(async () => {
     try {
       setIsLoading(true);
-      await start(false);
+      await start(true);
       await new Promise((resolve) => setTimeout(resolve, 5000));
       await fetchProfile();
-      setStatus(true);
+      setStatusBot(true);
       toast.success("Conectado a Twitch");
     } catch (error) {
       console.error("Error iniciando sesión:", error);
       toast.error("Error al conectar con Twitch");
-      setStatus(false);
+      setStatusBot(false);
     } finally {
       setIsLoading(false);
     }
-  }, [fetchProfile, setStatus]);
+  }, [fetchProfile, setStatusBot]);
 
   const handleClose = useCallback(async () => {
     try {
-      await stop(false);
-      setStatus(false);
+      await stop(true);
+      setStatusBot(false);
       setProfile(null);
       toast.info("Desconectado de Twitch");
     } catch (error) {
       console.error("Error cerrando sesión:", error);
       toast.error("Error al desconectar");
     }
-  }, [setStatus]);
+  }, [setStatusBot]);
 
   useEffect(() => {
-    if (status && !profile) {
+    if (statusBot && !profile) {
       fetchProfile();
       setIsLoading(false);
     }
-  }, [status, profile, fetchProfile]);
+  }, [statusBot, profile, fetchProfile]);
 
   return (
     <Card
-      className="w-full mt-3 p-0.5 gap-0"
-      style={{ background: "linear-gradient(90deg, #3A265E, #4B367C)" }}
+      className={`w-full mt-3 p-0.5 gap-0 bg-gradient-to-r from-[#3A265E] to-[#4B367C] ${!status ? 'opacity-50 bg-gray-700' : ''}`}
     >
       <div className="flex flex-row items-center justify-between p-4">
         <div className="flex flex-row space-x-4 items-center justify-center">
@@ -84,7 +85,7 @@ export const ConnectionCard = () => {
         </div>
 
         <div className="mx-4 flex flex-col justify-center">
-          {status ? (
+          {statusBot ? (
             <Button
               onClick={handleClose}
               className="mx-auto w-xs bg-chart-1 text-xl text-foreground font-normal hover:bg-chart-1 cursor-pointer h-16"
@@ -95,7 +96,7 @@ export const ConnectionCard = () => {
             <Button
               onClick={handleStart}
               className="mx-auto w-xs bg-chart-1 text-xl text-foreground font-normal hover:bg-chart-1 cursor-pointer h-16"
-              disabled={isLoading}
+              disabled={!status || isLoading} // Deshabilitar si status es false o está cargando
             >
               {isLoading ? (
                 <div className="flex flex-row items-center justify-center space-x-3">
@@ -115,7 +116,7 @@ export const ConnectionCard = () => {
           )}
           <span className="text-xl pt-2">
             Estado:{" "}
-            {status ? (
+            {statusBot ? (
               <span className="text-chart-2">Conectado</span>
             ) : (
               <span className="text-chart-5">Desconectado</span>
