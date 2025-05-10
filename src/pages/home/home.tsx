@@ -1,6 +1,8 @@
 import { ConnectionCard } from "@/components/ConnectionCard";
+import { ConnectionCardBot } from "@/components/ConnectionCardBot";
 import { Switchs } from "@/components/Switchs";
 import { Separator } from "@radix-ui/react-separator";
+import { StatusProviderBot } from "@/context/StatusContextBot";
 
 function Home() {
   return (
@@ -9,6 +11,9 @@ function Home() {
         <h1 className="mt-25 text-4xl pl-12 ">Conexión</h1>
         <div className="pl-10 pr-8">
           <ConnectionCard />
+          <StatusProviderBot>
+            <ConnectionCardBot />
+          </StatusProviderBot>
         </div>
         <div className="pt-4 pl-10 pr-8">
           <Separator />

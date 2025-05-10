@@ -11,12 +11,12 @@ export async function resumeMic() {
   return response.data;
 }
 
-export async function start() {
-  const response = await axios.get(`${baseURL}/start`);
+export async function start(bot: boolean) {
+  const response = await axios.get(`${baseURL}/start?bot=${bot}`);
   return response.data;
 }
 
-export async function stop() {
-  const response = await axios.get(`${baseURL}/stop`);
+export async function stop(bot: boolean) {
+  const response = await axios.get(`${baseURL}/stop?bot=${bot}`);
   return response.data;
 }
