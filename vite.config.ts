@@ -12,4 +12,14 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    proxy: {
+      '/fish-api': {
+        target: 'https://api.fish.audio',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/fish-api/, ''),
+        secure: false
+      }
+    }
+  }
 })
