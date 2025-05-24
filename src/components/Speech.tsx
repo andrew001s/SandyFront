@@ -8,35 +8,36 @@ import { toast } from "sonner";
 import { getVoiceSandy } from "@/api/fetchFishAudio";
 import { getResponseGemini } from "@/api/fetchGemini";
 
-const SUBSCRIPTION_KEY =import.meta.env.VITE_AZURE_SPEECH_KEY;
+const SUBSCRIPTION_KEY = import.meta.env.VITE_AZURE_SPEECH_KEY;
 const REGION = import.meta.env.VITE_AZURE_REGION;
 const LANGUAGE = import.meta.env.VITE_LENGUAGE || "es-ES";
 
-const { SpeechRecognition: AzureSpeechRecognition } =
-  createSpeechServicesPonyfill({
-    credentials: {
-      region: REGION,
-      subscriptionKey: SUBSCRIPTION_KEY,
-    },
-  });
+const { SpeechRecognition: AzureSpeechRecognition } = createSpeechServicesPonyfill({
+  credentials: {
+    region: REGION,
+    subscriptionKey: SUBSCRIPTION_KEY,
+  },
+});
 SpeechRecognition.applyPolyfill(AzureSpeechRecognition);
 
 const Dictaphone = () => {
   const [transcriptHistory, setTranscriptHistory] = useState<string[]>([]);
-  const { transcript, resetTranscript, browserSupportsSpeechRecognition } =
-    useSpeechRecognition({
-      commands: [
-        {
-          command: "*",
-          callback: () => {
-            resetSilenceTimer();
-          },
+  const [audioQueue, setAudioQueue] = useState<string[]>([]);
+  const isPlayingRef = useRef(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const { transcript, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition({
+    commands: [
+      {
+        command: "*",
+        callback: () => {
+          resetSilenceTimer();
         },
-      ],
-    });
+      },
+    ],
+  });
 
   const [silenceTimer, setSilenceTimer] = useState<NodeJS.Timeout | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const resetSilenceTimer = () => {
     if (silenceTimer) clearTimeout(silenceTimer);
@@ -45,17 +46,12 @@ const Dictaphone = () => {
         console.log("Transcripción guardada:", transcript);
         try {
           const response = await getResponseGemini(transcript);
-          
-          const audioBlob = await getVoiceSandy(response);
-          const audioUrl = URL.createObjectURL(audioBlob);
-
-          if (audioRef.current) {
-            audioRef.current.src = audioUrl;
-            await audioRef.current.play();
-          }
-
           setTranscriptHistory((prev) => [...prev, transcript]);
           resetTranscript();
+
+          const audioBlob = await getVoiceSandy(response);
+          const audioUrl = URL.createObjectURL(audioBlob);
+          setAudioQueue((prev) => [...prev, audioUrl]); 
         } catch (error) {
           console.error("Error al obtener respuesta de audio:", error);
           toast.error("Error al procesar el audio");
@@ -64,6 +60,36 @@ const Dictaphone = () => {
     }, 2000);
     setSilenceTimer(timer);
   };
+
+  const playNextInQueue = () => {
+    if (isPlayingRef.current || audioQueue.length === 0 || !audioRef.current) return;
+
+    const nextAudio = audioQueue[0];
+    isPlayingRef.current = true;
+    audioRef.current.src = nextAudio;
+    audioRef.current.play();
+  };
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    playNextInQueue();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioQueue]);
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+
+    const audio = audioRef.current;
+    const handleEnded = () => {
+      isPlayingRef.current = false;
+      setAudioQueue((prev) => prev.slice(1));
+    };
+
+    audio.addEventListener("ended", handleEnded);
+    return () => {
+      audio.removeEventListener("ended", handleEnded);
+    };
+  }, []);
 
   useEffect(() => {
     return () => {
