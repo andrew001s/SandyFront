@@ -99,7 +99,7 @@ const Dictaphone = () => {
       <Switch onCheckedChange={handleSpeechToggle} />
       <p>{transcript}</p>
       <div>
-        <h3>Historial de transcripciones:</h3>
+        <h3>Transcripción:</h3>
         {transcriptHistory.map((text) => (
           <p key={`transcript-${text}-${Date.now()}`}>{text}</p>
         ))}
