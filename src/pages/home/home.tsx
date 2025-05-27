@@ -3,6 +3,7 @@ import { ConnectionCardBot } from "@/components/ConnectionCardBot";
 import { Switchs } from "@/components/Switchs";
 import { Separator } from "@radix-ui/react-separator";
 import { StatusProviderBot } from "@/context/StatusContextBot";
+import Chat from "@/components/Chat";
 
 function Home() {
   return (
@@ -18,6 +19,7 @@ function Home() {
         <div className="pt-4 pl-10 pr-8">
           <Separator />
           <Switchs />
+          <Chat />
         </div>
       </div>
     </div>
