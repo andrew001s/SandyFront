@@ -11,6 +11,8 @@ interface WebSocketChatProps {
     response?:string;
 }
 
+const websocketUrl = import.meta.env.VITE_SOCKET_URL;
+console.log("WebSocket URL:", websocketUrl);
 const WebSocketChat = () => {
   const [currentMessage, setCurrentMessage] = useState<WebSocketChatProps | null>(null);
   const messagesHistoryRef = useRef<WebSocketChatProps[]>([]);
@@ -23,7 +25,7 @@ const WebSocketChat = () => {
     messagesHistoryRef.current = [...messagesHistoryRef.current, parsedData];
   }, []);
 
-  useWebSocket("ws://localhost:8000/ws", handleMessage);
+  useWebSocket(websocketUrl, handleMessage);
 
   useEffect(() => {
     const processAudio = async () => {
