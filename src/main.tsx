@@ -7,6 +7,7 @@ import { ThemeProvider } from "./components/theme-provider.tsx";
 import { HeaderContent } from "./components/HeaderContent.tsx";
 import { Toaster } from "sonner";
 
+// biome-ignore lint/style/noNonNullAssertion: <explanation>
 createRoot(document.getElementById("root")!).render(
   <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
     <SidebarProvider>
