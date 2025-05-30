@@ -33,6 +33,7 @@
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",
     "react-loader-spinner": "^6.1.6",
+    "react-router-dom": "^6.30.1",
     "react-speech-recognition": "^4.0.1",
     "react-toastify": "^11.0.5",
     "sandyfront": "file:",

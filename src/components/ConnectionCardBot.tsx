@@ -1,71 +1,31 @@
-import { start, stop } from "@/api/sandycore";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
-import { toast } from "sonner";
-import { useStatusBot } from "@/context/StatusContextBot";
-import { useCallback, useEffect, useState } from "react";
-import { getProfileInfo } from "@/api/fetchProfile";
 import { TailSpin } from "react-loader-spinner";
-import type { ProfileModel } from "@/interfaces/profileInterface";
 import { BsMoonStarsFill } from "react-icons/bs";
-import { useStatus } from "@/context/StatusContext";
+import { useTwitchAuth } from "@/hooks/useTwitchAuth";
+import { useEffect } from "react";
 
 export const ConnectionCardBot = () => {
-  const { statusBot, setStatusBot } = useStatusBot();
-  const { status } = useStatus();
-  const [profile, setProfile] = useState<ProfileModel | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const fetchProfile = useCallback(async () => {
-    try {
-      const profileInfo = await getProfileInfo(true);
-      setProfile(profileInfo);
-    } catch (error) {
-      console.error("Error al obtener el perfil:", error);
-      toast.error("No se pudo cargar el perfil");
-      setStatusBot(false);
-    }
-  }, [setStatusBot]);
-
-  const handleStart = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      await start(true);
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-      await fetchProfile();
-      setStatusBot(true);
-      toast.success("Conectado a Twitch");
-    } catch (error) {
-      console.error("Error iniciando sesión:", error);
-      toast.error("Error al conectar con Twitch");
-      setStatusBot(false);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [fetchProfile, setStatusBot]);
-
-  const handleClose = useCallback(async () => {
-    try {
-      await stop(true);
-      setStatusBot(false);
-      setProfile(null);
-      toast.info("Desconectado de Twitch");
-    } catch (error) {
-      console.error("Error cerrando sesión:", error);
-      toast.error("Error al desconectar");
-    }
-  }, [setStatusBot]);
+  const { 
+    isLoading, 
+    profile, 
+    status, 
+    handleStart, 
+    handleClose,
+    fetchProfile 
+  } = useTwitchAuth();
 
   useEffect(() => {
-    if (statusBot && !profile) {
+    if (status && !profile) {
       fetchProfile();
-      setIsLoading(false);
     }
-  }, [statusBot, profile, fetchProfile]);
+  }, [status, profile, fetchProfile]);
 
   return (
     <Card
-      className={`w-full mt-3 p-0.5 gap-0 bg-gradient-to-r from-[#3A265E] to-[#4B367C] ${!status ? 'opacity-50 bg-gray-700' : ''}`}
+      className="w-full mt-3 p-0.5 gap-0"
+      style={{ background: "linear-gradient(90deg, #3A265E, #4B367C)" }}
     >
       <div className="flex flex-row items-center justify-between p-4">
         <div className="flex flex-row space-x-4 items-center justify-center">
@@ -73,7 +33,7 @@ export const ConnectionCardBot = () => {
             <AvatarImage src={profile?.picProfile} />
             <AvatarFallback>
               <img
-                src="\icons\default.png"
+                src="/icons/default.png"
                 alt="Default Icon"
                 className="w-full h-full object-cover"
               />
@@ -85,7 +45,7 @@ export const ConnectionCardBot = () => {
         </div>
 
         <div className="mx-4 flex flex-col justify-center">
-          {statusBot ? (
+          {status ? (
             <Button
               onClick={handleClose}
               className="mx-auto w-xs bg-chart-1 text-xl text-foreground font-normal hover:bg-chart-1 cursor-pointer h-16"
@@ -94,9 +54,9 @@ export const ConnectionCardBot = () => {
             </Button>
           ) : (
             <Button
-              onClick={handleStart}
+              onClick={()=>handleStart(false)}
               className="mx-auto w-xs bg-chart-1 text-xl text-foreground font-normal hover:bg-chart-1 cursor-pointer h-16"
-              disabled={!status || isLoading} // Deshabilitar si status es false o está cargando
+              disabled={isLoading}
             >
               {isLoading ? (
                 <div className="flex flex-row items-center justify-center space-x-3">
@@ -110,13 +70,13 @@ export const ConnectionCardBot = () => {
                   />
                 </div>
               ) : (
-                <span className="">Conectar con Twitch</span>
+                <span>Conectar con Twitch</span>
               )}
             </Button>
           )}
           <span className="text-xl pt-2">
             Estado:{" "}
-            {statusBot ? (
+            {status ? (
               <span className="text-chart-2">Conectado</span>
             ) : (
               <span className="text-chart-5">Desconectado</span>

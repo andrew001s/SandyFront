@@ -1,63 +1,24 @@
-import { start, stop } from "@/api/sandycore";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
-import { toast } from "sonner";
-import { useStatus } from "@/context/StatusContext";
-import { useCallback, useEffect, useState } from "react";
-import { getProfileInfo } from "@/api/fetchProfile";
 import { TailSpin } from "react-loader-spinner";
-import type { ProfileModel } from "@/interfaces/profileInterface";
 import { BsMoonStarsFill } from "react-icons/bs";
+import { useTwitchAuth } from "@/hooks/useTwitchAuth";
+import { useEffect } from "react";
 
 export const ConnectionCard = () => {
-  const { status, setStatus } = useStatus();
-  const [profile, setProfile] = useState<ProfileModel | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const fetchProfile = useCallback(async () => {
-    try {
-      const profileInfo = await getProfileInfo(false);
-      setProfile(profileInfo);
-    } catch (error) {
-      console.error("Error al obtener el perfil:", error);
-      toast.error("No se pudo cargar el perfil");
-      setStatus(false);
-    }
-  }, [setStatus]);
-
-  const handleStart = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      await start(false);
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-      await fetchProfile();
-      setStatus(true);
-      toast.success("Conectado a Twitch");
-    } catch (error) {
-      console.error("Error iniciando sesión:", error);
-      toast.error("Error al conectar con Twitch");
-      setStatus(false);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [fetchProfile, setStatus]);
-
-  const handleClose = useCallback(async () => {
-    try {
-      await stop(false);
-      setStatus(false);
-      setProfile(null);
-      toast.info("Desconectado de Twitch");
-    } catch (error) {
-      console.error("Error cerrando sesión:", error);
-      toast.error("Error al desconectar");
-    }
-  }, [setStatus]);
+  const { 
+    isLoading, 
+    profile, 
+    status, 
+    handleStart, 
+    handleClose,
+    fetchProfile 
+  } = useTwitchAuth();
 
   useEffect(() => {
     if (status && !profile) {
       fetchProfile();
-      setIsLoading(false);
     }
   }, [status, profile, fetchProfile]);
 
@@ -72,7 +33,7 @@ export const ConnectionCard = () => {
             <AvatarImage src={profile?.picProfile} />
             <AvatarFallback>
               <img
-                src="\icons\default.png"
+                src="/icons/default.png"
                 alt="Default Icon"
                 className="w-full h-full object-cover"
               />
@@ -93,7 +54,7 @@ export const ConnectionCard = () => {
             </Button>
           ) : (
             <Button
-              onClick={handleStart}
+              onClick={()=>handleStart(false)}
               className="mx-auto w-xs bg-chart-1 text-xl text-foreground font-normal hover:bg-chart-1 cursor-pointer h-16"
               disabled={isLoading}
             >
@@ -109,7 +70,7 @@ export const ConnectionCard = () => {
                   />
                 </div>
               ) : (
-                <span className="">Conectar con Twitch</span>
+                <span>Conectar con Twitch</span>
               )}
             </Button>
           )}
