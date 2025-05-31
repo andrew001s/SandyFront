@@ -3,6 +3,7 @@ import { ConnectionCardBot } from "@/components/ConnectionCardBot";
 import { Switchs } from "@/components/Switchs";
 import { Separator } from "@radix-ui/react-separator";
 import { StatusProviderBot } from "@/context/StatusContextBot";
+import { TwitchAuthProvider, TwitchAuthBotProvider } from "@/context/TwitchAuthContext";
 import Chat from "@/components/Chat";
 
 function Home() {
@@ -14,11 +15,15 @@ function Home() {
         {/* Grid de dos columnas para las tarjetas */}
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="w-full">
-            <ConnectionCard />
+            <TwitchAuthProvider>
+              <ConnectionCard />
+            </TwitchAuthProvider>
           </div>
           <div className="w-full">
             <StatusProviderBot>
-              <ConnectionCardBot />
+              <TwitchAuthBotProvider>
+                <ConnectionCardBot />
+              </TwitchAuthBotProvider>
             </StatusProviderBot>
           </div>
         </div>

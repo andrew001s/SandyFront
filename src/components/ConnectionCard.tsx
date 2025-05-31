@@ -3,7 +3,7 @@ import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { TailSpin } from "react-loader-spinner";
 import { BsMoonStarsFill } from "react-icons/bs";
-import { useTwitchAuth } from "@/hooks/useTwitchAuth";
+import { useTwitchAuthContext } from "@/context/TwitchAuthContext";
 import { useEffect } from "react";
 
 export const ConnectionCard = () => {
@@ -14,7 +14,7 @@ export const ConnectionCard = () => {
     handleStart, 
     handleClose,
     fetchProfile 
-  } = useTwitchAuth();
+  } = useTwitchAuthContext();
 
   useEffect(() => {
     if (status && !profile) {

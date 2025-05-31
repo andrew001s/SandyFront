@@ -15,23 +15,24 @@ interface UseTwitchAuthReturn {
   fetchProfile: () => Promise<void>;
 }
 
-export const useTwitchAuth = (): UseTwitchAuthReturn => {
+export const useTwitchAuth = (defaultIsBot?: boolean): UseTwitchAuthReturn => {
   const [isLoading, setIsLoading] = useState(false);
   const [profile, setProfile] = useState<ProfileModel | null>(null);
   const [status, setStatus] = useState(false);
-
+  const [isBot] = useState(defaultIsBot ?? false);
   const fetchProfile = useCallback(async () => {
     try {
-      const profileInfo = await getProfileInfo(false);
+      const profileInfo = await getProfileInfo(isBot);
       setProfile(profileInfo);
     } catch (error) {
       console.error("Error al obtener el perfil:", error);
       toast.error("No se pudo cargar el perfil");
       setStatus(false);
     }
-  }, []);
+  }, [isBot]);
 
   const handleStart = useCallback(async (bot:boolean) => {
+    
     try {
       setIsLoading(true);
       const authUrl = getTwitchAuthUrl();
@@ -60,9 +61,6 @@ export const useTwitchAuth = (): UseTwitchAuthReturn => {
           try {
             const code = event.data.code;
             const tokenData = await getAccessToken(code);
-
-            
-            //await fetchProfile();
 			await postAuth({
 				token: tokenData.access_token,
 				refresh_token: tokenData.refresh_token,
