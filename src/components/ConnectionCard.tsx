@@ -6,11 +6,10 @@ import { BsMoonStarsFill } from "react-icons/bs";
 import { useTwitchAuthContext } from "@/context/TwitchAuthContext";
 import { useEffect } from "react";
 
-export const ConnectionCard = () => {
-  const { 
-    isLoading, 
+export const ConnectionCard = () => {  const { 
     profile, 
     status, 
+    isLoading,
     handleStart, 
     handleClose,
     fetchProfile 
@@ -21,6 +20,10 @@ export const ConnectionCard = () => {
       fetchProfile();
     }
   }, [status, profile, fetchProfile]);
+
+  const handleStartConnection = () => {
+    handleStart(false);
+  }
 
   return (
     <Card
@@ -54,8 +57,7 @@ export const ConnectionCard = () => {
             </Button>
           ) : (
             <Button
-              onClick={()=>handleStart(false)}
-              className="mx-auto w-xs bg-chart-1 text-xl text-foreground font-normal hover:bg-chart-1 cursor-pointer h-16"
+              onClick={handleStartConnection}              className="mx-auto w-xs bg-chart-1 text-xl text-foreground font-normal hover:bg-chart-1 cursor-pointer h-16"
               disabled={isLoading}
             >
               {isLoading ? (

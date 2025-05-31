@@ -3,10 +3,12 @@ import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { TailSpin } from "react-loader-spinner";
 import { BsMoonStarsFill } from "react-icons/bs";
-import { useTwitchAuthBotContext } from "@/context/TwitchAuthContext";
+import { useTwitchAuth } from "@/hooks/useTwitchAuth";
+import { useStatus } from "@/context/StatusContext";
 import { useEffect } from "react";
 
 export const ConnectionCardBot = () => {
+  const { status: globalStatus } = useStatus();
   const { 
     isLoading, 
     profile, 
@@ -14,17 +16,16 @@ export const ConnectionCardBot = () => {
     handleStart, 
     handleClose,
     fetchProfile 
-  } = useTwitchAuthBotContext();
+  } = useTwitchAuth(true);
 
   useEffect(() => {
     if (status && !profile) {
       fetchProfile();
     }
   }, [status, profile, fetchProfile]);
-
   return (
     <Card
-      className="w-full mt-3 p-0.5 gap-0"
+      className={`w-full mt-3 p-0.5 gap-0 ${!globalStatus ? 'opacity-50 pointer-events-none' : ''}`}
       style={{ background: "linear-gradient(90deg, #3A265E, #4B367C)" }}
     >
       <div className="flex flex-row items-center justify-between p-4">
@@ -45,18 +46,31 @@ export const ConnectionCardBot = () => {
         </div>
 
         <div className="mx-4 flex flex-col justify-center">
-          {status ? (
-            <Button
+          {status ? (            <Button
               onClick={handleClose}
               className="mx-auto w-xs bg-chart-1 text-xl text-foreground font-normal hover:bg-chart-1 cursor-pointer h-16"
+              disabled={isLoading || !globalStatus}
             >
-              <span>Desconectar</span>
+              {isLoading ? (
+                <div className="flex flex-row items-center justify-center space-x-3">
+                  <span className="pl-2">Desconectando</span>
+                  <TailSpin
+                    height={24}
+                    width={24}
+                    color="#ffffff"
+                    ariaLabel="loading"
+                    visible={true}
+                  />
+                </div>
+              ) : (
+                <span>Desconectar</span>
+              )}
             </Button>
           ) : (
             <Button
               onClick={()=>handleStart(true)}
               className="mx-auto w-xs bg-chart-1 text-xl text-foreground font-normal hover:bg-chart-1 cursor-pointer h-16"
-              disabled={isLoading}
+              disabled={isLoading || !globalStatus}
             >
               {isLoading ? (
                 <div className="flex flex-row items-center justify-center space-x-3">
