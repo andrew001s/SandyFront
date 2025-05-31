@@ -24,7 +24,6 @@ export const useTwitchAuth = (defaultIsBot?: boolean): UseTwitchAuthReturn => {
   const { statusBot, setStatusBot } = useStatusBot();
   const [isBot] = useState(defaultIsBot ?? false);
 
-  // Usamos el estado del bot solo si isBot es true
   const status = isBot ? statusBot : userStatus;
   const setStatus = useCallback(
     (value: boolean) => {
@@ -56,21 +55,11 @@ export const useTwitchAuth = (defaultIsBot?: boolean): UseTwitchAuthReturn => {
         setIsLoading(true);
         const authUrl = getTwitchAuthUrl();
 
-        const width = 500;
-        const height = 700;
-        const left = window.screenX + (window.outerWidth - width) / 2;
-        const top = window.screenY + (window.outerHeight - height) / 2;
-
-        const popup = window.open(
-          authUrl,
-          "Autenticación Twitch",
-          `width=${width},height=${height},left=${left},top=${top},popup=true,toolbar=no,location=no,status=no,menubar=no`
-        );
-
-        if (!popup) {
-          toast.error(
-            "Por favor, permite las ventanas emergentes para continuar"
-          );
+        const authWindow = window.open(authUrl, '_blank');
+        
+        if (!authWindow) {
+          toast.error("No se pudo abrir la página de autenticación");
+          setIsLoading(false);
           return;
         }
 
@@ -87,10 +76,7 @@ export const useTwitchAuth = (defaultIsBot?: boolean): UseTwitchAuthReturn => {
                 bot: bot,
               });
               await start(bot);
-              setStatus(true);
-              toast.success("Conectado a Twitch");
-
-              popup.close();
+              setStatus(true);              toast.success("Conectado a Twitch");
             } catch (error) {
               console.error("Error en la autenticación:", error);
               toast.error("Error en la autenticación de Twitch");
@@ -104,7 +90,6 @@ export const useTwitchAuth = (defaultIsBot?: boolean): UseTwitchAuthReturn => {
             toast.error(`Error de autenticación: ${event.data.error}`);
             setIsLoading(false);
             setStatus(false);
-            popup.close();
           }
         };
 

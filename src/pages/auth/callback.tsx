@@ -22,21 +22,21 @@ export const TwitchCallback = () => {
           window.location.origin
         );
         return;
-      }
+      }      if (code) {
+        // Guardar el código en localStorage
+        localStorage.setItem('twitch_auth_code', code);
+        localStorage.setItem('twitch_auth_timestamp', Date.now().toString());
 
-      if (code) {
+        // También intentar comunicar con la ventana principal si existe
         if (window.opener) {
           window.opener.postMessage(
             { type: "TWITCH_AUTH_CALLBACK", code },
             window.location.origin
           );
-          setStatus("success");
-          setMessage("¡Autenticación exitosa! Esta ventana se cerrará automáticamente.");
-          setTimeout(() => window.close(), 2000);
-        } else {
-          setStatus("error");
-          setMessage("Error: No se pudo comunicar con la ventana principal.");
         }
+        
+        setStatus("success");
+        setMessage("¡Autenticación exitosa! Ya puedes volver a la aplicación, esta información se transferirá automáticamente.");
       } else {
         setStatus("error");
         setMessage("Error: No se recibió código de autorización.");
@@ -55,8 +55,15 @@ export const TwitchCallback = () => {
           {status === 'error' ? '⚠️ Error' : 
            status === 'success' ? '✅ Éxito' : 
            '⌛ Procesando'}
-        </h1>
-        <p className="text-white/90">{message}</p>
+        </h1>        <p className="text-white/90">{message}</p>
+        {status === "success" && (
+          <button 
+            onClick={() => window.close()}
+            className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+          >
+            Cerrar Pestaña
+          </button>
+        )}
       </div>
     </div>
   );
