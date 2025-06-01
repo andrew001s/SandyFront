@@ -5,14 +5,20 @@ import { TailSpin } from "react-loader-spinner";
 import { BsMoonStarsFill } from "react-icons/bs";
 import { useTwitchAuthContext } from "@/context/TwitchAuthContext";
 import { useEffect } from "react";
+import { getTokens, postAuth } from "@/api/fetchAuth";
+import { start } from "@/api/sandycore";
+import { toast } from "sonner";
 
-export const ConnectionCard = () => {  const { 
-    profile, 
-    status, 
+export const ConnectionCard = () => {
+  const {
+    profile,
+    status,
     isLoading,
-    handleStart, 
+    setIsLoading,
+    handleStart,
     handleClose,
-    fetchProfile 
+    fetchProfile,
+    setStatus,
   } = useTwitchAuthContext();
 
   useEffect(() => {
@@ -21,9 +27,38 @@ export const ConnectionCard = () => {  const {
     }
   }, [status, profile, fetchProfile]);
 
-  const handleStartConnection = () => {
-    handleStart(false);
-  }
+  const handleStartConnection = async () => {
+    const tokens = await getTokens(false);
+    console.log("Tokens obtenidos:", tokens);
+    if (
+      !tokens.tokens ||
+      !tokens.tokens.token ||
+      !tokens.tokens.refresh_token
+    ) {
+      handleStart(false);
+    } else {
+      try {
+        setIsLoading(true);
+        await postAuth({
+          token: tokens.tokens.token,
+          refresh_token: tokens.tokens.refresh_token,
+          bot: false,
+        });
+        await start(false);
+        setStatus(true);
+        await fetchProfile();
+        toast.success("Conectado a Twitch");
+      } catch (error) {
+        console.error("Error al reconectar:", error);
+        toast.error(
+          "Error al reconectar, iniciando nuevo proceso de autenticación"
+        );
+        handleStart(false);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
 
   return (
     <Card
@@ -57,7 +92,8 @@ export const ConnectionCard = () => {  const {
             </Button>
           ) : (
             <Button
-              onClick={handleStartConnection}              className="mx-auto w-xs bg-chart-1 text-xl text-foreground font-normal hover:bg-chart-1 cursor-pointer h-16"
+              onClick={handleStartConnection}
+              className="mx-auto w-xs bg-chart-1 text-xl text-foreground font-normal hover:bg-chart-1 cursor-pointer h-16"
               disabled={isLoading}
             >
               {isLoading ? (

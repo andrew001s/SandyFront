@@ -1,3 +1,4 @@
+import { TokensInterface } from "@/interfaces/tokensInterface";
 import axios from "axios";
 
 
@@ -17,3 +18,16 @@ export async function postAuth(message:Auth) {
     return response.data.message;
   }
   
+export async function getTokens(bot: boolean) :Promise<TokensInterface>{
+    const response = await axios.get(`${baseURL}/tokens?bot=${bot}`, );
+    return response.data;
+}
+
+export async function saveTokens(bot: boolean, tokens: TokensInterface) {
+    console.log("Guardando tokens:", tokens);
+    const response = await axios.put(`${baseURL}/tokens?bot=${bot}`, 
+        tokens.tokens,
+    );
+    return response.data.message;
+
+}

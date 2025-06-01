@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { getAccessToken, getTwitchAuthUrl } from "@/api/twitchAuth";
 import { toast } from "sonner";
 import { start, stop } from "@/api/sandycore";
-import { postAuth } from "@/api/fetchAuth";
+import { postAuth, saveTokens } from "@/api/fetchAuth";
 import { getProfileInfo } from "@/api/fetchProfile";
 import type { ProfileModel } from "@/interfaces/profileInterface";
 import { useStatus } from "@/context/StatusContext";
@@ -12,6 +12,8 @@ interface UseTwitchAuthReturn {
   profile: ProfileModel | null;
   status: boolean;
   isLoading: boolean;
+  setIsLoading: (value: boolean) => void;
+  setStatus: (value: boolean) => void;
   handleStart: (bot: boolean) => Promise<void>;
   handleClose: () => Promise<void>;
   fetchProfile: () => Promise<void>;
@@ -46,17 +48,18 @@ export const useTwitchAuth = (defaultIsBot?: boolean): UseTwitchAuthReturn => {
     }
   }, [isBot, setProfile, setStatus]);
   const handleStart = useCallback(
-    
     async (bot: boolean) => {
       if (bot !== isBot) {
         console.error("Tipo de conexión incorrecto");
         return;
-      }      try {
+      }
+
+      try {
         setIsLoading(true);
         const authUrl = getTwitchAuthUrl();
 
-        const authWindow = window.open(authUrl, '_blank');
-        
+        const authWindow = window.open(authUrl, "_blank");
+
         if (!authWindow) {
           toast.error("No se pudo abrir la página de autenticación");
           setIsLoading(false);
@@ -75,8 +78,15 @@ export const useTwitchAuth = (defaultIsBot?: boolean): UseTwitchAuthReturn => {
                 refresh_token: tokenData.refresh_token,
                 bot: bot,
               });
+              await saveTokens(bot, {
+                tokens: {
+                  token: tokenData.access_token,
+                  refresh_token: tokenData.refresh_token,
+                },
+              });
               await start(bot);
-              setStatus(true);              toast.success("Conectado a Twitch");
+              setStatus(true);
+              toast.success("Conectado a Twitch");
             } catch (error) {
               console.error("Error en la autenticación:", error);
               toast.error("Error en la autenticación de Twitch");
@@ -98,17 +108,19 @@ export const useTwitchAuth = (defaultIsBot?: boolean): UseTwitchAuthReturn => {
         console.error("Error iniciando sesión:", error);
         toast.error("Error al conectar con Twitch");
         setStatus(false);
-      } 
+      }
     },
     [setStatus, isBot]
-  );  const handleClose = useCallback(async () => {
+  );
+  const handleClose = useCallback(async () => {
     try {
       setIsLoading(true);
       await stop(isBot);
       setStatus(false);
       setProfile(null);
       toast.info("Desconectado de Twitch");
-    } catch (error) {      console.error("Error cerrando sesión:", error);
+    } catch (error) {
+      console.error("Error cerrando sesión:", error);
       toast.error("Error al desconectar");
     } finally {
       setIsLoading(false);
@@ -118,6 +130,8 @@ export const useTwitchAuth = (defaultIsBot?: boolean): UseTwitchAuthReturn => {
     profile,
     status,
     isLoading,
+    setIsLoading,
+    setStatus,
     handleStart,
     handleClose,
     fetchProfile,
