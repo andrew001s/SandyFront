@@ -6,16 +6,21 @@ import { BsMoonStarsFill } from "react-icons/bs";
 import { useTwitchAuth } from "@/hooks/useTwitchAuth";
 import { useStatus } from "@/context/StatusContext";
 import { useEffect } from "react";
+import { getTokens, postAuth } from "@/api/fetchAuth";
+import { start } from "@/api/sandycore";
+import { toast } from "sonner";
 
 export const ConnectionCardBot = () => {
   const { status: globalStatus } = useStatus();
   const { 
     isLoading, 
+    setIsLoading,
     profile, 
     status, 
     handleStart, 
     handleClose,
-    fetchProfile 
+    fetchProfile,
+    setStatus
   } = useTwitchAuth(true);
 
   useEffect(() => {
@@ -23,6 +28,41 @@ export const ConnectionCardBot = () => {
       fetchProfile();
     }
   }, [status, profile, fetchProfile]);
+
+
+  const handleStartConnection = async () => {
+    const tokens = await getTokens(true);
+    console.log("Tokens obtenidos:", tokens);
+    if (
+      !tokens.tokens ||
+      !tokens.tokens.token ||
+      !tokens.tokens.refresh_token
+    ) {
+      handleStart(true);
+    } else {
+      try {
+        setIsLoading(true);
+        await postAuth({
+          token: tokens.tokens.token,
+          refresh_token: tokens.tokens.refresh_token,
+          bot: true,
+        });
+        await start(true);
+        setStatus(true);
+        await fetchProfile();
+        toast.success("Conectado a Twitch");
+      } catch (error) {
+        console.error("Error al reconectar:", error);
+        toast.error(
+          "Error al reconectar, iniciando nuevo proceso de autenticación"
+        );
+        handleStart(false);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+  
   return (
     <Card
       className={`w-full mt-3 p-0.5 gap-0 ${!globalStatus ? 'opacity-50 pointer-events-none' : ''}`}
@@ -68,7 +108,7 @@ export const ConnectionCardBot = () => {
             </Button>
           ) : (
             <Button
-              onClick={()=>handleStart(true)}
+              onClick={handleStartConnection}
               className="mx-auto w-xs bg-chart-1 text-xl text-foreground font-normal hover:bg-chart-1 cursor-pointer h-16"
               disabled={isLoading || !globalStatus}
             >
