@@ -9,7 +9,8 @@
 		"lint": "biome lint .",
 		"format": "biome format . --write",
 		"prepare": "lefthook install",
-		"preview": "vite preview"
+		"preview": "vite preview",
+		"release": "standard-version"
 	},
 	"dependencies": {
 		"@fortawesome/fontawesome-svg-core": "^6.7.2",
@@ -58,6 +59,7 @@
 		"eslint-plugin-react-refresh": "^0.4.19",
 		"globals": "^16.0.0",
 		"lefthook": "^1.11.13",
+		"standard-version": "^9.5.0",
 		"tw-animate-css": "^1.2.9",
 		"typescript": "~5.7.2",
 		"typescript-eslint": "^8.26.1",
