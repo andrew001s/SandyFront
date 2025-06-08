@@ -13,7 +13,7 @@ function Home() {
 
 			<div className='container mx-auto'>
 				{/* Grid de dos columnas para las tarjetas */}
-				<div className='mb-6 grid grid-cols-2 gap-4'>
+				<div className='mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2'>
 					<div className='w-full'>
 						<TwitchAuthProvider>
 							<ConnectionCard />

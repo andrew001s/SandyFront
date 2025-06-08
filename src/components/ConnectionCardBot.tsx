@@ -8,7 +8,7 @@ import { TailSpin } from 'react-loader-spinner';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Button } from './ui/button';
-import { Card } from './ui/card';
+import { Card, CardContent } from './ui/card';
 
 export const ConnectionCardBot = () => {
 	const { status: globalStatus } = useStatus();
@@ -60,8 +60,8 @@ export const ConnectionCardBot = () => {
 			className={`mt-3 w-full gap-0 p-0.5 ${!globalStatus ? 'pointer-events-none opacity-50' : ''}`}
 			style={{ background: 'linear-gradient(90deg, #3A265E, #4B367C)' }}
 		>
-			<div className='flex flex-row items-center justify-between p-4'>
-				<div className='flex flex-row items-center justify-center space-x-4'>
+			<CardContent className='flex flex-col space-y-4 p-4 sm:flex-row sm:items-center sm:space-x-4'>
+				<div className='flex flex-row items-center space-x-4 sm:justify-center'>
 					<Avatar className='ml-4 h-28 w-28 border-2 border-foreground'>
 						<AvatarImage src={profile?.picProfile} />
 						<AvatarFallback>
@@ -73,14 +73,14 @@ export const ConnectionCardBot = () => {
 							/>
 						</AvatarFallback>
 					</Avatar>
-					<span className='font-bold text-2xl text-foreground'>{profile?.username}</span>
+					<span className='truncate font-bold text-2xl text-foreground'>{profile?.username}</span>
 				</div>
 
-				<div className='mx-4 flex flex-col justify-center'>
+				<div className='flex w-full flex-col justify-center'>
 					{status ? (
 						<Button
 							onClick={handleClose}
-							className='mx-auto h-16 w-xs cursor-pointer bg-chart-1 font-normal text-foreground text-xl hover:bg-chart-1'
+							className='mx-auto h-16 w-full cursor-pointer bg-chart-1 font-normal text-foreground text-xl hover:bg-chart-1'
 							disabled={isLoading || !globalStatus}
 						>
 							{isLoading ? (
@@ -129,7 +129,7 @@ export const ConnectionCardBot = () => {
 						)}
 					</span>
 				</div>
-			</div>
+			</CardContent>
 			<div className='relative'>
 				<BsMoonStarsFill
 					className='-right-3 -top-10 -scale-x-100 absolute transform animate-pulse drop-shadow-[5px_0px_10px_rgba(255,255,255,0.5)]'
