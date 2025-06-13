@@ -67,7 +67,6 @@ export const CardConnectionBot = () => {
           <Avatar className="ml-4 h-28 w-28 border-2 border-foreground">
             <AvatarImage src={profile?.picProfile} />
             <AvatarFallback>
-              {/* biome-ignore lint/nursery/noImgElement: React Vite */}
               <Image
                 src="/icons/default.png"
                 alt="Default Icon"
