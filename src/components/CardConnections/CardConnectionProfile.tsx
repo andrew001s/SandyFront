@@ -1,15 +1,17 @@
-import { getTokens, postAuth } from '@/api/fetchAuth';
-import { start } from '@/api/sandycore';
-import { useTwitchAuthContext } from '@/context/TwitchAuthContext';
-import { useEffect } from 'react';
-import { BsMoonStarsFill } from 'react-icons/bs';
-import { TailSpin } from 'react-loader-spinner';
-import { toast } from 'sonner';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Button } from './ui/button';
-import { Card, CardContent } from './ui/card';
+"use client";
+import Image from "next/image";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Card, CardContent } from "../ui/card";
+import { Button } from "../ui/button";
+import { ClipLoader } from "react-spinners";
+import { BsMoonStarsFill } from "react-icons/bs";
+import { useTwitchAuthContext } from "@/context/TwitchAuthContext";
+import { useEffect } from "react";
+import { getTokens, postAuth } from "@/api/fetchAuth";
+import { start } from "@/api/sandycore";
+import { toast } from "sonner";
 
-export const ConnectionCard = () => {
+export const CardConnectionProfile = () => {
 	const {
 		profile,
 		status,
@@ -63,10 +65,12 @@ export const ConnectionCard = () => {
 					<Avatar className='ml-4 h-28 w-28 border-2 border-foreground'>
 						<AvatarImage src={profile?.picProfile} />
 						<AvatarFallback>
-							{/* biome-ignore lint/nursery/noImgElement: React Vite */}
-							<img
+							<Image
 								src='/icons/default.png'
 								alt='Default Icon'
+                                width={100}
+                                height={100}
+                                loading='lazy'
 								className='h-full w-full object-cover'
 							/>
 						</AvatarFallback>
@@ -91,13 +95,11 @@ export const ConnectionCard = () => {
 							{isLoading ? (
 								<div className='flex flex-row items-center justify-center space-x-3'>
 									<span className='pl-2'>Conectando</span>
-									<TailSpin
-										height={24}
-										width={24}
-										color='#ffffff'
-										ariaLabel='loading'
-										visible={true}
-									/>
+									<ClipLoader
+                                        color='#ffffff'
+                                        size={20}
+                                        className='animate-spin'
+                                    />
 								</div>
 							) : (
 								<span>Conectar con Twitch</span>

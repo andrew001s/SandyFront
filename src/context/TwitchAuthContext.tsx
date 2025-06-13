@@ -1,3 +1,4 @@
+'use client';
 import { useTwitchAuth } from '@/hooks/useTwitchAuth';
 import type { ProfileModel } from '@/interfaces/profileInterface';
 import { type ReactNode, createContext, useContext } from 'react';

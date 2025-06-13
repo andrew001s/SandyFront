@@ -1,7 +1,7 @@
-import type { TokensInterface } from '@/interfaces/tokensInterface';
+import { TokensInterface } from '@/interfaces/tokensInterface';
 import axios from 'axios';
 
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 interface Auth {
 	token: string;

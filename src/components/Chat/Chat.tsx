@@ -1,3 +1,4 @@
+"use client";
 import { getVoiceSandy } from '@/api/fetchFishAudio';
 import { useAudioQueue } from '@/hooks/useAudioQueue';
 import { useWebSocket } from '@/hooks/useSocket';
@@ -11,7 +12,7 @@ interface WebSocketChatProps {
 	response?: string;
 }
 
-const websocketUrl = import.meta.env.VITE_SOCKET_URL;
+const websocketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'ws://localhost:8000/ws';
 const WebSocketChat = () => {
 	const [currentMessage, setCurrentMessage] = useState<WebSocketChatProps | null>(null);
 	const messagesHistoryRef = useRef<WebSocketChatProps[]>([]);
@@ -62,7 +63,7 @@ const WebSocketChat = () => {
 					))}
 				</ul>
 			</div>
-			<audio ref={audioRef} preload='auto' style={{ display: 'none' }}>
+			<audio ref={audioRef} preload='auto' className='hidden'>
 				<track kind='captions' />
 			</audio>
 		</div>

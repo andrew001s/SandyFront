@@ -24,11 +24,9 @@ export const TwitchCallback = () => {
 				return;
 			}
 			if (code) {
-				// Guardar el código en localStorage
 				localStorage.setItem('twitch_auth_code', code);
 				localStorage.setItem('twitch_auth_timestamp', Date.now().toString());
 
-				// También intentar comunicar con la ventana principal si existe
 				if (window.opener) {
 					window.opener.postMessage({ type: 'TWITCH_AUTH_CALLBACK', code }, window.location.origin);
 				}

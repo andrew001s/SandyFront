@@ -1,28 +1,37 @@
+// components/Speech/Dictaphone.client.tsx
+'use client';
+
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { getVoiceSandy } from '@/api/fetchFishAudio';
 import { getResponseGemini } from '@/api/fetchGemini';
 import { useAudioQueue } from '@/hooks/useAudioQueue';
-import { useEffect, useState } from 'react';
+import { Switch } from '../ui/switch';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
-import { toast } from 'sonner';
 import { createSpeechServicesPonyfill } from 'web-speech-cognitive-services';
-import { Switch } from './ui/switch';
 
-const SUBSCRIPTION_KEY = import.meta.env.VITE_AZURE_SPEECH_KEY;
-const REGION = import.meta.env.VITE_AZURE_REGION;
-const LANGUAGE = import.meta.env.VITE_LENGUAGE || 'es-ES';
-
-const { SpeechRecognition: AzureSpeechRecognition } = createSpeechServicesPonyfill({
-	credentials: {
-		region: REGION,
-		subscriptionKey: SUBSCRIPTION_KEY,
-	},
-});
-SpeechRecognition.applyPolyfill(AzureSpeechRecognition);
+const SUBSCRIPTION_KEY = process.env.NEXT_PUBLIC_AZURE_SPEECH_KEY;
+const REGION = process.env.NEXT_PUBLIC_AZURE_REGION;
+const LANGUAGE = process.env.NEXT_PUBLIC_LANGUAGE || 'es-ES';
 
 const Dictaphone = () => {
 	const [transcriptHistory, setTranscriptHistory] = useState<string[]>([]);
 	const { audioRef, addToQueue } = useAudioQueue();
 	const [silenceTimer, setSilenceTimer] = useState<NodeJS.Timeout | null>(null);
+	useEffect(() => {
+		const initSpeechRecognition = () => {
+			const { SpeechRecognition: AzureSpeechRecognition } = createSpeechServicesPonyfill({
+				credentials: {
+					region: REGION,
+					subscriptionKey: SUBSCRIPTION_KEY,
+				},
+			});
+			
+			SpeechRecognition.applyPolyfill(AzureSpeechRecognition);
+		};
+
+		initSpeechRecognition();
+	}, []); // Solo se ejecuta una vez al montar el componente
 
 	const { transcript, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition({
 		commands: [
@@ -84,17 +93,17 @@ const Dictaphone = () => {
 	}
 
 	return (
-		<div className='flex items-center space-x-3 pt-4'>
+		<div className='flex flex-col gap-2 pt-4'>
 			<span>Reconocimiento de Voz:</span>
 			<Switch onCheckedChange={handleSpeechToggle} />
 			<p>{transcript}</p>
 			<div>
 				<h3>Transcripción:</h3>
-				{transcriptHistory.map((text) => (
-					<p key={`transcript-${text}-${Date.now()}`}>{text}</p>
+				{transcriptHistory.map((text, i) => (
+					<p key={`transcript-${i}`}>{text}</p>
 				))}
 			</div>
-			<audio ref={audioRef} preload='auto' style={{ display: 'none' }}>
+			<audio ref={audioRef} preload='auto' className='hidden'>
 				<track kind='captions' />
 			</audio>
 		</div>

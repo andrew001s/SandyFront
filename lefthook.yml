@@ -1,44 +1,37 @@
 # EXAMPLE USAGE:
 #
 #   Refer for explanation to following link:
-#   https://lefthook.dev/configuration/
+#   https://github.com/evilmartians/lefthook/blob/master/docs/configuration.md
 #
 # pre-push:
-#   jobs:
-#     - name: packages audit
-#       tags:
-#         - frontend
-#         - security
+#   commands:
+#     packages-audit:
+#       tags: frontend security
 #       run: yarn audit
-#
-#     - name: gems audit
-#       tags:
-#         - backend
-#         - security
+#     gems-audit:
+#       tags: backend security
 #       run: bundle audit
 #
 # pre-commit:
 #   parallel: true
-#   jobs:
-#     - run: yarn eslint {staged_files}
+#   commands:
+#     eslint:
 #       glob: "*.{js,ts,jsx,tsx}"
-#
-#     - name: rubocop
+#       run: yarn eslint {staged_files}
+#     rubocop:
+#       tags: backend style
 #       glob: "*.rb"
-#       exclude:
-#         - config/application.rb
-#         - config/routes.rb
+#       exclude: '(^|/)(application|routes)\.rb$'
 #       run: bundle exec rubocop --force-exclusion {all_files}
-#
-#     - name: govet
+#     govet:
+#       tags: backend style
 #       files: git ls-files -m
 #       glob: "*.go"
 #       run: go vet {files}
-#
-#     - script: "hello.js"
+#   scripts:
+#     "hello.js":
 #       runner: node
-#
-#     - script: "hello.go"
+#     "any.go":
 #       runner: go run
 pre-commit:
   commands:

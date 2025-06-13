@@ -1,3 +1,4 @@
+"use client";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
 interface StatusContextProps {
@@ -8,12 +9,17 @@ interface StatusContextProps {
 const StatusContext = createContext<StatusContextProps | undefined>(undefined);
 
 export const StatusProvider = ({ children }: { children: ReactNode }) => {
-  // Leer estado inicial desde localStorage
-  const [status, setStatusState] = useState(() => {
-    const stored = localStorage.getItem("globalStatus");
-    return stored ? JSON.parse(stored) : false;
-  });
+  const [status, setStatusState] = useState(false);
 
+  // Cargar el estado inicial desde localStorage solo en el cliente
+  useEffect(() => {
+    const stored = localStorage.getItem("globalStatus");
+    if (stored !== null) {
+      setStatusState(JSON.parse(stored));
+    }
+  }, []);
+
+  // Guardar en localStorage cuando el estado cambie
   useEffect(() => {
     localStorage.setItem("globalStatus", JSON.stringify(status));
   }, [status]);
@@ -29,7 +35,6 @@ export const StatusProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const useStatus = (): StatusContextProps => {
   const context = useContext(StatusContext);
   if (!context) {

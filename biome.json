@@ -30,7 +30,7 @@
 	},
 	"linter": {
 		"enabled": true,
-		"ignore": ["src/components/ui/**", "tailwind.config.ts"],
+		"ignore": ["src/components/ui/**", "src/superclient/**", "tailwind.config.ts"],
 		"rules": {
 			"recommended": true,
 			"a11y": {

@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const apiKey= import.meta.env.VITE_FISH_AUDIO_KEY || ""
-const idVoice = import.meta.env.VITE_VOICE_ID || ""
+const apiKey= process.env.NEXT_PUBLIC_FISH_AUDIO_KEY || ""
+const idVoice = process.env.NEXT_PUBLIC_VOICE_ID || ""
 
 export async function getVoiceSandy(message: string): Promise<Blob> {
     const headers = {
