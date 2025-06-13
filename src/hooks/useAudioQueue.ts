@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
 import { AudioQueueManager } from '@/lib/audioQueueSingleton';
+import { useState, useRef, useCallback, useEffect } from 'react';
 
 interface AudioQueueHook {
   audioRef: React.RefObject<HTMLAudioElement | null>;

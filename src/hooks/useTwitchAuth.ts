@@ -1,12 +1,12 @@
-import { useState, useCallback } from "react";
-import { getAccessToken, getTwitchAuthUrl } from "@/api/twitchAuth";
-import { toast } from "sonner";
-import { start, stop } from "@/api/sandycore";
 import { postAuth, saveTokens } from "@/api/fetchAuth";
 import { getProfileInfo } from "@/api/fetchProfile";
-import type { ProfileModel } from "@/interfaces/profileInterface";
+import { start,stop } from "@/api/sandycore";
+import { getAccessToken, getTwitchAuthUrl } from "@/api/twitchAuth";
 import { useStatus } from "@/context/StatusContext";
 import { useStatusBot } from "@/context/StatusContextBot";
+import { ProfileModel } from "@/interfaces/profileInterface";
+import { useState, useCallback } from "react";
+import { toast } from "sonner";
 
 interface UseTwitchAuthReturn {
   profile: ProfileModel | null;

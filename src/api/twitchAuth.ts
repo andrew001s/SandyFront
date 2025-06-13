@@ -8,9 +8,9 @@ interface TwitchTokenResponse {
     token_type: string;
 }
 
-const TWITCH_CLIENT_ID = import.meta.env.VITE_TWITCH_CLIENT_ID || '';
-const TWITCH_CLIENT_SECRET = import.meta.env.VITE_TWITCH_CLIENT_SECRET || '';
-const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI || 'http://localhost:5173/auth/callback';
+const TWITCH_CLIENT_ID = process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID || '';
+const TWITCH_CLIENT_SECRET = process.env.NEXT_PUBLIC_TWITCH_CLIENT_SECRET || '';
+const REDIRECT_URI = process.env.NEXT_PUBLIC_REDIRECT_URI || 'http://localhost:5173/auth/callback';
 
 export const getTwitchAuthUrl = () => {
     const scope = 'chat:read chat:edit channel:moderate moderator:manage:chat_messages moderator:read:chat_messages moderation:read channel:read:redemptions channel:manage:redemptions channel:manage:broadcast user:bot user:write:chat channel:bot clips:edit user:read:email moderator:manage:chat_settings moderator:read:chatters moderator:read:followers channel:read:subscriptions bits:read';
