@@ -1,6 +1,6 @@
-"use client"
+'use client';
 import { useTwitchAuth } from '@/hooks/useTwitchAuth';
-import { ProfileModel } from '@/interfaces/profileInterface';
+import type { ProfileModel } from '@/interfaces/profileInterface';
 import { type ReactNode, createContext, useContext } from 'react';
 
 interface TwitchAuthContextType {
