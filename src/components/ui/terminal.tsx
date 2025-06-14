@@ -1,56 +1,57 @@
-import styled from "styled-components";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from 'react';
+import styled from 'styled-components';
 
 interface TerminalProps {
-  children?: React.ReactNode;
+	children?: React.ReactNode;
 }
 
 export const Terminal = ({ children }: TerminalProps) => {
-  const [isMinimized, setIsMinimized] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
+	const [isMinimized, setIsMinimized] = useState(false);
+	const contentRef = useRef<HTMLDivElement>(null);
 
-  const toggleMinimize = () => {
-    setIsMinimized(!isMinimized);
-  };
+	const toggleMinimize = () => {
+		setIsMinimized(!isMinimized);
+	};
 
-  useEffect(() => {
-    if (contentRef.current && !isMinimized) {
-      contentRef.current.scrollTop = contentRef.current.scrollHeight;
-    }
-  }, [children, isMinimized]); 
+	useEffect(() => {
+		if (contentRef.current && !isMinimized) {
+			contentRef.current.scrollTop = contentRef.current.scrollHeight;
+		}
+	}, [children, isMinimized]);
 
-  return (
-    <StyledWrapper $isMinimized={isMinimized}>
-      <div className="status-container">
-        <div className="status">
-          <div className="mac-header">
-            <span
-              className="red"
-              onClick={toggleMinimize}
-              role="button"
-              tabIndex={0}
-              title={isMinimized ? "Maximizar terminal" : "Minimizar terminal"}
-              aria-label={isMinimized ? "Maximizar terminal" : "Minimizar terminal"}
-            />Consola
-          </div>{" "}
-          <div className="mac-content" ref={contentRef}>
-            {React.Children.map(children, (child) => (
-              <div className="terminal-line">
-                <span>~</span>
-                <span className="arrow">❯</span>
-                <span>{child}</span>
-              </div>
-            ))}{" "}
-            <div className="terminal-line">
-              <span>~</span>
-              <span className="arrow">❯</span>
-              <span className="cursor" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </StyledWrapper>
-  );
+	return (
+		<StyledWrapper $isMinimized={isMinimized}>
+			<div className='status-container'>
+				<div className='status'>
+					<div className='mac-header'>
+						<span
+							className='red'
+							onClick={toggleMinimize}
+							role='button'
+							tabIndex={0}
+							title={isMinimized ? 'Maximizar terminal' : 'Minimizar terminal'}
+							aria-label={isMinimized ? 'Maximizar terminal' : 'Minimizar terminal'}
+						/>
+						Consola
+					</div>{' '}
+					<div className='mac-content' ref={contentRef}>
+						{React.Children.map(children, (child) => (
+							<div className='terminal-line'>
+								<span>~</span>
+								<span className='arrow'>❯</span>
+								<span>{child}</span>
+							</div>
+						))}{' '}
+						<div className='terminal-line'>
+							<span>~</span>
+							<span className='arrow'>❯</span>
+							<span className='cursor' />
+						</div>
+					</div>
+				</div>
+			</div>
+		</StyledWrapper>
+	);
 };
 
 const StyledWrapper = styled.div<{ $isMinimized: boolean }>`
@@ -68,7 +69,7 @@ const StyledWrapper = styled.div<{ $isMinimized: boolean }>`
     color: #fbebe2;
     padding: 10px;
     width: 100%;
-    height: ${(props) => (props.$isMinimized ? "40px" : "300px")};
+    height: ${(props) => (props.$isMinimized ? '40px' : '300px')};
     border-radius: 10px;
     user-select: none;
     -moz-user-select: none;
@@ -83,8 +84,7 @@ const StyledWrapper = styled.div<{ $isMinimized: boolean }>`
     cursor: text;
     gap: 8px;
     overflow-y: auto;
-    height: ${(props) =>
-      props.$isMinimized ? "0" : "calc(100% - 40px)"};
+    height: ${(props) => (props.$isMinimized ? '0' : 'calc(100% - 40px)')};
     transition: all 0.3s ease-in-out;
   }
 
@@ -132,8 +132,7 @@ const StyledWrapper = styled.div<{ $isMinimized: boolean }>`
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: ${(props) =>
-      props.$isMinimized ? "0" : "15px"};
+    margin-bottom: ${(props) => (props.$isMinimized ? '0' : '15px')};
     transition: all 0.3s ease-in-out;
   }
 

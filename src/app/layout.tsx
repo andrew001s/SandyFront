@@ -1,52 +1,48 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import { ThemeProvider } from "next-themes";
-import { StatusProvider } from "@/context/StatusContext";
-import { StatusProviderBot } from "@/context/StatusContextBot";
-import { MessagesProvider } from "@/context/MessagesContext";
-import { Toaster } from "sonner";
+import type { Metadata } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
+import './globals.css';
+import { MessagesProvider } from '@/context/MessagesContext';
+import { StatusProvider } from '@/context/StatusContext';
+import { StatusProviderBot } from '@/context/StatusContextBot';
+import { ThemeProvider } from 'next-themes';
+import { Toaster } from 'sonner';
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+	variable: '--font-geist-sans',
+	subsets: ['latin'],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+	variable: '--font-geist-mono',
+	subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
-  title: "Sandy Front",
-  description: "Sandy Front Application",
+	title: 'Sandy Front',
+	description: 'Sandy Front Application',
 };
 
 export default function RootLayout({
-  children,
+	children,
 }: Readonly<{
-  children: React.ReactNode;
+	children: React.ReactNode;
 }>) {
-  return (
-    <html lang="es" suppressHydrationWarning translate="no">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <StatusProvider>
-            <StatusProviderBot>
-              <MessagesProvider>
-                <main className="w-full">
-                  <header className="flex flex-row items-center justify-between p-4">
-                  </header>
-                  <Toaster richColors position="top-right" />
-                  {children}
-                </main>
-              </MessagesProvider>
-            </StatusProviderBot>
-          </StatusProvider>
-        </ThemeProvider>
-      </body>
-    </html>
-  );
+	return (
+		<html lang='es' suppressHydrationWarning translate='no'>
+			<body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+				<ThemeProvider attribute='class' defaultTheme='dark' enableSystem>
+					<StatusProvider>
+						<StatusProviderBot>
+							<MessagesProvider>
+								<main className='w-full'>
+									<Toaster richColors position='top-right' />
+									{children}
+								</main>
+							</MessagesProvider>
+						</StatusProviderBot>
+					</StatusProvider>
+				</ThemeProvider>
+			</body>
+		</html>
+	);
 }

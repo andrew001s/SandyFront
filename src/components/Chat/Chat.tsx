@@ -1,9 +1,9 @@
-"use client";
+'use client';
 import { getVoiceSandy } from '@/api/fetchFishAudio';
+import { useMessages } from '@/context/MessagesContext';
 import { useAudioQueue } from '@/hooks/useAudioQueue';
 import { useWebSocket } from '@/hooks/useSocket';
 import { useCallback, useEffect, useRef } from 'react';
-import { useMessages } from '@/context/MessagesContext';
 
 interface WebSocketChatProps {
 	type: string;
@@ -25,30 +25,37 @@ const WebSocketChat = () => {
 		addMessageRef.current = addMessage;
 	}, [addMessage]);
 
-	const handleMessage = useCallback((data: string) => {
-		const parsedData = JSON.parse(data) as WebSocketChatProps;
-		if (parsedData.message) {
-			addMessageRef.current({
-				type: 'chat',
-				content: parsedData.message,
-				timestamp: parsedData.timestamp || new Date().toISOString(),
-			});
-		}
-
-		if (parsedData.type === 'twitch_response' && parsedData.response && !processedMessages.current.has(parsedData.response)) {
-			processedMessages.current.add(parsedData.response);
-			getVoiceSandy(parsedData.response)
-				.then(audioBlob => {
-					addToQueue(audioBlob);
-				})
-				.catch(error => {
-					if (parsedData.response) {
-						processedMessages.current.delete(parsedData.response);
-					}
-					console.error('Error al procesar el audio:', error);
+	const handleMessage = useCallback(
+		(data: string) => {
+			const parsedData = JSON.parse(data) as WebSocketChatProps;
+			if (parsedData.message) {
+				addMessageRef.current({
+					type: 'chat',
+					content: parsedData.message,
+					timestamp: parsedData.timestamp || new Date().toISOString(),
 				});
-		}
-	}, [addToQueue]); // Solo depende de addToQueue
+			}
+
+			if (
+				parsedData.type === 'twitch_response' &&
+				parsedData.response &&
+				!processedMessages.current.has(parsedData.response)
+			) {
+				processedMessages.current.add(parsedData.response);
+				getVoiceSandy(parsedData.response)
+					.then((audioBlob) => {
+						addToQueue(audioBlob);
+					})
+					.catch((error) => {
+						if (parsedData.response) {
+							processedMessages.current.delete(parsedData.response);
+						}
+						console.error('Error al procesar el audio:', error);
+					});
+			}
+		},
+		[addToQueue],
+	); // Solo depende de addToQueue
 
 	useWebSocket(websocketUrl, handleMessage);
 

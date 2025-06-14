@@ -1,140 +1,133 @@
 // components/Speech/Dictaphone.client.tsx
-"use client";
+'use client';
 
-import { getVoiceSandy } from "@/api/fetchFishAudio";
-import { getResponseGemini } from "@/api/fetchGemini";
-import { useAudioQueue } from "@/hooks/useAudioQueue";
-import { useEffect, useState } from "react";
-import SpeechRecognition, {
-  useSpeechRecognition,
-} from "react-speech-recognition";
-import { toast } from "sonner";
-import { createSpeechServicesPonyfill } from "web-speech-cognitive-services";
-import SwitchComponent from "../SwitchComponent/Switch";
-import { useMessages } from "@/context/MessagesContext";
-import { Terminal } from "../ui/terminal";
+import { getVoiceSandy } from '@/api/fetchFishAudio';
+import { getResponseGemini } from '@/api/fetchGemini';
+import { useMessages } from '@/context/MessagesContext';
+import { useAudioQueue } from '@/hooks/useAudioQueue';
+import { useEffect, useState } from 'react';
+import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
+import { toast } from 'sonner';
+import { createSpeechServicesPonyfill } from 'web-speech-cognitive-services';
+import SwitchComponent from '../SwitchComponent/Switch';
+import { Terminal } from '../ui/terminal';
 
 const SUBSCRIPTION_KEY = process.env.NEXT_PUBLIC_AZURE_SPEECH_KEY;
 const REGION = process.env.NEXT_PUBLIC_AZURE_REGION;
-const LANGUAGE = process.env.NEXT_PUBLIC_LANGUAGE || "es-ES";
+const LANGUAGE = process.env.NEXT_PUBLIC_LANGUAGE || 'es-ES';
 
 const Dictaphone = () => {
-  const { audioRef, addToQueue } = useAudioQueue();
-  const [silenceTimer, setSilenceTimer] = useState<NodeJS.Timeout | null>(null);
-  const { messages, addMessage } = useMessages();
+	const { audioRef, addToQueue } = useAudioQueue();
+	const [silenceTimer, setSilenceTimer] = useState<NodeJS.Timeout | null>(null);
+	const { messages, addMessage } = useMessages();
 
-  useEffect(() => {
-    const initSpeechRecognition = () => {
-      const { SpeechRecognition: AzureSpeechRecognition } =
-        createSpeechServicesPonyfill({
-          credentials: {
-            region: REGION,
-            subscriptionKey: SUBSCRIPTION_KEY,
-          },
-        });
+	useEffect(() => {
+		const initSpeechRecognition = () => {
+			const { SpeechRecognition: AzureSpeechRecognition } = createSpeechServicesPonyfill({
+				credentials: {
+					region: REGION,
+					subscriptionKey: SUBSCRIPTION_KEY,
+				},
+			});
 
-      SpeechRecognition.applyPolyfill(AzureSpeechRecognition);
-    };
+			SpeechRecognition.applyPolyfill(AzureSpeechRecognition);
+		};
 
-    initSpeechRecognition();
-  }, []); // Solo se ejecuta una vez al montar el componente
+		initSpeechRecognition();
+	}, []); // Solo se ejecuta una vez al montar el componente
 
-  const { transcript, resetTranscript, browserSupportsSpeechRecognition } =
-    useSpeechRecognition({
-      commands: [
-        {
-          command: "*",
-          callback: () => {
-            resetSilenceTimer();
-          },
-        },
-      ],
-    });
+	const { transcript, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition({
+		commands: [
+			{
+				command: '*',
+				callback: () => {
+					resetSilenceTimer();
+				},
+			},
+		],
+	});
 
-  const resetSilenceTimer = () => {
-    if (silenceTimer) clearTimeout(silenceTimer);
-    const timer = setTimeout(async () => {
-      if (transcript) {
-        try {
-          addMessage({
-            type: "transcription",
-            content: transcript,
-            timestamp: new Date().toISOString(),
-          });
+	const resetSilenceTimer = () => {
+		if (silenceTimer) clearTimeout(silenceTimer);
+		const timer = setTimeout(async () => {
+			if (transcript) {
+				try {
+					addMessage({
+						type: 'transcription',
+						content: transcript,
+						timestamp: new Date().toISOString(),
+					});
 
-          const response = await getResponseGemini(transcript);
-          addMessage({
-            type: "transcription",
-            content: `Sandy: ${response}`,
-            timestamp: new Date().toISOString(),
-          });
-          resetTranscript();
+					const response = await getResponseGemini(transcript);
+					addMessage({
+						type: 'transcription',
+						content: `Sandy: ${response}`,
+						timestamp: new Date().toISOString(),
+					});
+					resetTranscript();
 
-          const audioBlob = await getVoiceSandy(response);
-          addToQueue(audioBlob);
-        } catch (error) {
-          console.error("Error al obtener respuesta de audio:", error);
-          toast.error("Error al procesar el audio");
-        }
-      }
-    }, 2000);
-    setSilenceTimer(timer);
-  };
+					const audioBlob = await getVoiceSandy(response);
+					addToQueue(audioBlob);
+				} catch (error) {
+					console.error('Error al obtener respuesta de audio:', error);
+					toast.error('Error al procesar el audio');
+				}
+			}
+		}, 2000);
+		setSilenceTimer(timer);
+	};
 
-  useEffect(() => {
-    return () => {
-      if (silenceTimer) clearTimeout(silenceTimer);
-    };
-  }, [silenceTimer]);
+	useEffect(() => {
+		return () => {
+			if (silenceTimer) clearTimeout(silenceTimer);
+		};
+	}, [silenceTimer]);
 
-  const startListening = () =>
-    SpeechRecognition.startListening({
-      continuous: true,
-      language: LANGUAGE,
-    });
+	const startListening = () =>
+		SpeechRecognition.startListening({
+			continuous: true,
+			language: LANGUAGE,
+		});
 
-  const handleSpeechToggle = (checked: boolean) => {
-    if (checked) {
-      startListening();
-      toast.success("Reconocimiento de voz activado");
-    } else {
-      SpeechRecognition.stopListening();
-      resetTranscript();
-      toast.error("Reconocimiento de voz desactivado");
-    }
-  };
+	const handleSpeechToggle = (checked: boolean) => {
+		if (checked) {
+			startListening();
+			toast.success('Reconocimiento de voz activado');
+		} else {
+			SpeechRecognition.stopListening();
+			resetTranscript();
+			toast.error('Reconocimiento de voz desactivado');
+		}
+	};
 
-  if (!browserSupportsSpeechRecognition) {
-    return null;
-  }
+	if (!browserSupportsSpeechRecognition) {
+		return null;
+	}
 
-  return (
-    <div className="flex flex-col gap-2 pt-4">
-      <div className="flex items-center space-x-3">
-        <span>Reconocimiento de Voz:</span>
-        <SwitchComponent onCheckedChange={handleSpeechToggle} />
-      </div>
-      {transcript && (
-        <div className='rounded-md bg-gray-800 p-2'>
-          <span className="text-white">Transcripción: {transcript}</span>
-        </div>
-      )}
+	return (
+		<div className='flex flex-col gap-2 pt-4'>
+			<div className='flex items-center space-x-3'>
+				<span>Reconocimiento de Voz:</span>
+				<SwitchComponent onCheckedChange={handleSpeechToggle} />
+			</div>
+			{transcript && (
+				<div className='rounded-md bg-gray-800 p-2'>
+					<span className='text-white'>Transcripción: {transcript}</span>
+				</div>
+			)}
 
-      <Terminal>
-        {messages.map((msg, index) => (
-          <span
-            key={`msg-${index}-${msg.timestamp}`}
-            className="mb-2 text-sm text-white"
-          >
-            {msg.content}
-          </span>
-        ))}
-      </Terminal>
-      <audio ref={audioRef} preload="auto" className="hidden">
-        <track kind="captions" />
-      </audio>
-    </div>
-  );
+			<Terminal>
+				{messages.map((msg, index) => (
+					<span key={`msg-${index}-${msg.timestamp}`} className='mb-2 text-sm text-white'>
+						{msg.content}
+					</span>
+				))}
+			</Terminal>
+			<audio ref={audioRef} preload='auto' className='hidden'>
+				<track kind='captions' />
+			</audio>
+		</div>
+	);
 };
 
 export default Dictaphone;
