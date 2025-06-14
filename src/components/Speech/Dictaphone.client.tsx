@@ -105,7 +105,7 @@ const Dictaphone = () => {
 	}
 
 	return (
-		<div className='flex flex-col gap-2 pt-4'>
+		<div className='flex w-full flex-col gap-2 pt-4'>
 			<div className='flex items-center space-x-3'>
 				<span>Reconocimiento de Voz:</span>
 				<SwitchComponent onCheckedChange={handleSpeechToggle} />

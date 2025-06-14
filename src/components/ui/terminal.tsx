@@ -1,9 +1,27 @@
+import { AnimatePresence, motion } from 'framer-motion';
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 
 interface TerminalProps {
 	children?: React.ReactNode;
 }
+
+const TerminalLine = ({ children }: { children: React.ReactNode }) => (
+	<motion.div
+		className='terminal-line'
+		initial={{ opacity: 0, x: -20 }}
+		animate={{ opacity: 1, x: 0 }}
+		exit={{ opacity: 0, x: 20 }}
+		transition={{
+			duration: 0.2,
+			ease: 'easeOut',
+		}}
+	>
+		<span>~</span>
+		<span className='arrow'>❯</span>
+		<span>{children}</span>
+	</motion.div>
+);
 
 export const Terminal = ({ children }: TerminalProps) => {
 	const [isMinimized, setIsMinimized] = useState(false);
@@ -31,23 +49,26 @@ export const Terminal = ({ children }: TerminalProps) => {
 							tabIndex={0}
 							title={isMinimized ? 'Maximizar terminal' : 'Minimizar terminal'}
 							aria-label={isMinimized ? 'Maximizar terminal' : 'Minimizar terminal'}
-						/>
-						Consola
+						/>Terminal
 					</div>{' '}
-					<div className='mac-content' ref={contentRef}>
-						{React.Children.map(children, (child) => (
-							<div className='terminal-line'>
-								<span>~</span>
-								<span className='arrow'>❯</span>
-								<span>{child}</span>
-							</div>
-						))}{' '}
-						<div className='terminal-line'>
-							<span>~</span>
-							<span className='arrow'>❯</span>
-							<span className='cursor' />
-						</div>
-					</div>
+					<motion.div
+						className='mac-content'
+						ref={contentRef}
+						animate={{
+							height: isMinimized ? 0 : 'calc(100% - 40px)',
+							opacity: isMinimized ? 0 : 1,
+						}}
+						transition={{ duration: 0.3 }}
+					>
+						<AnimatePresence mode='popLayout'>
+							{React.Children.map(children, (child, index) => (
+								<TerminalLine key={index}>{child}</TerminalLine>
+							))}
+							<TerminalLine key='cursor'>
+								<span className='cursor' />
+							</TerminalLine>
+						</AnimatePresence>
+					</motion.div>
 				</div>
 			</div>
 		</StyledWrapper>
@@ -84,8 +105,6 @@ const StyledWrapper = styled.div<{ $isMinimized: boolean }>`
     cursor: text;
     gap: 8px;
     overflow-y: auto;
-    height: ${(props) => (props.$isMinimized ? '0' : 'calc(100% - 40px)')};
-    transition: all 0.3s ease-in-out;
   }
 
   .terminal-line {
