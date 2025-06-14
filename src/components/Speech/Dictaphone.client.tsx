@@ -1,14 +1,14 @@
 // components/Speech/Dictaphone.client.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 import { getVoiceSandy } from '@/api/fetchFishAudio';
 import { getResponseGemini } from '@/api/fetchGemini';
 import { useAudioQueue } from '@/hooks/useAudioQueue';
-import { Switch } from '../ui/switch';
+import { useEffect, useState } from 'react';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
+import { toast } from 'sonner';
 import { createSpeechServicesPonyfill } from 'web-speech-cognitive-services';
+import SwitchComponent from '../SwitchComponent/Switch';
 
 const SUBSCRIPTION_KEY = process.env.NEXT_PUBLIC_AZURE_SPEECH_KEY;
 const REGION = process.env.NEXT_PUBLIC_AZURE_REGION;
@@ -26,7 +26,7 @@ const Dictaphone = () => {
 					subscriptionKey: SUBSCRIPTION_KEY,
 				},
 			});
-			
+
 			SpeechRecognition.applyPolyfill(AzureSpeechRecognition);
 		};
 
@@ -94,8 +94,10 @@ const Dictaphone = () => {
 
 	return (
 		<div className='flex flex-col gap-2 pt-4'>
-			<span>Reconocimiento de Voz:</span>
-			<Switch onCheckedChange={handleSpeechToggle} />
+			<div className='flex items-center space-x-3'>
+				<span>Reconocimiento de Voz:</span>
+				<SwitchComponent onCheckedChange={handleSpeechToggle} />
+			</div>
 			<p>{transcript}</p>
 			<div>
 				<h3>Transcripción:</h3>
