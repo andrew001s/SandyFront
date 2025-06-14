@@ -49,7 +49,8 @@ export const Terminal = ({ children }: TerminalProps) => {
 							tabIndex={0}
 							title={isMinimized ? 'Maximizar terminal' : 'Minimizar terminal'}
 							aria-label={isMinimized ? 'Maximizar terminal' : 'Minimizar terminal'}
-						/>Terminal
+						/>
+						Terminal
 					</div>{' '}
 					<motion.div
 						className='mac-content'
