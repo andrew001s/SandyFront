@@ -49,20 +49,25 @@ Asegúrate de tener instalados los siguientes programas:
 
 3. Crea un archivo .env.local y configura las siguientes variables:
    ```ini
-   # URL de la API de Sandy Core
+  # URL de la API de Sandy Core
    NEXT_PUBLIC_API_URL="http://localhost:8000"
 
    # Configuración de Azure Speech Services
-   NEXT_PUBLIC_AZURE_SPEECH_KEY='tu_clave_de_azure_speech'
-   NEXT_PUBLIC_AZURE_REGION='tu_region_de_azure'
-   NEXT_PUBLIC_LANGUAGE='es-ES'  # O el idioma que prefieras
+   NEXT_PUBLIC_AZURE_SPEECH_KEY="tu_clave_de_azure_speech"
+   NEXT_PUBLIC_AZURE_REGION="tu_region_de_azure"
+   NEXT_PUBLIC_LANGUAGE="es-ES"  # O el idioma que prefieras
 
    # Configuración de Fish Audio
-   NEXT_PUBLIC_FISH_AUDIO_KEY='tu_clave_de_fish_audio'
-   NEXT_PUBLIC_VOICE_ID='id_de_voz_fish_audio'
+   NEXT_PUBLIC_FISH_AUDIO_KEY="tu_clave_de_fish_audio"
+   NEXT_PUBLIC_VOICE_ID="id_de_voz_fish_audio"
 
    # URL del WebSocket
    NEXT_PUBLIC_SOCKET_URL="ws://localhost:8000/ws"
+
+   # Configuración de OAuth de Twitch
+   NEXT_PUBLIC_TWITCH_CLIENT_ID="tu_client_id_de_twitch"
+   NEXT_PUBLIC_TWITCH_CLIENT_SECRET="tu_client_secret_de_twitch"
+   NEXT_PUBLIC_REDIRECT_URI="http://localhost:3000/auth/callback"
    ```
 
 ## Scripts disponibles
