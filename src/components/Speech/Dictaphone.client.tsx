@@ -10,6 +10,7 @@ import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognitio
 import { toast } from 'sonner';
 import { createSpeechServicesPonyfill } from 'web-speech-cognitive-services';
 import SwitchComponent from '../SwitchComponent/Switch';
+import { TypingAnimation } from '../magicui/typing-animation';
 import { Terminal } from '../ui/terminal';
 
 const SUBSCRIPTION_KEY = process.env.NEXT_PUBLIC_AZURE_SPEECH_KEY;
@@ -111,8 +112,9 @@ const Dictaphone = () => {
 				<SwitchComponent onCheckedChange={handleSpeechToggle} />
 			</div>
 			{transcript && (
-				<div className='rounded-md bg-gray-800 p-2'>
-					<span className='text-white'>Transcripción: {transcript}</span>
+				<div className='flex flex-row space-x-2 rounded-md bg-gray-800 p-2'>
+					<span>Trascripción:</span>
+					<TypingAnimation className='font-normal text-base'>{transcript}</TypingAnimation>
 				</div>
 			)}
 

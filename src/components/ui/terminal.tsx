@@ -110,7 +110,7 @@ const StyledWrapper = styled.div<{ $isMinimized: boolean }>`
 
   .terminal-line {
     display: flex;
-    align-items: center;
+    align-items: start;
     gap: 8px;
     padding: 4px 0;
   }
