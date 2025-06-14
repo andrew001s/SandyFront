@@ -55,7 +55,7 @@ const Dictaphone = () => {
 				try {
 					addMessage({
 						type: 'transcription',
-						content: transcript,
+						content: `Transcripción: ${transcript}`,
 						timestamp: new Date().toISOString(),
 					});
 
