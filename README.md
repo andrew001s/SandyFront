@@ -47,7 +47,7 @@ Asegúrate de tener instalados los siguientes programas:
    pnpm install
    ```
 
-3. Crea un archivo .env.local y configura las siguientes variables:
+3. Crea un archivo .env y configura las siguientes variables:
    ```ini
   # URL de la API de Sandy Core
    NEXT_PUBLIC_API_URL="http://localhost:8000"
