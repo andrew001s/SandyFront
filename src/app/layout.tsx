@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { StatusProvider } from "@/context/StatusContext";
 import { StatusProviderBot } from "@/context/StatusContextBot";
+import { MessagesProvider } from "@/context/MessagesContext";
 import { Toaster } from "sonner";
 
 const geistSans = Geist({
@@ -34,12 +35,14 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <StatusProvider>
             <StatusProviderBot>
+              <MessagesProvider>
                 <main className="w-full">
                   <header className="flex flex-row items-center justify-between p-4">
                   </header>
                   <Toaster richColors position="top-right" />
                   {children}
                 </main>
+              </MessagesProvider>
             </StatusProviderBot>
           </StatusProvider>
         </ThemeProvider>

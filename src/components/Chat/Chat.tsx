@@ -2,7 +2,8 @@
 import { getVoiceSandy } from '@/api/fetchFishAudio';
 import { useAudioQueue } from '@/hooks/useAudioQueue';
 import { useWebSocket } from '@/hooks/useSocket';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import { useMessages } from '@/context/MessagesContext';
 
 interface WebSocketChatProps {
 	type: string;
@@ -14,55 +15,45 @@ interface WebSocketChatProps {
 
 const websocketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'ws://localhost:8000/ws';
 const WebSocketChat = () => {
-	const [currentMessage, setCurrentMessage] = useState<WebSocketChatProps | null>(null);
-	const messagesHistoryRef = useRef<WebSocketChatProps[]>([]);
 	const processedMessages = useRef<Set<string>>(new Set());
 	const { audioRef, addToQueue } = useAudioQueue();
+	const { addMessage } = useMessages();
+	const addMessageRef = useRef(addMessage);
+
+	// Actualizar la referencia cuando cambie addMessage
+	useEffect(() => {
+		addMessageRef.current = addMessage;
+	}, [addMessage]);
 
 	const handleMessage = useCallback((data: string) => {
 		const parsedData = JSON.parse(data) as WebSocketChatProps;
-		setCurrentMessage(parsedData);
-		messagesHistoryRef.current = [...messagesHistoryRef.current, parsedData];
-	}, []);
+		if (parsedData.message) {
+			addMessageRef.current({
+				type: 'chat',
+				content: parsedData.message,
+				timestamp: parsedData.timestamp || new Date().toISOString(),
+			});
+		}
+
+		if (parsedData.type === 'twitch_response' && parsedData.response && !processedMessages.current.has(parsedData.response)) {
+			processedMessages.current.add(parsedData.response);
+			getVoiceSandy(parsedData.response)
+				.then(audioBlob => {
+					addToQueue(audioBlob);
+				})
+				.catch(error => {
+					if (parsedData.response) {
+						processedMessages.current.delete(parsedData.response);
+					}
+					console.error('Error al procesar el audio:', error);
+				});
+		}
+	}, [addToQueue]); // Solo depende de addToQueue
 
 	useWebSocket(websocketUrl, handleMessage);
 
-	useEffect(() => {
-		const processAudio = async () => {
-			if (
-				currentMessage?.type === 'twitch_response' &&
-				currentMessage.response &&
-				!processedMessages.current.has(currentMessage.response)
-			) {
-				try {
-					processedMessages.current.add(currentMessage.response);
-
-					const audioBlob = await getVoiceSandy(currentMessage.response);
-					addToQueue(audioBlob);
-				} catch (error) {
-					processedMessages.current.delete(currentMessage.response);
-					console.error('Error al procesar el audio:', error);
-				}
-			}
-		};
-
-		void processAudio();
-	}, [currentMessage, addToQueue]);
-
 	return (
-		<div className='mx-auto max-w-md space-y-4 p-4'>
-			<div className='h-64 overflow-y-auto rounded border p-3 shadow'>
-				<ul>
-					{messagesHistoryRef.current.map((msg, index) => (
-						<li
-							key={`msg-${index}-${msg.timestamp || Date.now()}`}
-							className='mb-2 text-sm text-white'
-						>
-							{msg.message}
-						</li>
-					))}
-				</ul>
-			</div>
+		<div className='mx-auto space-y-4 p-4'>
 			<audio ref={audioRef} preload='auto' className='hidden'>
 				<track kind='captions' />
 			</audio>
