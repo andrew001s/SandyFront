@@ -117,7 +117,6 @@ const Dictaphone = () => {
 				</div>
 			)}
 
-			
 			<audio ref={audioRef} preload='auto' className='hidden'>
 				<track kind='captions' />
 			</audio>

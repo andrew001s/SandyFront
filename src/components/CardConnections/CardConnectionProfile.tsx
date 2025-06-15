@@ -1,6 +1,7 @@
 'use client';
 import { getTokens, postAuth } from '@/api/fetchAuth';
 import { start } from '@/api/sandycore';
+import { useMessages } from '@/context/MessagesContext';
 import { useTwitchAuthContext } from '@/context/TwitchAuthContext';
 import Image from 'next/image';
 import { useEffect } from 'react';
@@ -11,11 +12,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { BackgroundGradient } from '../ui/background-gradient';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
-import { useMessages } from '@/context/MessagesContext';
 
 export const CardConnectionProfile = () => {
 	const { addMessage } = useMessages();
-	
+
 	const {
 		profile,
 		status,
@@ -49,7 +49,7 @@ export const CardConnectionProfile = () => {
 				setStatus(true);
 				await fetchProfile();
 				addMessage({
-					 type: 'chat',
+					type: 'chat',
 					content: `Conectado a Twitch como ${profile?.username}`,
 					timestamp: new Date().toISOString(),
 				});

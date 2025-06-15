@@ -54,9 +54,8 @@ const WebSocketChat = () => {
 					});
 			}
 		},
-		[addToQueue]
+		[addToQueue],
 	);
-
 
 	const handleReconnectAttempt = useCallback((attempt: number, maxAttempts: number) => {
 		addMessageRef.current({
@@ -69,7 +68,8 @@ const WebSocketChat = () => {
 	const handleMaxRetriesExceeded = useCallback(() => {
 		addMessageRef.current({
 			type: 'system',
-			content: '❌ No se pudo establecer la conexión después de varios intentos. Por favor, verifica tu conexión a internet.',
+			content:
+				'❌ No se pudo establecer la conexión después de varios intentos. Por favor, verifica tu conexión a internet.',
 			timestamp: new Date().toISOString(),
 		});
 	}, []);
@@ -87,7 +87,7 @@ const WebSocketChat = () => {
 		handleMessage,
 		handleDisconnect,
 		handleReconnectAttempt,
-		handleMaxRetriesExceeded
+		handleMaxRetriesExceeded,
 	);
 
 	return (
