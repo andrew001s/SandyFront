@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import { ThemeProvider } from 'next-themes';
+import { Footer } from '@/components/ui/footer';
+import { MessagesProvider } from '@/context/MessagesContext';
 import { StatusProvider } from '@/context/StatusContext';
 import { StatusProviderBot } from '@/context/StatusContextBot';
-import { MessagesProvider } from '@/context/MessagesContext';
-import { Footer } from '@/components/ui/footer';
+import { ThemeProvider } from 'next-themes';
 import { Toaster } from 'sonner';
 
 const geistSans = Geist({
@@ -30,14 +30,14 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang='es' suppressHydrationWarning translate='no'>
-			<body className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen flex-col antialiased`}>
+			<body
+				className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen flex-col antialiased`}
+			>
 				<ThemeProvider attribute='class' defaultTheme='dark' enableSystem>
 					<StatusProvider>
 						<StatusProviderBot>
 							<MessagesProvider>
 								<main className='w-full flex-grow'>
-									<header className='flex flex-row items-center justify-between p-4'>
-									</header>
 									<Toaster richColors position='top-right' />
 									{children}
 								</main>
