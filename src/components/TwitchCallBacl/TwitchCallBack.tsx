@@ -1,7 +1,7 @@
 'use client';
+import { AnimatePresence, type Variants, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { BackgroundGradient } from '../ui/background-gradient';
-import { motion, AnimatePresence, type Variants } from 'framer-motion';
 
 const containerVariants: Variants = {
 	hidden: { opacity: 0 },
@@ -126,8 +126,8 @@ export const TwitchCallback = () => {
 							status === 'error'
 								? 'text-red-400'
 								: status === 'success'
-								? 'text-green-400'
-								: 'text-white'
+									? 'text-green-400'
+									: 'text-white'
 						}`}
 					>
 						<AnimatePresence mode='wait'>
@@ -138,7 +138,11 @@ export const TwitchCallback = () => {
 								animate='visible'
 								exit='exit'
 							>
-								{status === 'error' ? '⚠️ Error' : status === 'success' ? '✅ Éxito' : '⌛ Procesando'}
+								{status === 'error'
+									? '⚠️ Error'
+									: status === 'success'
+										? '✅ Éxito'
+										: '⌛ Procesando'}
 							</motion.span>
 						</AnimatePresence>
 					</motion.h1>
