@@ -1,4 +1,4 @@
-import { ProfileModel } from "@/interfaces/profileInterface";
+import type { ProfileModel } from "@/interfaces/profileInterface";
 import axios from "axios";
 
 

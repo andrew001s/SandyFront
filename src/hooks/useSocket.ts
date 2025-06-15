@@ -1,30 +1,33 @@
 // src/hooks/useWebSocket.ts
-import { createWebSocket } from '@/services/socket';
-import { useCallback, useEffect, useRef } from 'react';
+import { getWebSocketService } from '@/services/socket';
+import { useEffect } from 'react';
 
-export const useWebSocket = (url: string, onMessage: (data: string) => void) => {
-	const socketRef = useRef<WebSocket | null>(null);
-
+export const useWebSocket = (
+	url: string,
+	onMessage?: (data: string) => void,
+	onDisconnect?: () => void,
+	onReconnectAttempt?: (attempt: number, maxAttempts: number) => void,
+	onMaxRetriesExceeded?: () => void
+) => {
 	useEffect(() => {
-		const socket = createWebSocket(url);
-		socketRef.current = socket;
+		const wsService = getWebSocketService(url);
 
-		socket.onmessage = (event) => {
-			onMessage(event.data);
-		};
+		wsService.connect({
+			onMessage,
+			onDisconnect,
+			onReconnectAttempt,
+			onMaxRetriesExceeded,
+		});
 
 		return () => {
-			socket.close();
+			wsService.disconnect();
 		};
-	}, [url, onMessage]);
+	}, [url, onMessage, onDisconnect, onReconnectAttempt, onMaxRetriesExceeded]);
 
-	const sendMessage = useCallback((message: string) => {
-		if (socketRef.current?.readyState === WebSocket.OPEN) {
-			socketRef.current.send(message);
-		} else {
-			throw new Error('WebSocket connection is not open');
-		}
-	}, []);
-
-	return { sendMessage };
+	return {
+		send: (message: string) => {
+			const wsService = getWebSocketService(url);
+			wsService.send(message);
+		},
+	};
 };

@@ -11,7 +11,6 @@ import { toast } from 'sonner';
 import { createSpeechServicesPonyfill } from 'web-speech-cognitive-services';
 import SwitchComponent from '../SwitchComponent/Switch';
 import { TypingAnimation } from '../magicui/typing-animation';
-import { Terminal } from '../ui/terminal';
 
 const SUBSCRIPTION_KEY = process.env.NEXT_PUBLIC_AZURE_SPEECH_KEY;
 const REGION = process.env.NEXT_PUBLIC_AZURE_REGION;
@@ -20,7 +19,7 @@ const LANGUAGE = process.env.NEXT_PUBLIC_LANGUAGE || 'es-ES';
 const Dictaphone = () => {
 	const { audioRef, addToQueue } = useAudioQueue();
 	const [silenceTimer, setSilenceTimer] = useState<NodeJS.Timeout | null>(null);
-	const { messages, addMessage } = useMessages();
+	const { addMessage } = useMessages();
 
 	useEffect(() => {
 		const initSpeechRecognition = () => {
@@ -118,13 +117,7 @@ const Dictaphone = () => {
 				</div>
 			)}
 
-			<Terminal>
-				{messages.map((msg, index) => (
-					<span key={`msg-${index}-${msg.timestamp}`} className='mb-2 text-sm text-white'>
-						{msg.content}
-					</span>
-				))}
-			</Terminal>
+			
 			<audio ref={audioRef} preload='auto' className='hidden'>
 				<track kind='captions' />
 			</audio>

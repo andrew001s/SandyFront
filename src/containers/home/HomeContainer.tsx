@@ -2,6 +2,7 @@ import { CardConnectionBot } from '@/components/CardConnections/CardConnectionBo
 import { CardConnectionProfile } from '@/components/CardConnections/CardConnectionProfile';
 import WebSocketChat from '@/components/Chat/Chat';
 import Switchs from '@/components/Switchs/Switchs';
+import { TerminalSandy } from '@/components/TerminalSandy/TerminalSandy';
 import { Separator } from '@/components/ui/separator';
 import { StatusProviderBot } from '@/context/StatusContextBot';
 import { TwitchAuthBotProvider, TwitchAuthProvider } from '@/context/TwitchAuthContext';
@@ -33,6 +34,7 @@ export const HomeContainer = () => {
 				{/* Sección inferior para switches y chat */}
 				<div className='space-y-4'>
 					<Switchs />
+					<TerminalSandy />
 					<WebSocketChat />
 				</div>
 			</div>

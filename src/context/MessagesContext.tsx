@@ -2,7 +2,7 @@
 import { type ReactNode, createContext, useContext, useState } from 'react';
 
 interface Message {
-	type: 'chat' | 'transcription';
+	type: 'chat' | 'transcription' | 'system';
 	content: string;
 	timestamp: string;
 }

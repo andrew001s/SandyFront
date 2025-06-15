@@ -11,8 +11,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { BackgroundGradient } from '../ui/background-gradient';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
+import { useMessages } from '@/context/MessagesContext';
 
 export const CardConnectionProfile = () => {
+	const { addMessage } = useMessages();
+	
 	const {
 		profile,
 		status,
@@ -45,9 +48,19 @@ export const CardConnectionProfile = () => {
 				await start(false);
 				setStatus(true);
 				await fetchProfile();
+				addMessage({
+					 type: 'chat',
+					content: `Conectado a Twitch como ${profile?.username}`,
+					timestamp: new Date().toISOString(),
+				});
 				toast.success('Conectado a Twitch');
 			} catch (error) {
 				console.error('Error al reconectar:', error);
+				addMessage({
+					type: 'chat',
+					content: 'Error al reconectar, iniciando nuevo proceso de autenticación',
+					timestamp: new Date().toISOString(),
+				});
 				toast.error('Error al reconectar, iniciando nuevo proceso de autenticación');
 				handleStart(false);
 			} finally {
