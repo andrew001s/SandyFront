@@ -1,5 +1,6 @@
 'use client';
 
+import { Show, SignOutButton } from '@clerk/nextjs';
 import {
 	Sidebar,
 	SidebarContent,
@@ -7,6 +8,7 @@ import {
 	SidebarGroupContent,
 	SidebarGroupLabel,
 	SidebarHeader,
+	SidebarFooter,
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
@@ -63,6 +65,16 @@ export function AppSidebar() {
 					</SidebarGroupContent>
 				</SidebarGroup>
 			</SidebarContent>
+
+			<SidebarFooter className='mt-auto border-t border-border/50 p-3'>
+				<Show when='signed-in'>
+					<SignOutButton redirectUrl='/auth'>
+						<button className='flex w-full items-center justify-center rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors hover:bg-muted'>
+							Cerrar sesión
+						</button>
+					</SignOutButton>
+				</Show>
+			</SidebarFooter>
 		</Sidebar>
 	);
 }
