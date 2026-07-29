@@ -42,6 +42,7 @@
 		"sonner": "^2.0.5",
 		"styled-components": "^6.1.19",
 		"tailwind-merge": "^3.3.1",
+		"vtubestudio": "^3.11.0",
 		"web-speech-cognitive-services": "^8.1.1"
 	},
 	"devDependencies": {

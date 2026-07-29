@@ -48,7 +48,7 @@ class WebSocketService {
 		try {
 			this.socket = new WebSocket(this.url);
 			this.setupEventListeners();
-		} catch (_error) {
+		} catch {
 			this.handleReconnect();
 		}
 	}

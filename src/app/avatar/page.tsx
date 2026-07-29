@@ -1,10 +1,10 @@
+import { AvatarContainer } from '@/containers/avatar/AvatarContainer';
 import { DashboardShell } from '@/containers/dashboard/DashboardShell';
-import { HomeContainer } from '@/containers/home/HomeContainer';
 
 export default function Page() {
 	return (
 		<DashboardShell>
-			<HomeContainer />
+			<AvatarContainer />
 		</DashboardShell>
 	);
 }

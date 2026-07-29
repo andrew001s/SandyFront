@@ -80,6 +80,9 @@ importers:
       tailwind-merge:
         specifier: ^3.3.1
         version: 3.3.1
+      vtubestudio:
+        specifier: ^3.11.0
+        version: 3.11.0
       web-speech-cognitive-services:
         specifier: ^8.1.1
         version: 8.1.1(microsoft-cognitiveservices-speech-sdk@1.44.1)(typescript@5.8.3)
@@ -2603,6 +2606,7 @@ packages:
   next@15.3.3:
     resolution: {integrity: sha512-JqNj29hHNmCLtNvd090SyRbXJiivQ+58XjCcrC50Crb5g5u2zi7Y2YivbsEfzk6AtVI80akdOQbaMZwWB1Hthw==}
     engines: {node: ^18.18.0 || ^19.8.0 || >= 20.0.0}
+    deprecated: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/CVE-2025-66478 for more details.
     hasBin: true
     peerDependencies:
       '@opentelemetry/api': ^1.1.0
@@ -3331,6 +3335,7 @@ packages:
 
   uuid@9.0.1:
     resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   valibot@0.42.1:
@@ -3343,6 +3348,9 @@ packages:
 
   validate-npm-package-license@3.0.4:
     resolution: {integrity: sha512-DpKm2Ui/xN7/HQKCtpZxoRWBhZ9Z0kqtygG8XCgNQ8ZlDnxuQmWhj566j8fN4Cu3/JmbhsDo7fcAJq4s9h27Ew==}
+
+  vtubestudio@3.11.0:
+    resolution: {integrity: sha512-Yv7ed3/1bpYQhhIW9hPs1UvPPUR62queUryQNaDxuAStiCGXuSnV28/Bpif5ZNgRv3nF4jxxvEm8IvkA74FZjw==}
 
   web-speech-cognitive-services@8.1.1:
     resolution: {integrity: sha512-9D7u6108HJipSwYSlMMMBzjF11tR9o4GvCCFNPY2eD17wstg6ZWztkfW3v+JWXHm/3KD50N5gdBNLaweD0qETw==}
@@ -6834,6 +6842,8 @@ snapshots:
     dependencies:
       spdx-correct: 3.2.0
       spdx-expression-parse: 3.0.1
+
+  vtubestudio@3.11.0: {}
 
   web-speech-cognitive-services@8.1.1(microsoft-cognitiveservices-speech-sdk@1.44.1)(typescript@5.8.3):
     dependencies:
