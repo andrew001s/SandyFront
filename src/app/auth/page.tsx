@@ -61,7 +61,7 @@ export default function AuthPage() {
 							>
 								<div className='flex flex-col items-start gap-4 rounded-2xl border border-border/60 bg-background/60 p-6'>
 									<div className='flex items-center gap-3'>
-										<UserButton afterSignOutUrl='/auth' />
+										<UserButton />
 										<div>
 											<p className='font-medium text-sm'>Sesión activa</p>
 											<p className='text-muted-foreground text-xs'>Tu cuenta ya está conectada.</p>
