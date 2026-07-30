@@ -22,6 +22,9 @@ class WebSocketService {
 
 	public connect(handlers: WebSocketHandlers): void {
 		this.handlers = handlers;
+		if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
+			return;
+		}
 		this.createConnection();
 	}
 
@@ -46,6 +49,9 @@ class WebSocketService {
 
 	private createConnection(): void {
 		try {
+			if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+				return;
+			}
 			this.socket = new WebSocket(this.url);
 			this.setupEventListeners();
 		} catch {
@@ -87,12 +93,17 @@ class WebSocketService {
 	}
 }
 
-// Singleton instance
-let websocketInstance: WebSocketService | null = null;
+const websocketInstances = new Map<string, WebSocketService>();
 
 export const getWebSocketService = (url: string): WebSocketService => {
-	if (!websocketInstance) {
-		websocketInstance = new WebSocketService(url);
+	const normalizedUrl = url.trim();
+	const existingInstance = websocketInstances.get(normalizedUrl);
+
+	if (existingInstance) {
+		return existingInstance;
 	}
+
+	const websocketInstance = new WebSocketService(normalizedUrl);
+	websocketInstances.set(normalizedUrl, websocketInstance);
 	return websocketInstance;
 };

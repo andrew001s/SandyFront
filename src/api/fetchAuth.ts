@@ -1,7 +1,5 @@
+import { backendClient } from '@/api/backendClient';
 import type { TokensInterface } from '@/interfaces/tokensInterface';
-import axios from 'axios';
-
-const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 interface Auth {
 	token: string;
@@ -10,16 +8,24 @@ interface Auth {
 }
 
 export async function postAuth(message: Auth) {
-	const response = await axios.post(`${baseURL}/auth`, message);
+	const response = await backendClient.post('/auth', message);
 	return response.data.message;
 }
 
 export async function getTokens(bot: boolean): Promise<TokensInterface> {
-	const response = await axios.get(`${baseURL}/tokens?bot=${bot}`);
+	const response = await backendClient.get('/tokens', {
+		params: {
+			bot,
+		},
+	});
 	return response.data;
 }
 
 export async function saveTokens(bot: boolean, tokens: TokensInterface) {
-	const response = await axios.put(`${baseURL}/tokens?bot=${bot}`, tokens.tokens);
+	const response = await backendClient.put('/tokens', tokens.tokens, {
+		params: {
+			bot,
+		},
+	});
 	return response.data.message;
 }

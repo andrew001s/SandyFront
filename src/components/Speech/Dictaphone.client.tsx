@@ -3,6 +3,7 @@
 
 import { getVoiceSandy } from '@/api/fetchFishAudio';
 import { getResponseGemini } from '@/api/fetchGemini';
+import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
 import { useAudioQueue } from '@/hooks/useAudioQueue';
 import { useEffect, useState } from 'react';
@@ -12,21 +13,22 @@ import { createSpeechServicesPonyfill } from 'web-speech-cognitive-services';
 import SwitchComponent from '../SwitchComponent/Switch';
 import { TypingAnimation } from '../magicui/typing-animation';
 
-const SUBSCRIPTION_KEY = process.env.NEXT_PUBLIC_AZURE_SPEECH_KEY;
-const REGION = process.env.NEXT_PUBLIC_AZURE_REGION;
-const LANGUAGE = process.env.NEXT_PUBLIC_LANGUAGE || 'es-ES';
-
 const Dictaphone = () => {
-	const { audioRef, addToQueue } = useAudioQueue();
+	const { addToQueue } = useAudioQueue();
 	const [silenceTimer, setSilenceTimer] = useState<NodeJS.Timeout | null>(null);
 	const { addMessage } = useMessages();
+	const { settings, isLoading } = useAppSettings();
 
 	useEffect(() => {
+		if (!settings?.azure_speech_key || !settings?.azure_region) {
+			return;
+		}
+
 		const initSpeechRecognition = () => {
 			const { SpeechRecognition: AzureSpeechRecognition } = createSpeechServicesPonyfill({
 				credentials: {
-					region: REGION,
-					subscriptionKey: SUBSCRIPTION_KEY,
+					region: settings.azure_region,
+					subscriptionKey: settings.azure_speech_key,
 				},
 			});
 
@@ -34,7 +36,7 @@ const Dictaphone = () => {
 		};
 
 		initSpeechRecognition();
-	}, []); // Solo se ejecuta una vez al montar el componente
+	}, [settings?.azure_region, settings?.azure_speech_key]);
 
 	const { transcript, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition({
 		commands: [
@@ -66,7 +68,10 @@ const Dictaphone = () => {
 					});
 					resetTranscript();
 
-					const audioBlob = await getVoiceSandy(response);
+					const audioBlob = await getVoiceSandy(response, {
+						apiKey: settings?.fish_audio_key ?? '',
+						voiceId: settings?.voice_id ?? '',
+					});
 					addToQueue(audioBlob);
 				} catch (error) {
 					console.error('Error al obtener respuesta de audio:', error);
@@ -86,10 +91,15 @@ const Dictaphone = () => {
 	const startListening = () =>
 		SpeechRecognition.startListening({
 			continuous: true,
-			language: LANGUAGE,
+			language: settings?.language || 'es-ES',
 		});
 
 	const handleSpeechToggle = (checked: boolean) => {
+		if (!settings?.azure_speech_key || !settings?.azure_region) {
+			toast.error('Configura Azure Speech en Ajustes de IA antes de usar voz');
+			return;
+		}
+
 		if (checked) {
 			startListening();
 			toast.success('Reconocimiento de voz activado');
@@ -102,6 +112,10 @@ const Dictaphone = () => {
 
 	if (!browserSupportsSpeechRecognition) {
 		return null;
+	}
+
+	if (isLoading) {
+		return <p>Cargando reconocimiento de voz...</p>;
 	}
 
 	return (
@@ -117,9 +131,6 @@ const Dictaphone = () => {
 				</div>
 			)}
 
-			<audio ref={audioRef} preload='auto' className='hidden'>
-				<track kind='captions' />
-			</audio>
 		</div>
 	);
 };

@@ -4,5 +4,5 @@ interface Tokens {
 }
 
 export interface TokensInterface {
-    tokens: Tokens;
+    tokens: Tokens | null;
 }

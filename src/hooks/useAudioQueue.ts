@@ -2,7 +2,6 @@ import { AudioQueueManager } from '@/lib/audioQueueSingleton';
 import { useState, useRef, useCallback, useEffect } from 'react';
 
 interface AudioQueueHook {
-  audioRef: React.RefObject<HTMLAudioElement | null>;
   isPlaying: boolean;
   addToQueue: (audioBlob: Blob) => Promise<void>;
   clearQueue: () => void;
@@ -10,22 +9,7 @@ interface AudioQueueHook {
 
 export const useAudioQueue = (): AudioQueueHook => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const managerRef = useRef<AudioQueueManager>(AudioQueueManager.getInstance());
-
-  // Configurar el elemento de audio
-  useEffect(() => {
-    const currentAudioRef = audioRef.current;
-    const manager = managerRef.current;
-    
-    if (currentAudioRef) {
-      manager.setAudioElement(currentAudioRef);
-    }
-
-    return () => {
-      manager.setAudioElement(null);
-    };
-  }, []);
 
   // Suscribirse a cambios en el estado de reproducción
   useEffect(() => {
@@ -45,7 +29,6 @@ export const useAudioQueue = (): AudioQueueHook => {
   }, []);
 
   return {
-    audioRef,
     isPlaying,
     addToQueue,
     clearQueue

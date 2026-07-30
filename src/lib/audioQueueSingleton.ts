@@ -5,6 +5,7 @@ export class AudioQueueManager {
     private audioElement: HTMLAudioElement | null = null;
     private processedUrls = new Set<string>();
     private callbacks: Set<(isPlaying: boolean) => void> = new Set();
+    private lipSyncHandler: ((audioBlob: Blob) => Promise<void> | void) | null = null;
 
     private constructor() {}
 
@@ -26,7 +27,16 @@ export class AudioQueueManager {
                 this.notifyStateChange();
                 void this.playNext();
             };
+
+            // If audio arrived before the player mounted, resume playback now.
+            if (!this.isPlaying && this.queue.length > 0) {
+                void this.playNext();
+            }
         }
+    }
+
+    setLipSyncHandler(handler: ((audioBlob: Blob) => Promise<void> | void) | null) {
+        this.lipSyncHandler = handler;
     }
 
     subscribe(callback: (isPlaying: boolean) => void) {
@@ -60,6 +70,9 @@ export class AudioQueueManager {
             const nextAudio = this.queue.shift();
             if (nextAudio) {
                 this.audioElement.src = nextAudio.url;
+                this.audioElement.onplay = () => {
+                    void this.lipSyncHandler?.(nextAudio.blob);
+                };
                 try {
                     await this.audioElement.play();
                 } catch (error) {
@@ -81,6 +94,7 @@ export class AudioQueueManager {
         this.processedUrls.clear();
         if (this.audioElement) {
             this.audioElement.pause();
+            this.audioElement.onplay = null;
             if (this.audioElement.src) {
                 URL.revokeObjectURL(this.audioElement.src);
             }

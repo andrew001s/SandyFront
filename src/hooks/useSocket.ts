@@ -20,7 +20,7 @@ export const useWebSocket = (
 		});
 
 		return () => {
-			wsService.disconnect();
+			// Keep the connection alive across route changes.
 		};
 	}, [url, onMessage, onDisconnect, onReconnectAttempt, onMaxRetriesExceeded]);
 

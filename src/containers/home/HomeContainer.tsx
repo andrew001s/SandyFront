@@ -1,6 +1,7 @@
 import { CardConnectionBot } from '@/components/CardConnections/CardConnectionBot';
 import { CardConnectionProfile } from '@/components/CardConnections/CardConnectionProfile';
 import WebSocketChat from '@/components/Chat/Chat';
+import { SettingsPanel } from '@/components/Settings/SettingsPanel';
 import Switchs from '@/components/Switchs/Switchs';
 import { TerminalSandy } from '@/components/TerminalSandy/TerminalSandy';
 import { Separator } from '@/components/ui/separator';
@@ -12,6 +13,10 @@ export const HomeContainer = () => {
 		<div className='bg-background p-4'>
 			<div className='container mx-auto'>
 				<h1 className='mb-6 text-start font-bold text-4xl'>Conexión</h1>
+
+				<div className='mb-6'>
+					<SettingsPanel />
+				</div>
 
 				{/* Grid de dos columnas para las tarjetas */}
 				<div className='mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2'>

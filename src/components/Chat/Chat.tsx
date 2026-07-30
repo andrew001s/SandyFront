@@ -1,24 +1,28 @@
 'use client';
 import { getVoiceSandy } from '@/api/fetchFishAudio';
+import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
 import { useAudioQueue } from '@/hooks/useAudioQueue';
 import { useWebSocket } from '@/hooks/useSocket';
 import { useCallback, useEffect, useRef } from 'react';
 
 interface WebSocketChatProps {
+	id?: string;
 	type: string;
 	client_id?: number;
 	timestamp?: string;
 	message?: string;
 	response?: string;
+	text?: string;
 }
 
 const websocketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'ws://localhost:8000/ws';
 
 const WebSocketChat = () => {
 	const processedMessages = useRef<Set<string>>(new Set());
-	const { audioRef, addToQueue } = useAudioQueue();
+	const { addToQueue } = useAudioQueue();
 	const { addMessage } = useMessages();
+	const { settings } = useAppSettings();
 	const addMessageRef = useRef(addMessage);
 
 	useEffect(() => {
@@ -36,13 +40,39 @@ const WebSocketChat = () => {
 				});
 			}
 
+			const speechText = parsedData.text ?? parsedData.response;
+			const responseKey = parsedData.id ?? speechText;
+
+			if (parsedData.type === 'speech' && speechText && !processedMessages.current.has(responseKey)) {
+				processedMessages.current.add(responseKey);
+				addMessageRef.current({
+					type: 'chat',
+					content: speechText,
+					timestamp: parsedData.timestamp || new Date().toISOString(),
+				});
+				getVoiceSandy(speechText, {
+					apiKey: settings?.fish_audio_key ?? '',
+					voiceId: settings?.voice_id ?? '',
+				})
+					.then((audioBlob) => {
+						addToQueue(audioBlob);
+					})
+					.catch((error) => {
+						processedMessages.current.delete(responseKey);
+						console.error('Error al procesar el audio:', error);
+					});
+			}
+
 			if (
 				parsedData.type === 'twitch_response' &&
 				parsedData.response &&
 				!processedMessages.current.has(parsedData.response)
 			) {
 				processedMessages.current.add(parsedData.response);
-				getVoiceSandy(parsedData.response)
+				getVoiceSandy(parsedData.response, {
+					apiKey: settings?.fish_audio_key ?? '',
+					voiceId: settings?.voice_id ?? '',
+				})
 					.then((audioBlob) => {
 						addToQueue(audioBlob);
 					})
@@ -54,7 +84,7 @@ const WebSocketChat = () => {
 					});
 			}
 		},
-		[addToQueue],
+		[addToQueue, settings],
 	);
 
 	const handleReconnectAttempt = useCallback((attempt: number, maxAttempts: number) => {
@@ -90,13 +120,7 @@ const WebSocketChat = () => {
 		handleMaxRetriesExceeded,
 	);
 
-	return (
-		<div className='mx-auto space-y-4 p-4'>
-			<audio ref={audioRef} preload='auto' className='hidden'>
-				<track kind='captions' />
-			</audio>
-		</div>
-	);
+	return <div className='mx-auto space-y-4 p-4' />;
 };
 
 export default WebSocketChat;

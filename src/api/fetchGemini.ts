@@ -1,12 +1,9 @@
-import axios from "axios";
+import { backendClient } from '@/api/backendClient';
 
-
-const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-export async function getResponseGemini(message:string) {
-    const response = await axios.post(`${baseURL}/gemini`, {
-        message
-    });
-    return response.data.message;
-  }
+export async function getResponseGemini(message: string) {
+	const response = await backendClient.post('/gemini', {
+		message,
+	});
+	return response.data.message;
+}
   

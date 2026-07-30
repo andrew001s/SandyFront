@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiClient, VTubeStudioError } from 'vtubestudio';
+import { AudioQueueManager } from '@/lib/audioQueueSingleton';
+import { createVtsLipSyncHandler, stopVtsLipSync } from '@/lib/vtsLipSync';
 
 interface VTSModel {
 	modelLoaded: boolean;
@@ -72,6 +74,9 @@ const LIPSYNC_INPUTS = [
 	},
 ] as const;
 
+let sharedClient: ApiClient | null = null;
+let sharedConnected = false;
+
 export function useVTubeStudio(): UseVTSReturn {
 	const [connecting, setConnecting] = useState(false);
 	const [connected, setConnected] = useState(false);
@@ -81,12 +86,6 @@ export function useVTubeStudio(): UseVTSReturn {
 	const [currentModel, setCurrentModel] = useState<VTSModelInfo | null>(null);
 	const clientRef = useRef<ApiClient | null>(null);
 
-	useEffect(() => {
-		return () => {
-			clientRef.current?.disconnect();
-		};
-	}, []);
-
 	const handleError = useCallback((e: unknown) => {
 		if (e instanceof VTubeStudioError) {
 			return `VTS Error [${e.data.errorID}]: ${e.data.message}`;
@@ -95,6 +94,43 @@ export function useVTubeStudio(): UseVTSReturn {
 		return 'Error desconocido';
 	}, []);
 
+	const syncClientState = useCallback(async (client: ApiClient) => {
+		try {
+			const [statsResp, modelsResp, modelResp] = await Promise.all([
+				client.statistics(),
+				client.availableModels(),
+				client.currentModel(),
+			]);
+
+			setStats(statsResp);
+			setModels(modelsResp.availableModels);
+			setCurrentModel(modelResp.modelLoaded ? modelResp : null);
+		} catch (e) {
+			setError(handleError(e));
+		}
+	}, [handleError]);
+
+	const injectParameters = useCallback(async (params: { id: string; value: number }[]) => {
+		const client = clientRef.current;
+		if (!client) return;
+		await client.injectParameterData({
+			mode: 'set',
+			parameterValues: params.map((p) => ({
+				id: p.id,
+				value: p.value,
+			})),
+		});
+	}, []);
+
+	useEffect(() => {
+		clientRef.current = sharedClient;
+		setConnected(sharedConnected);
+
+		if (sharedClient && sharedConnected) {
+			AudioQueueManager.getInstance().setLipSyncHandler(createVtsLipSyncHandler(injectParameters));
+		}
+	}, [injectParameters]);
+
 	const connect = useCallback(
 		async (port = 8001) => {
 			if (connecting) return;
@@ -102,7 +138,21 @@ export function useVTubeStudio(): UseVTSReturn {
 			setError(null);
 
 			try {
-				clientRef.current?.disconnect();
+				if (sharedClient && sharedConnected) {
+					clientRef.current = sharedClient;
+					setConnected(true);
+					AudioQueueManager.getInstance().setLipSyncHandler(createVtsLipSyncHandler(injectParameters));
+					await syncClientState(sharedClient);
+					return;
+				}
+
+				if (sharedClient && !sharedConnected) {
+					try {
+						await sharedClient.disconnect();
+					} catch {
+						// Ignore stale client teardown errors.
+					}
+				}
 
 				const client = new ApiClient({
 					pluginName: PLUGIN_NAME,
@@ -116,12 +166,18 @@ export function useVTubeStudio(): UseVTSReturn {
 				});
 
 				clientRef.current = client;
+				sharedClient = client;
 
 				client.on('connect', () => {
+					sharedConnected = true;
 					setConnected(true);
+					AudioQueueManager.getInstance().setLipSyncHandler(createVtsLipSyncHandler(injectParameters));
 				});
 				client.on('disconnect', () => {
+					sharedConnected = false;
 					setConnected(false);
+					AudioQueueManager.getInstance().setLipSyncHandler(null);
+					stopVtsLipSync();
 				});
 				client.on('error', (err) => {
 					setError(handleError(err));
@@ -176,17 +232,7 @@ export function useVTubeStudio(): UseVTSReturn {
 					}
 				}
 
-				const [statsResp, modelsResp, modelResp] = await Promise.all([
-					client.statistics(),
-					client.availableModels(),
-					client.currentModel(),
-				]);
-
-				setStats(statsResp);
-				setModels(modelsResp.availableModels);
-				if (modelResp.modelLoaded) {
-					setCurrentModel(modelResp);
-				}
+				await syncClientState(client);
 			} catch (e) {
 				const msg = handleError(e);
 				setError(msg);
@@ -194,12 +240,16 @@ export function useVTubeStudio(): UseVTSReturn {
 				setConnecting(false);
 			}
 		},
-		[connecting, handleError],
+		[connecting, handleError, injectParameters, syncClientState],
 	);
 
 	const disconnect = useCallback(async () => {
 		await clientRef.current?.disconnect();
+		sharedConnected = false;
+		sharedClient = null;
 		clientRef.current = null;
+		AudioQueueManager.getInstance().setLipSyncHandler(null);
+		stopVtsLipSync();
 		setConnected(false);
 		setStats(null);
 		setModels([]);
@@ -239,18 +289,6 @@ export function useVTubeStudio(): UseVTSReturn {
 			setError(handleError(e));
 		}
 	}, [handleError]);
-
-	const injectParameters = useCallback(async (params: { id: string; value: number }[]) => {
-		const client = clientRef.current;
-		if (!client) return;
-		await client.injectParameterData({
-			mode: 'set',
-			parameterValues: params.map((p) => ({
-				id: p.id,
-				value: p.value,
-			})),
-		});
-	}, []);
 
 	return {
 		connecting,

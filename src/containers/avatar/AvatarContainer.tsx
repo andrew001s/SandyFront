@@ -37,7 +37,6 @@ export const AvatarContainer = () => {
     disconnect,
     loadModel,
     refreshModels,
-    injectParameters,
   } = useVTubeStudio();
 
   return (
@@ -398,7 +397,6 @@ export const AvatarContainer = () => {
           {connected && currentModel && (
             <LipSyncTest
               connected={connected}
-              injectParameters={injectParameters}
             />
           )}
         </motion.div>
