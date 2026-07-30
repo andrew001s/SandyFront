@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosHeaders } from 'axios';
 
 const rawBackendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -40,12 +40,9 @@ backendClient.interceptors.request.use(async (config) => {
 	const token = await getClerkSessionToken();
 
 	if (token) {
-		config.headers = {
-			...config.headers,
-			Authorization: `Bearer ${token}`,
-		};
+		config.headers = AxiosHeaders.from(config.headers);
+		config.headers.set('Authorization', `Bearer ${token}`);
 	}
 
 	return config;
 });
-
