@@ -39,7 +39,9 @@ export const createVtsLipSyncHandler = (injectParameters: VTSInjectParameters) =
 			const tick = () => {
 				if (session !== activeSession) {
 					void stopMouth(injectParameters);
-					void audioContext.close();
+					if (audioContext) {
+						void audioContext.close();
+					}
 					return;
 				}
 
@@ -48,7 +50,9 @@ export const createVtsLipSyncHandler = (injectParameters: VTSInjectParameters) =
 
 				if (samplePos >= channel.length) {
 					void stopMouth(injectParameters);
-					void audioContext.close();
+					if (audioContext) {
+						void audioContext.close();
+					}
 					return;
 				}
 

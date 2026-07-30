@@ -3,6 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiClient, VTubeStudioError } from 'vtubestudio';
 import { AudioQueueManager } from '@/lib/audioQueueSingleton';
+import {
+	type AvatarBackendPayload,
+	resolveAvatarExpression,
+	resolveAvatarHotkey,
+	resolveAvatarPose,
+} from '@/lib/vtsAvatarPayload';
 import { createVtsLipSyncHandler, stopVtsLipSync } from '@/lib/vtsLipSync';
 
 interface VTSModel {
@@ -41,6 +47,27 @@ interface VTSStats {
 	vTubeStudioVersion: string;
 }
 
+interface VTSHotkey {
+	name: string;
+	type: string;
+	description: string;
+	file: string;
+	hotkeyID: string;
+	keyCombination: unknown[];
+	onScreenButtonID: number;
+}
+
+interface VTSExpression {
+	name: string;
+	file: string;
+	active: boolean;
+	deactivateWhenKeyIsLetGo: boolean;
+	autoDeactivateAfterSeconds: boolean;
+	secondsRemaining: boolean;
+	usedInHotkeys: { name: string; id: string }[];
+	parameters: { name: string; value: number }[];
+}
+
 interface UseVTSReturn {
 	connecting: boolean;
 	connected: boolean;
@@ -53,6 +80,11 @@ interface UseVTSReturn {
 	loadModel: (modelID: string) => Promise<void>;
 	refreshModels: () => Promise<void>;
 	injectParameters: (params: { id: string; value: number }[]) => Promise<void>;
+	hotkeys: VTSHotkey[];
+	expressions: VTSExpression[];
+	triggerHotkey: (key: string) => Promise<boolean>;
+	activateExpression: (nameOrFile: string) => Promise<boolean>;
+	sendAvatarPayload: (payload: AvatarBackendPayload) => Promise<boolean>;
 }
 
 const PLUGIN_NAME = 'SandyIA';
@@ -84,6 +116,8 @@ export function useVTubeStudio(): UseVTSReturn {
 	const [stats, setStats] = useState<VTSStats | null>(null);
 	const [models, setModels] = useState<VTSModel[]>([]);
 	const [currentModel, setCurrentModel] = useState<VTSModelInfo | null>(null);
+	const [hotkeys, setHotkeys] = useState<VTSHotkey[]>([]);
+	const [expressions, setExpressions] = useState<VTSExpression[]>([]);
 	const clientRef = useRef<ApiClient | null>(null);
 
 	const handleError = useCallback((e: unknown) => {
@@ -96,15 +130,19 @@ export function useVTubeStudio(): UseVTSReturn {
 
 	const syncClientState = useCallback(async (client: ApiClient) => {
 		try {
-			const [statsResp, modelsResp, modelResp] = await Promise.all([
+			const [statsResp, modelsResp, modelResp, hotkeysResp, expressionsResp] = await Promise.all([
 				client.statistics(),
 				client.availableModels(),
 				client.currentModel(),
+				client.hotkeysInCurrentModel({}),
+				client.expressionState({ details: true }),
 			]);
 
 			setStats(statsResp);
 			setModels(modelsResp.availableModels);
 			setCurrentModel(modelResp.modelLoaded ? modelResp : null);
+			setHotkeys(hotkeysResp.availableHotkeys);
+			setExpressions(expressionsResp.expressions);
 		} catch (e) {
 			setError(handleError(e));
 		}
@@ -122,14 +160,119 @@ export function useVTubeStudio(): UseVTSReturn {
 		});
 	}, []);
 
+	const triggerHotkey = useCallback(async (key: string) => {
+		const client = clientRef.current;
+		if (!client) return false;
+
+		let availableHotkeys = hotkeys;
+		if (availableHotkeys.length === 0) {
+			try {
+				const hotkeysResp = await client.hotkeysInCurrentModel({});
+				availableHotkeys = hotkeysResp.availableHotkeys;
+				setHotkeys(availableHotkeys);
+			} catch {
+				return false;
+			}
+		}
+
+		const normalizedKey = key.trim().toLowerCase();
+		const hotkey =
+			availableHotkeys.find((item) => item.hotkeyID === key) ??
+			availableHotkeys.find((item) => item.name.trim().toLowerCase() === normalizedKey) ??
+			availableHotkeys.find((item) => item.file.trim().toLowerCase() === normalizedKey);
+
+		if (!hotkey) return false;
+
+		await client.hotkeyTrigger({ hotkeyID: hotkey.hotkeyID });
+		return true;
+	}, [hotkeys]);
+
+	const activateExpression = useCallback(
+		async (nameOrFile: string) => {
+			const client = clientRef.current;
+			if (!client) return false;
+
+			let availableExpressions = expressions;
+			if (availableExpressions.length === 0) {
+				try {
+					const expressionsResp = await client.expressionState({ details: true });
+					availableExpressions = expressionsResp.expressions;
+					setExpressions(availableExpressions);
+				} catch {
+					return false;
+				}
+			}
+
+			const normalizedKey = nameOrFile.trim().toLowerCase();
+			const expression = availableExpressions.find((item) => {
+				const nameMatch = item.name.trim().toLowerCase() === normalizedKey;
+				const fileMatch = item.file.trim().toLowerCase() === normalizedKey;
+				return nameMatch || fileMatch;
+			});
+
+			if (!expression) return false;
+
+			await client.expressionActivation({
+				expressionFile: expression.file,
+				active: true,
+				fadeTime: 0.25,
+			});
+			return true;
+		},
+		[expressions],
+	);
+
+	const sendAvatarPayload = useCallback(
+		async (payload: AvatarBackendPayload) => {
+			const client = clientRef.current;
+			if (!client) return false;
+
+			const normalizedType = String(payload.type ?? '').toLowerCase();
+			const pose = resolveAvatarPose(payload);
+			const tasks: Promise<unknown>[] = [];
+
+			if (normalizedType === 'speech' || normalizedType === 'reaction' || normalizedType === 'idle') {
+				tasks.push(
+					injectParameters([
+						{ id: 'SandyLipOpen', value: pose.open },
+						{ id: 'SandyLipSmile', value: pose.smile },
+					]),
+				);
+			}
+
+			const hotkeyKey = resolveAvatarHotkey(payload);
+			if (hotkeyKey) {
+				tasks.push(
+					(async () => {
+						await triggerHotkey(hotkeyKey);
+					})(),
+				);
+			}
+
+			const expressionKey = resolveAvatarExpression(payload);
+			if (expressionKey) {
+				tasks.push(
+					(async () => {
+						await activateExpression(expressionKey);
+					})(),
+				);
+			}
+
+			await Promise.allSettled(tasks);
+			return true;
+		},
+		[activateExpression, injectParameters, triggerHotkey],
+	);
+
 	useEffect(() => {
 		clientRef.current = sharedClient;
 		setConnected(sharedConnected);
 
 		if (sharedClient && sharedConnected) {
+			void syncClientState(sharedClient);
 			AudioQueueManager.getInstance().setLipSyncHandler(createVtsLipSyncHandler(injectParameters));
 		}
-	}, [injectParameters]);
+	}, [injectParameters, syncClientState]);
 
 	const connect = useCallback(
 		async (port = 8001) => {
@@ -302,5 +445,10 @@ export function useVTubeStudio(): UseVTSReturn {
 		loadModel,
 		refreshModels,
 		injectParameters,
+		hotkeys,
+		expressions,
+		triggerHotkey,
+		activateExpression,
+		sendAvatarPayload,
 	};
 }

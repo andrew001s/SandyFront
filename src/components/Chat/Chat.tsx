@@ -3,18 +3,14 @@ import { getVoiceSandy } from '@/api/fetchFishAudio';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
 import { useAudioQueue } from '@/hooks/useAudioQueue';
+import { useVTubeStudio } from '@/hooks/useVTubeStudio';
 import { useWebSocket } from '@/hooks/useSocket';
+import type { AvatarBackendPayload } from '@/lib/vtsAvatarPayload';
 import { useCallback, useEffect, useRef } from 'react';
 
-interface WebSocketChatProps {
-	id?: string;
-	type: string;
+type WebSocketChatProps = AvatarBackendPayload & {
 	client_id?: number;
-	timestamp?: string;
-	message?: string;
-	response?: string;
-	text?: string;
-}
+};
 
 const websocketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'ws://localhost:8000/ws';
 
@@ -23,6 +19,7 @@ const WebSocketChat = () => {
 	const { addToQueue } = useAudioQueue();
 	const { addMessage } = useMessages();
 	const { settings } = useAppSettings();
+	const { sendAvatarPayload, connect, connected, connecting } = useVTubeStudio();
 	const addMessageRef = useRef(addMessage);
 
 	useEffect(() => {
@@ -41,7 +38,19 @@ const WebSocketChat = () => {
 			}
 
 			const speechText = parsedData.text ?? parsedData.response;
-			const responseKey = parsedData.id ?? speechText;
+			const responseKey = parsedData.id ?? speechText ?? parsedData.message ?? data;
+
+			const forwardToAvatar = async (payload: AvatarBackendPayload) => {
+				if (!connected && !connecting) {
+					try {
+						await connect(8001);
+					} catch (error) {
+						console.error('No se pudo conectar VTube Studio automáticamente:', error);
+					}
+				}
+
+				await sendAvatarPayload(payload);
+			};
 
 			if (parsedData.type === 'speech' && speechText && !processedMessages.current.has(responseKey)) {
 				processedMessages.current.add(responseKey);
@@ -50,6 +59,7 @@ const WebSocketChat = () => {
 					content: speechText,
 					timestamp: parsedData.timestamp || new Date().toISOString(),
 				});
+				void forwardToAvatar(parsedData);
 				getVoiceSandy(speechText, {
 					apiKey: settings?.fish_audio_key ?? '',
 					voiceId: settings?.voice_id ?? '',
@@ -69,6 +79,12 @@ const WebSocketChat = () => {
 				!processedMessages.current.has(parsedData.response)
 			) {
 				processedMessages.current.add(parsedData.response);
+				void forwardToAvatar({
+					...parsedData,
+					type: 'speech',
+					text: parsedData.response,
+					emotion: parsedData.emotion ?? 'neutral',
+				});
 				getVoiceSandy(parsedData.response, {
 					apiKey: settings?.fish_audio_key ?? '',
 					voiceId: settings?.voice_id ?? '',
@@ -84,7 +100,7 @@ const WebSocketChat = () => {
 					});
 			}
 		},
-		[addToQueue, settings],
+		[addToQueue, connect, connected, connecting, sendAvatarPayload, settings],
 	);
 
 	const handleReconnectAttempt = useCallback((attempt: number, maxAttempts: number) => {
