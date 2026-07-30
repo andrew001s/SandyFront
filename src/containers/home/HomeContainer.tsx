@@ -1,6 +1,6 @@
 import { CardConnectionBot } from '@/components/CardConnections/CardConnectionBot';
 import { CardConnectionProfile } from '@/components/CardConnections/CardConnectionProfile';
-import WebSocketChat from '@/components/Chat/Chat';
+import StreamChat from '@/components/Chat/Chat';
 import { SettingsPanel } from '@/components/Settings/SettingsPanel';
 import Switchs from '@/components/Switchs/Switchs';
 import { TerminalSandy } from '@/components/TerminalSandy/TerminalSandy';
@@ -40,7 +40,7 @@ export const HomeContainer = () => {
 				<div className='space-y-4'>
 					<Switchs />
 					<TerminalSandy />
-					<WebSocketChat />
+					<StreamChat />
 				</div>
 			</div>
 		</div>

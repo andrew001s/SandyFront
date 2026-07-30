@@ -1,142 +1,283 @@
 'use client';
+
 import { getVoiceSandy } from '@/api/fetchFishAudio';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
 import { useAudioQueue } from '@/hooks/useAudioQueue';
 import { useVTubeStudio } from '@/hooks/useVTubeStudio';
-import { useWebSocket } from '@/hooks/useSocket';
 import type { AvatarBackendPayload } from '@/lib/vtsAvatarPayload';
+import { useAuth } from '@clerk/nextjs';
 import { useCallback, useEffect, useRef } from 'react';
 
-type WebSocketChatProps = AvatarBackendPayload & {
+type StreamEventPayload = AvatarBackendPayload & {
 	client_id?: number;
 };
 
-const websocketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'ws://localhost:8000/ws';
+type StreamEventName = 'speech' | 'reaction' | 'system';
 
-const WebSocketChat = () => {
+const backendUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
+const STREAM_TOKEN_URL = `${backendUrl}/stream/token`;
+const RECONNECT_BASE_DELAY_MS = 1500;
+const RECONNECT_MAX_DELAY_MS = 15000;
+
+const StreamChat = () => {
 	const processedMessages = useRef<Set<string>>(new Set());
+	const streamRef = useRef<EventSource | null>(null);
+	const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const reconnectAttemptRef = useRef(0);
+	const isMountedRef = useRef(false);
 	const { addToQueue } = useAudioQueue();
 	const { addMessage } = useMessages();
-	const { settings } = useAppSettings();
-	const { sendAvatarPayload, connect, connected, connecting } = useVTubeStudio();
 	const addMessageRef = useRef(addMessage);
+	const { settings } = useAppSettings();
+	const { getToken, isLoaded, isSignedIn } = useAuth();
+	const { sendAvatarPayload, connect, connected, connecting } = useVTubeStudio();
 
 	useEffect(() => {
 		addMessageRef.current = addMessage;
 	}, [addMessage]);
 
-	const handleMessage = useCallback(
-		(data: string) => {
-			const parsedData = JSON.parse(data) as WebSocketChatProps;
-			if (parsedData.message) {
-				addMessageRef.current({
-					type: 'chat',
-					content: parsedData.message,
-					timestamp: parsedData.timestamp || new Date().toISOString(),
-				});
+	const pushSystemMessage = useCallback((content: string) => {
+		addMessageRef.current({
+			type: 'system',
+			content,
+			timestamp: new Date().toISOString(),
+		});
+	}, []);
+
+	const forwardToAvatar = useCallback(
+		async (payload: AvatarBackendPayload) => {
+			if (!connected && !connecting) {
+				try {
+					await connect(8001);
+				} catch (error) {
+					console.error('No se pudo conectar VTube Studio automáticamente:', error);
+				}
 			}
 
-			const speechText = parsedData.text ?? parsedData.response;
-			const responseKey = parsedData.id ?? speechText ?? parsedData.message ?? data;
+			await sendAvatarPayload(payload);
+		},
+		[connect, connected, connecting, sendAvatarPayload],
+	);
 
-			const forwardToAvatar = async (payload: AvatarBackendPayload) => {
-				if (!connected && !connecting) {
-					try {
-						await connect(8001);
-					} catch (error) {
-						console.error('No se pudo conectar VTube Studio automáticamente:', error);
-					}
+	const queueVoice = useCallback(
+		async (text: string) => {
+			const audioBlob = await getVoiceSandy(text, {
+				apiKey: settings?.fish_audio_key ?? '',
+				voiceId: settings?.voice_id ?? '',
+			});
+			addToQueue(audioBlob);
+		},
+		[addToQueue, settings?.fish_audio_key, settings?.voice_id],
+	);
+
+	useEffect(() => {
+		isMountedRef.current = true;
+
+		const clearReconnectTimer = () => {
+			if (reconnectTimerRef.current) {
+				clearTimeout(reconnectTimerRef.current);
+				reconnectTimerRef.current = null;
+			}
+		};
+
+		const closeStream = () => {
+			clearReconnectTimer();
+			streamRef.current?.close();
+			streamRef.current = null;
+		};
+
+		const scheduleReconnect = (reason: string) => {
+			if (!isMountedRef.current || reconnectTimerRef.current) {
+				return;
+			}
+
+			reconnectAttemptRef.current += 1;
+			const attempt = reconnectAttemptRef.current;
+			const delay = Math.min(
+				RECONNECT_MAX_DELAY_MS,
+				RECONNECT_BASE_DELAY_MS * 2 ** Math.min(attempt - 1, 4),
+			);
+
+			pushSystemMessage(`⚠️ Stream caído (${reason}). Reintentando en ${Math.round(delay / 1000)}s...`);
+
+			reconnectTimerRef.current = setTimeout(() => {
+				reconnectTimerRef.current = null;
+				void openStream();
+			}, delay);
+		};
+
+		const handleStreamPayload = async (eventName: StreamEventName, rawData: string) => {
+			try {
+				const parsedData = JSON.parse(rawData) as StreamEventPayload;
+				const normalizedType = String(parsedData.type ?? eventName).toLowerCase();
+				const speechText = parsedData.text ?? parsedData.response ?? parsedData.message ?? '';
+				const reactionText =
+					parsedData.text ??
+					parsedData.message ??
+					parsedData.response ??
+					parsedData.expression ??
+					parsedData.emotion ??
+					'';
+				const messageKey =
+					parsedData.id ?? parsedData.metadata?.messageId ?? speechText ?? reactionText ?? rawData;
+
+				if (processedMessages.current.has(messageKey)) {
+					return;
 				}
 
-				await sendAvatarPayload(payload);
+				if (normalizedType === 'speech') {
+					if (!speechText) {
+						return;
+					}
+
+					processedMessages.current.add(messageKey);
+					addMessageRef.current({
+						type: 'chat',
+						content: speechText,
+						timestamp: parsedData.timestamp || new Date().toISOString(),
+					});
+
+					void forwardToAvatar({
+						...parsedData,
+						type: 'speech',
+						text: speechText,
+					});
+
+					queueVoice(speechText).catch((error) => {
+						processedMessages.current.delete(messageKey);
+						console.error('Error al procesar el audio:', error);
+					});
+					return;
+				}
+
+				if (normalizedType === 'reaction') {
+					processedMessages.current.add(messageKey);
+					addMessageRef.current({
+						type: 'reaction',
+						content: reactionText || 'Reacción recibida',
+						timestamp: parsedData.timestamp || new Date().toISOString(),
+					});
+
+					void forwardToAvatar({
+						...parsedData,
+						type: 'reaction',
+						text: reactionText || parsedData.text,
+					});
+					return;
+				}
+
+				if (normalizedType === 'system') {
+					processedMessages.current.add(messageKey);
+					addMessageRef.current({
+						type: 'system',
+						content: reactionText || 'Evento del sistema recibido',
+						timestamp: parsedData.timestamp || new Date().toISOString(),
+					});
+				}
+			} catch (error) {
+				console.error(`No se pudo procesar el evento ${eventName}:`, error);
+			}
+		};
+
+		const attachStreamListeners = (eventSource: EventSource) => {
+			const listeners: Array<{ event: StreamEventName; handler: (event: MessageEvent<string>) => void }> = [
+				{
+					event: 'speech',
+					handler: (event) => {
+						void handleStreamPayload('speech', event.data);
+					},
+				},
+				{
+					event: 'reaction',
+					handler: (event) => {
+						void handleStreamPayload('reaction', event.data);
+					},
+				},
+				{
+					event: 'system',
+					handler: (event) => {
+						void handleStreamPayload('system', event.data);
+					},
+				},
+			];
+
+			for (const { event, handler } of listeners) {
+				eventSource.addEventListener(event, handler);
+			}
+
+			eventSource.onopen = () => {
+				reconnectAttemptRef.current = 0;
+				pushSystemMessage('🟢 Conectado al stream SSE');
 			};
 
-			if (parsedData.type === 'speech' && speechText && !processedMessages.current.has(responseKey)) {
-				processedMessages.current.add(responseKey);
-				addMessageRef.current({
-					type: 'chat',
-					content: speechText,
-					timestamp: parsedData.timestamp || new Date().toISOString(),
-				});
-				void forwardToAvatar(parsedData);
-				getVoiceSandy(speechText, {
-					apiKey: settings?.fish_audio_key ?? '',
-					voiceId: settings?.voice_id ?? '',
-				})
-					.then((audioBlob) => {
-						addToQueue(audioBlob);
-					})
-					.catch((error) => {
-						processedMessages.current.delete(responseKey);
-						console.error('Error al procesar el audio:', error);
-					});
+			eventSource.onerror = () => {
+				if (streamRef.current !== eventSource) {
+					return;
+				}
+
+				eventSource.close();
+				streamRef.current = null;
+				scheduleReconnect('error');
+			};
+		};
+
+		const openStream = async () => {
+			if (!isLoaded || !isSignedIn) {
+				pushSystemMessage('Esperando sesión de Clerk para abrir el stream...');
+				return;
 			}
 
-			if (
-				parsedData.type === 'twitch_response' &&
-				parsedData.response &&
-				!processedMessages.current.has(parsedData.response)
-			) {
-				processedMessages.current.add(parsedData.response);
-				void forwardToAvatar({
-					...parsedData,
-					type: 'speech',
-					text: parsedData.response,
-					emotion: parsedData.emotion ?? 'neutral',
+			try {
+				closeStream();
+
+				const clerkToken = await getToken();
+				if (!clerkToken) {
+					throw new Error('No se pudo obtener el token de Clerk');
+				}
+
+				const tokenRes = await fetch(STREAM_TOKEN_URL, {
+					headers: {
+						Authorization: `Bearer ${clerkToken}`,
+					},
 				});
-				getVoiceSandy(parsedData.response, {
-					apiKey: settings?.fish_audio_key ?? '',
-					voiceId: settings?.voice_id ?? '',
-				})
-					.then((audioBlob) => {
-						addToQueue(audioBlob);
-					})
-					.catch((error) => {
-						if (parsedData.response) {
-							processedMessages.current.delete(parsedData.response);
-						}
-						console.error('Error al procesar el audio:', error);
-					});
+
+				if (!tokenRes.ok) {
+					throw new Error(`No se pudo pedir el token efímero (${tokenRes.status})`);
+				}
+
+				const tokenData = (await tokenRes.json()) as { token?: string };
+				if (!tokenData.token) {
+					throw new Error('La respuesta de /stream/token no incluyó token');
+				}
+
+				const eventSource = new EventSource(
+					`${backendUrl}/stream?token=${encodeURIComponent(tokenData.token)}`,
+				);
+
+				streamRef.current = eventSource;
+				attachStreamListeners(eventSource);
+			} catch (error) {
+				const message = error instanceof Error ? error.message : 'Error desconocido';
+				pushSystemMessage(`No se pudo abrir el stream: ${message}`);
+				scheduleReconnect('fetch');
 			}
-		},
-		[addToQueue, connect, connected, connecting, sendAvatarPayload, settings],
-	);
+		};
 
-	const handleReconnectAttempt = useCallback((attempt: number, maxAttempts: number) => {
-		addMessageRef.current({
-			type: 'system',
-			content: `🔴 Intento de reconexión ${attempt} de ${maxAttempts}...`,
-			timestamp: new Date().toISOString(),
-		});
-	}, []);
+		void openStream();
 
-	const handleMaxRetriesExceeded = useCallback(() => {
-		addMessageRef.current({
-			type: 'system',
-			content:
-				'❌ No se pudo establecer la conexión después de varios intentos. Por favor, verifica tu conexión a internet.',
-			timestamp: new Date().toISOString(),
-		});
-	}, []);
-
-	const handleDisconnect = useCallback(() => {
-		addMessageRef.current({
-			type: 'system',
-			content: '⚠️ Se ha perdido la conexión con el servidor. Intentando reconectar...',
-			timestamp: new Date().toISOString(),
-		});
-	}, []);
-
-	useWebSocket(
-		websocketUrl,
-		handleMessage,
-		handleDisconnect,
-		handleReconnectAttempt,
-		handleMaxRetriesExceeded,
-	);
+		return () => {
+			isMountedRef.current = false;
+			if (reconnectTimerRef.current) {
+				clearTimeout(reconnectTimerRef.current);
+				reconnectTimerRef.current = null;
+			}
+			streamRef.current?.close();
+			streamRef.current = null;
+		};
+	}, [getToken, isLoaded, isSignedIn, forwardToAvatar, queueVoice, pushSystemMessage]);
 
 	return <div className='mx-auto space-y-4 p-4' />;
 };
 
-export default WebSocketChat;
+export default StreamChat;
