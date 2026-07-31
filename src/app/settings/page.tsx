@@ -4,9 +4,8 @@ import { DashboardShell } from '@/containers/dashboard/DashboardShell';
 export default function SettingsPage() {
 	return (
 		<DashboardShell>
-			<div className='bg-background p-4'>
-				<div className='container mx-auto'>
-					<h1 className='mb-6 text-start font-bold text-4xl'>Configuración de IA</h1>
+			<div className='min-h-[calc(100vh-4rem)] bg-gradient-to-br from-background via-background to-violet-50/40 px-4 py-6 dark:to-background'>
+				<div className='mx-auto max-w-7xl'>
 					<SettingsPanel />
 				</div>
 			</div>
