@@ -2,6 +2,7 @@
 
 import { AuthAction } from '@/components/landing/AuthAction';
 import { MoonGlow, StarField } from '@/components/landing/StarField';
+import { useAuth } from '@clerk/nextjs';
 import { ArrowRight, Mic, Sparkle, Star, Tv } from 'lucide-react';
 import { AnimatePresence, motion, useScroll, useTransform } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
@@ -135,6 +136,7 @@ function ChatMock() {
 const integrations = ['Twitch', 'VTube Studio'];
 
 export function Hero() {
+	const { isSignedIn } = useAuth();
 	const ref = useRef<HTMLDivElement>(null);
 	const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
 	const glowY = useTransform(scrollYProgress, [0, 1], [0, 160]);
@@ -207,10 +209,10 @@ export function Hero() {
 						className='mt-8 flex flex-wrap items-center gap-3'
 					>
 						<AuthAction
-							action='signup'
+							action={isSignedIn ? 'app' : 'signup'}
 							className='group h-12 rounded-full border border-[#8B5CF6]/40 bg-[#8B5CF6] px-7 text-base text-white shadow-[0_0_28px_rgba(139,92,246,0.4)] transition-all hover:bg-[#7C4DFF] hover:shadow-[0_0_36px_rgba(139,92,246,0.6)]'
 						>
-							Empezar gratis
+							{isSignedIn ? 'Ir a la app' : 'Empezar gratis'}
 							<ArrowRight size={18} className='transition-transform group-hover:translate-x-1' />
 						</AuthAction>
 					</motion.div>

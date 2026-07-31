@@ -1,6 +1,7 @@
 'use client';
 
 import { AuthAction } from '@/components/landing/AuthAction';
+import { useAuth } from '@clerk/nextjs';
 import { Moon, Sun } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useTheme } from 'next-themes';
@@ -15,6 +16,7 @@ const links = [
 ];
 
 export function LandingNav() {
+	const { isSignedIn } = useAuth();
 	const { theme, setTheme } = useTheme();
 	const [mounted, setMounted] = useState(false);
 	const [scrolled, setScrolled] = useState(false);
@@ -78,19 +80,30 @@ export function LandingNav() {
 							{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
 						</button>
 					)}
-					<AuthAction
-						action='signin'
-						variant='ghost'
-						className='hidden text-zinc-700 hover:bg-[#8B5CF6]/10 hover:text-zinc-900 sm:inline-flex dark:text-zinc-200 dark:hover:bg-white/5 dark:hover:text-white'
-					>
-						Entrar
-					</AuthAction>
-					<AuthAction
-						action='signup'
-						className='rounded-full border border-[#8B5CF6]/40 bg-[#8B5CF6] px-5 text-white shadow-[0_0_20px_rgba(139,92,246,0.35)] transition-all hover:bg-[#7C4DFF] hover:shadow-[0_0_28px_rgba(139,92,246,0.55)]'
-					>
-						Crear cuenta
-					</AuthAction>
+					{isSignedIn ? (
+						<AuthAction
+							action='app'
+							className='rounded-full border border-[#8B5CF6]/40 bg-[#8B5CF6] px-5 text-white shadow-[0_0_20px_rgba(139,92,246,0.35)] transition-all hover:bg-[#7C4DFF] hover:shadow-[0_0_28px_rgba(139,92,246,0.55)]'
+						>
+							Ir a la app
+						</AuthAction>
+					) : (
+						<>
+							<AuthAction
+								action='signin'
+								variant='ghost'
+								className='hidden text-zinc-700 hover:bg-[#8B5CF6]/10 hover:text-zinc-900 sm:inline-flex dark:text-zinc-200 dark:hover:bg-white/5 dark:hover:text-white'
+							>
+								Entrar
+							</AuthAction>
+							<AuthAction
+								action='signup'
+								className='rounded-full border border-[#8B5CF6]/40 bg-[#8B5CF6] px-5 text-white shadow-[0_0_20px_rgba(139,92,246,0.35)] transition-all hover:bg-[#7C4DFF] hover:shadow-[0_0_28px_rgba(139,92,246,0.55)]'
+							>
+								Crear cuenta
+							</AuthAction>
+						</>
+					)}
 				</div>
 			</nav>
 		</motion.header>
