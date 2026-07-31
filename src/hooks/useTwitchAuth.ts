@@ -4,6 +4,7 @@ import { start, stop } from '@/api/sandycore';
 import { getAccessToken, getTwitchAuthUrl } from '@/api/twitchAuth';
 import { useStatus } from '@/context/StatusContext';
 import { useStatusBot } from '@/context/StatusContextBot';
+import { useAuth } from '@clerk/nextjs';
 import type { ProfileModel } from '@/interfaces/profileInterface';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
@@ -24,6 +25,7 @@ export const useTwitchAuth = (defaultIsBot?: boolean): UseTwitchAuthReturn => {
 	const [isLoading, setIsLoading] = useState(false);
 	const { status: userStatus, setStatus: setUserStatus } = useStatus();
 	const { statusBot, setStatusBot } = useStatusBot();
+	const { getToken, isLoaded, isSignedIn } = useAuth();
 	const [isBot] = useState(defaultIsBot ?? false);
 
 	const status = isBot ? statusBot : userStatus;
@@ -39,14 +41,23 @@ export const useTwitchAuth = (defaultIsBot?: boolean): UseTwitchAuthReturn => {
 	);
 	const fetchProfile = useCallback(async () => {
 		try {
-			const profileInfo = await getProfileInfo(isBot);
+			if (!isLoaded || !isSignedIn) {
+				return;
+			}
+
+			const token = await getToken();
+			if (!token) {
+				throw new Error('No se pudo obtener el token de Clerk');
+			}
+
+			const profileInfo = await getProfileInfo(isBot, { token });
 			setProfile(profileInfo);
 		} catch (error) {
 			console.error('Error al obtener el perfil:', error);
 			toast.error('No se pudo cargar el perfil');
 			setStatus(false);
 		}
-	}, [isBot, setProfile, setStatus]);
+	}, [getToken, isBot, isLoaded, isSignedIn, setProfile, setStatus]);
 	const handleStart = useCallback(
 		async (bot: boolean) => {
 			if (bot !== isBot) {
