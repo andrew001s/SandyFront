@@ -1,24 +1,25 @@
 'use client';
 
-import { SignOutButton, useUser } from '@clerk/nextjs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
 	Sidebar,
 	SidebarContent,
+	SidebarFooter,
 	SidebarGroup,
 	SidebarGroupContent,
 	SidebarGroupLabel,
 	SidebarHeader,
-	SidebarFooter,
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
+import { SignOutButton, useUser } from '@clerk/nextjs';
 import { LayoutDashboard, LogIn, LogOut, Settings2, Tv } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -30,53 +31,33 @@ const navItems = [
 
 export function AppSidebar() {
 	const pathname = usePathname();
-	const { isLoaded, isSignedIn, user } = useUser();
+	const { isSignedIn, user } = useUser();
 
 	const displayName = user?.fullName ?? user?.firstName ?? user?.username ?? 'Tu perfil';
 	const email = user?.primaryEmailAddress?.emailAddress ?? 'Sesión activa';
 	const initials = (
-		user?.firstName?.[0] ?? user?.lastName?.[0] ?? user?.emailAddresses?.[0]?.emailAddress?.[0] ?? 'S'
+		user?.firstName?.[0] ??
+		user?.lastName?.[0] ??
+		user?.emailAddresses?.[0]?.emailAddress?.[0] ??
+		'S'
 	).toUpperCase();
 
 	return (
 		<Sidebar collapsible='icon' variant='floating'>
 			<SidebarHeader className='p-3 pt-3'>
-				<div className='rounded-[28px] border border-sidebar-border bg-background/80 p-3 shadow-sm backdrop-blur-sm group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-3'>
-					<div className='flex items-center gap-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0'>
-						<Avatar className='size-12 shrink-0 ring-2 ring-background shadow-sm group-data-[collapsible=icon]:size-10'>
-							{isSignedIn && user?.imageUrl ? (
-								<AvatarImage src={user.imageUrl} alt={displayName} />
-							) : null}
-							<AvatarFallback className='bg-primary/10 text-primary text-sm font-semibold'>
-								{initials}
-							</AvatarFallback>
-						</Avatar>
-						{isSignedIn ? (
-							<div className='min-w-0 flex-1 group-data-[collapsible=icon]:hidden'>
-								<p className='text-xs text-muted-foreground'>
-									{isLoaded ? 'Perfil de inicio de sesión' : 'Cargando perfil'}
-								</p>
-								<div className='flex items-center gap-2'>
-									<span className='truncate font-semibold text-sm'>{displayName}</span>
-									<Badge variant='secondary' className='rounded-full px-2 py-0.5 text-[10px]'>
-										Online
-									</Badge>
-								</div>
-								<p className='truncate text-xs text-muted-foreground'>{email}</p>
-							</div>
-						) : (
-							<div className='min-w-0 flex-1 group-data-[collapsible=icon]:hidden'>
-								<p className='text-xs text-muted-foreground'>Sin sesión activa</p>
-								<span className='block truncate font-semibold text-sm'>Inicia sesión</span>
-								<p className='truncate text-xs text-muted-foreground'>
-									Accede para ver tu perfil y volver al dashboard.
-								</p>
-							</div>
-						)}
+				<Link
+					href='/home'
+					className='flex items-center gap-3 rounded-[28px] border border-sidebar-border bg-background/80 p-3 shadow-sm backdrop-blur-sm transition-colors hover:bg-background/95 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-3'
+				>
+					<div className='relative size-12 shrink-0 overflow-hidden rounded-2xl border border-sidebar-border bg-sidebar-accent/20 shadow-sm ring-2 ring-background group-data-[collapsible=icon]:size-10'>
+						<Image src='/icons/default.png' alt='Shandrew logo' fill className='object-cover' />
 					</div>
-				</div>
+					<div className='min-w-0 flex-1 group-data-[collapsible=icon]:hidden'>
+						<span className='block truncate font-semibold text-sm'>Sandy Studio</span>
+					</div>
+				</Link>
 			</SidebarHeader>
-			<SidebarSeparator className='mx-4 group-data-[collapsible=icon]:mx-2' />
+			<SidebarSeparator className='mx-4 mb-2 group-data-[collapsible=icon]:mx-2' />
 			<SidebarContent className='px-3 pb-3 group-data-[collapsible=icon]:px-2'>
 				<SidebarGroup className='rounded-[28px] border border-sidebar-border bg-background/75 p-3 shadow-sm backdrop-blur-sm group-data-[collapsible=icon]:rounded-[24px] group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-2'>
 					<SidebarGroupLabel className='px-2 text-[0.7rem] font-semibold uppercase tracking-[0.18em] group-data-[collapsible=icon]:hidden'>
@@ -93,7 +74,7 @@ export function AppSidebar() {
 												href={item.href}
 												className={cn(
 													'flex items-center gap-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0',
-													isActive && 'font-medium'
+													isActive && 'font-medium',
 												)}
 											>
 												<item.icon className='h-4 w-4 shrink-0' />
@@ -123,7 +104,10 @@ export function AppSidebar() {
 							<p className='truncate font-semibold text-sm'>{displayName}</p>
 							<p className='truncate text-xs text-muted-foreground'>{email}</p>
 						</div>
-						<Badge variant='secondary' className='rounded-full px-2 py-0.5 text-[10px] group-data-[collapsible=icon]:hidden'>
+						<Badge
+							variant='secondary'
+							className='rounded-full px-2 py-0.5 text-[10px] group-data-[collapsible=icon]:hidden'
+						>
 							{isSignedIn ? 'Activo' : 'Invitado'}
 						</Badge>
 					</div>
