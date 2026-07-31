@@ -14,7 +14,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAppSettings } from '@/context/AppSettingsContext';
+import { getStoredAiProvider, storeAiProvider } from '@/lib/ai-provider';
+import { getStoredSttProvider, storeSttProvider } from '@/lib/stt-provider';
 import { useAuth } from '@clerk/nextjs';
 import { Bot, ExternalLink, Mic, Save, Star, Volume2 } from 'lucide-react';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
@@ -413,6 +416,7 @@ export function SettingsPanel() {
 	const [isAzureRegionOpen, setIsAzureRegionOpen] = useState(false);
 	const [isAzureLanguageOpen, setIsAzureLanguageOpen] = useState(false);
 	const [isOpenRouterSortOpen, setIsOpenRouterSortOpen] = useState(false);
+	const [browserSupportsNativeSpeech, setBrowserSupportsNativeSpeech] = useState(false);
 
 	const activeProviderLabel = useMemo(
 		() => (form.ai_provider === 'gemini' ? 'Gemini' : 'OpenRouter'),
@@ -426,7 +430,7 @@ export function SettingsPanel() {
 	const sttProviderBadgeClassName =
 		form.stt_provider === 'azure'
 			? 'border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400'
-			: 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400';
+			: 'border-cyan-500/30 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400';
 	const ttsProviderBadgeClassName =
 		form.tts_provider === 'fish_audio'
 			? 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'
@@ -436,7 +440,13 @@ export function SettingsPanel() {
 	const openRouterState =
 		form.openrouter_api_key && form.openrouter_model ? 'Configurado' : 'Pendiente';
 	const speechState =
-		form.azure_speech_key && form.azure_region && form.language ? 'Configurado' : 'Pendiente';
+		form.stt_provider === 'browser'
+			? browserSupportsNativeSpeech
+				? 'Configurado'
+				: 'No compatible'
+			: form.azure_speech_key && form.azure_region && form.language
+				? 'Configurado'
+				: 'Pendiente';
 	const fishState = form.fish_audio_key && form.voice_id ? 'Configurado' : 'Pendiente';
 	const visibleOpenRouterModels = useMemo(
 		() => openRouterModels.slice(0, visibleOpenRouterCount),
@@ -445,7 +455,35 @@ export function SettingsPanel() {
 
 	useEffect(() => {
 		setForm(normalizeSettings(settings));
+		const storedStt = getStoredSttProvider();
+		const storedAi = getStoredAiProvider();
+		if (
+			(storedStt && storedStt !== (settings?.stt_provider ?? 'azure')) ||
+			(storedAi && storedAi !== (settings?.ai_provider ?? 'gemini'))
+		) {
+			setForm((current) => ({
+				...current,
+				stt_provider: storedStt ?? current.stt_provider,
+				ai_provider: storedAi ?? current.ai_provider,
+			}));
+		}
 	}, [settings]);
+
+	useEffect(() => {
+		const speechWindow = window as Window & {
+			SpeechRecognition?: unknown;
+			webkitSpeechRecognition?: unknown;
+			mozSpeechRecognition?: unknown;
+			msSpeechRecognition?: unknown;
+		};
+		const supported = Boolean(
+			speechWindow.SpeechRecognition ||
+				speechWindow.webkitSpeechRecognition ||
+				speechWindow.mozSpeechRecognition ||
+				speechWindow.msSpeechRecognition,
+		);
+		setBrowserSupportsNativeSpeech(supported);
+	}, []);
 
 	const loadOpenRouterModels = useCallback(
 		async (query: string, sort: OpenRouterSort = openRouterSort) => {
@@ -521,6 +559,7 @@ export function SettingsPanel() {
 	};
 
 	const handleProviderChange = (value: 'gemini' | 'openrouter') => {
+		storeAiProvider(value);
 		setForm((current) => ({
 			...current,
 			ai_provider: value,
@@ -630,7 +669,12 @@ export function SettingsPanel() {
 								Proveedor activo: {activeProviderLabel}
 							</Badge>
 							<Badge variant='outline' className={sttProviderBadgeClassName}>
-								STT: {form.stt_provider === 'azure' ? 'Azure' : 'Fish Audio'}
+								STT:{' '}
+								{form.stt_provider === 'browser'
+									? 'Navegador (gratis)'
+									: form.stt_provider === 'azure'
+										? 'Azure'
+										: 'No configurado'}
 							</Badge>
 							<Badge variant='outline' className={ttsProviderBadgeClassName}>
 								TTS: {form.tts_provider === 'fish_audio' ? 'Fish Audio' : 'Azure'}
@@ -656,121 +700,162 @@ export function SettingsPanel() {
 						}
 						highlighted
 					>
-						<div className='grid gap-2 sm:grid-cols-2'>
-							<Button
-								type='button'
-								variant='outline'
-								onClick={() => handleProviderChange('gemini')}
-								className={
-									form.ai_provider === 'gemini'
-										? 'justify-start border-transparent bg-[#8B5CF6] text-white hover:bg-[#7C3AED] hover:text-white'
-										: 'justify-start'
-								}
-							>
-								Gemini
-							</Button>
-							<Button
-								type='button'
-								variant='outline'
-								onClick={() => handleProviderChange('openrouter')}
-								className={
-									form.ai_provider === 'openrouter'
-										? 'justify-start border-transparent bg-[#8B5CF6] text-white hover:bg-[#7C3AED] hover:text-white'
-										: 'justify-start'
-								}
-							>
-								OpenRouter
-							</Button>
-						</div>
+						<Tabs
+							value={form.ai_provider}
+							onValueChange={(value) => handleProviderChange(value as 'gemini' | 'openrouter')}
+							className='w-full'
+						>
+							<TabsList className='w-full'>
+								<TabsTrigger value='gemini' className='flex-1'>
+									Gemini
+								</TabsTrigger>
+								<TabsTrigger value='openrouter' className='flex-1'>
+									OpenRouter
+								</TabsTrigger>
+							</TabsList>
 
-						{form.ai_provider === 'gemini' ? (
-							<div className='space-y-2'>
-								<Label htmlFor='gemini_api_key'>Gemini API Key</Label>
-								<Input
-									id='gemini_api_key'
-									type='password'
-									placeholder='AIza...'
-									value={form.gemini_api_key}
-									onChange={(event) => updateField('gemini_api_key', event.target.value)}
-								/>
-							</div>
-						) : (
-							<div className='grid gap-4 lg:grid-cols-2'>
-								<div className='space-y-2 lg:col-span-2'>
-									<Label htmlFor='openrouter_api_key'>OpenRouter API Key</Label>
+							<TabsContent value='gemini'>
+								<div className='space-y-2 pt-4'>
+									<Label htmlFor='gemini_api_key'>Gemini API Key</Label>
 									<Input
-										id='openrouter_api_key'
+										id='gemini_api_key'
 										type='password'
-										placeholder='sk-or-v1-...'
-										value={form.openrouter_api_key}
-										onChange={(event) => updateField('openrouter_api_key', event.target.value)}
+										placeholder='AIza...'
+										value={form.gemini_api_key}
+										onChange={(event) => updateField('gemini_api_key', event.target.value)}
 									/>
 								</div>
-								<div className='space-y-2 lg:col-span-2'>
-									<Label htmlFor='openrouter_model'>OpenRouter Model</Label>
-									<div className='flex flex-col gap-3 sm:flex-row'>
+							</TabsContent>
+
+							<TabsContent value='openrouter'>
+								<div className='grid gap-4 pt-4 lg:grid-cols-2'>
+									<div className='space-y-2 lg:col-span-2'>
+										<Label htmlFor='openrouter_api_key'>OpenRouter API Key</Label>
 										<Input
-											id='openrouter_model'
-											readOnly
-											value={form.openrouter_model || 'Selecciona un modelo de texto'}
-											className='bg-background/70'
+											id='openrouter_api_key'
+											type='password'
+											placeholder='sk-or-v1-...'
+											value={form.openrouter_api_key}
+											onChange={(event) => updateField('openrouter_api_key', event.target.value)}
 										/>
-										<Button
-											type='button'
-											variant='outline'
-											onClick={() => setIsOpenRouterModalOpen(true)}
-											className='shrink-0'
-										>
-											Buscar modelos
-										</Button>
+									</div>
+									<div className='space-y-2 lg:col-span-2'>
+										<Label htmlFor='openrouter_model'>OpenRouter Model</Label>
+										<div className='flex flex-col gap-3 sm:flex-row'>
+											<Input
+												id='openrouter_model'
+												readOnly
+												value={form.openrouter_model || 'Selecciona un modelo de texto'}
+												className='bg-background/70'
+											/>
+											<Button
+												type='button'
+												variant='outline'
+												onClick={() => setIsOpenRouterModalOpen(true)}
+												className='shrink-0'
+											>
+												Buscar modelos
+											</Button>
+										</div>
 									</div>
 								</div>
-							</div>
-						)}
+							</TabsContent>
+						</Tabs>
 					</SectionCard>
 
 					<SectionCard
 						icon={<Mic className='size-5' />}
 						title='Reconocimiento de voz'
-						description='Configura STT para convertir el audio en texto. Por ahora solo usa Azure.'
+						description='Convierte tu voz en texto con Azure o con el reconocimiento gratuito del navegador.'
 						statusLabel={speechState}
 						statusTone={
 							speechState === 'Configurado'
 								? 'border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400'
-								: 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+								: speechState === 'No compatible'
+									? 'border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400'
+									: 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'
 						}
 					>
-						<div className='grid gap-4 lg:grid-cols-2'>
-							<div className='space-y-2'>
-								<Label htmlFor='azure_speech_key'>Azure Speech Key</Label>
-								<Input
-									id='azure_speech_key'
-									type='password'
-									placeholder='tu_clave_de_azure_speech'
-									value={form.azure_speech_key}
-									onChange={(event) => updateField('azure_speech_key', event.target.value)}
-								/>
-							</div>
-							<DropdownField
-								label='Azure Region'
-								placeholder='Selecciona una región'
-								value={form.azure_region}
-								options={azureRegions}
-								open={isAzureRegionOpen}
-								setOpen={setIsAzureRegionOpen}
-								onChange={(value) => updateField('azure_region', value)}
-							/>
-							<DropdownField
-								label='Idioma de Azure'
-								placeholder='Selecciona un idioma'
-								value={form.language}
-								options={azureLanguages}
-								open={isAzureLanguageOpen}
-								setOpen={setIsAzureLanguageOpen}
-								onChange={(value) => updateField('language', value)}
-								className='lg:col-span-2'
-							/>
-						</div>
+						<Tabs
+							value={form.stt_provider === 'browser' ? 'browser' : 'azure'}
+							onValueChange={(value) => {
+								updateField('stt_provider', value);
+								storeSttProvider(value as 'azure' | 'browser');
+							}}
+							className='w-full'
+						>
+							<TabsList className='w-full'>
+								<TabsTrigger value='azure' className='flex-1'>
+									Azure
+								</TabsTrigger>
+								<TabsTrigger value='browser' className='flex-1'>
+									Navegador (gratis)
+								</TabsTrigger>
+							</TabsList>
+
+							<TabsContent value='browser'>
+								<div className='space-y-4 pt-4'>
+									<div className='rounded-2xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 text-cyan-700 text-sm dark:text-cyan-300'>
+										Usa el reconocimiento de voz integrado en tu navegador, sin coste ni claves.
+										Solo disponible en navegadores basados en Chromium (Google Chrome, Edge, Brave,
+										Opera, Vivaldi).
+									</div>
+									{browserSupportsNativeSpeech ? (
+										<div className='rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-emerald-700 text-sm dark:text-emerald-300'>
+											Tu navegador es compatible. No hace falta configurar nada más.
+										</div>
+									) : (
+										<div className='rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-red-700 text-sm dark:text-red-300'>
+											Tu navegador no es compatible con esta opción. Solo funciona en Google Chrome
+											y otros navegadores basados en Chromium.
+										</div>
+									)}
+									<DropdownField
+										label='Idioma'
+										placeholder='Selecciona un idioma'
+										value={form.language}
+										options={azureLanguages}
+										open={isAzureLanguageOpen}
+										setOpen={setIsAzureLanguageOpen}
+										onChange={(value) => updateField('language', value)}
+									/>
+								</div>
+							</TabsContent>
+
+							<TabsContent value='azure'>
+								<div className='grid gap-4 pt-4 lg:grid-cols-2'>
+									<div className='space-y-2'>
+										<Label htmlFor='azure_speech_key'>Azure Speech Key</Label>
+										<Input
+											id='azure_speech_key'
+											type='password'
+											placeholder='tu_clave_de_azure_speech'
+											value={form.azure_speech_key}
+											onChange={(event) => updateField('azure_speech_key', event.target.value)}
+										/>
+									</div>
+									<DropdownField
+										label='Azure Region'
+										placeholder='Selecciona una región'
+										value={form.azure_region}
+										options={azureRegions}
+										open={isAzureRegionOpen}
+										setOpen={setIsAzureRegionOpen}
+										onChange={(value) => updateField('azure_region', value)}
+									/>
+									<DropdownField
+										label='Idioma de Azure'
+										placeholder='Selecciona un idioma'
+										value={form.language}
+										options={azureLanguages}
+										open={isAzureLanguageOpen}
+										setOpen={setIsAzureLanguageOpen}
+										onChange={(value) => updateField('language', value)}
+										className='lg:col-span-2'
+									/>
+								</div>
+							</TabsContent>
+						</Tabs>
 					</SectionCard>
 
 					<SectionCard

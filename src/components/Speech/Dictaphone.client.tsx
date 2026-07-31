@@ -6,6 +6,7 @@ import { getResponseGemini } from '@/api/fetchGemini';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
 import { useAudioQueue } from '@/hooks/useAudioQueue';
+import { getStoredSttProvider } from '@/lib/stt-provider';
 import { Mic } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
@@ -19,8 +20,16 @@ const Dictaphone = () => {
 	const [silenceTimer, setSilenceTimer] = useState<NodeJS.Timeout | null>(null);
 	const { addMessage } = useMessages();
 	const { settings, isLoading } = useAppSettings();
+	const effectiveSttProvider = getStoredSttProvider() ?? settings?.stt_provider ?? 'azure';
 
 	useEffect(() => {
+		if (effectiveSttProvider === 'browser') {
+			(
+				SpeechRecognition as typeof SpeechRecognition & { removePolyfill: () => void }
+			).removePolyfill();
+			return;
+		}
+
 		if (!settings?.azure_speech_key || !settings?.azure_region) {
 			return;
 		}
@@ -37,7 +46,7 @@ const Dictaphone = () => {
 		};
 
 		initSpeechRecognition();
-	}, [settings?.azure_region, settings?.azure_speech_key]);
+	}, [effectiveSttProvider, settings?.azure_region, settings?.azure_speech_key]);
 
 	const { transcript, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition({
 		commands: [
@@ -96,7 +105,16 @@ const Dictaphone = () => {
 		});
 
 	const handleSpeechToggle = (checked: boolean) => {
-		if (!settings?.azure_speech_key || !settings?.azure_region) {
+		const isBrowserProvider = effectiveSttProvider === 'browser';
+
+		if (isBrowserProvider) {
+			if (!browserSupportsSpeechRecognition) {
+				toast.error(
+					'El reconocimiento gratuito del navegador solo está disponible en Google Chrome y otros navegadores basados en Chromium',
+				);
+				return;
+			}
+		} else if (!settings?.azure_speech_key || !settings?.azure_region) {
 			toast.error('Configura Azure Speech en Ajustes de IA antes de usar voz');
 			return;
 		}
