@@ -1,7 +1,6 @@
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
 	Sidebar,
@@ -18,7 +17,7 @@ import {
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import { SignOutButton, useUser } from '@clerk/nextjs';
-import { LayoutDashboard, LogIn, LogOut, Settings2, Tv } from 'lucide-react';
+import { CircleUserRound, LayoutDashboard, LogIn, LogOut, Settings2, Tv } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -27,6 +26,7 @@ const navItems = [
 	{ href: '/home', label: 'Dashboard', icon: LayoutDashboard },
 	{ href: '/avatar', label: 'Avatar VTuber', icon: Tv },
 	{ href: '/settings', label: 'Configuración de IA', icon: Settings2 },
+	{ href: '/account', label: 'Configuración', icon: CircleUserRound },
 ];
 
 export function AppSidebar() {
@@ -104,12 +104,6 @@ export function AppSidebar() {
 							<p className='truncate font-semibold text-sm'>{displayName}</p>
 							<p className='truncate text-xs text-muted-foreground'>{email}</p>
 						</div>
-						<Badge
-							variant='secondary'
-							className='rounded-full px-2 py-0.5 text-[10px] group-data-[collapsible=icon]:hidden'
-						>
-							{isSignedIn ? 'Activo' : 'Invitado'}
-						</Badge>
 					</div>
 					<div className='mt-3'>
 						{isSignedIn ? (
