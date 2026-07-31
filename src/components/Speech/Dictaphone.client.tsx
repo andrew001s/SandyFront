@@ -120,14 +120,14 @@ const Dictaphone = () => {
 
 	return (
 		<div className='flex w-full flex-col gap-2 pt-4'>
-			<div className='flex items-center space-x-3'>
+			<div className='flex items-center gap-3'>
 				<span>Reconocimiento de Voz:</span>
 				<SwitchComponent onCheckedChange={handleSpeechToggle} />
 			</div>
 			{transcript && (
-				<div className='flex flex-row space-x-2 rounded-md bg-gray-800 p-2'>
-					<span>Trascripción:</span>
-					<TypingAnimation className='font-normal text-base'>{transcript}</TypingAnimation>
+				<div className='flex flex-row gap-2 rounded-lg border border-border/60 bg-card px-3 py-2 text-card-foreground'>
+					<span className='shrink-0 text-muted-foreground'>Transcripción:</span>
+					<TypingAnimation className='font-normal text-base text-foreground'>{transcript}</TypingAnimation>
 				</div>
 			)}
 

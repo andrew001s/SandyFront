@@ -2,6 +2,10 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import {
 	FaDiscord,
 	FaFacebook,
@@ -13,88 +17,98 @@ import {
 import { LuGithub } from 'react-icons/lu';
 
 export const Footer = () => {
+	const pathname = usePathname();
+	const isSidebarPage =
+		pathname === '/home' || pathname === '/avatar' || pathname === '/settings';
+
 	const socialLinks = [
 		{
 			name: 'GitHub',
 			url: 'https://github.com/andrew001s',
-			icon: <LuGithub size={24} />,
-			hoverClass: 'hover:bg-[#24292e]/20 hover:shadow-[0_0_50px_rgba(36,41,46,0.6)]',
+			icon: LuGithub,
 		},
 		{
 			name: 'Twitter',
 			url: 'https://x.com/ElShandrew',
-			icon: <FaXTwitter size={24} />,
-			hoverClass: 'hover:bg-black/20 hover:shadow-[0_0_50px_rgba(0,0,0,0.6)]',
+			icon: FaXTwitter,
 		},
 		{
 			name: 'Twitch',
 			url: 'https://www.twitch.tv/elshandrew',
-			icon: <FaTwitch size={24} />,
-			hoverClass: 'hover:bg-[#9146FF]/20 hover:shadow-[0_0_50px_rgba(145,70,255,0.6)]',
+			icon: FaTwitch,
 		},
 		{
 			name: 'YouTube',
 			url: 'https://www.youtube.com/@Shandrew',
-			icon: <FaYoutube size={24} />,
-			hoverClass: 'hover:bg-[#FF0000]/20 hover:shadow-[0_0_50px_rgba(255,0,0,0.6)]',
+			icon: FaYoutube,
 		},
 		{
 			name: 'Instagram',
 			url: 'https://www.instagram.com/elshandrew/',
-			icon: <FaInstagram size={24} />,
-			hoverClass: 'hover:bg-[#E4405F]/20 hover:shadow-[0_0_50px_rgba(228,64,95,0.6)]',
+			icon: FaInstagram,
 		},
 		{
 			name: 'Discord',
 			url: 'https://discord.com/invite/KtCBAfneRy',
-			icon: <FaDiscord size={24} />,
-			hoverClass: 'hover:bg-[#7289DA]/20 hover:shadow-[0_0_50px_rgba(114,137,218,0.6)]',
+			icon: FaDiscord,
 		},
 		{
 			name: 'Facebook',
 			url: 'https://www.facebook.com/Shandrewvt',
-			icon: <FaFacebook size={24} />,
-			hoverClass: 'hover:bg-[#1877F2]/20 hover:shadow-[0_0_50px_rgba(24,119,242,0.6)]',
+			icon: FaFacebook,
 		},
 	];
 
 	return (
-		<footer className='w-full py-6 px-4 border-t border-gray-200 dark:border-gray-800'>
+		<footer
+			className={cn(
+				'w-full border-t border-border/60 bg-background/80 px-4 py-6 backdrop-blur-sm',
+				isSidebarPage && 'md:pl-[17rem]'
+			)}
+		>
 			<div className='container mx-auto flex flex-col items-center justify-between gap-4 md:flex-row'>
 				<motion.div
-					initial={{ opacity: 0, y: 20 }}
+					initial={{ opacity: 0, y: 12 }}
 					animate={{ opacity: 1, y: 0 }}
-					transition={{ duration: 0.5 }}
-					className='text-sm text-gray-500 dark:text-gray-400'
+					transition={{ duration: 0.45 }}
+					className='text-center text-sm text-muted-foreground md:text-left'
 				>
 					© Shandrew {new Date().getFullYear()}. Todos los derechos reservados.
 				</motion.div>
 				<motion.div
-					initial={{ opacity: 0, y: 20 }}
+					initial={{ opacity: 0, y: 12 }}
 					animate={{ opacity: 1, y: 0 }}
-					transition={{ duration: 0.5, delay: 0.2 }}
-					className='flex items-center space-x-4'
+					transition={{ duration: 0.45, delay: 0.12 }}
+					className='flex flex-wrap items-center justify-center gap-2 md:justify-end'
 				>
-					{socialLinks.map((link) => (
-						<Link
-							key={link.name}
-							href={link.url}
-							target='_blank'
-							rel='noopener noreferrer'
-							className='text-gray-500 hover:text-white dark:text-gray-400 dark:hover:text-white transition-all'
-						>
+					{socialLinks.map((link, index) => {
+						const Icon = link.icon;
+
+						return (
 							<motion.div
-								whileHover={{ scale: 1.1 }}
-								whileTap={{ scale: 0.95 }}
-								className={`p-2 rounded-full ${link.hoverClass} transition-colors duration-300`}
+								key={link.name}
+								initial={{ opacity: 0, y: 8 }}
+								animate={{ opacity: 1, y: 0 }}
+								transition={{ duration: 0.3, delay: 0.04 * index }}
+								whileHover={{ y: -2 }}
+								whileTap={{ scale: 0.97 }}
 							>
-								{link.icon}
-								<span className='sr-only'>{link.name}</span>
+								<Button
+									asChild
+									variant='outline'
+									size='icon'
+									className='size-10 rounded-full border-border/70 bg-background/90 shadow-none text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
+								>
+									<Link href={link.url} target='_blank' rel='noopener noreferrer' aria-label={link.name}>
+										<Icon size={20} />
+									</Link>
+								</Button>
 							</motion.div>
-						</Link>
-					))}
+						);
+					})}
 				</motion.div>
 			</div>
+	
 		</footer>
 	);
 };

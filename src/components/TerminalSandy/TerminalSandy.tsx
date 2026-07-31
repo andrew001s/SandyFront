@@ -8,7 +8,10 @@ export const TerminalSandy = () => {
 	return (
 		<Terminal>
 			{messages.map((msg, index) => (
-				<span key={`msg-${index}-${msg.timestamp}`} className='mb-2 text-sm text-white'>
+				<span
+					key={`msg-${index}-${msg.timestamp}`}
+					className='mb-2 text-sm text-foreground'
+				>
 					{msg.content}
 				</span>
 			))}

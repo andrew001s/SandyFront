@@ -107,14 +107,14 @@ export const TwitchCallback = () => {
 
 	return (
 		<motion.div
-			className='flex min-h-screen items-center justify-center bg-background'
+			className='flex min-h-screen items-center justify-center bg-background px-4 py-10'
 			initial={{ opacity: 0 }}
 			animate={{ opacity: 1 }}
 			transition={{ duration: 0.8 }}
 		>
-			<BackgroundGradient className='rounded-[22px] bg-zinc-900 p-1'>
+			<BackgroundGradient className='rounded-[22px] bg-background p-1'>
 				<motion.div
-					className='rounded-lg bg-zinc-900 p-8 text-center backdrop-blur-sm'
+					className='rounded-lg border border-border/60 bg-card p-8 text-center text-card-foreground backdrop-blur-sm'
 					variants={containerVariants}
 					initial='hidden'
 					animate='visible'
@@ -124,10 +124,10 @@ export const TwitchCallback = () => {
 						variants={itemVariants}
 						className={`mb-4 font-bold text-2xl ${
 							status === 'error'
-								? 'text-red-400'
+								? 'text-destructive'
 								: status === 'success'
-									? 'text-green-400'
-									: 'text-white'
+									? 'text-emerald-500 dark:text-emerald-400'
+									: 'text-foreground'
 						}`}
 					>
 						<AnimatePresence mode='wait'>
@@ -146,7 +146,7 @@ export const TwitchCallback = () => {
 							</motion.span>
 						</AnimatePresence>
 					</motion.h1>
-					<motion.p variants={itemVariants} className='text-white/90'>
+					<motion.p variants={itemVariants} className='text-muted-foreground'>
 						{message}
 					</motion.p>
 					<AnimatePresence mode='wait'>
@@ -158,7 +158,7 @@ export const TwitchCallback = () => {
 								exit='exit'
 								type='button'
 								onClick={() => window.close()}
-								className='mt-4 rounded bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700'
+								className='mt-4 rounded-md bg-primary px-4 py-2 text-primary-foreground transition-colors hover:bg-primary/90'
 								whileHover={{
 									scale: 1.05,
 									transition: { duration: 0.2 },

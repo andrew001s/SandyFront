@@ -87,8 +87,8 @@ const StyledWrapper = styled.div<{ $isMinimized: boolean }>`
   .status {
     display: flex;
     flex-direction: column;
-    background-color: #222533;
-    color: #fbebe2;
+    background-color: var(--card);
+    color: var(--card-foreground);
     padding: 10px;
     width: 100%;
     height: ${(props) => (props.$isMinimized ? '40px' : '300px')};
@@ -121,19 +121,19 @@ const StyledWrapper = styled.div<{ $isMinimized: boolean }>`
     transition: all 0.3s ease-in-out;
   }
   .status span:first-child {
-    color: #57c7ff;
+    color: var(--primary);
   }
   .status .arrow {
-    color: #ff6ac1;
+    color: var(--secondary-foreground);
   }
-  .text-white {
-    color: #ffffff !important;
+  .status .terminal-label {
+    color: var(--muted-foreground);
   }
   .cursor {
     display: inline-block;
     width: 2px;
     height: 16px;
-    background-color: #ffffff;
+    background-color: var(--foreground);
     margin-left: 4px;
     animation: blink 1s step-end infinite;
   }

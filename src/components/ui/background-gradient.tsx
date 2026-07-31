@@ -40,8 +40,9 @@ export const BackgroundGradient = ({
 					backgroundSize: animate ? '400% 400%' : undefined,
 				}}
 				className={cn(
-					'absolute inset-0 rounded-3xl z-[1] opacity-60 group-hover:opacity-100 blur-xl  transition duration-500 will-change-transform',
-					' bg-[radial-gradient(circle_farthest-side_at_0_100%,#00ccb1,transparent),radial-gradient(circle_farthest-side_at_100%_0,#7b61ff,transparent),radial-gradient(circle_farthest-side_at_100%_100%,#ffc414,transparent),radial-gradient(circle_farthest-side_at_0_0,#1ca0fb,#141316)]',
+					'absolute inset-0 z-[1] rounded-3xl opacity-55 blur-xl transition duration-500 will-change-transform group-hover:opacity-100',
+					'bg-[radial-gradient(circle_farthest-side_at_0_100%,rgba(14,165,233,0.20),transparent),radial-gradient(circle_farthest-side_at_100%_0,rgba(168,85,247,0.16),transparent),radial-gradient(circle_farthest-side_at_100%_100%,rgba(245,158,11,0.14),transparent),radial-gradient(circle_farthest-side_at_0_0,rgba(59,130,246,0.16),transparent)]',
+					'dark:bg-[radial-gradient(circle_farthest-side_at_0_100%,rgba(14,165,233,0.18),transparent),radial-gradient(circle_farthest-side_at_100%_0,rgba(168,85,247,0.18),transparent),radial-gradient(circle_farthest-side_at_100%_100%,rgba(245,158,11,0.12),transparent),radial-gradient(circle_farthest-side_at_0_0,rgba(59,130,246,0.18),transparent)]',
 				)}
 			/>
 			<motion.div
@@ -61,8 +62,9 @@ export const BackgroundGradient = ({
 					backgroundSize: animate ? '400% 400%' : undefined,
 				}}
 				className={cn(
-					'absolute inset-0 rounded-3xl z-[1] will-change-transform',
-					'bg-[radial-gradient(circle_farthest-side_at_0_100%,#00ccb1,transparent),radial-gradient(circle_farthest-side_at_100%_0,#7b61ff,transparent),radial-gradient(circle_farthest-side_at_100%_100%,#ffc414,transparent),radial-gradient(circle_farthest-side_at_0_0,#1ca0fb,#141316)]',
+					'absolute inset-0 z-[1] rounded-3xl will-change-transform',
+					'bg-[radial-gradient(circle_farthest-side_at_0_100%,rgba(14,165,233,0.18),transparent),radial-gradient(circle_farthest-side_at_100%_0,rgba(168,85,247,0.14),transparent),radial-gradient(circle_farthest-side_at_100%_100%,rgba(245,158,11,0.12),transparent),radial-gradient(circle_farthest-side_at_0_0,rgba(59,130,246,0.14),transparent)]',
+					'dark:bg-[radial-gradient(circle_farthest-side_at_0_100%,rgba(14,165,233,0.22),transparent),radial-gradient(circle_farthest-side_at_100%_0,rgba(168,85,247,0.18),transparent),radial-gradient(circle_farthest-side_at_100%_100%,rgba(245,158,11,0.12),transparent),radial-gradient(circle_farthest-side_at_0_0,rgba(59,130,246,0.18),transparent)]',
 				)}
 			/>
 

@@ -57,11 +57,11 @@ export const CardConnectionProfile = () => {
 	};
 
 	return (
-		<BackgroundGradient className='rounded-[22px] bg-white p-2 dark:bg-zinc-900'>
-			<Card className='mt-3 w-full gap-0 border-none bg-card p-0.5 sm:p-0'>
+		<BackgroundGradient className='rounded-[22px] bg-background p-2'>
+			<Card className='mt-3 w-full gap-0 border-border/60 bg-card p-0.5 sm:p-0'>
 				<CardContent className='flex flex-col space-y-4 p-4 sm:flex-row sm:items-center sm:space-x-4'>
 					<div className='flex flex-row items-center space-x-4 sm:justify-center'>
-						<Avatar className='ml-4 h-28 w-28 border-2 border-foreground'>
+						<Avatar className='ml-4 h-28 w-28 border-2 border-border'>
 							<AvatarImage src={profile?.picProfile} />
 							<AvatarFallback>
 								<Image
@@ -81,14 +81,14 @@ export const CardConnectionProfile = () => {
 						{status ? (
 							<Button
 								onClick={handleClose}
-								className='mx-auto h-16 w-full cursor-pointer bg-chart-1 font-normal text-foreground text-xl duration-300 ease-in-out hover:scale-105 hover:bg-chart-1'
+								className='mx-auto h-16 w-full cursor-pointer bg-[#604ABB] font-normal text-white text-xl duration-300 ease-in-out hover:scale-105 hover:bg-[#4f3fa3]'
 							>
 								<span>Desconectar</span>
 							</Button>
 						) : (
 							<Button
 								onClick={handleStartConnection}
-								className='mx-auto h-16 w-xs cursor-pointer bg-chart-1 font-normal text-foreground text-xl duration-300 ease-in-out hover:scale-105 hover:bg-chart-1'
+								className='mx-auto h-16 w-xs cursor-pointer bg-[#604ABB] font-normal text-white text-xl duration-300 ease-in-out hover:scale-105 hover:bg-[#4f3fa3]'
 								disabled={isLoading}
 							>
 								{isLoading ? (
@@ -104,22 +104,31 @@ export const CardConnectionProfile = () => {
 						<span className='pt-2 text-xl'>
 							Estado:{' '}
 							{status ? (
-								<span className='text-chart-2'>Conectado</span>
+								<span className='text-emerald-500 dark:text-emerald-400'>Conectado</span>
 							) : (
-								<span className='text-chart-5'>Desconectado</span>
+								<span className='text-destructive'>Desconectado</span>
 							)}
 						</span>
 					</div>
 				</CardContent>
 				<div className='relative'>
-					<BsMoonStarsFill
-						className='-right-3 -top-10 -scale-x-100 absolute transform animate-pulse drop-shadow-[5px_0px_10px_rgba(255,255,255,0.5)]'
-						size={60}
-					/>
-					<BsMoonStarsFill
-						className='-right-3 -top-10 -scale-x-100 absolute transform animate-pulse'
-						size={60}
-					/>
+					<div className='absolute -right-3 -top-10 -scale-x-100 transform dark:hidden'>
+						<BsMoonStarsFill
+							className='absolute translate-x-1 translate-y-1 animate-pulse text-violet-300/55 blur-[0.4px] drop-shadow-[0_0_16px_rgba(168,85,247,0.18)]'
+							size={62}
+						/>
+						<BsMoonStarsFill
+							className='absolute animate-pulse text-violet-600/90 drop-shadow-[0_0_18px_rgba(124,58,237,0.28)]'
+							size={60}
+						/>
+					</div>
+					<div className='absolute -right-3 -top-10 -scale-x-100 hidden transform dark:block'>
+						<BsMoonStarsFill
+							className='absolute animate-pulse drop-shadow-[5px_0px_10px_rgba(255,255,255,0.5)]'
+							size={60}
+						/>
+						<BsMoonStarsFill className='absolute animate-pulse' size={60} />
+					</div>
 				</div>
 			</Card>
 		</BackgroundGradient>

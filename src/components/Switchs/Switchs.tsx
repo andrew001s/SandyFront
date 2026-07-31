@@ -9,7 +9,7 @@ const Dictaphone = dynamic(() => import('../Speech/Dictaphone.client'), {
 
 const Switchs = () => {
 	return (
-		<div className='flex items-center space-x-3 pt-4'>
+		<div className='flex items-center gap-3 pt-4'>
 			<Dictaphone />
 		</div>
 	);
