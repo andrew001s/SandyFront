@@ -16,8 +16,9 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useAuth } from '@clerk/nextjs';
-import { Bot, ExternalLink, Mic, Save, Volume2 } from 'lucide-react';
+import { Bot, ExternalLink, Mic, Save, Star, Volume2 } from 'lucide-react';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import ReactCountryFlag from 'react-country-flag';
 import { toast } from 'sonner';
 
 type SettingsFormState = {
@@ -75,12 +76,12 @@ const azureRegions = [
 ];
 
 const azureLanguages = [
-	{ label: 'Español (España)', value: 'es-ES' },
-	{ label: 'Español (México)', value: 'es-MX' },
-	{ label: 'English (US)', value: 'en-US' },
-	{ label: 'English (UK)', value: 'en-GB' },
-	{ label: 'Português (Brasil)', value: 'pt-BR' },
-	{ label: 'Français (France)', value: 'fr-FR' },
+	{ label: 'Español (España)', value: 'es-ES', flag: 'ES' },
+	{ label: 'Español (México)', value: 'es-MX', flag: 'MX' },
+	{ label: 'English (US)', value: 'en-US', flag: 'US' },
+	{ label: 'English (UK)', value: 'en-GB', flag: 'GB' },
+	{ label: 'Português (Brasil)', value: 'pt-BR', flag: 'BR' },
+	{ label: 'Français (France)', value: 'fr-FR', flag: 'FR' },
 ];
 
 type OpenRouterModel = {
@@ -180,6 +181,24 @@ const formatOpenRouterContext = (model: OpenRouterModel) => {
 const getOpenRouterModelUrl = (modelId: string) =>
 	`https://openrouter.ai/models/${modelId.replace(/^~\/?/, '')}`;
 
+const openRouterProviderIcons: Record<string, string> = {
+	amazon: 'Bedrock',
+	anthropic: 'Anthropic',
+	deepseek: 'SiliconFlow',
+	google: 'GoogleGemini',
+	'meta-llama': 'CoreWeave',
+	microsoft: 'Microsoft',
+	openai: 'OpenAI',
+	perplexity: 'Perplexity',
+};
+
+const getOpenRouterModelIconUrl = (modelId: string) => {
+	const author = modelId.split('/')[0]?.toLowerCase();
+	const icon = author ? openRouterProviderIcons[author] : undefined;
+
+	return icon ? `https://openrouter.ai/images/icons/${icon}.svg` : null;
+};
+
 const sortOpenRouterModels = (
 	models: OpenRouterModel[],
 	sort: OpenRouterSort,
@@ -213,6 +232,7 @@ const sortOpenRouterModels = (
 };
 
 type DropdownOption = {
+	flag?: string;
 	label: string;
 	value: string;
 };
@@ -242,7 +262,8 @@ function DropdownField({
 	className,
 	hideLabel,
 }: DropdownFieldProps) {
-	const selectedLabel = options.find((option) => option.value === value)?.label ?? placeholder;
+	const selected = options.find((option) => option.value === value);
+	const selectedLabel = selected?.label ?? placeholder;
 
 	return (
 		<div className={className}>
@@ -254,7 +275,16 @@ function DropdownField({
 					onClick={() => setOpen(!open)}
 					className='h-9 w-full justify-between bg-card/80 text-left'
 				>
-					<span className='truncate'>{selectedLabel}</span>
+					<span className='flex min-w-0 items-center gap-2'>
+						{selected?.flag ? (
+							<ReactCountryFlag
+								countryCode={selected.flag}
+								svg
+								className='size-5 shrink-0 rounded-full object-cover'
+							/>
+						) : null}
+						<span className='truncate'>{selectedLabel}</span>
+					</span>
 					<span className='text-muted-foreground'>⌄</span>
 				</Button>
 				{open ? (
@@ -275,7 +305,16 @@ function DropdownField({
 										: 'text-foreground hover:bg-accent hover:text-accent-foreground',
 								].join(' ')}
 							>
-								<span>{option.label}</span>
+								<span className='flex min-w-0 items-center gap-2'>
+									{option.flag ? (
+										<ReactCountryFlag
+											countryCode={option.flag}
+											svg
+											className='size-5 shrink-0 rounded-full object-cover'
+										/>
+									) : null}
+									<span className='truncate'>{option.label}</span>
+								</span>
 								{option.value === value ? <span>●</span> : null}
 							</button>
 						))}
@@ -308,7 +347,7 @@ function SectionCard({
 	return (
 		<Card
 			className={[
-				'overflow-hidden border-border/60 bg-card/90 shadow-[0_24px_80px_-36px_rgba(15,23,42,0.18)] backdrop-blur-xl transition-all',
+				'border-border/60 bg-card/90 shadow-[0_24px_80px_-36px_rgba(15,23,42,0.18)] backdrop-blur-xl transition-all',
 				highlighted ? 'ring-1 ring-violet-500/30' : '',
 			].join(' ')}
 		>
@@ -330,6 +369,32 @@ function SectionCard({
 			</CardHeader>
 			<CardContent className='space-y-5 px-5 py-5 sm:px-6'>{children}</CardContent>
 		</Card>
+	);
+}
+
+function ModelIcon({ modelId }: { modelId: string }) {
+	const [failed, setFailed] = useState(false);
+	const iconUrl = getOpenRouterModelIconUrl(modelId);
+
+	if (!iconUrl || failed) {
+		return (
+			<div className='flex size-6 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background/80'>
+				<Bot className='size-3.5 text-violet-600 dark:text-[#A78BFA]' />
+			</div>
+		);
+	}
+
+	return (
+		<div className='flex size-12 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background/80'>
+			{/* biome-ignore lint/nursery/noImgElement: iconos SVG de terceros de OpenRouter, con fallback a Bot */}
+			<img
+				src={iconUrl}
+				alt=''
+				loading='lazy'
+				onError={() => setFailed(true)}
+				className='size-12 object-contain'
+			/>
+		</div>
 	);
 }
 
@@ -373,10 +438,6 @@ export function SettingsPanel() {
 	const speechState =
 		form.azure_speech_key && form.azure_region && form.language ? 'Configurado' : 'Pendiente';
 	const fishState = form.fish_audio_key && form.voice_id ? 'Configurado' : 'Pendiente';
-	const selectedOpenRouterModel = useMemo(
-		() => openRouterModels.find((model) => model.id === form.openrouter_model) ?? null,
-		[form.openrouter_model, openRouterModels],
-	);
 	const visibleOpenRouterModels = useMemo(
 		() => openRouterModels.slice(0, visibleOpenRouterCount),
 		[openRouterModels, visibleOpenRouterCount],
@@ -530,10 +591,19 @@ export function SettingsPanel() {
 		<div className=''>
 			<section className='space-y-6'>
 				<Card className='overflow-hidden border-border/60 bg-card/90 shadow-[0_30px_90px_-40px_rgba(15,23,42,0.22)] backdrop-blur-xl'>
-					<div className='border-border/60 border-b px-6 py-6 sm:px-8'>
+					<div className='px-6 py-6 sm:px-8'>
 						<div className='flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between'>
 							<div className='space-y-2'>
-								<CardTitle className='text-3xl sm:text-4xl'>Configuración de IA</CardTitle>
+								<span className='flex items-center gap-2 font-semibold text-violet-600 text-xs uppercase tracking-[0.25em] dark:text-[#A78BFA]'>
+									<Star
+										size={12}
+										className='fill-amber-400 text-amber-500 dark:fill-[#FDE68A] dark:text-[#FDE68A]'
+									/>
+									Ajustes
+								</span>
+								<CardTitle className='font-bold text-3xl [font-family:var(--font-unbounded)] sm:text-4xl'>
+									Configuración de IA
+								</CardTitle>
 								<CardDescription className='max-w-2xl text-sm sm:text-base'>
 									Ajusta los proveedores, claves y voz con una interfaz más limpia, clara y modular.
 								</CardDescription>
@@ -548,7 +618,7 @@ export function SettingsPanel() {
 								<Button
 									onClick={handleSave}
 									disabled={isBusy}
-									className='bg-[#604ABB] text-white hover:bg-[#4f3fa3]'
+									className='bg-[#8B5CF6] text-white hover:bg-[#7C3AED]'
 								>
 									<Save className='size-4' />
 									{isSaving ? 'Guardando...' : 'Guardar configuración'}
@@ -593,7 +663,7 @@ export function SettingsPanel() {
 								onClick={() => handleProviderChange('gemini')}
 								className={
 									form.ai_provider === 'gemini'
-										? 'justify-start border-transparent bg-[#604ABB] text-white hover:bg-[#4f3fa3] hover:text-white'
+										? 'justify-start border-transparent bg-[#8B5CF6] text-white hover:bg-[#7C3AED] hover:text-white'
 										: 'justify-start'
 								}
 							>
@@ -605,7 +675,7 @@ export function SettingsPanel() {
 								onClick={() => handleProviderChange('openrouter')}
 								className={
 									form.ai_provider === 'openrouter'
-										? 'justify-start border-transparent bg-[#604ABB] text-white hover:bg-[#4f3fa3] hover:text-white'
+										? 'justify-start border-transparent bg-[#8B5CF6] text-white hover:bg-[#7C3AED] hover:text-white'
 										: 'justify-start'
 								}
 							>
@@ -626,7 +696,7 @@ export function SettingsPanel() {
 							</div>
 						) : (
 							<div className='grid gap-4 lg:grid-cols-2'>
-								<div className='space-y-2'>
+								<div className='space-y-2 lg:col-span-2'>
 									<Label htmlFor='openrouter_api_key'>OpenRouter API Key</Label>
 									<Input
 										id='openrouter_api_key'
@@ -654,15 +724,6 @@ export function SettingsPanel() {
 											Buscar modelos
 										</Button>
 									</div>
-									<p className='text-muted-foreground text-xs'>
-										Solo se muestran modelos de texto de OpenRouter.
-									</p>
-									{selectedOpenRouterModel ? (
-										<p className='text-muted-foreground text-xs'>
-											Selección actual: {selectedOpenRouterModel.name} ({selectedOpenRouterModel.id}
-											)
-										</p>
-									) : null}
 								</div>
 							</div>
 						)}
@@ -801,16 +862,10 @@ export function SettingsPanel() {
 								type='button'
 								onClick={handleSearchOpenRouterModels}
 								disabled={isLoadingModels}
+								className='text-foreground'
 							>
 								{isLoadingModels ? 'Buscando...' : 'Buscar'}
 							</Button>
-						</div>
-
-						<div className='rounded-2xl border border-border/60 bg-background/70 p-3'>
-							<p className='text-muted-foreground text-xs'>
-								Filtro activo: solo texto · Orden:{' '}
-								{openRouterSortOptions.find((option) => option.value === openRouterSort)?.label}
-							</p>
 						</div>
 
 						{openRouterModelError ? (
@@ -848,7 +903,7 @@ export function SettingsPanel() {
 														'relative flex w-full flex-col gap-2 rounded-2xl border p-4 text-left transition-all',
 														form.openrouter_model === model.id
 															? 'border-violet-500/40 bg-violet-500/10'
-															: 'border-border/60 bg-card hover:border-violet-500/30 hover:bg-violet-500/5',
+															: 'border-border/60 bg-card hover:bg-violet-500/5 dark:hover:bg-violet-500/10',
 													].join(' ')}
 												>
 													<Button
@@ -858,9 +913,12 @@ export function SettingsPanel() {
 														className='h-auto w-full justify-start p-0 text-left hover:bg-transparent'
 													>
 														<div className='flex w-full flex-col gap-2 pr-32'>
-															<div>
-																<p className='font-medium text-sm'>{model.name}</p>
-																<p className='text-muted-foreground text-xs'>{model.id}</p>
+															<div className='flex items-center gap-2'>
+																<ModelIcon modelId={model.id} />
+																<div className='min-w-0'>
+																	<p className='font-medium text-sm'>{model.name}</p>
+																	<p className='text-muted-foreground text-xs'>{model.id}</p>
+																</div>
 															</div>
 															<div className='flex flex-wrap gap-2'>
 																<Badge

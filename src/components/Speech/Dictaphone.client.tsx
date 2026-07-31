@@ -6,6 +6,7 @@ import { getResponseGemini } from '@/api/fetchGemini';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
 import { useAudioQueue } from '@/hooks/useAudioQueue';
+import { Mic } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { toast } from 'sonner';
@@ -120,17 +121,21 @@ const Dictaphone = () => {
 
 	return (
 		<div className='flex w-full flex-col gap-2 pt-4'>
-			<div className='flex items-center gap-3'>
-				<span>Reconocimiento de Voz:</span>
-				<SwitchComponent onCheckedChange={handleSpeechToggle} />
+			<div className='flex items-center gap-3 rounded-2xl border border-border/60 bg-card/70 px-4 py-3 backdrop-blur-sm'>
+				<Mic size={18} className='text-violet-600 dark:text-[#A78BFA]' />
+				<span className='font-medium text-sm'>Reconocimiento de Voz</span>
+				<div className='ml-auto'>
+					<SwitchComponent onCheckedChange={handleSpeechToggle} />
+				</div>
 			</div>
 			{transcript && (
-				<div className='flex flex-row gap-2 rounded-lg border border-border/60 bg-card px-3 py-2 text-card-foreground'>
+				<div className='flex flex-row gap-2 rounded-2xl border border-[#8B5CF6]/20 bg-card px-3 py-2 text-card-foreground'>
 					<span className='shrink-0 text-muted-foreground'>Transcripción:</span>
-					<TypingAnimation className='font-normal text-base text-foreground'>{transcript}</TypingAnimation>
+					<TypingAnimation className='font-normal text-base text-foreground'>
+						{transcript}
+					</TypingAnimation>
 				</div>
 			)}
-
 		</div>
 	);
 };

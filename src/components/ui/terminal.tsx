@@ -92,12 +92,13 @@ const StyledWrapper = styled.div<{ $isMinimized: boolean }>`
     padding: 10px;
     width: 100%;
     height: ${(props) => (props.$isMinimized ? '40px' : '300px')};
-    border-radius: 10px;
+    border-radius: 18px;
     user-select: none;
     -moz-user-select: none;
     -webkit-user-select: none;
     transition: all 0.3s ease-in-out;
-    border: transparent 1px solid;
+    border: 1px solid var(--border);
+    box-shadow: 0 12px 40px rgba(139, 92, 246, 0.06);
     overflow: hidden;
   }
   .mac-content {

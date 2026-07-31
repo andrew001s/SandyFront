@@ -1,7 +1,7 @@
 import { esES } from '@clerk/localizations';
 import { ClerkProvider } from '@clerk/nextjs';
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Geist, Geist_Mono, Unbounded } from 'next/font/google';
 import './globals.css';
 import { Footer } from '@/components/ui/footer';
 import { MessagesProvider } from '@/context/MessagesContext';
@@ -20,6 +20,12 @@ const geistMono = Geist_Mono({
 	subsets: ['latin'],
 });
 
+const unbounded = Unbounded({
+	variable: '--font-unbounded',
+	subsets: ['latin'],
+	weight: ['400', '500', '600', '700', '800'],
+});
+
 export const metadata: Metadata = {
 	title: 'Sandy Studio',
 	description:
@@ -34,7 +40,7 @@ export default function RootLayout({
 	return (
 		<html lang='es' suppressHydrationWarning translate='no'>
 			<body
-				className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen flex-col antialiased`}
+				className={`${geistSans.variable} ${geistMono.variable} ${unbounded.variable} flex min-h-screen flex-col antialiased`}
 			>
 				<ClerkProvider localization={esES}>
 					<ThemeProvider attribute='class' defaultTheme='dark' enableSystem>

@@ -58,7 +58,7 @@ export const CardConnectionProfile = () => {
 
 	return (
 		<BackgroundGradient className='rounded-[22px] bg-background p-2'>
-			<Card className='mt-3 w-full gap-0 border-border/60 bg-card p-0.5 sm:p-0'>
+			<Card className='mt-3 w-full gap-0 border-none bg-transparent p-0.5 sm:p-0'>
 				<CardContent className='flex flex-col space-y-4 p-4 sm:flex-row sm:items-center sm:space-x-4'>
 					<div className='flex flex-row items-center space-x-4 sm:justify-center'>
 						<Avatar className='ml-4 h-28 w-28 border-2 border-border'>
@@ -112,7 +112,7 @@ export const CardConnectionProfile = () => {
 					</div>
 				</CardContent>
 				<div className='relative'>
-					<div className='absolute -right-3 -top-10 -scale-x-100 transform dark:hidden'>
+					<div className='-right-3 -top-10 -scale-x-100 absolute transform dark:hidden'>
 						<BsMoonStarsFill
 							className='absolute translate-x-1 translate-y-1 animate-pulse text-violet-300/55 blur-[0.4px] drop-shadow-[0_0_16px_rgba(168,85,247,0.18)]'
 							size={62}
@@ -122,7 +122,7 @@ export const CardConnectionProfile = () => {
 							size={60}
 						/>
 					</div>
-					<div className='absolute -right-3 -top-10 -scale-x-100 hidden transform dark:block'>
+					<div className='-right-3 -top-10 -scale-x-100 absolute hidden transform dark:block'>
 						<BsMoonStarsFill
 							className='absolute animate-pulse drop-shadow-[5px_0px_10px_rgba(255,255,255,0.5)]'
 							size={60}

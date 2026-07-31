@@ -1,12 +1,5 @@
 import { Landing } from '@/components/landing/Landing';
 import type { Metadata } from 'next';
-import { Unbounded } from 'next/font/google';
-
-const unbounded = Unbounded({
-	variable: '--font-unbounded',
-	subsets: ['latin'],
-	weight: ['400', '500', '600', '700', '800'],
-});
 
 export const metadata: Metadata = {
 	title: 'Sandy Studio — Tu VTuber con IA que conversa con tu chat',
@@ -38,7 +31,7 @@ export const metadata: Metadata = {
 
 export default function LandingPage() {
 	return (
-		<div className={`${unbounded.variable} min-h-screen bg-[#F6F3FC] dark:bg-[#0B0A12]`}>
+		<div className='min-h-screen bg-[#F6F3FC] dark:bg-[#0B0A12]'>
 			<Landing />
 		</div>
 	);
