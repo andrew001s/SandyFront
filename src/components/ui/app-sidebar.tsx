@@ -16,7 +16,7 @@ import {
 	SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
-import { SignOutButton, useUser } from '@clerk/nextjs';
+import { SignOutButton, useClerk, useUser } from '@clerk/nextjs';
 import { CircleUserRound, LayoutDashboard, LogIn, LogOut, Settings2, Tv } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -32,6 +32,7 @@ const navItems = [
 export function AppSidebar() {
 	const pathname = usePathname();
 	const { isSignedIn, user } = useUser();
+	const { openSignIn } = useClerk();
 
 	const displayName = user?.fullName ?? user?.firstName ?? user?.username ?? 'Tu perfil';
 	const email = user?.primaryEmailAddress?.emailAddress ?? 'Sesión activa';
@@ -107,7 +108,7 @@ export function AppSidebar() {
 					</div>
 					<div className='mt-3'>
 						{isSignedIn ? (
-							<SignOutButton redirectUrl='/auth'>
+							<SignOutButton redirectUrl='/'>
 								<Button
 									type='button'
 									variant='outline'
@@ -120,15 +121,14 @@ export function AppSidebar() {
 							</SignOutButton>
 						) : (
 							<Button
-								asChild
+								type='button'
 								variant='outline'
 								size='sm'
+								onClick={() => void openSignIn({ fallbackRedirectUrl: '/home' })}
 								className='h-10 w-full justify-start gap-3 rounded-2xl border-border/70 bg-background px-3 shadow-none group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0'
 							>
-								<Link href='/auth'>
-									<LogIn className='h-4 w-4 shrink-0' />
-									<span className='group-data-[collapsible=icon]:hidden'>Iniciar sesión</span>
-								</Link>
+								<LogIn className='h-4 w-4 shrink-0' />
+								<span className='group-data-[collapsible=icon]:hidden'>Iniciar sesión</span>
 							</Button>
 						)}
 					</div>

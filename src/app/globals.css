@@ -138,3 +138,34 @@
 	max-width: none !important;
 	min-width: 0 !important;
 }
+
+@keyframes marquee {
+	from {
+		transform: translateX(0);
+	}
+	to {
+		transform: translateX(-50%);
+	}
+}
+
+@keyframes twinkle {
+	0%,
+	100% {
+		opacity: 0.12;
+		transform: scale(0.75);
+	}
+	50% {
+		opacity: 1;
+		transform: scale(1.15);
+	}
+}
+
+@keyframes float-slow {
+	0%,
+	100% {
+		transform: translateY(0) rotate(-4deg);
+	}
+	50% {
+		transform: translateY(-14px) rotate(4deg);
+	}
+}

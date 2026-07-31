@@ -1,8 +1,8 @@
 'use client';
 
-import { Show, SignOutButton, UserButton } from '@clerk/nextjs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Show, SignOutButton, UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
 import { FiLock, FiLogIn, FiUserPlus } from 'react-icons/fi';
 
@@ -17,9 +17,10 @@ export default function AuthPage() {
 								<FiLock size={22} />
 							</div>
 							<div className='space-y-2'>
-								<CardTitle className='text-3xl'>Acceso a SandyIA</CardTitle>
+								<CardTitle className='text-3xl'>Acceso a Sandy Studio</CardTitle>
 								<CardDescription className='max-w-xl text-base'>
-									Entra o crea tu cuenta para usar el dashboard, el avatar y las funciones conectadas a VTube Studio.
+									Entra o crea tu cuenta para usar el dashboard, el avatar y las funciones
+									conectadas a VTube Studio.
 								</CardDescription>
 							</div>
 						</CardHeader>
@@ -51,9 +52,10 @@ export default function AuthPage() {
 								fallback={
 									<div className='space-y-4 rounded-2xl border border-border/60 bg-background/60 p-6'>
 										<p className='text-muted-foreground text-sm'>
-											No tienes una sesión activa todavía. Usa los botones de la izquierda para entrar o registrarte.
+											No tienes una sesión activa todavía. Usa los botones de la izquierda para
+											entrar o registrarte.
 										</p>
-										<div className='rounded-xl border border-dashed border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground'>
+										<div className='rounded-xl border border-border/60 border-dashed bg-muted/30 p-4 text-muted-foreground text-sm'>
 											Después de iniciar sesión, podrás volver al dashboard sin tocar el sidebar.
 										</div>
 									</div>

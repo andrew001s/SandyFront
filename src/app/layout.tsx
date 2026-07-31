@@ -21,9 +21,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: 'SandyIA',
+	title: 'Sandy Studio',
 	description:
-		'Sandy IA es una VTuber que te ayuda a interactuar con tu chat y servicios de streaming.',
+		'Sandy Studio es una VTuber que te ayuda a interactuar con tu chat y servicios de streaming.',
 };
 
 export default function RootLayout({
