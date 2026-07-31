@@ -17,7 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useAuth } from '@clerk/nextjs';
 import { Bot, ExternalLink, Mic, Save, Volume2 } from 'lucide-react';
-import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 type SettingsFormState = {
@@ -386,11 +386,63 @@ export function SettingsPanel() {
 		setForm(normalizeSettings(settings));
 	}, [settings]);
 
+	const loadOpenRouterModels = useCallback(
+		async (query: string, sort: OpenRouterSort = openRouterSort) => {
+			try {
+				setIsLoadingModels(true);
+				setOpenRouterModelError(null);
+
+				const apiSort = sort === 'free-only' ? 'most-popular' : sort;
+				const params = new URLSearchParams({
+					output_modalities: 'text',
+					sort: apiSort,
+				});
+
+				if (query.trim()) {
+					params.set('q', query.trim());
+				}
+
+				const response = await fetch(`https://openrouter.ai/api/v1/models?${params.toString()}`, {
+					headers: form.openrouter_api_key
+						? {
+								Authorization: `Bearer ${form.openrouter_api_key}`,
+							}
+						: undefined,
+				});
+
+				if (!response.ok) {
+					throw new Error(`OpenRouter respondió ${response.status}`);
+				}
+
+				const data = (await response.json()) as { data?: OpenRouterModel[] };
+				const models = sortOpenRouterModels(
+					(data.data ?? []).filter(
+						(model) =>
+							model.architecture?.output_modalities?.includes('text') ||
+							model.architecture?.modality === 'text->text',
+					),
+					sort,
+				).slice(0, 120);
+
+				setOpenRouterModels(models);
+				setVisibleOpenRouterCount(24);
+			} catch (error) {
+				console.error('Error al cargar modelos de OpenRouter:', error);
+				setOpenRouterModelError('No se pudieron cargar los modelos de OpenRouter.');
+				setOpenRouterModels([]);
+				setVisibleOpenRouterCount(24);
+			} finally {
+				setIsLoadingModels(false);
+			}
+		},
+		[form.openrouter_api_key, openRouterSort],
+	);
+
 	useEffect(() => {
 		if (isOpenRouterModalOpen && form.ai_provider === 'openrouter') {
 			void loadOpenRouterModels('', openRouterSort);
 		}
-	}, [isOpenRouterModalOpen, form.ai_provider, openRouterSort]);
+	}, [isOpenRouterModalOpen, form.ai_provider, openRouterSort, loadOpenRouterModels]);
 
 	useEffect(() => {
 		if (!isOpenRouterModalOpen) {
@@ -399,55 +451,6 @@ export function SettingsPanel() {
 			setIsAzureLanguageOpen(false);
 		}
 	}, [isOpenRouterModalOpen]);
-
-	const loadOpenRouterModels = async (query: string, sort: OpenRouterSort = openRouterSort) => {
-		try {
-			setIsLoadingModels(true);
-			setOpenRouterModelError(null);
-
-			const apiSort = sort === 'free-only' ? 'most-popular' : sort;
-			const params = new URLSearchParams({
-				output_modalities: 'text',
-				sort: apiSort,
-			});
-
-			if (query.trim()) {
-				params.set('q', query.trim());
-			}
-
-			const response = await fetch(`https://openrouter.ai/api/v1/models?${params.toString()}`, {
-				headers: form.openrouter_api_key
-					? {
-							Authorization: `Bearer ${form.openrouter_api_key}`,
-						}
-					: undefined,
-			});
-
-			if (!response.ok) {
-				throw new Error(`OpenRouter respondió ${response.status}`);
-			}
-
-			const data = (await response.json()) as { data?: OpenRouterModel[] };
-			const models = sortOpenRouterModels(
-				(data.data ?? []).filter(
-					(model) =>
-						model.architecture?.output_modalities?.includes('text') ||
-						model.architecture?.modality === 'text->text',
-				),
-				sort,
-			).slice(0, 120);
-
-			setOpenRouterModels(models);
-			setVisibleOpenRouterCount(24);
-		} catch (error) {
-			console.error('Error al cargar modelos de OpenRouter:', error);
-			setOpenRouterModelError('No se pudieron cargar los modelos de OpenRouter.');
-			setOpenRouterModels([]);
-			setVisibleOpenRouterCount(24);
-		} finally {
-			setIsLoadingModels(false);
-		}
-	};
 
 	const updateField = (field: keyof SettingsFormState, value: string) => {
 		setForm((current) => ({
