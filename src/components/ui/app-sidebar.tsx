@@ -26,7 +26,9 @@ import {
 	LayoutDashboard,
 	LogIn,
 	LogOut,
+	Plug,
 	Settings2,
+	ShieldCheck,
 	Tv,
 } from 'lucide-react';
 import Image from 'next/image';
@@ -35,6 +37,8 @@ import { usePathname } from 'next/navigation';
 
 const navItems = [
 	{ href: '/home', label: 'Dashboard', icon: LayoutDashboard },
+	{ href: '/conexiones', label: 'Conexiones', icon: Plug },
+	{ href: '/moderacion', label: 'Moderación', icon: ShieldCheck },
 	{ href: '/avatar', label: 'Avatar VTuber', icon: Tv },
 	{ href: '/settings', label: 'Configuración de IA', icon: Settings2 },
 	{ href: '/account', label: 'Configuración', icon: CircleUserRound },

@@ -1,4 +1,5 @@
 import { backendClient } from '@/api/backendClient';
+import type { FeatureFlags, PersonaProfile, PromptOverrides } from '@/lib/sandycore-config';
 
 export type SettingsPayload = {
 	twitch_channel?: string;
@@ -17,6 +18,12 @@ export type SettingsPayload = {
 	language?: string;
 	fish_audio_key?: string;
 	voice_id?: string;
+	persona_profile?: PersonaProfile;
+	prompt_overrides?: PromptOverrides;
+	feature_flags?: FeatureFlags;
+	custom_banned_words?: string[];
+	custom_banned_symbols?: string[];
+	custom_banned_links?: string[];
 };
 
 export type SettingsResponse = {
@@ -41,7 +48,10 @@ export async function getSettings(options: RequestAuthOptions = {}): Promise<Set
 	return response.data;
 }
 
-export async function saveSettings(payload: SettingsPayload, options: RequestAuthOptions = {}): Promise<SettingsResponse> {
+export async function saveSettings(
+	payload: SettingsPayload,
+	options: RequestAuthOptions = {},
+): Promise<SettingsResponse> {
 	const response = await backendClient.put('/settings', payload, {
 		headers: buildAuthHeaders(options.token),
 	});

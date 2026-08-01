@@ -1,6 +1,7 @@
 'use client';
 
 import { type SettingsPayload, saveSettings } from '@/api/settings';
+import { SandyCoreConfigPanel } from '@/components/Settings/SandyCoreConfigPanel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +18,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { getStoredAiProvider, storeAiProvider } from '@/lib/ai-provider';
+import {
+	DEFAULT_FEATURE_FLAGS,
+	type SandyCoreConfig,
+	normalizeSandyCoreConfig,
+} from '@/lib/sandycore-config';
 import { getStoredSttProvider, storeSttProvider } from '@/lib/stt-provider';
 import { useAuth } from '@clerk/nextjs';
 import { Bot, ExternalLink, Mic, Save, Star, Volume2 } from 'lucide-react';
@@ -417,6 +423,15 @@ export function SettingsPanel() {
 	const [isAzureLanguageOpen, setIsAzureLanguageOpen] = useState(false);
 	const [isOpenRouterSortOpen, setIsOpenRouterSortOpen] = useState(false);
 	const [browserSupportsNativeSpeech, setBrowserSupportsNativeSpeech] = useState(false);
+	const [sandyConfig, setSandyConfig] = useState<SandyCoreConfig>({
+		feature_flags: { ...DEFAULT_FEATURE_FLAGS },
+	});
+	const [sandyHasLocalChanges, setSandyHasLocalChanges] = useState(false);
+
+	const handleSandyConfigChange = useCallback((next: SandyCoreConfig) => {
+		setSandyConfig(next);
+		setSandyHasLocalChanges(true);
+	}, []);
 
 	const activeProviderLabel = useMemo(
 		() => (form.ai_provider === 'gemini' ? 'Gemini' : 'OpenRouter'),
@@ -468,6 +483,12 @@ export function SettingsPanel() {
 			}));
 		}
 	}, [settings]);
+
+	useEffect(() => {
+		if (!sandyHasLocalChanges && settings) {
+			setSandyConfig(normalizeSandyCoreConfig(settings));
+		}
+	}, [sandyHasLocalChanges, settings]);
 
 	useEffect(() => {
 		const speechWindow = window as Window & {
@@ -611,10 +632,16 @@ export function SettingsPanel() {
 				language: form.language || 'es-ES',
 				fish_audio_key: form.fish_audio_key,
 				voice_id: form.voice_id,
+				persona_profile: sandyConfig.persona_profile,
+				prompt_overrides: sandyConfig.prompt_overrides,
+				custom_banned_words: sandyConfig.custom_banned_words,
+				custom_banned_symbols: sandyConfig.custom_banned_symbols,
+				custom_banned_links: sandyConfig.custom_banned_links,
 			};
 
 			await saveSettings(payload, { token });
 			await refreshSettings();
+			setSandyHasLocalChanges(false);
 			toast.success('Ajustes guardados');
 		} catch (error) {
 			console.error('Error al guardar settings:', error);
@@ -762,7 +789,39 @@ export function SettingsPanel() {
 							</TabsContent>
 						</Tabs>
 					</SectionCard>
-
+					<SectionCard
+						icon={<Volume2 className='size-5' />}
+						title='Voz sintética'
+						description='Define la voz sintética. Por ahora solo usa Fish Audio.'
+						statusLabel={fishState}
+						statusTone={
+							fishState === 'Configurado'
+								? 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+								: 'border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400'
+						}
+					>
+						<div className='grid gap-4 lg:grid-cols-2'>
+							<div className='space-y-2'>
+								<Label htmlFor='fish_audio_key'>Fish Audio Key</Label>
+								<Input
+									id='fish_audio_key'
+									type='password'
+									placeholder='tu_clave_de_fish_audio'
+									value={form.fish_audio_key}
+									onChange={(event) => updateField('fish_audio_key', event.target.value)}
+								/>
+							</div>
+							<div className='space-y-2'>
+								<Label htmlFor='voice_id'>Fish Voice ID</Label>
+								<Input
+									id='voice_id'
+									placeholder='id_de_voz_fish_audio'
+									value={form.voice_id}
+									onChange={(event) => updateField('voice_id', event.target.value)}
+								/>
+							</div>
+						</div>
+					</SectionCard>
 					<SectionCard
 						icon={<Mic className='size-5' />}
 						title='Reconocimiento de voz'
@@ -858,39 +917,7 @@ export function SettingsPanel() {
 						</Tabs>
 					</SectionCard>
 
-					<SectionCard
-						icon={<Volume2 className='size-5' />}
-						title='Voz sintética'
-						description='Define la voz sintética. Por ahora solo usa Fish Audio.'
-						statusLabel={fishState}
-						statusTone={
-							fishState === 'Configurado'
-								? 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'
-								: 'border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400'
-						}
-					>
-						<div className='grid gap-4 lg:grid-cols-2'>
-							<div className='space-y-2'>
-								<Label htmlFor='fish_audio_key'>Fish Audio Key</Label>
-								<Input
-									id='fish_audio_key'
-									type='password'
-									placeholder='tu_clave_de_fish_audio'
-									value={form.fish_audio_key}
-									onChange={(event) => updateField('fish_audio_key', event.target.value)}
-								/>
-							</div>
-							<div className='space-y-2'>
-								<Label htmlFor='voice_id'>Fish Voice ID</Label>
-								<Input
-									id='voice_id'
-									placeholder='id_de_voz_fish_audio'
-									value={form.voice_id}
-									onChange={(event) => updateField('voice_id', event.target.value)}
-								/>
-							</div>
-						</div>
-					</SectionCard>
+					<SandyCoreConfigPanel config={sandyConfig} onConfigChange={handleSandyConfigChange} />
 				</div>
 			</section>
 

@@ -78,11 +78,13 @@ const Dictaphone = () => {
 					});
 					resetTranscript();
 
-					const audioBlob = await getVoiceSandy(response, {
-						apiKey: settings?.fish_audio_key ?? '',
-						voiceId: settings?.voice_id ?? '',
-					});
-					addToQueue(audioBlob);
+					if (settings?.feature_flags?.voice_replies !== false) {
+						const audioBlob = await getVoiceSandy(response, {
+							apiKey: settings?.fish_audio_key ?? '',
+							voiceId: settings?.voice_id ?? '',
+						});
+						addToQueue(audioBlob);
+					}
 				} catch (error) {
 					console.error('Error al obtener respuesta de audio:', error);
 					toast.error('Error al procesar el audio');

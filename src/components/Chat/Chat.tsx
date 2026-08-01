@@ -62,13 +62,21 @@ const StreamChat = () => {
 
 	const queueVoice = useCallback(
 		async (text: string) => {
+			if (settings?.feature_flags?.voice_replies === false) {
+				return;
+			}
 			const audioBlob = await getVoiceSandy(text, {
 				apiKey: settings?.fish_audio_key ?? '',
 				voiceId: settings?.voice_id ?? '',
 			});
 			addToQueue(audioBlob);
 		},
-		[addToQueue, settings?.fish_audio_key, settings?.voice_id],
+		[
+			addToQueue,
+			settings?.feature_flags?.voice_replies,
+			settings?.fish_audio_key,
+			settings?.voice_id,
+		],
 	);
 
 	useEffect(() => {
@@ -99,7 +107,9 @@ const StreamChat = () => {
 				RECONNECT_BASE_DELAY_MS * 2 ** Math.min(attempt - 1, 4),
 			);
 
-			pushSystemMessage(`⚠️ Stream caído (${reason}). Reintentando en ${Math.round(delay / 1000)}s...`);
+			pushSystemMessage(
+				`⚠️ Stream caído (${reason}). Reintentando en ${Math.round(delay / 1000)}s...`,
+			);
 
 			reconnectTimerRef.current = setTimeout(() => {
 				reconnectTimerRef.current = null;
@@ -181,7 +191,10 @@ const StreamChat = () => {
 		};
 
 		const attachStreamListeners = (eventSource: EventSource) => {
-			const listeners: Array<{ event: StreamEventName; handler: (event: MessageEvent<string>) => void }> = [
+			const listeners: Array<{
+				event: StreamEventName;
+				handler: (event: MessageEvent<string>) => void;
+			}> = [
 				{
 					event: 'speech',
 					handler: (event) => {
