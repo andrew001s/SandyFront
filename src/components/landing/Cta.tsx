@@ -1,6 +1,7 @@
 'use client';
 
 import { AuthAction } from '@/components/landing/AuthAction';
+import { KoFiButton } from '@/components/landing/KoFi';
 import { Reveal } from '@/components/landing/Reveal';
 import { StarField } from '@/components/landing/StarField';
 import { ArrowRight, Sparkle, Sparkles, Star } from 'lucide-react';
@@ -63,6 +64,7 @@ export function Cta() {
 							Crear cuenta gratis
 							<ArrowRight size={18} className='transition-transform group-hover:translate-x-1' />
 						</AuthAction>
+						<KoFiButton />
 					</div>
 				</Reveal>
 			</div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { KoFiButton } from '@/components/landing/KoFi';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,10 +15,20 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarSeparator,
+	useSidebar,
 } from '@/components/ui/sidebar';
+import { KOFI_URL } from '@/lib/links';
 import { cn } from '@/lib/utils';
 import { SignOutButton, useClerk, useUser } from '@clerk/nextjs';
-import { CircleUserRound, LayoutDashboard, LogIn, LogOut, Settings2, Tv } from 'lucide-react';
+import {
+	CircleUserRound,
+	Coffee,
+	LayoutDashboard,
+	LogIn,
+	LogOut,
+	Settings2,
+	Tv,
+} from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -33,6 +44,7 @@ export function AppSidebar() {
 	const pathname = usePathname();
 	const { isSignedIn, user } = useUser();
 	const { openSignIn } = useClerk();
+	const { state } = useSidebar();
 
 	const displayName = user?.fullName ?? user?.firstName ?? user?.username ?? 'Tu perfil';
 	const email = user?.primaryEmailAddress?.emailAddress ?? 'Sesión activa';
@@ -91,6 +103,21 @@ export function AppSidebar() {
 			</SidebarContent>
 
 			<SidebarFooter className='mt-auto p-3 group-data-[collapsible=icon]:p-2'>
+				{state === 'collapsed' ? (
+					<a
+						href={KOFI_URL}
+						target='_blank'
+						rel='noopener noreferrer'
+						aria-label='Apóyame en Ko-fi'
+						className='mx-auto mb-2 flex size-10 items-center justify-center rounded-2xl border border-border/70 bg-background text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
+					>
+						<Coffee className='h-4 w-4 shrink-0 text-[#FF5E5B]' />
+					</a>
+				) : (
+					<div className='mb-2 flex w-full justify-center'>
+						<KoFiButton />
+					</div>
+				)}
 				<div className='rounded-[28px] border border-sidebar-border bg-background/80 p-3 shadow-sm backdrop-blur-sm group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-2'>
 					<div className='flex items-center gap-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0'>
 						<Avatar className='size-10 shrink-0 ring-2 ring-background shadow-sm'>
