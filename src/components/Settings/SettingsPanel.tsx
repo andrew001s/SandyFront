@@ -1,5 +1,6 @@
 'use client';
 
+import { stop } from '@/api/sandycore';
 import { type SettingsPayload, saveSettings } from '@/api/settings';
 import { SandyCoreConfigPanel } from '@/components/Settings/SandyCoreConfigPanel';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { getStoredAiProvider, storeAiProvider } from '@/lib/ai-provider';
@@ -25,7 +27,7 @@ import {
 } from '@/lib/sandycore-config';
 import { getStoredSttProvider, storeSttProvider } from '@/lib/stt-provider';
 import { useAuth } from '@clerk/nextjs';
-import { Bot, ExternalLink, Mic, Save, Star, Volume2 } from 'lucide-react';
+import { Bot, ExternalLink, Mic, Power, Save, Square, Star, Volume2 } from 'lucide-react';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import ReactCountryFlag from 'react-country-flag';
 import { toast } from 'sonner';
@@ -42,6 +44,10 @@ type SettingsFormState = {
 	language: string;
 	fish_audio_key: string;
 	voice_id: string;
+	service_mode: 'manual' | 'hybrid';
+	auto_start_on_live: boolean;
+	auto_stop_on_offline: boolean;
+	idle_timeout_minutes: number;
 };
 
 const initialState: SettingsFormState = {
@@ -56,6 +62,10 @@ const initialState: SettingsFormState = {
 	language: 'es-ES',
 	fish_audio_key: '',
 	voice_id: '',
+	service_mode: 'manual',
+	auto_start_on_live: false,
+	auto_stop_on_offline: true,
+	idle_timeout_minutes: 60,
 };
 
 const normalizeSettings = (settings?: SettingsPayload | null): SettingsFormState => ({
@@ -70,6 +80,10 @@ const normalizeSettings = (settings?: SettingsPayload | null): SettingsFormState
 	language: settings?.language ?? 'es-ES',
 	fish_audio_key: settings?.fish_audio_key ?? '',
 	voice_id: settings?.voice_id ?? '',
+	service_mode: settings?.service_mode ?? 'manual',
+	auto_start_on_live: settings?.auto_start_on_live ?? false,
+	auto_stop_on_offline: settings?.auto_stop_on_offline ?? true,
+	idle_timeout_minutes: settings?.idle_timeout_minutes ?? 60,
 });
 
 const azureRegions = [
@@ -412,6 +426,7 @@ export function SettingsPanel() {
 	const { settings, isLoading: settingsLoading, refreshSettings } = useAppSettings();
 	const [form, setForm] = useState<SettingsFormState>(initialState);
 	const [isSaving, setIsSaving] = useState(false);
+	const [isStopping, setIsStopping] = useState(false);
 	const [isOpenRouterModalOpen, setIsOpenRouterModalOpen] = useState(false);
 	const [openRouterSearch, setOpenRouterSearch] = useState('');
 	const [openRouterSort, setOpenRouterSort] = useState<OpenRouterSort>('most-popular');
@@ -579,6 +594,40 @@ export function SettingsPanel() {
 		}));
 	};
 
+	const updateLifecycleBoolean = (
+		field: 'auto_start_on_live' | 'auto_stop_on_offline',
+		value: boolean,
+	) => {
+		setForm((current) => ({
+			...current,
+			[field]: value,
+		}));
+	};
+
+	const updateIdleTimeout = (value: string) => {
+		const minutes = Number(value);
+		setForm((current) => ({
+			...current,
+			idle_timeout_minutes:
+				Number.isFinite(minutes) && minutes >= 0
+					? Math.floor(minutes)
+					: current.idle_timeout_minutes,
+		}));
+	};
+
+	const handleStopService = async () => {
+		try {
+			setIsStopping(true);
+			await stop(false);
+			toast.success('Servicios detenidos');
+		} catch (error) {
+			console.error('Error al detener servicios:', error);
+			toast.error('No se pudieron detener los servicios');
+		} finally {
+			setIsStopping(false);
+		}
+	};
+
 	const handleProviderChange = (value: 'gemini' | 'openrouter') => {
 		storeAiProvider(value);
 		setForm((current) => ({
@@ -637,6 +686,10 @@ export function SettingsPanel() {
 				custom_banned_words: sandyConfig.custom_banned_words,
 				custom_banned_symbols: sandyConfig.custom_banned_symbols,
 				custom_banned_links: sandyConfig.custom_banned_links,
+				service_mode: form.service_mode,
+				auto_start_on_live: form.auto_start_on_live,
+				auto_stop_on_offline: form.auto_stop_on_offline,
+				idle_timeout_minutes: form.idle_timeout_minutes,
 			};
 
 			await saveSettings(payload, { token });
@@ -711,6 +764,7 @@ export function SettingsPanel() {
 				</Card>
 
 				<div className='grid gap-4 xl:grid-cols-2'>
+					<SandyCoreConfigPanel config={sandyConfig} onConfigChange={handleSandyConfigChange} />
 					<SectionCard
 						icon={<Bot className='size-5' />}
 						title='Proveedor de IA'
@@ -917,7 +971,116 @@ export function SettingsPanel() {
 						</Tabs>
 					</SectionCard>
 
-					<SandyCoreConfigPanel config={sandyConfig} onConfigChange={handleSandyConfigChange} />
+					<SectionCard
+						icon={<Power className='size-5' />}
+						title='Ciclo de vida del servicio'
+						description='Controla cómo arranca y se detiene la VTuber y cuándo se apaga por inactividad.'
+						statusLabel={form.service_mode === 'hybrid' ? 'Híbrido' : 'Manual'}
+						statusTone={
+							form.service_mode === 'hybrid'
+								? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+								: 'border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400'
+						}
+					>
+						<div className='space-y-5'>
+							<div className='space-y-2'>
+								<Label>Modo de servicio</Label>
+								<Tabs
+									value={form.service_mode}
+									onValueChange={(value) => updateField('service_mode', value)}
+									className='w-full'
+								>
+									<TabsList className='w-full'>
+										<TabsTrigger value='manual' className='flex-1'>
+											Manual
+										</TabsTrigger>
+										<TabsTrigger value='hybrid' className='flex-1'>
+											Híbrido
+										</TabsTrigger>
+									</TabsList>
+								</Tabs>
+								<p className='text-muted-foreground text-xs'>
+									En modo híbrido el monitor revisa el estado del stream y la inactividad para
+									arrancar y detener la VTuber automáticamente.
+								</p>
+							</div>
+
+							{form.service_mode !== 'hybrid' ? (
+								<div className='rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-amber-700 text-sm dark:text-amber-300'>
+									Estás en modo manual: el arranque y la parada se controlan con los botones. Cambia
+									a modo híbrido para activar las opciones automáticas.
+								</div>
+							) : null}
+
+							<div
+								className={
+									form.service_mode === 'hybrid'
+										? 'space-y-5'
+										: 'pointer-events-none select-none space-y-5 opacity-60'
+								}
+							>
+								<div className='flex items-center justify-between gap-4 rounded-2xl border border-border/60 bg-background/60 px-4 py-3'>
+									<div className='space-y-0.5'>
+										<p className='font-medium text-sm'>Arranque automático al estar live</p>
+										<p className='text-muted-foreground text-xs'>
+											Arranca la VTuber cuando el stream pase a estar en directo.
+										</p>
+									</div>
+									<Switch
+										checked={form.auto_start_on_live}
+										disabled={form.service_mode !== 'hybrid'}
+										onCheckedChange={(value) => updateLifecycleBoolean('auto_start_on_live', value)}
+									/>
+								</div>
+
+								<div className='flex items-center justify-between gap-4 rounded-2xl border border-border/60 bg-background/60 px-4 py-3'>
+									<div className='space-y-0.5'>
+										<p className='font-medium text-sm'>Parada automática al cerrar stream</p>
+										<p className='text-muted-foreground text-xs'>
+											Detiene la VTuber cuando el stream pase a estar offline.
+										</p>
+									</div>
+									<Switch
+										checked={form.auto_stop_on_offline}
+										disabled={form.service_mode !== 'hybrid'}
+										onCheckedChange={(value) =>
+											updateLifecycleBoolean('auto_stop_on_offline', value)
+										}
+									/>
+								</div>
+
+								<div className='space-y-2'>
+									<Label htmlFor='idle_timeout_minutes'>
+										Minutos de inactividad antes de apagar
+									</Label>
+									<Input
+										id='idle_timeout_minutes'
+										type='number'
+										min={0}
+										placeholder='60'
+										disabled={form.service_mode !== 'hybrid'}
+										value={form.idle_timeout_minutes}
+										onChange={(event) => updateIdleTimeout(event.target.value)}
+									/>
+									<p className='text-muted-foreground text-xs'>
+										Si la VTuber no tiene actividad durante este tiempo, se detiene sola. Usa 0 para
+										desactivarlo.
+									</p>
+								</div>
+							</div>
+
+							<Button
+								type='button'
+								variant='outline'
+								onClick={handleStopService}
+								disabled={isStopping}
+								className='w-full'
+							>
+								<Square className='size-4' />
+								{isStopping ? 'Deteniendo...' : 'Detener servicio'}
+							</Button>
+						</div>
+					</SectionCard>
 				</div>
 			</section>
 

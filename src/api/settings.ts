@@ -24,6 +24,10 @@ export type SettingsPayload = {
 	custom_banned_words?: string[];
 	custom_banned_symbols?: string[];
 	custom_banned_links?: string[];
+	service_mode?: 'manual' | 'hybrid';
+	auto_start_on_live?: boolean;
+	auto_stop_on_offline?: boolean;
+	idle_timeout_minutes?: number;
 };
 
 export type SettingsResponse = {
