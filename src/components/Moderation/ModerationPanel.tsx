@@ -144,7 +144,7 @@ export function ModerationPanel() {
 						<ShieldCheck className='size-6 text-muted-foreground' />
 						<p className='font-medium'>No hay bloqueos configurados</p>
 						<p className='text-muted-foreground text-sm'>
-							Agrega la primera entrada con el botón "Agregar entrada".
+							Agrega la primera entrada con el botón &ldquo;Agregar entrada&rdquo;.
 						</p>
 					</div>
 				) : (

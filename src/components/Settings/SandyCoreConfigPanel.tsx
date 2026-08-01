@@ -9,7 +9,7 @@ import {
 	normalizeSandyCoreConfig,
 } from '@/lib/sandycore-config';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, Download, FileJson, ShieldCheck, Sparkles, Upload } from 'lucide-react';
+import { CheckCircle2, Download, FileJson, ShieldCheck, Sparkles } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -174,7 +174,6 @@ export function SandyCoreConfigPanel({ config, onConfigChange }: SandyCoreConfig
 						<Download className='size-4' />
 						Descargar plantilla
 					</Button>
-					
 				</div>
 			</CardContent>
 		</Card>
