@@ -27,7 +27,8 @@ import {
 } from '@/lib/sandycore-config';
 import { getStoredSttProvider, storeSttProvider } from '@/lib/stt-provider';
 import { useAuth } from '@clerk/nextjs';
-import { Bot, ExternalLink, Mic, Power, Save, Square, Star, Volume2 } from 'lucide-react';
+import { Bot, ExternalLink, Mic, Power, Save, Square, Volume2 } from 'lucide-react';
+import Image from 'next/image';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import ReactCountryFlag from 'react-country-flag';
 import { toast } from 'sonner';
@@ -409,10 +410,12 @@ function ModelIcon({ modelId }: { modelId: string }) {
 
 	return (
 		<div className='flex size-12 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background/80'>
-			{/* biome-ignore lint/nursery/noImgElement: iconos SVG de terceros de OpenRouter, con fallback a Bot */}
-			<img
+			<Image
 				src={iconUrl}
 				alt=''
+				width={48}
+				height={48}
+				quality={100}
 				loading='lazy'
 				onError={() => setFailed(true)}
 				className='size-12 object-contain'
@@ -447,24 +450,6 @@ export function SettingsPanel() {
 		setSandyConfig(next);
 		setSandyHasLocalChanges(true);
 	}, []);
-
-	const activeProviderLabel = useMemo(
-		() => (form.ai_provider === 'gemini' ? 'Gemini' : 'OpenRouter'),
-		[form.ai_provider],
-	);
-
-	const providerBadgeClassName =
-		form.ai_provider === 'gemini'
-			? 'border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400'
-			: 'border-cyan-500/30 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400';
-	const sttProviderBadgeClassName =
-		form.stt_provider === 'azure'
-			? 'border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400'
-			: 'border-cyan-500/30 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400';
-	const ttsProviderBadgeClassName =
-		form.tts_provider === 'fish_audio'
-			? 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'
-			: 'border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400';
 
 	const geminiState = form.gemini_api_key ? 'Configurado' : 'Pendiente';
 	const openRouterState =
@@ -713,15 +698,8 @@ export function SettingsPanel() {
 					<div className='px-6 py-6 sm:px-8'>
 						<div className='flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between'>
 							<div className='space-y-2'>
-								<span className='flex items-center gap-2 font-semibold text-violet-600 text-xs uppercase tracking-[0.25em] dark:text-[#A78BFA]'>
-									<Star
-										size={12}
-										className='fill-amber-400 text-amber-500 dark:fill-[#FDE68A] dark:text-[#FDE68A]'
-									/>
-									Ajustes
-								</span>
 								<CardTitle className='font-bold text-3xl [font-family:var(--font-unbounded)] sm:text-4xl'>
-									Configuración de IA
+									Configuración
 								</CardTitle>
 								<CardDescription className='max-w-2xl text-sm sm:text-base'>
 									Ajusta los proveedores, claves y voz con una interfaz más limpia, clara y modular.
@@ -744,22 +722,7 @@ export function SettingsPanel() {
 								</Button>
 							</div>
 						</div>
-						<div className='mt-5 flex flex-wrap gap-2'>
-							<Badge variant='outline' className={providerBadgeClassName}>
-								Proveedor activo: {activeProviderLabel}
-							</Badge>
-							<Badge variant='outline' className={sttProviderBadgeClassName}>
-								STT:{' '}
-								{form.stt_provider === 'browser'
-									? 'Navegador (gratis)'
-									: form.stt_provider === 'azure'
-										? 'Azure'
-										: 'No configurado'}
-							</Badge>
-							<Badge variant='outline' className={ttsProviderBadgeClassName}>
-								TTS: {form.tts_provider === 'fish_audio' ? 'Fish Audio' : 'Azure'}
-							</Badge>
-						</div>
+						
 					</div>
 				</Card>
 

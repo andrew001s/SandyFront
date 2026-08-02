@@ -9,7 +9,7 @@ import {
 	normalizeSandyCoreConfig,
 } from '@/lib/sandycore-config';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, Download, FileJson, ShieldCheck, Sparkles } from 'lucide-react';
+import { CheckCircle2, Download, FileJson, Sparkles } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -56,11 +56,6 @@ export function SandyCoreConfigPanel({ config, onConfigChange }: SandyCoreConfig
 	};
 
 	const personaName = config.persona_profile?.name ?? 'Sin personalidad cargada';
-	const bannedCounts = {
-		words: config.custom_banned_words?.length ?? 0,
-		symbols: config.custom_banned_symbols?.length ?? 0,
-		links: config.custom_banned_links?.length ?? 0,
-	};
 	const hasConfig = Boolean(config.persona_profile || config.prompt_overrides);
 
 	return (
@@ -92,7 +87,7 @@ export function SandyCoreConfigPanel({ config, onConfigChange }: SandyCoreConfig
 				</div>
 			</CardHeader>
 			<CardContent className='space-y-6 px-5 py-5 sm:px-6'>
-				<div className='grid gap-4 sm:grid-cols-2'>
+				<div className='grid gap-4 sm:grid-cols-1'>
 					<div className='rounded-2xl border border-border/60 bg-background/60 p-4'>
 						<div className='flex items-center gap-2 font-semibold text-muted-foreground text-xs uppercase tracking-[0.2em]'>
 							<FileJson className='size-4 text-violet-600 dark:text-[#A78BFA]' />
@@ -106,17 +101,6 @@ export function SandyCoreConfigPanel({ config, onConfigChange }: SandyCoreConfig
 								Usará el fallback genérico del backend.
 							</p>
 						)}
-					</div>
-					<div className='rounded-2xl border border-border/60 bg-background/60 p-4'>
-						<div className='flex items-center gap-2 font-semibold text-muted-foreground text-xs uppercase tracking-[0.2em]'>
-							<ShieldCheck className='size-4 text-emerald-500' />
-							Moderación
-						</div>
-						<div className='mt-2 flex flex-wrap gap-2'>
-							<Badge variant='outline'>{bannedCounts.words} palabras</Badge>
-							<Badge variant='outline'>{bannedCounts.symbols} símbolos</Badge>
-							<Badge variant='outline'>{bannedCounts.links} links</Badge>
-						</div>
 					</div>
 				</div>
 
