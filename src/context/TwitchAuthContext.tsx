@@ -18,7 +18,7 @@ const TwitchAuthContext = createContext<TwitchAuthContextType | null>(null);
 const TwitchAuthBotContext = createContext<TwitchAuthContextType | null>(null);
 
 export const TwitchAuthProvider = ({ children }: { children: ReactNode }) => {
-	const auth = useTwitchAuth();
+	const auth = useTwitchAuth(false);
 
 	return <TwitchAuthContext.Provider value={auth}>{children}</TwitchAuthContext.Provider>;
 };
@@ -28,7 +28,7 @@ export const TwitchAuthBotProvider = ({
 }: {
 	children: ReactNode;
 }) => {
-	const auth = useTwitchAuth();
+	const auth = useTwitchAuth(true);
 
 	return <TwitchAuthBotContext.Provider value={auth}>{children}</TwitchAuthBotContext.Provider>;
 };

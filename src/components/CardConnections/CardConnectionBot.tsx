@@ -1,8 +1,8 @@
 'use client';
-import { getTokens, postAuth } from '@/api/fetchAuth';
+import { getTokens } from '@/api/fetchAuth';
 import { start } from '@/api/sandycore';
 import { useStatus } from '@/context/StatusContext';
-import { useTwitchAuth } from '@/hooks/useTwitchAuth';
+import { useTwitchAuthBotContext } from '@/context/TwitchAuthContext';
 import Image from 'next/image';
 import { useEffect } from 'react';
 import { BsMoonStarsFill } from 'react-icons/bs';
@@ -24,7 +24,7 @@ export const CardConnectionBot = () => {
 		handleClose,
 		fetchProfile,
 		setStatus,
-	} = useTwitchAuth(true);
+	} = useTwitchAuthBotContext();
 
 	useEffect(() => {
 		if (status && !profile) {
@@ -39,11 +39,6 @@ export const CardConnectionBot = () => {
 		} else {
 			try {
 				setIsLoading(true);
-				await postAuth({
-					token: tokens.tokens.token,
-					refresh_token: tokens.tokens.refresh_token,
-					bot: true,
-				});
 				await start(true);
 				setStatus(true);
 				await fetchProfile();
@@ -51,7 +46,7 @@ export const CardConnectionBot = () => {
 			} catch (error) {
 				console.error('Error al reconectar:', error);
 				toast.error('Error al reconectar, iniciando nuevo proceso de autenticación');
-				handleStart(false);
+				handleStart(true);
 			} finally {
 				setIsLoading(false);
 			}
@@ -85,7 +80,7 @@ export const CardConnectionBot = () => {
 								onClick={handleClose}
 								className='mx-auto h-16 w-full cursor-pointer bg-[#604ABB] font-normal text-white text-xl duration-300 ease-in-out hover:scale-105 hover:bg-[#4f3fa3]'
 							>
-								<span>Desconectar</span>
+								<span>Cerrar sesión Twitch</span>
 							</Button>
 						) : (
 							<Button
@@ -104,11 +99,11 @@ export const CardConnectionBot = () => {
 							</Button>
 						)}
 						<span className='pt-2 text-xl'>
-							Estado:{' '}
+							Estado de Twitch:{' '}
 							{status ? (
-								<span className='text-emerald-500 dark:text-emerald-400'>Conectado</span>
+								<span className='text-emerald-500 dark:text-emerald-400'>Autenticado</span>
 							) : (
-								<span className='text-destructive'>Desconectado</span>
+								<span className='text-destructive'>No autenticado</span>
 							)}
 						</span>
 					</div>

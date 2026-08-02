@@ -1,5 +1,5 @@
 'use client';
-import { getTokens, postAuth } from '@/api/fetchAuth';
+import { getTokens } from '@/api/fetchAuth';
 import { start } from '@/api/sandycore';
 import { useTwitchAuthContext } from '@/context/TwitchAuthContext';
 import Image from 'next/image';
@@ -37,11 +37,6 @@ export const CardConnectionProfile = () => {
 		} else {
 			try {
 				setIsLoading(true);
-				await postAuth({
-					token: tokens.tokens.token,
-					refresh_token: tokens.tokens.refresh_token,
-					bot: false,
-				});
 				await start(false);
 				setStatus(true);
 				await fetchProfile();
@@ -83,7 +78,7 @@ export const CardConnectionProfile = () => {
 								onClick={handleClose}
 								className='mx-auto h-16 w-full cursor-pointer bg-[#604ABB] font-normal text-white text-xl duration-300 ease-in-out hover:scale-105 hover:bg-[#4f3fa3]'
 							>
-								<span>Desconectar</span>
+								<span>Cerrar sesión Twitch</span>
 							</Button>
 						) : (
 							<Button
@@ -102,11 +97,11 @@ export const CardConnectionProfile = () => {
 							</Button>
 						)}
 						<span className='pt-2 text-xl'>
-							Estado:{' '}
+							Estado de Twitch:{' '}
 							{status ? (
-								<span className='text-emerald-500 dark:text-emerald-400'>Conectado</span>
+								<span className='text-emerald-500 dark:text-emerald-400'>Autenticado</span>
 							) : (
-								<span className='text-destructive'>Desconectado</span>
+								<span className='text-destructive'>No autenticado</span>
 							)}
 						</span>
 					</div>
