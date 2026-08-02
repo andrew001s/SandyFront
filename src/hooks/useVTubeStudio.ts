@@ -11,7 +11,7 @@ import {
 } from '@/lib/vtsAvatarPayload';
 import { createVtsLipSyncHandler, stopVtsLipSync } from '@/lib/vtsLipSync';
 
-interface VTSModel {
+export interface VTSModel {
 	modelLoaded: boolean;
 	modelName: string;
 	modelID: string;
@@ -19,7 +19,7 @@ interface VTSModel {
 	vtsModelIconName: string;
 }
 
-interface VTSModelInfo {
+export interface VTSModelInfo {
 	modelLoaded: boolean;
 	modelName: string;
 	modelID: string;
@@ -41,7 +41,7 @@ interface VTSModelInfo {
 	};
 }
 
-interface VTSStats {
+export interface VTSStats {
 	uptime: number;
 	framerate: number;
 	vTubeStudioVersion: string;

@@ -1,6 +1,6 @@
 'use client';
 
-import type { BannedItem, BannedItemType } from '@/components/Moderation/ModerationPanel';
+import type { BannedItem, BannedItemType } from '@/components/Moderation/moderation.types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
