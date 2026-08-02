@@ -1,6 +1,8 @@
+import { CardConnectionKick } from '@/components/CardConnections/CardConnectionKick';
 import { CardConnectionBot } from '@/components/CardConnections/CardConnectionBot';
 import { CardConnectionProfile } from '@/components/CardConnections/CardConnectionProfile';
 import { DashboardShell } from '@/containers/dashboard/DashboardShell';
+import { KickAuthProvider } from '@/context/KickAuthContext';
 import { StatusProviderBot } from '@/context/StatusContextBot';
 import { TwitchAuthBotProvider, TwitchAuthProvider } from '@/context/TwitchAuthContext';
 import { Star } from 'lucide-react';
@@ -26,12 +28,12 @@ export default function ConexionesPage() {
 						</span>
 					</h1>
 					<p className='mt-2 max-w-xl text-muted-foreground'>
-						Conecta tu canal y el bot de Twitch para que Sandy Studio reaccione a tu chat en tiempo
-						real.
+						Conecta tus cuentas de Twitch y Kick para que Sandy Studio reaccione a tu chat en
+						tiempo real.
 					</p>
 				</header>
 
-				<div className='grid grid-cols-1 gap-4 lg:grid-cols-2'>
+				<div className='grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3'>
 					<div className='w-full'>
 						<TwitchAuthProvider>
 							<CardConnectionProfile />
@@ -43,6 +45,11 @@ export default function ConexionesPage() {
 								<CardConnectionBot />
 							</TwitchAuthBotProvider>
 						</StatusProviderBot>
+					</div>
+					<div className='w-full'>
+						<KickAuthProvider>
+							<CardConnectionKick />
+						</KickAuthProvider>
 					</div>
 				</div>
 			</div>
