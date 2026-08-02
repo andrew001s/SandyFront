@@ -8,6 +8,7 @@ import { type ReactNode, createContext, useContext } from 'react';
 interface KickAuthContextType {
 	isLoading: boolean;
 	isBusy: boolean;
+	isRefreshing: boolean;
 	setIsLoading: (value: boolean) => void;
 	profile: ProfileModel | null;
 	status: boolean;

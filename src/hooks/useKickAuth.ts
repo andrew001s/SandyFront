@@ -25,6 +25,7 @@ interface UseKickAuthReturn {
 	serviceStatus: ServiceStatus | null;
 	isLoading: boolean;
 	isBusy: boolean;
+	isRefreshing: boolean;
 	setIsLoading: (value: boolean) => void;
 	handleConnect: () => Promise<void>;
 	handleDisconnect: () => Promise<void>;
@@ -40,6 +41,7 @@ export const useKickAuth = (): UseKickAuthReturn => {
 	const [status, setStatus] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 	const [isBusy, setIsBusy] = useState(false);
+	const [isRefreshing, setIsRefreshing] = useState(true);
 	const { getToken, isLoaded, isSignedIn } = useAuth();
 
 	const fetchProfile = useCallback(async () => {
@@ -67,6 +69,7 @@ export const useKickAuth = (): UseKickAuthReturn => {
 
 	const refreshStatus = useCallback(async () => {
 		try {
+			setIsRefreshing(true);
 			const [tokensSnapshot, profileSnapshot, serviceSnapshot] = await Promise.allSettled([
 				getKickTokens(),
 				getKickProfileInfo(),
@@ -90,6 +93,8 @@ export const useKickAuth = (): UseKickAuthReturn => {
 			}
 		} catch (error) {
 			console.error('Error al refrescar estado de Kick:', error);
+		} finally {
+			setIsRefreshing(false);
 		}
 	}, []);
 
@@ -220,6 +225,7 @@ export const useKickAuth = (): UseKickAuthReturn => {
 		serviceStatus,
 		isLoading,
 		isBusy,
+		isRefreshing,
 		setIsLoading,
 		handleConnect,
 		handleDisconnect,

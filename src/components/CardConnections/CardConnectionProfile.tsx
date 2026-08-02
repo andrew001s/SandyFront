@@ -1,6 +1,7 @@
 'use client';
 import { getTokens } from '@/api/fetchAuth';
 import { start } from '@/api/sandycore';
+import { ConnectionCardSkeleton } from '@/components/loading/dashboard-skeletons';
 import { useTwitchAuthContext } from '@/context/TwitchAuthContext';
 import Image from 'next/image';
 import { useEffect } from 'react';
@@ -17,6 +18,7 @@ export const CardConnectionProfile = () => {
 		profile,
 		status,
 		isLoading,
+		isProfileLoading,
 		setIsLoading,
 		handleStart,
 		handleClose,
@@ -29,6 +31,8 @@ export const CardConnectionProfile = () => {
 			fetchProfile();
 		}
 	}, [status, profile, fetchProfile]);
+
+	const showSkeleton = isLoading || isProfileLoading;
 
 	const handleStartConnection = async () => {
 		const tokens = await getTokens(false);
@@ -50,6 +54,10 @@ export const CardConnectionProfile = () => {
 			}
 		}
 	};
+
+	if (showSkeleton) {
+		return <ConnectionCardSkeleton />;
+	}
 
 	return (
 		<BackgroundGradient className='rounded-[22px] bg-background p-2'>

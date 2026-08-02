@@ -4,29 +4,9 @@ import { StarField } from '@/components/landing/StarField';
 import { AppSidebar } from '@/components/ui/app-sidebar';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSettingsProvider } from '@/context/AppSettingsContext';
-import { AudioQueueManager } from '@/lib/audioQueueSingleton';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import { useEffect, useRef, useState } from 'react';
-
-function GlobalAudioPlayer() {
-	const audioRef = useRef<HTMLAudioElement | null>(null);
-
-	useEffect(() => {
-		const manager = AudioQueueManager.getInstance();
-		manager.setAudioElement(audioRef.current);
-
-		return () => {
-			manager.setAudioElement(null);
-		};
-	}, []);
-
-	return (
-		<audio ref={audioRef} preload='auto' className='hidden'>
-			<track kind='captions' />
-		</audio>
-	);
-}
+import { useEffect, useState } from 'react';
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
 	const { theme, setTheme } = useTheme();
@@ -52,7 +32,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 							</button>
 						)}
 					</header>
-					<GlobalAudioPlayer />
 					<div className='relative flex-1'>
 						<StarField
 							count={40}

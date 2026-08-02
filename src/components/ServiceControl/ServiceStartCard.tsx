@@ -13,6 +13,7 @@ import {
 	DialogTitle,
 } from '@/components/ui/dialog';
 import { useStatus } from '@/context/StatusContext';
+import { ServiceStartSkeleton } from '@/components/loading/dashboard-skeletons';
 import { cn } from '@/lib/utils';
 import { Power } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -151,6 +152,10 @@ export function ServiceStartCard() {
 				? 'Conecta tu cuenta principal de Twitch para iniciar.'
 				: 'Inicia la VTuber para que responda a tu chat.';
 	const actionLabel = isBusy ? (isRunning ? 'Pausando...' : 'Iniciando...') : active ? 'Pausar servicios' : 'Iniciar servicios';
+
+	if (!statusLoaded) {
+		return <ServiceStartSkeleton />;
+	}
 
 	return (
 		<>

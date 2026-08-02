@@ -3,6 +3,7 @@
 import { type SettingsPayload, saveSettings } from '@/api/settings';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { FeatureFlagsSkeleton } from '@/components/loading/dashboard-skeletons';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import {
 	DEFAULT_FEATURE_FLAGS,
@@ -38,7 +39,7 @@ const FEATURE_FLAG_ICONS: Record<FeatureFlagKey, LucideIcon> = {
 
 export function FeatureFlagsPanel() {
 	const { getToken } = useAuth();
-	const { settings, refreshSettings } = useAppSettings();
+	const { settings, isLoading: settingsLoading, refreshSettings } = useAppSettings();
 	const [flags, setFlags] = useState<FeatureFlags>({ ...DEFAULT_FEATURE_FLAGS });
 	const [hasLocalChanges, setHasLocalChanges] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
@@ -86,6 +87,10 @@ export function FeatureFlagsPanel() {
 			setIsSaving(false);
 		}
 	};
+
+	if (settingsLoading) {
+		return <FeatureFlagsSkeleton />;
+	}
 
 	return (
 		<Card className='border-border/60 bg-card/90 shadow-[0_24px_80px_-36px_rgba(15,23,42,0.18)] backdrop-blur-xl'>

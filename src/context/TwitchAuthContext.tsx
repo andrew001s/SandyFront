@@ -5,6 +5,7 @@ import { type ReactNode, createContext, useContext } from 'react';
 
 interface TwitchAuthContextType {
 	isLoading: boolean;
+	isProfileLoading: boolean;
 	setIsLoading: (value: boolean) => void;
 	profile: ProfileModel | null;
 	status: boolean;

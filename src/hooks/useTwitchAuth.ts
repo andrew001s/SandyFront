@@ -6,13 +6,15 @@ import { useStatus } from '@/context/StatusContext';
 import { useStatusBot } from '@/context/StatusContextBot';
 import { useAuth } from '@clerk/nextjs';
 import type { ProfileModel } from '@/interfaces/profileInterface';
-import { useCallback, useState } from 'react';
+import axios from 'axios';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 interface UseTwitchAuthReturn {
 	profile: ProfileModel | null;
 	status: boolean;
 	isLoading: boolean;
+	isProfileLoading: boolean;
 	setIsLoading: (value: boolean) => void;
 	setStatus: (value: boolean) => void;
 	handleStart: (bot: boolean) => Promise<void>;
@@ -23,6 +25,7 @@ interface UseTwitchAuthReturn {
 export const useTwitchAuth = (defaultIsBot?: boolean): UseTwitchAuthReturn => {
 	const [profile, setProfile] = useState<ProfileModel | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
+	const [isProfileLoading, setIsProfileLoading] = useState(true);
 	const { status: userStatus, setStatus: setUserStatus } = useStatus();
 	const { statusBot, setStatusBot } = useStatusBot();
 	const { getToken, isLoaded, isSignedIn } = useAuth();
@@ -41,6 +44,7 @@ export const useTwitchAuth = (defaultIsBot?: boolean): UseTwitchAuthReturn => {
 	);
 	const fetchProfile = useCallback(async () => {
 		try {
+			setIsProfileLoading(true);
 			if (!isLoaded || !isSignedIn) {
 				return;
 			}
@@ -54,10 +58,31 @@ export const useTwitchAuth = (defaultIsBot?: boolean): UseTwitchAuthReturn => {
 			setProfile(profileInfo);
 		} catch (error) {
 			console.error('Error al obtener el perfil:', error);
-			toast.error('No se pudo cargar el perfil');
+			const errorMessage = axios.isAxiosError(error)
+				? typeof error.response?.data === 'object' && error.response?.data !== null
+					? String(
+							(error.response.data as { detail?: unknown; message?: unknown }).detail ??
+								(error.response.data as { detail?: unknown; message?: unknown }).message ??
+								'',
+						)
+					: error.message
+				: error instanceof Error
+					? error.message
+					: '';
+
+			if (!(isBot && errorMessage.includes('No existe una sesión de bot autenticada para este usuario'))) {
+				toast.error('No se pudo cargar el perfil');
+			}
 			setStatus(false);
+		} finally {
+			setIsProfileLoading(false);
 		}
 	}, [getToken, isBot, isLoaded, isSignedIn, setProfile, setStatus]);
+
+	useEffect(() => {
+		void fetchProfile();
+	}, [fetchProfile]);
+
 	const handleStart = useCallback(
 		async (bot: boolean) => {
 			if (bot !== isBot) {
@@ -141,6 +166,7 @@ export const useTwitchAuth = (defaultIsBot?: boolean): UseTwitchAuthReturn => {
 		profile,
 		status,
 		isLoading,
+		isProfileLoading,
 		setIsLoading,
 		setStatus,
 		handleStart,

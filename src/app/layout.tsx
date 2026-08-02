@@ -7,6 +7,7 @@ import { Footer } from '@/components/ui/footer';
 import { MessagesProvider } from '@/context/MessagesContext';
 import { StatusProvider } from '@/context/StatusContext';
 import { StatusProviderBot } from '@/context/StatusContextBot';
+import { GlobalAudioPlayer } from '@/components/audio/GlobalAudioPlayer';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from 'sonner';
 import { metadataBase, sharedDescription, sharedSiteName, sharedOpenGraphImage } from '@/lib/seo';
@@ -82,6 +83,7 @@ export default function RootLayout({
 						<StatusProvider>
 							<StatusProviderBot>
 								<MessagesProvider>
+									<GlobalAudioPlayer />
 									<main className='w-full flex-grow'>
 										<Toaster richColors position='top-right' />
 										{children}

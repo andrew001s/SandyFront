@@ -169,3 +169,39 @@
 		transform: translateY(-14px) rotate(4deg);
 	}
 }
+
+@keyframes shimmer {
+	0% {
+		transform: translateX(-140%);
+	}
+	100% {
+		transform: translateX(240%);
+	}
+}
+
+.skeleton-shimmer__bar {
+	position: absolute;
+	inset: 0;
+	transform: translateX(-140%);
+	background: linear-gradient(
+		90deg,
+		transparent 0%,
+		rgba(255, 255, 255, 0.2) 48%,
+		rgba(255, 255, 255, 0.42) 50%,
+		rgba(255, 255, 255, 0.2) 52%,
+		transparent 100%
+	);
+	animation: shimmer 1.8s ease-in-out infinite;
+	pointer-events: none;
+}
+
+.dark .skeleton-shimmer__bar {
+	background: linear-gradient(
+		90deg,
+		transparent 0%,
+		rgba(255, 255, 255, 0.06) 48%,
+		rgba(255, 255, 255, 0.12) 50%,
+		rgba(255, 255, 255, 0.06) 52%,
+		transparent 100%
+	);
+}

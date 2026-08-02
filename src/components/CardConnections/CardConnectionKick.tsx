@@ -1,6 +1,7 @@
 'use client';
 
 import { useKickAuthContext } from '@/context/KickAuthContext';
+import { ConnectionCardSkeleton } from '@/components/loading/dashboard-skeletons';
 import Image from 'next/image';
 import { useEffect } from 'react';
 import { BsMoonStarsFill } from 'react-icons/bs';
@@ -12,7 +13,7 @@ import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 
 export const CardConnectionKick = () => {
-	const { profile, status, isLoading, handleConnect, handleDisconnect, fetchProfile } =
+	const { profile, status, isLoading, isRefreshing, handleConnect, handleDisconnect, fetchProfile } =
 		useKickAuthContext();
 
 	useEffect(() => {
@@ -22,6 +23,12 @@ export const CardConnectionKick = () => {
 			});
 		}
 	}, [status, profile, fetchProfile]);
+
+	const showSkeleton = isLoading || isRefreshing;
+
+	if (showSkeleton) {
+		return <ConnectionCardSkeleton />;
+	}
 
 	return (
 		<BackgroundGradient className='rounded-[22px] bg-background p-2'>

@@ -9,6 +9,7 @@ import { VoiceSection } from '@/components/Settings/sections/VoiceSection';
 import { OpenRouterModelDialog } from '@/components/Settings/OpenRouterModelDialog';
 import { azureLanguages, azureRegions } from '@/components/Settings/settings.constants';
 import { useSettingsPanel } from '@/components/Settings/useSettingsPanel';
+import { SettingsSkeleton } from '@/components/loading/dashboard-skeletons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Bot, Cpu, Mic, Power, Volume2 } from 'lucide-react';
 
@@ -18,6 +19,7 @@ export function SettingsPanel() {
 		isSaving,
 		isStopping,
 		isBusy,
+		settingsLoading,
 		sandyConfig,
 		geminiState,
 		openRouterState,
@@ -53,6 +55,10 @@ export function SettingsPanel() {
 		handleOpenRouterScroll,
 		handleSave,
 	} = useSettingsPanel();
+
+	if (settingsLoading) {
+		return <SettingsSkeleton />;
+	}
 
 	return (
 		<div>
