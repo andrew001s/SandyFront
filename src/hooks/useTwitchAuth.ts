@@ -1,6 +1,6 @@
-import { postAuth, saveTokens } from '@/api/fetchAuth';
+import { deleteAuth, postAuth, saveTokens } from '@/api/fetchAuth';
 import { getProfileInfo } from '@/api/fetchProfile';
-import { start, stop } from '@/api/sandycore';
+import { start } from '@/api/sandycore';
 import { getAccessToken, getTwitchAuthUrl } from '@/api/twitchAuth';
 import { useStatus } from '@/context/StatusContext';
 import { useStatusBot } from '@/context/StatusContextBot';
@@ -126,13 +126,13 @@ export const useTwitchAuth = (defaultIsBot?: boolean): UseTwitchAuthReturn => {
 	const handleClose = useCallback(async () => {
 		try {
 			setIsLoading(true);
-			await stop(isBot);
+			await deleteAuth(isBot);
 			setStatus(false);
 			setProfile(null);
-			toast.info('Desconectado de Twitch');
+			toast.info('Sesión Twitch cerrada');
 		} catch (error) {
 			console.error('Error cerrando sesión:', error);
-			toast.error('Error al desconectar');
+			toast.error('Error al cerrar sesión');
 		} finally {
 			setIsLoading(false);
 		}

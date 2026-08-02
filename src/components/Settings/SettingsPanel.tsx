@@ -619,7 +619,7 @@ export function SettingsPanel() {
 		try {
 			setIsStopping(true);
 			await stop(false);
-			toast.success('Servicios detenidos');
+			toast.success('Servicios pausados');
 		} catch (error) {
 			console.error('Error al detener servicios:', error);
 			toast.error('No se pudieron detener los servicios');
@@ -1077,7 +1077,7 @@ export function SettingsPanel() {
 								className='w-full'
 							>
 								<Square className='size-4' />
-								{isStopping ? 'Deteniendo...' : 'Detener servicio'}
+								{isStopping ? 'Pausando...' : 'Pausar servicios'}
 							</Button>
 						</div>
 					</SectionCard>

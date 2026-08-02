@@ -12,6 +12,7 @@ import { Mic } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { toast } from 'sonner';
+import { ThinkingOrb } from 'thinking-orbs';
 import { createSpeechServicesPonyfill } from 'web-speech-cognitive-services';
 import SwitchComponent from '../SwitchComponent/Switch';
 import { TypingAnimation } from '../magicui/typing-animation';
@@ -179,7 +180,11 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 							: 'border-border/70 bg-background/80 text-muted-foreground',
 					)}
 				>
-					<Mic className='size-6' />
+					{listening ? (
+						<ThinkingOrb state='listening' size={64} speed={0.55} />
+					) : (
+						<Mic className='size-6' />
+					)}
 				</div>
 				<div className='relative z-10'>
 					<p className='font-medium text-sm'>Micrófono</p>

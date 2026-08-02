@@ -12,6 +12,15 @@ export async function postAuth(message: Auth) {
 	return response.data.message;
 }
 
+export async function deleteAuth(bot: boolean) {
+	const response = await backendClient.delete('/auth', {
+		params: {
+			bot,
+		},
+	});
+	return response.data;
+}
+
 export async function getTokens(bot: boolean): Promise<TokensInterface> {
 	const response = await backendClient.get('/tokens', {
 		params: {

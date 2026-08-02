@@ -1,6 +1,7 @@
 'use client';
 
-import { getTokens, postAuth } from '@/api/fetchAuth';
+import { getTokens } from '@/api/fetchAuth';
+import { getProfileInfo } from '@/api/fetchProfile';
 import { type ServiceStatus, getServiceStatus, start, stop } from '@/api/sandycore';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,6 +18,7 @@ import { Power } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { ThinkingOrb } from 'thinking-orbs';
 
 export function ServiceStartCard() {
 	const router = useRouter();
@@ -24,15 +26,28 @@ export function ServiceStartCard() {
 	const [isBusy, setIsBusy] = useState(false);
 	const [isStopConfirmOpen, setIsStopConfirmOpen] = useState(false);
 	const [isConfigured, setIsConfigured] = useState<boolean | null>(null);
+	const [isTwitchAuthenticated, setIsTwitchAuthenticated] = useState<boolean | null>(null);
 	const [serviceStatus, setServiceStatus] = useState<ServiceStatus | null>(null);
 
 	const isRunning = serviceStatus?.running === true;
-	const statusLoaded = serviceStatus !== null;
+	const statusLoaded = serviceStatus !== null && isTwitchAuthenticated !== null;
 
 	const refreshStatus = useCallback(async () => {
 		try {
-			const status = await getServiceStatus();
-			setServiceStatus(status);
+			const [serviceSnapshot, profileSnapshot] = await Promise.allSettled([
+				getServiceStatus(),
+				getProfileInfo(false),
+			]);
+
+			if (serviceSnapshot.status === 'fulfilled') {
+				setServiceStatus(serviceSnapshot.value);
+			}
+
+			if (profileSnapshot.status === 'fulfilled') {
+				setIsTwitchAuthenticated(Boolean(profileSnapshot.value));
+			} else {
+				setIsTwitchAuthenticated(false);
+			}
 		} catch (error) {
 			console.error('Error al obtener el estado del servicio:', error);
 		}
@@ -73,11 +88,6 @@ export function ServiceStartCard() {
 				toast.error('Conecta primero tu cuenta principal de Twitch para iniciar el servicio');
 				return;
 			}
-			await postAuth({
-				token: stored.tokens.token,
-				refresh_token: stored.tokens.refresh_token,
-				bot: false,
-			});
 			await start(false);
 			setStatus(true);
 			await refreshStatus();
@@ -94,9 +104,8 @@ export function ServiceStartCard() {
 		try {
 			setIsBusy(true);
 			await stop(false);
-			setStatus(false);
 			await refreshStatus();
-			toast.success('Servicios detenidos');
+			toast.success('Servicios pausados');
 		} catch (error) {
 			console.error('Error al detener servicios:', error);
 			toast.error('No se pudieron detener los servicios');
@@ -141,6 +150,7 @@ export function ServiceStartCard() {
 			: isConfigured === false
 				? 'Conecta tu cuenta principal de Twitch para iniciar.'
 				: 'Inicia la VTuber para que responda a tu chat.';
+	const actionLabel = isBusy ? (isRunning ? 'Pausando...' : 'Iniciando...') : active ? 'Pausar servicios' : 'Iniciar servicios';
 
 	return (
 		<>
@@ -191,21 +201,25 @@ export function ServiceStartCard() {
 							: 'border-border/70 bg-background/80 text-muted-foreground',
 					)}
 				>
-					<Power className='size-6' />
+					{isBusy ? (
+						<ThinkingOrb state='solving' size={64} speed={0.55} />
+					) : (
+						<Power className='size-6' />
+					)}
 				</div>
 				<div className='relative z-10'>
 					<p className='font-medium text-sm'>Servicio de la VTuber</p>
 					<p className='text-muted-foreground text-xs'>{description}</p>
+					<p className='mt-4 font-medium text-foreground text-sm'>{actionLabel}</p>
 				</div>
 			</button>
 
 			<Dialog open={isStopConfirmOpen} onOpenChange={setIsStopConfirmOpen}>
 				<DialogContent className='w-[min(92vw,26rem)]'>
 					<DialogHeader>
-						<DialogTitle>¿Detener el servicio?</DialogTitle>
+						<DialogTitle>¿Pausar servicios?</DialogTitle>
 						<DialogDescription>
-							La VTuber dejará de responder al chat y de reaccionar a eventos hasta que la inicies
-							de nuevo.
+							Se detendrán chat, EventSub y monitor, pero la sesión de Twitch permanecerá activa.
 						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter>
@@ -223,7 +237,7 @@ export function ServiceStartCard() {
 							onClick={() => void handleStop()}
 							disabled={isBusy}
 						>
-							{isBusy ? 'Apagando...' : 'Apagar'}
+							{isBusy ? 'Pausando...' : 'Pausar servicios'}
 						</Button>
 					</DialogFooter>
 				</DialogContent>
