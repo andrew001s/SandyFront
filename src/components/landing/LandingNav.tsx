@@ -51,9 +51,8 @@ export function LandingNav() {
 							scrolled ? 'h-8 w-16' : 'h-9 w-20'
 						}`}
 					>
-						<Image src={logoSrc} alt='Sandy Studio' fill className='object-contain' priority />
+						<Image src={logoSrc} alt='Sandy Studio' fill sizes='80px' className='object-contain' priority />
 					</span>
-					
 				</Link>
 
 				<div className='hidden items-center gap-1 md:flex'>

@@ -75,10 +75,17 @@ export function AppSidebar() {
 					href='/home'
 					aria-label='Sandy Studio'
 					title='Sandy Studio'
-					className='flex w-full  items-center justify-center  p-3  group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-3'
+					className='flex w-full items-center justify-center p-3 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-3'
 				>
 					<div className='relative h-16 w-full shrink-0 overflow-hidden rounded-2xl shadow-sm ring-2 ring-transparent group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:w-10'>
-						<Image src={logoSrc} alt='Sandy Studio' fill className='object-contain p-1.5' priority />
+						<Image
+							src={logoSrc}
+							alt='Sandy Studio'
+							fill
+							sizes={state === 'collapsed' ? '40px' : '240px'}
+							className='object-contain p-1.5'
+							priority
+						/>
 					</div>
 				</Link>
 			</SidebarHeader>

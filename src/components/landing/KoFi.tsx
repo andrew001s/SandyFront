@@ -58,6 +58,30 @@ function loadKoFiOverlay() {
 	return overlayPromise;
 }
 
+function fixKoFiImage(root: HTMLElement) {
+	const image = root.querySelector('img.kofiimg') as HTMLImageElement | null;
+	if (!image) return;
+
+	image.style.width = 'auto';
+	image.style.height = '15px';
+	image.style.aspectRatio = '285 / 229';
+	image.style.objectFit = 'contain';
+}
+
+function scheduleWork(callback: () => void) {
+	if (typeof window === 'undefined') {
+		callback();
+		return;
+	}
+
+	if ('requestIdleCallback' in window) {
+		window.requestIdleCallback(callback, { timeout: 2500 });
+		return;
+	}
+
+	window.setTimeout(callback, 1200);
+}
+
 export function KoFiButton() {
 	const rootId = useId();
 	const containerId = `kofi-widget-${rootId}`;
@@ -67,17 +91,53 @@ export function KoFiButton() {
 		const root = document.getElementById(containerId);
 		if (!root) return;
 
-		loadKoFiWidget().then(() => {
-			if (cancelled) return;
-			window.kofiwidget2?.init(KOFI_TEXT, KOFI_COLOR, KOFI_HANDLE);
-			const html = window.kofiwidget2?.getHTML();
-			if (html) {
-				root.innerHTML = html;
-			}
-		});
+		if (typeof IntersectionObserver === 'undefined') {
+			scheduleWork(() => {
+				loadKoFiWidget().then(() => {
+					if (cancelled) return;
+					window.kofiwidget2?.init(KOFI_TEXT, KOFI_COLOR, KOFI_HANDLE);
+					const html = window.kofiwidget2?.getHTML();
+					if (html) {
+						root.innerHTML = html;
+						fixKoFiImage(root);
+					}
+				});
+			});
+			return () => {
+				cancelled = true;
+			};
+		}
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (!entries.some((entry) => entry.isIntersecting)) {
+					return;
+				}
+
+				observer.disconnect();
+				scheduleWork(() => {
+					loadKoFiWidget().then(() => {
+						if (cancelled) return;
+						window.kofiwidget2?.init(KOFI_TEXT, KOFI_COLOR, KOFI_HANDLE);
+						const html = window.kofiwidget2?.getHTML();
+						if (html) {
+							root.innerHTML = html;
+							fixKoFiImage(root);
+						}
+					});
+				});
+			},
+			{
+				rootMargin: '160px',
+				threshold: 0.01,
+			},
+		);
+
+		observer.observe(root);
 
 		return () => {
 			cancelled = true;
+			observer.disconnect();
 		};
 	}, [containerId]);
 
@@ -90,20 +150,22 @@ export function KoFiOverlay() {
 	useEffect(() => {
 		let cancelled = false;
 
-		loadKoFiOverlay().then(() => {
-			if (cancelled) return;
-			const root = document.getElementById(containerId);
-			if (!root || root.querySelector('.floatingchat-container-wrap')) return;
-			window.kofiWidgetOverlay?.draw(
-				KOFI_HANDLE,
-				{
-					type: 'floating-chat',
-					'floating-chat.donateButton.text': 'Support me',
-					'floating-chat.donateButton.background-color': '#00b9fe',
-					'floating-chat.donateButton.text-color': '#fff',
-				},
-				containerId,
-			);
+		scheduleWork(() => {
+			loadKoFiOverlay().then(() => {
+				if (cancelled) return;
+				const root = document.getElementById(containerId);
+				if (!root || root.querySelector('.floatingchat-container-wrap')) return;
+				window.kofiWidgetOverlay?.draw(
+					KOFI_HANDLE,
+					{
+						type: 'floating-chat',
+						'floating-chat.donateButton.text': 'Support me',
+						'floating-chat.donateButton.background-color': '#00b9fe',
+						'floating-chat.donateButton.text-color': '#fff',
+					},
+					containerId,
+				);
+			});
 		});
 
 		return () => {
