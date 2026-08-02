@@ -17,9 +17,11 @@ const links = [
 
 export function LandingNav() {
 	const { isSignedIn } = useAuth();
-	const { theme, setTheme } = useTheme();
+	const { theme, resolvedTheme, setTheme } = useTheme();
 	const [mounted, setMounted] = useState(false);
 	const [scrolled, setScrolled] = useState(false);
+	const activeTheme = resolvedTheme ?? theme ?? 'dark';
+	const logoSrc = activeTheme === 'light' ? '/icons/sandyLight.png' : '/icons/sandyDark.png';
 
 	useEffect(() => {
 		setMounted(true);
@@ -45,16 +47,13 @@ export function LandingNav() {
 			>
 				<Link href='/' className='flex items-center gap-2.5'>
 					<span
-						className={`relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-[#8B5CF6] to-[#22D3EE] shadow-[0_0_24px_rgba(139,92,246,0.45)] transition-all duration-300 ${
-							scrolled ? 'h-8 w-8' : 'h-9 w-9'
+						className={`relative flex items-center justify-center overflow-hidden transition-all duration-300 ${
+							scrolled ? 'h-8 w-16' : 'h-9 w-20'
 						}`}
 					>
-						<Image src='/icons/default.png' alt='Sandy Studio' fill className='object-cover' />
-						<span className='-right-0.5 -top-0.5 absolute h-2 w-2 animate-pulse rounded-full bg-[#22D3EE] ring-2 ring-[#F6F3FC] dark:ring-[#0B0A12]' />
+						<Image src={logoSrc} alt='Sandy Studio' fill className='object-contain' priority />
 					</span>
-					<span className='font-bold text-lg text-zinc-900 tracking-tight [font-family:var(--font-unbounded)] dark:text-zinc-50'>
-						Sandy <span className='text-violet-600 dark:text-[#A78BFA]'>Studio</span>
-					</span>
+					
 				</Link>
 
 				<div className='hidden items-center gap-1 md:flex'>

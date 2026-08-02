@@ -34,6 +34,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTheme } from 'next-themes';
 
 const navItems = [
 	{ href: '/home', label: 'Dashboard', icon: LayoutDashboard },
@@ -49,6 +50,7 @@ export function AppSidebar() {
 	const { isSignedIn, user } = useUser();
 	const { openSignIn } = useClerk();
 	const { state } = useSidebar();
+	const { theme, resolvedTheme } = useTheme();
 
 	const displayName = user?.fullName ?? user?.firstName ?? user?.username ?? 'Tu perfil';
 	const email = user?.primaryEmailAddress?.emailAddress ?? 'Sesión activa';
@@ -58,19 +60,25 @@ export function AppSidebar() {
 		user?.emailAddresses?.[0]?.emailAddress?.[0] ??
 		'S'
 	).toUpperCase();
+	const activeTheme = resolvedTheme ?? theme ?? 'dark';
+	const logoSrc =
+		state === 'collapsed'
+			? '/icons/icon.png'
+			: activeTheme === 'light'
+				? '/icons/sandyLight.png'
+				: '/icons/sandyDark.png';
 
 	return (
 		<Sidebar collapsible='icon' variant='floating'>
 			<SidebarHeader className='p-3 pt-3'>
 				<Link
 					href='/home'
-					className='flex items-center gap-3 rounded-[28px] border border-sidebar-border bg-background/80 p-3 shadow-sm backdrop-blur-sm transition-colors hover:bg-background/95 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-3'
+					aria-label='Sandy Studio'
+					title='Sandy Studio'
+					className='flex w-full  items-center justify-center  p-3  group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-3'
 				>
-					<div className='relative size-12 shrink-0 overflow-hidden rounded-2xl border border-sidebar-border bg-sidebar-accent/20 shadow-sm ring-2 ring-background group-data-[collapsible=icon]:size-10'>
-						<Image src='/icons/default.png' alt='Shandrew logo' fill className='object-cover' />
-					</div>
-					<div className='min-w-0 flex-1 group-data-[collapsible=icon]:hidden'>
-						<span className='block truncate font-semibold text-sm'>Sandy Studio</span>
+					<div className='relative h-16 w-full shrink-0 overflow-hidden rounded-2xl shadow-sm ring-2 ring-transparent group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:w-10'>
+						<Image src={logoSrc} alt='Sandy Studio' fill className='object-contain p-1.5' priority />
 					</div>
 				</Link>
 			</SidebarHeader>

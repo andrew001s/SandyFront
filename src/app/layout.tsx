@@ -30,6 +30,9 @@ export const metadata: Metadata = {
 	title: 'Sandy Studio',
 	description:
 		'Sandy Studio es una VTuber que te ayuda a interactuar con tu chat y servicios de streaming.',
+	icons: {
+		icon: '/icons/icon.png',
+	},
 };
 
 export default function RootLayout({
