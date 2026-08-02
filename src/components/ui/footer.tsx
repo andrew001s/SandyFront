@@ -17,8 +17,14 @@ import { LuGithub } from 'react-icons/lu';
 
 export const Footer = () => {
 	const pathname = usePathname();
-	const isSidebarPage =
-		pathname === '/home' || pathname === '/avatar' || pathname === '/settings';
+	const isSidebarPage = [
+		'/home',
+		'/conexiones',
+		'/moderacion',
+		'/avatar',
+		'/settings',
+		'/account',
+	].some((route) => pathname === route || pathname.startsWith(`${route}/`));
 
 	const socialLinks = [
 		{
@@ -62,7 +68,7 @@ export const Footer = () => {
 		<footer
 			className={cn(
 				'w-full border-t border-border/60 bg-background/80 px-4 py-6 backdrop-blur-sm',
-				isSidebarPage && 'md:pl-[17rem]'
+				isSidebarPage && 'md:pl-[17rem]',
 			)}
 		>
 			<div className='container mx-auto flex flex-col items-center justify-between gap-4 md:flex-row'>
