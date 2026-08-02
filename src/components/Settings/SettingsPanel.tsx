@@ -9,6 +9,8 @@ import { VoiceSection } from '@/components/Settings/sections/VoiceSection';
 import { OpenRouterModelDialog } from '@/components/Settings/OpenRouterModelDialog';
 import { azureLanguages, azureRegions } from '@/components/Settings/settings.constants';
 import { useSettingsPanel } from '@/components/Settings/useSettingsPanel';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Bot, Cpu, Mic, Power, Volume2 } from 'lucide-react';
 
 export function SettingsPanel() {
 	const {
@@ -54,42 +56,104 @@ export function SettingsPanel() {
 
 	return (
 		<div>
-			<section className='space-y-6'>
+			<section className='space-y-4'>
 				<SettingsHeader isBusy={isBusy} isSaving={isSaving} onSave={handleSave} />
 
-				<div className='grid gap-4 xl:grid-cols-2'>
-					<SandyCoreConfigPanel config={sandyConfig} onConfigChange={handleSandyConfigChange} />
-					<AiProviderSection
-						form={form}
-						geminiState={geminiState}
-						openRouterState={openRouterState}
-						setOpenRouterModalOpen={setIsOpenRouterModalOpen}
-						updateField={updateField}
-						onProviderChange={handleProviderChange}
-					/>
-					<VoiceSection form={form} fishState={fishState} updateField={updateField} />
-					<SpeechSection
-						form={form}
-						speechState={speechState}
-						browserSupportsNativeSpeech={browserSupportsNativeSpeech}
-						isAzureRegionOpen={isAzureRegionOpen}
-						setIsAzureRegionOpen={setIsAzureRegionOpen}
-						isAzureLanguageOpen={isAzureLanguageOpen}
-						setIsAzureLanguageOpen={setIsAzureLanguageOpen}
-						updateField={updateField}
-						updateSttProvider={updateSttProvider}
-						azureRegions={azureRegions}
-						azureLanguages={azureLanguages}
-					/>
-					<ServiceLifecycleSection
-						form={form}
-						isStopping={isStopping}
-						onStopService={handleStopService}
-						updateField={updateField}
-						updateLifecycleBoolean={updateLifecycleBoolean}
-						updateIdleTimeout={updateIdleTimeout}
-					/>
-				</div>
+				<Tabs defaultValue='sandy' className='space-y-4'>
+				<TabsList className=' h-auto w-full grid-cols-5 rounded-2xl bg-muted p-1'>
+						<TabsTrigger
+							value='sandy'
+							className='rounded-xl py-2 text-xs data-[state=active]:bg-background sm:text-sm'
+						>
+							<span className='flex items-center gap-2'>
+								<Cpu className='size-4' />
+								<span className='hidden sm:inline'>Personalida Vtuber</span>
+							</span>
+						</TabsTrigger>
+						<TabsTrigger
+							value='ai'
+							className='rounded-xl py-2 text-xs data-[state=active]:bg-background sm:text-sm'
+						>
+							<span className='flex items-center gap-2'>
+								<Bot className='size-4' />
+								<span className='hidden sm:inline'>IA</span>
+							</span>
+						</TabsTrigger>
+						<TabsTrigger
+							value='voice'
+							className='rounded-xl py-2 text-xs data-[state=active]:bg-background sm:text-sm'
+						>
+							<span className='flex items-center gap-2'>
+								<Volume2 className='size-4' />
+								<span className='hidden sm:inline'>Voz</span>
+							</span>
+						</TabsTrigger>
+						<TabsTrigger
+							value='speech'
+							className='rounded-xl py-2 text-xs data-[state=active]:bg-background sm:text-sm'
+						>
+							<span className='flex items-center gap-2'>
+								<Mic className='size-4' />
+								<span className='hidden sm:inline'>Reconocimiento</span>
+							</span>
+						</TabsTrigger>
+						<TabsTrigger
+							value='services'
+							className='rounded-xl py-2 text-xs data-[state=active]:bg-background sm:text-sm'
+						>
+							<span className='flex items-center gap-2'>
+								<Power className='size-4' />
+								<span className='hidden sm:inline'>Servicios</span>
+							</span>
+						</TabsTrigger>
+					</TabsList>
+
+					<TabsContent value='sandy' className='mt-0'>
+						<SandyCoreConfigPanel config={sandyConfig} onConfigChange={handleSandyConfigChange} />
+					</TabsContent>
+
+					<TabsContent value='ai' className='mt-0'>
+						<AiProviderSection
+							form={form}
+							geminiState={geminiState}
+							openRouterState={openRouterState}
+							setOpenRouterModalOpen={setIsOpenRouterModalOpen}
+							updateField={updateField}
+							onProviderChange={handleProviderChange}
+						/>
+					</TabsContent>
+
+					<TabsContent value='voice' className='mt-0'>
+						<VoiceSection form={form} fishState={fishState} updateField={updateField} />
+					</TabsContent>
+
+					<TabsContent value='speech' className='mt-0'>
+						<SpeechSection
+							form={form}
+							speechState={speechState}
+							browserSupportsNativeSpeech={browserSupportsNativeSpeech}
+							isAzureRegionOpen={isAzureRegionOpen}
+							setIsAzureRegionOpen={setIsAzureRegionOpen}
+							isAzureLanguageOpen={isAzureLanguageOpen}
+							setIsAzureLanguageOpen={setIsAzureLanguageOpen}
+							updateField={updateField}
+							updateSttProvider={updateSttProvider}
+							azureRegions={azureRegions}
+							azureLanguages={azureLanguages}
+						/>
+					</TabsContent>
+
+					<TabsContent value='services' className='mt-0'>
+						<ServiceLifecycleSection
+							form={form}
+							isStopping={isStopping}
+							onStopService={handleStopService}
+							updateField={updateField}
+							updateLifecycleBoolean={updateLifecycleBoolean}
+							updateIdleTimeout={updateIdleTimeout}
+						/>
+					</TabsContent>
+				</Tabs>
 			</section>
 
 			<OpenRouterModelDialog
