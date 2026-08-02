@@ -1,10 +1,12 @@
-'use client';
-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DashboardShell } from '@/containers/dashboard/DashboardShell';
+import type { Metadata } from 'next';
 import { Show, UserProfile } from '@clerk/nextjs';
 import Link from 'next/link';
+import { noIndexMetadata } from '@/lib/seo';
+
+export const metadata: Metadata = noIndexMetadata;
 
 const userProfileAppearance = {
 	elements: {

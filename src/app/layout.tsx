@@ -9,6 +9,7 @@ import { StatusProvider } from '@/context/StatusContext';
 import { StatusProviderBot } from '@/context/StatusContextBot';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from 'sonner';
+import { metadataBase, sharedDescription, sharedSiteName, sharedOpenGraphImage } from '@/lib/seo';
 
 const geistSans = Geist({
 	variable: '--font-geist-sans',
@@ -27,9 +28,37 @@ const unbounded = Unbounded({
 });
 
 export const metadata: Metadata = {
-	title: 'Sandy Studio',
-	description:
-		'Sandy Studio es una VTuber que te ayuda a interactuar con tu chat y servicios de streaming.',
+	metadataBase,
+	title: {
+		default: sharedSiteName,
+		template: `%s | ${sharedSiteName}`,
+	},
+	description: sharedDescription,
+	applicationName: sharedSiteName,
+	alternates: {
+		canonical: '/',
+	},
+	openGraph: {
+		type: 'website',
+		siteName: sharedSiteName,
+		title: sharedSiteName,
+		description: sharedDescription,
+		url: '/',
+		images: [
+			{
+				url: sharedOpenGraphImage,
+				width: 1200,
+				height: 630,
+				alt: 'Sandy Studio',
+			},
+		],
+	},
+	twitter: {
+		card: 'summary_large_image',
+		title: sharedSiteName,
+		description: sharedDescription,
+		images: [sharedOpenGraphImage],
+	},
 	icons: {
 		icon: '/icons/icon.png',
 	},

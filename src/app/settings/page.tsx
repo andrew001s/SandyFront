@@ -1,5 +1,9 @@
+import type { Metadata } from 'next';
 import { SettingsPanel } from '@/components/Settings/SettingsPanel';
 import { DashboardShell } from '@/containers/dashboard/DashboardShell';
+import { noIndexMetadata } from '@/lib/seo';
+
+export const metadata: Metadata = noIndexMetadata;
 
 export default function SettingsPage() {
 	return (

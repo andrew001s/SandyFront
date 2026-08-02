@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { CardConnectionKick } from '@/components/CardConnections/CardConnectionKick';
 import { CardConnectionBot } from '@/components/CardConnections/CardConnectionBot';
 import { CardConnectionProfile } from '@/components/CardConnections/CardConnectionProfile';
@@ -5,8 +6,11 @@ import { DashboardShell } from '@/containers/dashboard/DashboardShell';
 import { KickAuthProvider } from '@/context/KickAuthContext';
 import { StatusProviderBot } from '@/context/StatusContextBot';
 import { TwitchAuthBotProvider, TwitchAuthProvider } from '@/context/TwitchAuthContext';
+import { noIndexMetadata } from '@/lib/seo';
 import { Star } from 'lucide-react';
 import { SiKick, SiTwitch } from 'react-icons/si';
+
+export const metadata: Metadata = noIndexMetadata;
 
 function SocialSection({
 	icon,

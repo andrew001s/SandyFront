@@ -2,13 +2,12 @@ import { Moon, Star } from 'lucide-react';
 
 const items = [
 	'Chat de Twitch',
+	'Chat de Kick',
 	'Reconocimiento de voz',
 	'VTube Studio',
 	'Respuestas con IA',
 	'Voz natural',
 	'Lip sync en vivo',
-	'Azure Speech',
-	'Fish Audio',
 ];
 
 export function Marquee() {
