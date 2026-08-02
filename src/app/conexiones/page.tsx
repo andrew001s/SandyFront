@@ -6,6 +6,34 @@ import { KickAuthProvider } from '@/context/KickAuthContext';
 import { StatusProviderBot } from '@/context/StatusContextBot';
 import { TwitchAuthBotProvider, TwitchAuthProvider } from '@/context/TwitchAuthContext';
 import { Star } from 'lucide-react';
+import { SiKick, SiTwitch } from 'react-icons/si';
+
+function SocialSection({
+	icon,
+	title,
+	description,
+	children,
+}: {
+	icon: React.ReactNode;
+	title: string;
+	description: string;
+	children: React.ReactNode;
+}) {
+	return (
+		<section className='space-y-4'>
+			<div className='flex items-center gap-3'>
+				<div className='flex size-10 items-center justify-center rounded-2xl border border-border/70 bg-background/80 text-foreground shadow-sm'>
+					{icon}
+				</div>
+				<div>
+					<h2 className='font-semibold text-xl'>{title}</h2>
+					<p className='text-muted-foreground text-sm'>{description}</p>
+				</div>
+			</div>
+			<div className='grid grid-cols-1 gap-4 xl:grid-cols-2'>{children}</div>
+		</section>
+	);
+}
 
 export default function ConexionesPage() {
 	return (
@@ -33,24 +61,37 @@ export default function ConexionesPage() {
 					</p>
 				</header>
 
-				<div className='grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3'>
-					<div className='w-full'>
-						<TwitchAuthProvider>
-							<CardConnectionProfile />
-						</TwitchAuthProvider>
-					</div>
-					<div className='w-full'>
-						<StatusProviderBot>
-							<TwitchAuthBotProvider>
-								<CardConnectionBot />
-							</TwitchAuthBotProvider>
-						</StatusProviderBot>
-					</div>
-					<div className='w-full'>
-						<KickAuthProvider>
-							<CardConnectionKick />
-						</KickAuthProvider>
-					</div>
+				<div className='space-y-8'>
+					<SocialSection
+						icon={<SiTwitch className='size-5 text-[#9146FF]' />}
+						title='Twitch'
+						description='Gestiona la cuenta principal y el bot de Twitch.'
+					>
+						<div className='w-full'>
+							<TwitchAuthProvider>
+								<CardConnectionProfile />
+							</TwitchAuthProvider>
+						</div>
+						<div className='w-full'>
+							<StatusProviderBot>
+								<TwitchAuthBotProvider>
+									<CardConnectionBot />
+								</TwitchAuthBotProvider>
+							</StatusProviderBot>
+						</div>
+					</SocialSection>
+
+					<SocialSection
+						icon={<SiKick className='size-5 text-[#53FC18]' />}
+						title='Kick'
+						description='Gestiona tu conexión de Kick con la misma experiencia visual.'
+					>
+						<div className='w-full'>
+							<KickAuthProvider>
+								<CardConnectionKick />
+							</KickAuthProvider>
+						</div>
+					</SocialSection>
 				</div>
 			</div>
 		</DashboardShell>
