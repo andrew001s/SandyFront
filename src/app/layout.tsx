@@ -59,6 +59,9 @@ export const metadata: Metadata = {
 		description: sharedDescription,
 		images: [sharedOpenGraphImage],
 	},
+	verification: {
+		google: 'DHf86adjQLpMeRuz0oKd5FxpD6T5bwr5kTiuOHMYCjE',
+	},
 	icons: {
 		icon: '/icons/icon.png',
 	},
