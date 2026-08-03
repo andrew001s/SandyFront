@@ -3,14 +3,11 @@ import { ClerkProvider } from '@clerk/nextjs';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono, Unbounded } from 'next/font/google';
 import './globals.css';
+import { AppProviders } from '@/components/providers/AppProviders';
 import { Footer } from '@/components/ui/footer';
-import { MessagesProvider } from '@/context/MessagesContext';
-import { StatusProvider } from '@/context/StatusContext';
-import { StatusProviderBot } from '@/context/StatusContextBot';
-import { GlobalAudioPlayer } from '@/components/audio/GlobalAudioPlayer';
+import { metadataBase, sharedDescription, sharedOpenGraphImage, sharedSiteName } from '@/lib/seo';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from 'sonner';
-import { metadataBase, sharedDescription, sharedSiteName, sharedOpenGraphImage } from '@/lib/seo';
 
 const geistSans = Geist({
 	variable: '--font-geist-sans',
@@ -25,7 +22,6 @@ const geistMono = Geist_Mono({
 const unbounded = Unbounded({
 	variable: '--font-unbounded',
 	subsets: ['latin'],
-	weight: ['400', '500', '600', '700', '800'],
 });
 
 export const metadata: Metadata = {
@@ -80,18 +76,13 @@ export default function RootLayout({
 			>
 				<ClerkProvider localization={esES}>
 					<ThemeProvider attribute='class' defaultTheme='dark' enableSystem>
-						<StatusProvider>
-							<StatusProviderBot>
-								<MessagesProvider>
-									<GlobalAudioPlayer />
-									<main className='w-full flex-grow'>
-										<Toaster richColors position='top-right' />
-										{children}
-									</main>
-									<Footer />
-								</MessagesProvider>
-							</StatusProviderBot>
-						</StatusProvider>
+						<AppProviders>
+							<main className='w-full flex-grow'>
+								<Toaster richColors position='top-right' />
+								{children}
+							</main>
+							<Footer />
+						</AppProviders>
 					</ThemeProvider>
 				</ClerkProvider>
 			</body>

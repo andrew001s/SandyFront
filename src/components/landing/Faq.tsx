@@ -156,7 +156,7 @@ export function Faq() {
 		<section id='faq' className='relative py-24 md:py-32'>
 			<div className='-z-10 pointer-events-none absolute inset-0'>
 				<StarField count={22} seed={3} className='absolute inset-0 opacity-40' />
-				<div className='-translate-x-1/2 absolute top-1/4 left-1/2 h-[420px] w-[760px] rounded-full bg-[#8B5CF6]/10 blur-[140px]' />
+				<div className='-translate-x-1/2 absolute top-1/4 left-1/2 h-[420px] w-[760px] rounded-full bg-[#8B5CF6]/10 blur-[70px] md:blur-[140px]' />
 			</div>
 
 			<div className='mx-auto max-w-3xl px-5 md:px-8'>

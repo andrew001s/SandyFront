@@ -12,7 +12,7 @@ export function Cta() {
 			<div className='-z-10 pointer-events-none absolute inset-0'>
 				<StarField count={50} seed={13} className='absolute inset-0 opacity-70' />
 				<StarField moon moonClassName='top-8 right-[12%]' />
-				<div className='-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2 h-[520px] w-[820px] rounded-full bg-[#8B5CF6]/20 blur-[150px]' />
+				<div className='-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2 h-[520px] w-[820px] rounded-full bg-[#8B5CF6]/20 blur-[70px] md:blur-[150px]' />
 				<div className='absolute inset-0 opacity-[0.05] [background-image:linear-gradient(rgba(139,92,246,0.14)_1px,transparent_1px),linear-gradient(90deg,rgba(139,92,246,0.14)_1px,transparent_1px)] [background-size:72px_72px] dark:opacity-[0.04] dark:[background-image:linear-gradient(rgba(255,255,255,.6)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.6)_1px,transparent_1px)]' />
 			</div>
 

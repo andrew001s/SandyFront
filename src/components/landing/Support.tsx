@@ -10,7 +10,7 @@ export function Support() {
 		<section id='apoya' className='relative py-24 md:py-32'>
 			<div className='-z-10 pointer-events-none absolute inset-0'>
 				<StarField count={30} seed={7} className='absolute inset-0 opacity-50' />
-				<div className='-translate-x-1/2 absolute top-1/2 left-1/2 h-[420px] w-[720px] rounded-full bg-[#FF5E5B]/10 blur-[140px]' />
+				<div className='-translate-x-1/2 absolute top-1/2 left-1/2 h-[420px] w-[720px] rounded-full bg-[#FF5E5B]/10 blur-[70px] md:blur-[140px]' />
 			</div>
 
 			<div className='mx-auto max-w-4xl px-5 md:px-8'>

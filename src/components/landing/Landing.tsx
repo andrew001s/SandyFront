@@ -1,15 +1,19 @@
 'use client';
 
-import { Cta } from '@/components/landing/Cta';
-import { Faq } from '@/components/landing/Faq';
-import { Features } from '@/components/landing/Features';
 import { Hero } from '@/components/landing/Hero';
-import { HowItWorks } from '@/components/landing/HowItWorks';
 import { KoFiOverlay } from '@/components/landing/KoFi';
 import { LandingNav } from '@/components/landing/LandingNav';
-import { Marquee } from '@/components/landing/Marquee';
 import { StarField } from '@/components/landing/StarField';
-import { Support } from '@/components/landing/Support';
+import dynamic from 'next/dynamic';
+
+const Marquee = dynamic(() => import('@/components/landing/Marquee').then((m) => m.Marquee));
+const Features = dynamic(() => import('@/components/landing/Features').then((m) => m.Features));
+const HowItWorks = dynamic(() =>
+	import('@/components/landing/HowItWorks').then((m) => m.HowItWorks),
+);
+const Faq = dynamic(() => import('@/components/landing/Faq').then((m) => m.Faq));
+const Support = dynamic(() => import('@/components/landing/Support').then((m) => m.Support));
+const Cta = dynamic(() => import('@/components/landing/Cta').then((m) => m.Cta));
 
 export function Landing() {
 	return (

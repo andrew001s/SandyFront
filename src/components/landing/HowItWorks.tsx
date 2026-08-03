@@ -35,7 +35,7 @@ export function HowItWorks() {
 		<section id='como-funciona' className='relative py-24 md:py-32'>
 			<div className='-z-10 pointer-events-none absolute inset-0'>
 				<StarField count={24} seed={9} className='absolute inset-0 opacity-40' />
-				<div className='absolute top-1/3 left-[-10%] h-[400px] w-[500px] rounded-full bg-[#8B5CF6]/10 blur-[130px]' />
+				<div className='absolute top-1/3 left-[-10%] h-[400px] w-[500px] rounded-full bg-[#8B5CF6]/10 blur-[60px] md:blur-[130px]' />
 				<motion.div
 					animate={{ y: [0, -12, 0] }}
 					transition={{ duration: 6, repeat: Number.POSITIVE_INFINITY }}

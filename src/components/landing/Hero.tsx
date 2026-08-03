@@ -28,12 +28,44 @@ const script: Array<{ type: 'user' | 'sandy' | 'thinking'; text?: string }> = [
 
 function ChatMock() {
 	const [step, setStep] = useState(0);
+	const ref = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
-		const id = setInterval(() => {
-			setStep((s) => (s >= script.length ? 0 : s + 1));
-		}, 1600);
-		return () => clearInterval(id);
+		const tick = () => setStep((s) => (s >= script.length ? 0 : s + 1));
+
+		if (typeof IntersectionObserver === 'undefined') {
+			const id = setInterval(tick, 1600);
+			return () => clearInterval(id);
+		}
+
+		let id: ReturnType<typeof setInterval> | null = null;
+		const start = () => {
+			if (id) return;
+			id = setInterval(tick, 1600);
+		};
+		const stop = () => {
+			if (id) {
+				clearInterval(id);
+				id = null;
+			}
+		};
+
+		const observer = new IntersectionObserver((entries) => {
+			if (entries[0]?.isIntersecting) {
+				start();
+			} else {
+				stop();
+			}
+		});
+		if (ref.current) {
+			observer.observe(ref.current);
+		}
+		start();
+
+		return () => {
+			stop();
+			observer.disconnect();
+		};
 	}, []);
 
 	const shown = script.slice(0, step).filter((m) => m.type !== 'thinking');
@@ -41,6 +73,7 @@ function ChatMock() {
 
 	return (
 		<motion.div
+			ref={ref}
 			initial={{ opacity: 0, y: 40, rotateX: 6 }}
 			animate={{ opacity: 1, y: 0, rotateX: 0 }}
 			transition={{ duration: 0.9, delay: 0.5, ease: [0.21, 0.47, 0.32, 0.98] }}
@@ -146,8 +179,8 @@ export function Hero() {
 		<section ref={ref} className='relative overflow-hidden pt-32 pb-24 md:pt-40 md:pb-32'>
 			<motion.div style={{ y: glowY }} className='-z-10 pointer-events-none absolute inset-0'>
 				<StarField count={90} seed={11} className='absolute inset-0 opacity-80' />
-				<div className='-translate-x-1/2 absolute top-[-20%] left-1/2 h-[560px] w-[860px] rounded-full bg-[#8B5CF6]/25 blur-[140px]' />
-				<div className='absolute right-[-10%] bottom-[-10%] h-[420px] w-[520px] rounded-full bg-[#22D3EE]/15 blur-[130px]' />
+				<div className='-translate-x-1/2 absolute top-[-20%] left-1/2 h-[560px] w-[860px] rounded-full bg-[#8B5CF6]/25 blur-[70px] md:blur-[140px]' />
+				<div className='absolute right-[-10%] bottom-[-10%] h-[420px] w-[520px] rounded-full bg-[#22D3EE]/15 blur-[60px] md:blur-[130px]' />
 				<div className='absolute inset-0 opacity-[0.05] [background-image:linear-gradient(rgba(139,92,246,0.14)_1px,transparent_1px),linear-gradient(90deg,rgba(139,92,246,0.14)_1px,transparent_1px)] [background-size:72px_72px] dark:opacity-[0.04] dark:[background-image:linear-gradient(rgba(255,255,255,.6)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.6)_1px,transparent_1px)]' />
 			</motion.div>
 

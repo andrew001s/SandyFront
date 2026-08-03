@@ -1,5 +1,5 @@
 'use client';
-
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useMemo } from 'react';
 import { BsMoonStarsFill } from 'react-icons/bs';
 
@@ -55,9 +55,12 @@ export function StarField({
 	moon = false,
 	moonClassName = 'top-12 right-[10%]',
 }: StarFieldProps) {
+	const isMobile = useMediaQuery('(max-width: 640px)');
+	const starCount = isMobile ? Math.max(6, Math.round(count * 0.3)) : count;
+
 	const stars = useMemo<Array<Star>>(() => {
 		const rand = mulberry32(seed);
-		return Array.from({ length: count }, () => {
+		return Array.from({ length: starCount }, () => {
 			const glow = rand() > 0.78;
 			return {
 				top: `${Math.round(rand() * 100)}%`,
@@ -68,7 +71,7 @@ export function StarField({
 				glow,
 			};
 		});
-	}, [count, seed]);
+	}, [starCount, seed]);
 
 	return (
 		<div aria-hidden='true' className={`pointer-events-none overflow-hidden ${className}`}>
