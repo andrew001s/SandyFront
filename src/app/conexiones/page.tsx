@@ -1,14 +1,16 @@
-import type { Metadata } from 'next';
-import { CardConnectionKick } from '@/components/CardConnections/CardConnectionKick';
 import { CardConnectionBot } from '@/components/CardConnections/CardConnectionBot';
+import { CardConnectionKick } from '@/components/CardConnections/CardConnectionKick';
 import { CardConnectionProfile } from '@/components/CardConnections/CardConnectionProfile';
+import { CardConnectionYoutube } from '@/components/CardConnections/CardConnectionYoutube';
 import { DashboardShell } from '@/containers/dashboard/DashboardShell';
 import { KickAuthProvider } from '@/context/KickAuthContext';
 import { StatusProviderBot } from '@/context/StatusContextBot';
 import { TwitchAuthBotProvider, TwitchAuthProvider } from '@/context/TwitchAuthContext';
+import { YoutubeAuthProvider } from '@/context/YoutubeAuthContext';
 import { noIndexMetadata } from '@/lib/seo';
 import { Star } from 'lucide-react';
-import { SiKick, SiTwitch } from 'react-icons/si';
+import type { Metadata } from 'next';
+import { SiKick, SiTwitch, SiYoutube } from 'react-icons/si';
 
 export const metadata: Metadata = noIndexMetadata;
 
@@ -53,8 +55,8 @@ export default function ConexionesPage() {
 						</span>
 					</h1>
 					<p className='mt-2 max-w-xl text-muted-foreground'>
-						Conecta tus cuentas de Twitch y Kick para que Sandy Studio reaccione a tu chat en
-						tiempo real.
+						Conecta tus cuentas de Twitch, Kick y YouTube para que Sandy Studio reaccione a tu chat
+						en tiempo real.
 					</p>
 				</header>
 
@@ -87,6 +89,18 @@ export default function ConexionesPage() {
 							<KickAuthProvider>
 								<CardConnectionKick />
 							</KickAuthProvider>
+						</div>
+					</SocialSection>
+
+					<SocialSection
+						icon={<SiYoutube className='size-5 text-[#FF0000]' />}
+						title='YouTube'
+						description='Conecta Google en tu cuenta para leer el live chat y actualizar tu broadcast.'
+					>
+						<div className='w-full'>
+							<YoutubeAuthProvider>
+								<CardConnectionYoutube />
+							</YoutubeAuthProvider>
 						</div>
 					</SocialSection>
 				</div>
