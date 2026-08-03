@@ -1,6 +1,6 @@
 'use client';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { BsMoonStarsFill } from 'react-icons/bs';
 
 type Star = {
@@ -57,6 +57,11 @@ export function StarField({
 }: StarFieldProps) {
 	const isMobile = useMediaQuery('(max-width: 640px)');
 	const starCount = isMobile ? Math.max(6, Math.round(count * 0.3)) : count;
+	const [mounted, setMounted] = useState(false);
+
+	useEffect(() => {
+		setMounted(true);
+	}, []);
 
 	const stars = useMemo<Array<Star>>(() => {
 		const rand = mulberry32(seed);
@@ -75,21 +80,24 @@ export function StarField({
 
 	return (
 		<div aria-hidden='true' className={`pointer-events-none overflow-hidden ${className}`}>
-			{stars.map((star, i) => (
-				<span
-					key={i}
-					className='absolute rounded-full bg-[#8B5CF6]/80 dark:bg-white'
-					style={{
-						top: star.top,
-						left: star.left,
-						width: star.size,
-						height: star.size,
-						boxShadow: star.glow ? '0 0 8px rgba(139,92,246,0.55)' : '0 0 3px rgba(139,92,246,0.3)',
-						animation: `twinkle ${star.duration}s ease-in-out ${star.delay}s infinite`,
-					}}
-				/>
-			))}
-			{moon && (
+			{mounted &&
+				stars.map((star, i) => (
+					<span
+						key={i}
+						className='absolute rounded-full bg-[#8B5CF6]/80 dark:bg-white'
+						style={{
+							top: star.top,
+							left: star.left,
+							width: star.size,
+							height: star.size,
+							boxShadow: star.glow
+								? '0 0 8px rgba(139,92,246,0.55)'
+								: '0 0 3px rgba(139,92,246,0.3)',
+							animation: `twinkle ${star.duration}s ease-in-out ${star.delay}s infinite`,
+						}}
+					/>
+				))}
+			{mounted && moon && (
 				<div
 					style={{ animation: 'float-slow 9s ease-in-out infinite' }}
 					className={`absolute ${moonClassName}`}

@@ -21,7 +21,8 @@ export function LandingNav() {
 	const [mounted, setMounted] = useState(false);
 	const [scrolled, setScrolled] = useState(false);
 	const activeTheme = resolvedTheme ?? theme ?? 'dark';
-	const logoSrc = activeTheme === 'light' ? '/icons/sandyLight.png' : '/icons/sandyDark.png';
+	const logoSrc =
+		activeTheme === 'light' ? '/icons/logo-nav-light.png' : '/icons/logo-nav-dark.png';
 
 	useEffect(() => {
 		setMounted(true);
@@ -48,10 +49,17 @@ export function LandingNav() {
 				<Link href='/' className='flex items-center gap-2.5'>
 					<span
 						className={`relative flex items-center justify-center overflow-hidden transition-all duration-300 ${
-							scrolled ? 'h-8 w-16' : 'h-9 w-20'
+							scrolled ? 'w-16' : 'w-20'
 						}`}
 					>
-						<Image src={logoSrc} alt='Sandy Studio' fill sizes='80px' className='object-contain' priority />
+						<Image
+							src={logoSrc}
+							alt='Sandy Studio'
+							width={80}
+							height={31}
+							sizes='80px'
+							className='h-auto w-full object-contain'
+						/>
 					</span>
 				</Link>
 

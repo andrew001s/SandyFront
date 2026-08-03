@@ -6,14 +6,18 @@ import { LandingNav } from '@/components/landing/LandingNav';
 import { StarField } from '@/components/landing/StarField';
 import dynamic from 'next/dynamic';
 
-const Marquee = dynamic(() => import('@/components/landing/Marquee').then((m) => m.Marquee));
+const Marquee = dynamic(() => import('@/components/landing/Marquee').then((m) => m.Marquee), {
+	ssr: false,
+});
 const Features = dynamic(() => import('@/components/landing/Features').then((m) => m.Features));
 const HowItWorks = dynamic(() =>
 	import('@/components/landing/HowItWorks').then((m) => m.HowItWorks),
 );
 const Faq = dynamic(() => import('@/components/landing/Faq').then((m) => m.Faq));
-const Support = dynamic(() => import('@/components/landing/Support').then((m) => m.Support));
-const Cta = dynamic(() => import('@/components/landing/Cta').then((m) => m.Cta));
+const Support = dynamic(() => import('@/components/landing/Support').then((m) => m.Support), {
+	ssr: false,
+});
+const Cta = dynamic(() => import('@/components/landing/Cta').then((m) => m.Cta), { ssr: false });
 
 export function Landing() {
 	return (
