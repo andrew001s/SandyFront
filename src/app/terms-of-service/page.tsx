@@ -1,5 +1,5 @@
 import { LegalPage, type LegalSection } from '@/components/legal/LegalPage';
-import { metadataBase, sharedDescription, sharedSiteName } from '@/lib/seo';
+import { metadataBase, sharedDescription, sharedOpenGraphImage, sharedSiteName } from '@/lib/seo';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -15,9 +15,20 @@ export const metadata: Metadata = {
 		type: 'website',
 		siteName: sharedSiteName,
 		url: '/terms-of-service',
+		locale: 'es_ES',
+		images: [
+			{
+				url: sharedOpenGraphImage,
+				width: 1200,
+				height: 630,
+				alt: 'Sandy Studio',
+			},
+		],
 	},
 	twitter: {
 		card: 'summary_large_image',
+		site: '@ElShandrew',
+		creator: '@ElShandrew',
 		title: `Términos del Servicio | ${sharedSiteName}`,
 		description: sharedDescription,
 	},

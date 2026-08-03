@@ -6,7 +6,7 @@ export const metadata: Metadata = {
 	metadataBase,
 	title: 'VTuber con IA que conversa con tu chat | Sandy Studio',
 	description:
-		'Crea tu VTuber con IA para Twitch y Kick: Sandy Studio lee tu chat, responde con su voz, se mueve en VTube Studio y modera tu canal automáticamente. Gratis para empezar.',
+		'Crea tu VTuber con IA para Twitch y Kick: lee tu chat, responde con su voz, se mueve en VTube Studio y modera tu canal. Gratis.',
 	keywords: [
 		'vtuber con IA',
 		'vtuber inteligencia artificial',
@@ -22,11 +22,12 @@ export const metadata: Metadata = {
 		canonical: '/',
 	},
 	openGraph: {
-		title: sharedSiteName,
+		title: 'VTuber con IA que conversa con tu chat | Sandy Studio',
 		description: sharedDescription,
 		type: 'website',
 		siteName: sharedSiteName,
 		url: '/',
+		locale: 'es_ES',
 		images: [
 			{
 				url: sharedOpenGraphImage,
@@ -38,7 +39,9 @@ export const metadata: Metadata = {
 	},
 	twitter: {
 		card: 'summary_large_image',
-		title: sharedSiteName,
+		site: '@ElShandrew',
+		creator: '@ElShandrew',
+		title: 'VTuber con IA que conversa con tu chat | Sandy Studio',
 		description:
 			'Sandy Studio te ayuda a conectar Twitch, Kick, voz y avatar en una sola interfaz.',
 		images: [sharedOpenGraphImage],

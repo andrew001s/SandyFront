@@ -3,7 +3,7 @@ import {
 	ContentPage,
 	type ContentSection,
 } from '@/components/content/ContentPage';
-import { metadataBase, sharedSiteName } from '@/lib/seo';
+import { metadataBase, sharedOpenGraphImage, sharedSiteName } from '@/lib/seo';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -28,9 +28,20 @@ export const metadata: Metadata = {
 		type: 'website',
 		siteName: sharedSiteName,
 		url: '/vtuber-ia',
+		locale: 'es_ES',
+		images: [
+			{
+				url: sharedOpenGraphImage,
+				width: 1200,
+				height: 630,
+				alt: 'Sandy Studio',
+			},
+		],
 	},
 	twitter: {
 		card: 'summary_large_image',
+		site: '@ElShandrew',
+		creator: '@ElShandrew',
 		title: 'VTuber con IA: qué es y cómo crear el tuyo',
 		description: 'Crea tu VTuber con IA gratis: chat de Twitch, voz y VTube Studio.',
 	},

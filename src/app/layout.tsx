@@ -1,6 +1,6 @@
 import { esES } from '@clerk/localizations';
 import { ClerkProvider } from '@clerk/nextjs';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono, Unbounded } from 'next/font/google';
 import './globals.css';
 import { AppProviders } from '@/components/providers/AppProviders';
@@ -24,6 +24,11 @@ const unbounded = Unbounded({
 	subsets: ['latin'],
 });
 
+export const viewport: Viewport = {
+	themeColor: '#8B5CF6',
+	colorScheme: 'light dark',
+};
+
 export const metadata: Metadata = {
 	metadataBase,
 	title: {
@@ -32,6 +37,7 @@ export const metadata: Metadata = {
 	},
 	description: sharedDescription,
 	applicationName: sharedSiteName,
+	manifest: '/manifest.webmanifest',
 	alternates: {
 		canonical: '/',
 	},
@@ -41,6 +47,7 @@ export const metadata: Metadata = {
 		title: sharedSiteName,
 		description: sharedDescription,
 		url: '/',
+		locale: 'es_ES',
 		images: [
 			{
 				url: sharedOpenGraphImage,
@@ -55,12 +62,18 @@ export const metadata: Metadata = {
 		title: sharedSiteName,
 		description: sharedDescription,
 		images: [sharedOpenGraphImage],
+		site: '@ElShandrew',
+		creator: '@ElShandrew',
 	},
 	verification: {
 		google: 'AL5En1HMHtQ2Q0tI5CsdqAgKRlzJY-kU7qZ02BZtABQ',
 	},
 	icons: {
-		icon: '/favicon.ico',
+		icon: [
+			{ url: '/favicon.ico', type: 'image/x-icon', sizes: 'any' },
+			{ url: '/favicon-32x32.png', type: 'image/png', sizes: '32x32' },
+			{ url: '/favicon.svg', type: 'image/svg+xml' },
+		],
 		apple: '/apple-touch-icon.png',
 	},
 };
