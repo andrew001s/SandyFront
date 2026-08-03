@@ -57,7 +57,7 @@ export const metadata: Metadata = {
 		images: [sharedOpenGraphImage],
 	},
 	verification: {
-		google: 'DHf86adjQLpMeRuz0oKd5FxpD6T5bwr5kTiuOHMYCjE',
+		google: 'AL5En1HMHtQ2Q0tI5CsdqAgKRlzJY-kU7qZ02BZtABQ',
 	},
 	icons: {
 		icon: '/icons/icon.png',
