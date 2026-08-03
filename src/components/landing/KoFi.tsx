@@ -79,7 +79,7 @@ function scheduleWork(callback: () => void) {
 		return;
 	}
 
-	window.setTimeout(callback, 1200);
+	globalThis.setTimeout(callback, 1200);
 }
 
 export function KoFiButton() {
