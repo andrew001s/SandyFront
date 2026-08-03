@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.4](https://github.com/andrew001s/SandyFront/compare/v0.1.2...v0.1.4) (2026-08-03)
+
+
+### Features
+
+* add kick integration ([15e551a](https://github.com/andrew001s/SandyFront/commit/15e551a4207b5087e421241ae58beb08e81bf07c))
+* refine twitch service controls ([f6c6492](https://github.com/andrew001s/SandyFront/commit/f6c6492f5600d5e54355035c2efae6c9e6bf6385))
+* **settings:** ✨ mejora la preview clicable de la voz ([fc2c4d0](https://github.com/andrew001s/SandyFront/commit/fc2c4d0e6545cc85f4b16ef1970dbe7a3dd03f32))
+
 ### [0.1.3](https://github.com/andrew001s/SandyFront/compare/v0.1.2...v0.1.3) (2026-08-02)
 
 
