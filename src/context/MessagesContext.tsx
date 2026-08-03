@@ -13,12 +13,13 @@ interface MessagesContextType {
 }
 
 const MessagesContext = createContext<MessagesContextType | undefined>(undefined);
+const MAX_MESSAGES = 200;
 
 export function MessagesProvider({ children }: { children: ReactNode }) {
 	const [messages, setMessages] = useState<Message[]>([]);
 
 	const addMessage = (message: Message) => {
-		setMessages((prev) => [...prev, message]);
+		setMessages((prev) => [...prev, message].slice(-MAX_MESSAGES));
 	};
 
 	return (

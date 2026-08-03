@@ -7,7 +7,7 @@ import { useAudioQueue } from '@/hooks/useAudioQueue';
 import { useVTubeStudio } from '@/hooks/useVTubeStudio';
 import type { AvatarBackendPayload } from '@/lib/vtsAvatarPayload';
 import { useAuth } from '@clerk/nextjs';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, type MutableRefObject } from 'react';
 
 type StreamEventPayload = AvatarBackendPayload & {
 	client_id?: number;
@@ -19,6 +19,17 @@ const backendUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').
 const STREAM_TOKEN_URL = `${backendUrl}/stream/token`;
 const RECONNECT_BASE_DELAY_MS = 1500;
 const RECONNECT_MAX_DELAY_MS = 15000;
+const MAX_PROCESSED_MESSAGES = 500;
+
+function trimProcessedMessages(ref: MutableRefObject<Set<string>>) {
+	while (ref.current.size > MAX_PROCESSED_MESSAGES) {
+		const oldest = ref.current.values().next().value as string | undefined;
+		if (!oldest) {
+			break;
+		}
+		ref.current.delete(oldest);
+	}
+}
 
 const StreamChat = () => {
 	const processedMessages = useRef<Set<string>>(new Set());
@@ -142,6 +153,7 @@ const StreamChat = () => {
 					}
 
 					processedMessages.current.add(messageKey);
+					trimProcessedMessages(processedMessages);
 					addMessageRef.current({
 						type: 'chat',
 						content: speechText,
@@ -163,6 +175,7 @@ const StreamChat = () => {
 
 				if (normalizedType === 'reaction') {
 					processedMessages.current.add(messageKey);
+					trimProcessedMessages(processedMessages);
 					addMessageRef.current({
 						type: 'reaction',
 						content: reactionText || 'Reacción recibida',
@@ -179,6 +192,7 @@ const StreamChat = () => {
 
 				if (normalizedType === 'system') {
 					processedMessages.current.add(messageKey);
+					trimProcessedMessages(processedMessages);
 					addMessageRef.current({
 						type: 'system',
 						content: reactionText || 'Evento del sistema recibido',
