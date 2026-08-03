@@ -38,7 +38,32 @@ export function Support() {
 								</p>
 							</div>
 
-							<KoFiButton />
+							<div className='flex flex-col items-center gap-4'>
+								<KoFiButton />
+								<a
+									href='https://www.producthunt.com/products/sandy-studio?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-sandy-studio'
+									target='_blank'
+									rel='noopener noreferrer'
+									className='transition-opacity hover:opacity-90'
+								>
+									{/* biome-ignore lint/nursery/noImgElement: Product Hunt badge is a static SVG embed */}
+									<img
+										alt='Sandy Studio - VTuber con IA que habla con tu chat de Twitch | Product Hunt'
+										width='250'
+										height='54'
+										className='block dark:hidden'
+										src='https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1214052&theme=light&t=1785779991881'
+									/>
+									{/* biome-ignore lint/nursery/noImgElement: Product Hunt badge is a static SVG embed */}
+									<img
+										alt='Sandy Studio - VTuber con IA que habla con tu chat de Twitch | Product Hunt'
+										width='250'
+										height='54'
+										className='hidden dark:block'
+										src='https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1214052&theme=dark&t=1785779991881'
+									/>
+								</a>
+							</div>
 						</div>
 					</div>
 				</Reveal>
