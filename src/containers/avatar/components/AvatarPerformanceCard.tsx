@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { type VTSStats } from '@/hooks/useVTubeStudio';
+import type { VTSStats } from '@/hooks/useVTubeStudio';
 import { FiCpu } from 'react-icons/fi';
 
 type AvatarPerformanceCardProps = {

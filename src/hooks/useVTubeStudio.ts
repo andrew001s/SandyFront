@@ -1,7 +1,5 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { ApiClient, VTubeStudioError } from 'vtubestudio';
 import { AudioQueueManager } from '@/lib/audioQueueSingleton';
 import {
 	type AvatarBackendPayload,
@@ -10,6 +8,8 @@ import {
 	resolveAvatarPose,
 } from '@/lib/vtsAvatarPayload';
 import { createVtsLipSyncHandler, stopVtsLipSync } from '@/lib/vtsLipSync';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ApiClient, VTubeStudioError } from 'vtubestudio';
 
 export interface VTSModel {
 	modelLoaded: boolean;
@@ -47,7 +47,7 @@ export interface VTSStats {
 	vTubeStudioVersion: string;
 }
 
-interface VTSHotkey {
+export interface VTSHotkey {
 	name: string;
 	type: string;
 	description: string;
@@ -57,7 +57,7 @@ interface VTSHotkey {
 	onScreenButtonID: number;
 }
 
-interface VTSExpression {
+export interface VTSExpression {
 	name: string;
 	file: string;
 	active: boolean;
@@ -75,6 +75,7 @@ interface UseVTSReturn {
 	stats: VTSStats | null;
 	models: VTSModel[];
 	currentModel: VTSModelInfo | null;
+	folderInfo: { models: string; backgrounds: string; items: string } | null;
 	connect: (port?: number) => Promise<void>;
 	disconnect: () => Promise<void>;
 	loadModel: (modelID: string) => Promise<void>;
@@ -84,6 +85,15 @@ interface UseVTSReturn {
 	expressions: VTSExpression[];
 	triggerHotkey: (key: string) => Promise<boolean>;
 	activateExpression: (nameOrFile: string) => Promise<boolean>;
+	setExpressionActive: (nameOrFile: string, active: boolean) => Promise<boolean>;
+	moveModel: (opts: {
+		positionX?: number;
+		positionY?: number;
+		rotation?: number;
+		size?: number;
+		timeInSeconds?: number;
+		valuesAreRelativeToModel?: boolean;
+	}) => Promise<void>;
 	sendAvatarPayload: (payload: AvatarBackendPayload) => Promise<boolean>;
 }
 
@@ -116,6 +126,11 @@ export function useVTubeStudio(): UseVTSReturn {
 	const [stats, setStats] = useState<VTSStats | null>(null);
 	const [models, setModels] = useState<VTSModel[]>([]);
 	const [currentModel, setCurrentModel] = useState<VTSModelInfo | null>(null);
+	const [folderInfo, setFolderInfo] = useState<{
+		models: string;
+		backgrounds: string;
+		items: string;
+	} | null>(null);
 	const [hotkeys, setHotkeys] = useState<VTSHotkey[]>([]);
 	const [expressions, setExpressions] = useState<VTSExpression[]>([]);
 	const clientRef = useRef<ApiClient | null>(null);
@@ -128,25 +143,51 @@ export function useVTubeStudio(): UseVTSReturn {
 		return 'Error desconocido';
 	}, []);
 
-	const syncClientState = useCallback(async (client: ApiClient) => {
-		try {
-			const [statsResp, modelsResp, modelResp, hotkeysResp, expressionsResp] = await Promise.all([
-				client.statistics(),
-				client.availableModels(),
-				client.currentModel(),
-				client.hotkeysInCurrentModel({}),
-				client.expressionState({ details: true }),
-			]);
+	const syncClientState = useCallback(
+		async (client: ApiClient) => {
+			try {
+				const [statsResp, modelsResp, modelResp, hotkeysResp, expressionsResp, folderInfoResp] =
+					await Promise.all([
+						client.statistics(),
+						client.availableModels(),
+						client.currentModel(),
+						client.hotkeysInCurrentModel({}),
+						client.expressionState({ details: true }),
+						client.vtsFolderInfo(),
+					]);
 
-			setStats(statsResp);
-			setModels(modelsResp.availableModels);
-			setCurrentModel(modelResp.modelLoaded ? modelResp : null);
-			setHotkeys(hotkeysResp.availableHotkeys);
-			setExpressions(expressionsResp.expressions);
-		} catch (e) {
-			setError(handleError(e));
-		}
-	}, [handleError]);
+				setStats(statsResp);
+				setModels(modelsResp.availableModels);
+				setCurrentModel(modelResp.modelLoaded ? modelResp : null);
+				setHotkeys(hotkeysResp.availableHotkeys);
+				setExpressions(expressionsResp.expressions);
+				setFolderInfo(folderInfoResp);
+			} catch (e) {
+				setError(handleError(e));
+			}
+		},
+		[handleError],
+	);
+
+	const syncModelState = useCallback(
+		async (client: ApiClient) => {
+			try {
+				const [modelsResp, modelResp, hotkeysResp, expressionsResp] = await Promise.all([
+					client.availableModels(),
+					client.currentModel(),
+					client.hotkeysInCurrentModel({}),
+					client.expressionState({ details: true }),
+				]);
+				setModels(modelsResp.availableModels);
+				setCurrentModel(modelResp.modelLoaded ? modelResp : null);
+				setHotkeys(hotkeysResp.availableHotkeys);
+				setExpressions(expressionsResp.expressions);
+			} catch (e) {
+				setError(handleError(e));
+			}
+		},
+		[handleError],
+	);
 
 	const injectParameters = useCallback(async (params: { id: string; value: number }[]) => {
 		const client = clientRef.current;
@@ -160,35 +201,38 @@ export function useVTubeStudio(): UseVTSReturn {
 		});
 	}, []);
 
-	const triggerHotkey = useCallback(async (key: string) => {
-		const client = clientRef.current;
-		if (!client) return false;
+	const triggerHotkey = useCallback(
+		async (key: string) => {
+			const client = clientRef.current;
+			if (!client) return false;
 
-		let availableHotkeys = hotkeys;
-		if (availableHotkeys.length === 0) {
-			try {
-				const hotkeysResp = await client.hotkeysInCurrentModel({});
-				availableHotkeys = hotkeysResp.availableHotkeys;
-				setHotkeys(availableHotkeys);
-			} catch {
-				return false;
+			let availableHotkeys = hotkeys;
+			if (availableHotkeys.length === 0) {
+				try {
+					const hotkeysResp = await client.hotkeysInCurrentModel({});
+					availableHotkeys = hotkeysResp.availableHotkeys;
+					setHotkeys(availableHotkeys);
+				} catch {
+					return false;
+				}
 			}
-		}
 
-		const normalizedKey = key.trim().toLowerCase();
-		const hotkey =
-			availableHotkeys.find((item) => item.hotkeyID === key) ??
-			availableHotkeys.find((item) => item.name.trim().toLowerCase() === normalizedKey) ??
-			availableHotkeys.find((item) => item.file.trim().toLowerCase() === normalizedKey);
+			const normalizedKey = key.trim().toLowerCase();
+			const hotkey =
+				availableHotkeys.find((item) => item.hotkeyID === key) ??
+				availableHotkeys.find((item) => item.name.trim().toLowerCase() === normalizedKey) ??
+				availableHotkeys.find((item) => item.file.trim().toLowerCase() === normalizedKey);
 
-		if (!hotkey) return false;
+			if (!hotkey) return false;
 
-		await client.hotkeyTrigger({ hotkeyID: hotkey.hotkeyID });
-		return true;
-	}, [hotkeys]);
+			await client.hotkeyTrigger({ hotkeyID: hotkey.hotkeyID });
+			return true;
+		},
+		[hotkeys],
+	);
 
-	const activateExpression = useCallback(
-		async (nameOrFile: string) => {
+	const setExpressionActive = useCallback(
+		async (nameOrFile: string, active: boolean) => {
 			const client = clientRef.current;
 			if (!client) return false;
 
@@ -214,12 +258,50 @@ export function useVTubeStudio(): UseVTSReturn {
 
 			await client.expressionActivation({
 				expressionFile: expression.file,
-				active: true,
+				active,
 				fadeTime: 0.25,
 			});
+
+			setExpressions((prev) =>
+				prev.map((item) => (item.file === expression.file ? { ...item, active } : item)),
+			);
 			return true;
 		},
 		[expressions],
+	);
+
+	const activateExpression = useCallback(
+		async (nameOrFile: string) => setExpressionActive(nameOrFile, true),
+		[setExpressionActive],
+	);
+
+	const moveModel = useCallback(
+		async (opts: {
+			positionX?: number;
+			positionY?: number;
+			rotation?: number;
+			size?: number;
+			timeInSeconds?: number;
+			valuesAreRelativeToModel?: boolean;
+		}) => {
+			const client = clientRef.current;
+			if (!client) return;
+
+			await client.moveModel({
+				timeInSeconds: opts.timeInSeconds ?? 0.5,
+				valuesAreRelativeToModel: opts.valuesAreRelativeToModel ?? false,
+				positionX: opts.positionX,
+				positionY: opts.positionY,
+				rotation: opts.rotation,
+				size: opts.size,
+			});
+
+			const modelResp = await client.currentModel();
+			if (modelResp.modelLoaded) {
+				setCurrentModel(modelResp);
+			}
+		},
+		[],
 	);
 
 	const sendAvatarPayload = useCallback(
@@ -231,7 +313,11 @@ export function useVTubeStudio(): UseVTSReturn {
 			const pose = resolveAvatarPose(payload);
 			const tasks: Promise<unknown>[] = [];
 
-			if (normalizedType === 'speech' || normalizedType === 'reaction' || normalizedType === 'idle') {
+			if (
+				normalizedType === 'speech' ||
+				normalizedType === 'reaction' ||
+				normalizedType === 'idle'
+			) {
 				tasks.push(
 					injectParameters([
 						{ id: 'SandyLipOpen', value: pose.open },
@@ -284,7 +370,9 @@ export function useVTubeStudio(): UseVTSReturn {
 				if (sharedClient && sharedConnected) {
 					clientRef.current = sharedClient;
 					setConnected(true);
-					AudioQueueManager.getInstance().setLipSyncHandler(createVtsLipSyncHandler(injectParameters));
+					AudioQueueManager.getInstance().setLipSyncHandler(
+						createVtsLipSyncHandler(injectParameters),
+					);
 					await syncClientState(sharedClient);
 					return;
 				}
@@ -314,7 +402,12 @@ export function useVTubeStudio(): UseVTSReturn {
 				client.on('connect', () => {
 					sharedConnected = true;
 					setConnected(true);
-					AudioQueueManager.getInstance().setLipSyncHandler(createVtsLipSyncHandler(injectParameters));
+					AudioQueueManager.getInstance().setLipSyncHandler(
+						createVtsLipSyncHandler(injectParameters),
+					);
+					void client.events.modelLoaded.subscribe(() => {
+						void syncModelState(client);
+					}, {});
 				});
 				client.on('disconnect', () => {
 					sharedConnected = false;
@@ -383,7 +476,7 @@ export function useVTubeStudio(): UseVTSReturn {
 				setConnecting(false);
 			}
 		},
-		[connecting, handleError, injectParameters, syncClientState],
+		[connecting, handleError, injectParameters, syncClientState, syncModelState],
 	);
 
 	const disconnect = useCallback(async () => {
@@ -402,14 +495,37 @@ export function useVTubeStudio(): UseVTSReturn {
 
 	const loadModel = useCallback(
 		async (modelID: string) => {
-			if (!clientRef.current) return;
+			const client = clientRef.current;
+			if (!client) return;
 			setError(null);
 			try {
-				await clientRef.current.modelLoad({ modelID });
-				const modelResp = await clientRef.current.currentModel();
+				setModels((prev) =>
+					prev.map((model) => ({ ...model, modelLoaded: model.modelID === modelID })),
+				);
+
+				await client.modelLoad({ modelID });
+
+				let modelResp = await client.currentModel();
+				for (
+					let attempt = 0;
+					attempt < 20 && !(modelResp.modelLoaded && modelResp.modelID === modelID);
+					attempt++
+				) {
+					await new Promise((resolve) => setTimeout(resolve, 150));
+					modelResp = await client.currentModel();
+				}
 				if (modelResp.modelLoaded) {
 					setCurrentModel(modelResp);
 				}
+
+				const [modelsResp, hotkeysResp, expressionsResp] = await Promise.all([
+					client.availableModels(),
+					client.hotkeysInCurrentModel({}),
+					client.expressionState({ details: true }),
+				]);
+				setModels(modelsResp.availableModels);
+				setHotkeys(hotkeysResp.availableHotkeys);
+				setExpressions(expressionsResp.expressions);
 			} catch (e) {
 				setError(handleError(e));
 			}
@@ -440,6 +556,7 @@ export function useVTubeStudio(): UseVTSReturn {
 		stats,
 		models,
 		currentModel,
+		folderInfo,
 		connect,
 		disconnect,
 		loadModel,
@@ -449,6 +566,8 @@ export function useVTubeStudio(): UseVTSReturn {
 		expressions,
 		triggerHotkey,
 		activateExpression,
+		setExpressionActive,
+		moveModel,
 		sendAvatarPayload,
 	};
 }
