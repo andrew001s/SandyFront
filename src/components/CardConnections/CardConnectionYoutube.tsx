@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { BsMoonStarsFill } from 'react-icons/bs';
 import { FaYoutube } from 'react-icons/fa';
 import { ClipLoader } from 'react-spinners';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Avatar } from '../ui/avatar';
 import { BackgroundGradient } from '../ui/background-gradient';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
@@ -75,9 +75,16 @@ export const CardConnectionYoutube = () => {
 			<Card className='mt-3 w-full gap-0 border-none bg-transparent p-0.5 sm:p-0'>
 				<CardContent className='flex flex-col space-y-4 p-4'>
 					<div className='flex flex-row items-center space-x-4'>
-						<Avatar className='ml-4 h-20 w-20 border-2 border-border'>
-							<AvatarImage src={profile?.picProfile} />
-							<AvatarFallback>
+						<Avatar className='relative ml-4 h-20 w-20 border-2 border-border'>
+							{profile?.picProfile ? (
+								<Image
+									src={profile.picProfile}
+									alt={`Avatar de ${channelName}`}
+									fill
+									sizes='80px'
+									className='object-cover'
+								/>
+							) : (
 								<Image
 									src='/icons/default.png'
 									alt='Default Icon'
@@ -86,7 +93,7 @@ export const CardConnectionYoutube = () => {
 									loading='lazy'
 									className='h-full w-full object-cover'
 								/>
-							</AvatarFallback>
+							)}
 						</Avatar>
 						<div className='min-w-0 flex-1'>
 							<div className='flex items-center gap-2'>

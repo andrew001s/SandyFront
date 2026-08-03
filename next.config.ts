@@ -26,6 +26,11 @@ const nextConfig: NextConfig = {
 				hostname: 'public-platform.r2.fish.audio',
 				pathname: '/**',
 			},
+			{
+				protocol: 'https',
+				hostname: 'yt3.ggpht.com',
+				pathname: '/**',
+			},
 		],
 	},
 };
