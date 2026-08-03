@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.5](https://github.com/andrew001s/SandyFront/compare/v0.1.4...v0.1.5) (2026-08-03)
+
+
+### Features
+
+* ✨Add Open Graph metadata and icons for improved SEO and social sharing ([e6f8ca9](https://github.com/andrew001s/SandyFront/commit/e6f8ca958d06b90c33314e50e4244a268b30f85e))
+* ✨enhance AvatarContainer with new expression and hotkey management features ([32ff611](https://github.com/andrew001s/SandyFront/commit/32ff611b6a86e553df1b0a4d290619c82c493250))
+* **conexiones:** 🔗 integra la conexión de YouTube con OAuth de Google ([df229f9](https://github.com/andrew001s/SandyFront/commit/df229f91140bb06f900b7191714fd7f6b0aa9c79))
+* **icons:** ✨ agregar icono de Apple Touch y favicon en formato PNG ([ca46bac](https://github.com/andrew001s/SandyFront/commit/ca46bacff30fc79e2523d9adea8dfe1d01998d9f))
+* **landing:** ✨ agregar nuevos íconos de navegación y optimizar la carga de componentes dinámicos ([e6503a7](https://github.com/andrew001s/SandyFront/commit/e6503a75c7f1fcc22d78edb53ab989b01322f4f6))
+* **legal:** ✨ agregar páginas de Política de Privacidad y Términos del Servicio ([f270ad0](https://github.com/andrew001s/SandyFront/commit/f270ad0b092db5c30ae72b65ff791e23cc9daa88))
+* **metadata:** ✨ actualizar el título en los metadatos para reflejar la funcionalidad de conversación con el chat ([56b1074](https://github.com/andrew001s/SandyFront/commit/56b1074cb90710a66036dfcf45a1735364bb1fcd))
+* **metadata:** ✨ actualizar el título y el texto en el componente Hero para reflejar la marca Sandy Studio ([d66dc85](https://github.com/andrew001s/SandyFront/commit/d66dc85b1fc2d2946fcc622f9982a94f000b6e49))
+* **páginas:** ✨ agregar nuevas páginas para VTuber con IA y Bot de chat para Twitch y Kick, incluyendo SEO y contenido relevante ([f19dc42](https://github.com/andrew001s/SandyFront/commit/f19dc427938280a0a2e46c07cb6f29428f6f1dcb))
+* **support:** ✨ agregar botón de Ko-Fi y badge de Product Hunt para apoyo al proyecto ([970fa15](https://github.com/andrew001s/SandyFront/commit/970fa1599e040393091caa9fafbc580e519ff7cf))
+
+
+### Bug Fixes
+
+* **conexiones:** 🐛 muestra el avatar del canal de YouTube ([76ba819](https://github.com/andrew001s/SandyFront/commit/76ba819fb4f5720b0f91a89d4c1cc6f0a4ca29ef))
+* **favicon:** 🐛 actualizar el archivo favicon.ico ([db06cf4](https://github.com/andrew001s/SandyFront/commit/db06cf4ec8457d6583359ecbb6720c086f2d51ed))
+* **metadata:** 🐛 actualizar la ruta del ícono a favicon.ico ([b400fa3](https://github.com/andrew001s/SandyFront/commit/b400fa3bda49a362912c5314f4b13351e62065b1))
+* **metadata:** 🐛 actualizar la verificación de Google en los metadatos ([72ff57b](https://github.com/andrew001s/SandyFront/commit/72ff57b257bddaa331bea4b7b4b94551c3b6d4d2))
+
 ### [0.1.4](https://github.com/andrew001s/SandyFront/compare/v0.1.2...v0.1.4) (2026-08-03)
 
 
