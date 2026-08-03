@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/badge';
 import { Star } from 'lucide-react';
 
 export function AvatarHeader() {
@@ -13,9 +12,7 @@ export function AvatarHeader() {
 						<Star size={20} className='fill-amber-400 dark:fill-[#FDE68A]' />
 					</span>
 				</h1>
-				<Badge variant='secondary' className='rounded-full px-3 py-0.5 text-xs'>
-					VTube Studio
-				</Badge>
+				
 			</div>
 			<p className='text-muted-foreground'>Conectate a VTube Studio para controlar tu modelo Live2D</p>
 		</header>

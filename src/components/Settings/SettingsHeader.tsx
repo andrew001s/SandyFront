@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Save } from 'lucide-react';
@@ -23,9 +22,7 @@ export function SettingsHeader({ isBusy, isSaving, onSave }: SettingsHeaderProps
 						</CardDescription>
 					</div>
 					<div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
-						<Badge variant='outline' className='border-border/70 bg-background/80 text-muted-foreground'>
-							Sincronizado
-						</Badge>
+						
 						<Button onClick={onSave} disabled={isBusy} className='bg-[#8B5CF6] text-white hover:bg-[#7C3AED]'>
 							<Save className='size-4' />
 							{isSaving ? 'Guardando...' : 'Guardar configuración'}
