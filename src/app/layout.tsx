@@ -60,7 +60,7 @@ export const metadata: Metadata = {
 		google: 'AL5En1HMHtQ2Q0tI5CsdqAgKRlzJY-kU7qZ02BZtABQ',
 	},
 	icons: {
-		icon: '/icons/icon.png',
+		icon: '/favicon.ico',
 	},
 };
 
