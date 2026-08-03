@@ -1,19 +1,22 @@
 import { Landing } from '@/components/landing/Landing';
-import type { Metadata } from 'next';
 import { metadataBase, sharedDescription, sharedOpenGraphImage, sharedSiteName } from '@/lib/seo';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
 	metadataBase,
-	title: 'Sandy Studio | VTuber con IA que conversa con tu chat',
+	title: 'VTuber con IA que conversa con tu chat | Sandy Studio',
 	description:
-		'Sandy Studio es una VTuber impulsada por inteligencia artificial que lee tu chat de Twitch, responde con su voz, se mueve en VTube Studio y entiende lo que dices por micrófono.',
+		'Crea tu VTuber con IA para Twitch y Kick: Sandy Studio lee tu chat, responde con su voz, se mueve en VTube Studio y modera tu canal automáticamente. Gratis para empezar.',
 	keywords: [
-		'VTuber',
-		'IA',
-		'Twitch',
+		'vtuber con IA',
+		'vtuber inteligencia artificial',
+		'vtuber twitch',
+		'vtuber kick',
+		'bot para twitch con IA',
+		'chat bot twitch IA',
 		'VTube Studio',
 		'streamer',
-		'chat bot',
+		'IA',
 	],
 	alternates: {
 		canonical: '/',
@@ -58,13 +61,73 @@ export default function LandingPage() {
 								'@type': 'ImageObject',
 								url: `${metadataBase.origin}/icons/icon.png`,
 							},
-							sameAs: [],
+							sameAs: [
+								'https://github.com/andrew001s',
+								'https://x.com/ElShandrew',
+								'https://www.twitch.tv/elshandrew',
+								'https://www.youtube.com/@Shandrew',
+								'https://www.instagram.com/elshandrew/',
+								'https://discord.com/invite/KtCBAfneRy',
+								'https://www.facebook.com/Shandrewvt',
+							],
 						},
 						{
 							'@type': 'WebSite',
 							'@id': `${metadataBase.origin}/#website`,
 							url: metadataBase.origin,
 							name: sharedSiteName,
+						},
+						{
+							'@type': 'SoftwareApplication',
+							'@id': `${metadataBase.origin}/#software`,
+							name: sharedSiteName,
+							url: metadataBase.origin,
+							description: sharedDescription,
+							applicationCategory: 'MultimediaApplication',
+							operatingSystem: 'Web',
+							offers: {
+								'@type': 'Offer',
+								price: '0',
+								priceCurrency: 'USD',
+							},
+						},
+						{
+							'@type': 'FAQPage',
+							'@id': `${metadataBase.origin}/#faq`,
+							mainEntity: [
+								{
+									'@type': 'Question',
+									name: '¿Necesito experiencia técnica para usarlo?',
+									acceptedAnswer: {
+										'@type': 'Answer',
+										text: 'No. Conectas tu canal de Twitch con OAuth, eliges el modelo de IA, la voz y el avatar desde el panel de Sandy Studio. Todo se configura con clics, sin tocar código.',
+									},
+								},
+								{
+									'@type': 'Question',
+									name: '¿Qué modelos de IA usa Sandy Studio?',
+									acceptedAnswer: {
+										'@type': 'Answer',
+										text: 'Tú decides cómo piensa: puedes usar Gemini o cualquier modelo de OpenRouter, desde opciones rápidas y económicas hasta los modelos más capaces del mercado.',
+									},
+								},
+								{
+									'@type': 'Question',
+									name: '¿Cómo se mueve el avatar y hace lip sync?',
+									acceptedAnswer: {
+										'@type': 'Answer',
+										text: 'Sandy Studio se conecta con VTube Studio: cada palabra que dice se convierte en movimiento de boca y expresiones en tiempo real, sincronizadas con su voz.',
+									},
+								},
+								{
+									'@type': 'Question',
+									name: '¿Funciona con canales pequeños?',
+									acceptedAnswer: {
+										'@type': 'Answer',
+										text: 'Sí. Sandy Studio reacciona a cada mensaje sin importar cuántos viewers tengas: cada saludo y cada donación recibe una respuesta en vivo.',
+									},
+								},
+							],
 						},
 					],
 				})}

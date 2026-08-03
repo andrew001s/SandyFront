@@ -12,6 +12,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
 			priority: 1,
 		},
 		{
+			url: `${siteUrl}/vtuber-ia`,
+			lastModified: now,
+			changeFrequency: 'monthly',
+			priority: 0.9,
+		},
+		{
+			url: `${siteUrl}/chat-bot-twitch-ia`,
+			lastModified: now,
+			changeFrequency: 'monthly',
+			priority: 0.9,
+		},
+		{
+			url: `${siteUrl}/vtuber-kick`,
+			lastModified: now,
+			changeFrequency: 'monthly',
+			priority: 0.9,
+		},
+		{
 			url: `${siteUrl}/privacy-policy`,
 			lastModified: now,
 			changeFrequency: 'monthly',

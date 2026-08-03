@@ -9,7 +9,7 @@ export const sharedSiteName = 'Sandy Studio';
 export const sharedDescription =
 	'Sandy Studio es una VTuber con IA para Twitch y Kick: conversa con tu chat, reacciona con voz, monitoriza servicios y se conecta con tu avatar.';
 
-export const sharedOpenGraphImage = '/icons/sandyDark.png';
+export const sharedOpenGraphImage = '/icons/og.png';
 
 export const noIndexMetadata: Metadata = {
 	robots: {
@@ -18,4 +18,3 @@ export const noIndexMetadata: Metadata = {
 		nocache: true,
 	},
 };
-
