@@ -1,10 +1,10 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import {
 	FaDiscord,
 	FaFacebook,
@@ -76,9 +76,26 @@ export const Footer = () => {
 					initial={{ opacity: 0, y: 12 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.45 }}
-					className='text-center text-sm text-muted-foreground md:text-left'
+					className='flex flex-col items-center gap-3 text-center text-sm text-muted-foreground md:items-start md:text-left'
 				>
-					© Shandrew {new Date().getFullYear()}. Todos los derechos reservados.
+					<div>© Shandrew {new Date().getFullYear()}. Todos los derechos reservados.</div>
+					<nav className='flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs'>
+						<Link
+							href='/privacy-policy'
+							className='transition-colors hover:text-foreground'
+							aria-label='Política de Privacidad'
+						>
+							Política de Privacidad
+						</Link>
+						<span aria-hidden='true' className='h-3 w-px bg-border' />
+						<Link
+							href='/terms-of-service'
+							className='transition-colors hover:text-foreground'
+							aria-label='Términos del Servicio'
+						>
+							Términos del Servicio
+						</Link>
+					</nav>
 				</motion.div>
 				<motion.div
 					initial={{ opacity: 0, y: 12 }}
@@ -104,7 +121,12 @@ export const Footer = () => {
 									size='icon'
 									className='size-10 rounded-full border-border/70 bg-background/90 shadow-none text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
 								>
-									<Link href={link.url} target='_blank' rel='noopener noreferrer' aria-label={link.name}>
+									<Link
+										href={link.url}
+										target='_blank'
+										rel='noopener noreferrer'
+										aria-label={link.name}
+									>
 										<Icon size={20} />
 									</Link>
 								</Button>
@@ -113,7 +135,6 @@ export const Footer = () => {
 					})}
 				</motion.div>
 			</div>
-	
 		</footer>
 	);
 };
