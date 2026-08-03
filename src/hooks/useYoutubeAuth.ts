@@ -28,7 +28,7 @@ interface UseYoutubeAuthReturn {
 	isBusy: boolean;
 	isRefreshing: boolean;
 	fetchProfile: () => Promise<void>;
-	refreshStatus: () => Promise<void>;
+	refreshStatus: () => Promise<boolean>;
 	handleConnect: () => Promise<void>;
 	handleDisconnect: () => Promise<void>;
 	handleToggleService: () => Promise<void>;
@@ -78,8 +78,13 @@ export const useYoutubeAuth = (): UseYoutubeAuthReturn => {
 				getYoutubeServiceStatus(),
 			]);
 
+			const tokensAuthenticatedResult =
+				tokensSnapshot.status === 'fulfilled' ? Boolean(tokensSnapshot.value?.tokens?.authenticated) : false;
+			const profileAuthenticatedResult =
+				profileSnapshot.status === 'fulfilled' ? Boolean(profileSnapshot.value) : false;
+
 			if (tokensSnapshot.status === 'fulfilled') {
-				setTokensAuthenticated(Boolean(tokensSnapshot.value?.tokens?.authenticated));
+				setTokensAuthenticated(tokensAuthenticatedResult);
 			} else {
 				setTokensAuthenticated(false);
 			}
@@ -97,8 +102,11 @@ export const useYoutubeAuth = (): UseYoutubeAuthReturn => {
 			} else {
 				setServiceStatus(null);
 			}
+
+			return tokensAuthenticatedResult || profileAuthenticatedResult;
 		} catch (error) {
 			console.error('Error al refrescar estado de YouTube:', error);
+			return false;
 		} finally {
 			setIsRefreshing(false);
 		}
@@ -135,9 +143,13 @@ export const useYoutubeAuth = (): UseYoutubeAuthReturn => {
 
 			let settled = false;
 			let pollId: number | null = null;
+			let pollInFlight = false;
+			const startedAt = Date.now();
+			const maxWaitMs = 180_000;
 
 			const handleCallback = (event: MessageEvent) => {
-				if (event.origin !== getBackendUrl()) return;
+				const backendOrigin = getBackendUrl();
+				if (event.origin !== backendOrigin && event.origin !== window.location.origin) return;
 				if (event.data?.type !== 'youtube-auth-complete') return;
 
 				settled = true;
@@ -154,12 +166,31 @@ export const useYoutubeAuth = (): UseYoutubeAuthReturn => {
 			};
 
 			pollId = window.setInterval(() => {
-				if (authWindow.closed && !settled) {
+				if (settled || pollInFlight) return;
+				if (Date.now() - startedAt > maxWaitMs) {
 					settled = true;
 					if (pollId) window.clearInterval(pollId);
 					window.removeEventListener('message', handleCallback);
 					setIsLoading(false);
+					toast.error('La autenticación de YouTube tardó demasiado');
+					return;
 				}
+
+				pollInFlight = true;
+				void (async () => {
+					try {
+						const connected = await refreshStatus();
+						if (connected) {
+							settled = true;
+							if (pollId) window.clearInterval(pollId);
+							window.removeEventListener('message', handleCallback);
+							setIsLoading(false);
+							toast.success('Conectado a YouTube');
+						}
+					} finally {
+						pollInFlight = false;
+					}
+				})();
 			}, 500);
 
 			window.addEventListener('message', handleCallback);

@@ -17,7 +17,7 @@ interface YoutubeAuthContextType {
 	isBusy: boolean;
 	isRefreshing: boolean;
 	fetchProfile: () => Promise<void>;
-	refreshStatus: () => Promise<void>;
+	refreshStatus: () => Promise<boolean>;
 	handleConnect: () => Promise<void>;
 	handleDisconnect: () => Promise<void>;
 	handleToggleService: () => Promise<void>;
