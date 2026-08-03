@@ -4,7 +4,7 @@ import { metadataBase, sharedDescription, sharedOpenGraphImage, sharedSiteName }
 
 export const metadata: Metadata = {
 	metadataBase,
-	title: 'Tu VTuber con IA que conversa con tu chat',
+	title: 'Sandy Studio | VTuber con IA para Twitch y VTube Studio',
 	description:
 		'Sandy Studio es una VTuber impulsada por inteligencia artificial que lee tu chat de Twitch, responde con su voz, se mueve en VTube Studio y entiende lo que dices por micrófono.',
 	keywords: [

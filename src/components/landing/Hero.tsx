@@ -206,9 +206,9 @@ export function Hero() {
 						transition={{ duration: 0.7, delay: 0.2 }}
 						className='font-extrabold text-4xl text-zinc-900 leading-[1.05] tracking-tight [font-family:var(--font-unbounded)] sm:text-5xl lg:text-6xl dark:text-zinc-50'
 					>
-						Tu chat conversa
+						Sandy Studio
 						<br />
-						con una{' '}
+						tu chat conversa con una{' '}
 						<span className='bg-gradient-to-r from-violet-600 via-violet-700 to-cyan-600 bg-clip-text text-transparent dark:from-[#A78BFA] dark:via-[#8B5CF6] dark:to-[#22D3EE]'>
 							VTuber IA
 						</span>{' '}
