@@ -2,6 +2,7 @@ import { esES } from '@clerk/localizations';
 import { ClerkProvider } from '@clerk/nextjs';
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono, Unbounded } from 'next/font/google';
+import Script from 'next/script';
 import './globals.css';
 import { AppProviders } from '@/components/providers/AppProviders';
 import { Footer } from '@/components/ui/footer';
@@ -85,9 +86,26 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang='es' suppressHydrationWarning translate='no'>
+			<head>
+				<Script id='google-tag-manager' strategy='beforeInteractive'>
+					{`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-PPZXNM4Q');`}
+				</Script>
+			</head>
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} ${unbounded.variable} flex min-h-screen flex-col antialiased`}
 			>
+				<noscript>
+					<iframe
+						src='https://www.googletagmanager.com/ns.html?id=GTM-PPZXNM4Q'
+						height='0'
+						width='0'
+						style={{ display: 'none', visibility: 'hidden' }}
+					/>
+				</noscript>
 				<ClerkProvider localization={esES}>
 					<ThemeProvider attribute='class' defaultTheme='dark' enableSystem>
 						<AppProviders>

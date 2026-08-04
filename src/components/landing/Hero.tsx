@@ -51,7 +51,7 @@ function TwitchBadge({ badge }: { badge: NonNullable<ChatLine['badge']> }) {
 	};
 	return (
 		<span
-			className={`mr-1 inline-flex h-[14px] min-w-[14px] items-center justify-center rounded-[4px] px-0.5 align-middle text-[8px] font-bold text-white ${styles[badge]}`}
+			className={`mr-1 inline-flex h-[14px] min-w-[14px] items-center justify-center rounded-[4px] px-0.5 align-middle font-bold text-[8px] text-white ${styles[badge]}`}
 		>
 			{labels[badge]}
 		</span>
@@ -111,12 +111,12 @@ function ChatMock() {
 			transition={{ duration: 0.9, delay: 0.5, ease: [0.21, 0.47, 0.32, 0.98] }}
 			className='relative w-full overflow-hidden rounded-lg border border-[#26262C] bg-[#18181B] shadow-[0_20px_80px_rgba(0,0,0,0.5)] sm:w-[52%]'
 		>
-			<div className='flex items-center justify-between border-b border-[#26262C] bg-[#18181B] px-3 py-2.5'>
-				<div className='flex items-center gap-1.5 text-xs font-semibold text-[#EFEFF1]'>
+			<div className='flex items-center justify-between border-[#26262C] border-b bg-[#18181B] px-3 py-2.5'>
+				<div className='flex items-center gap-1.5 font-semibold text-[#EFEFF1] text-xs'>
 					<Tv size={13} className='text-[#9146FF]' />
 					Chat de la transmisión
 				</div>
-				<span className='flex items-center gap-1.5 rounded bg-[#9146FF]/15 px-2 py-1 font-semibold text-[10px] text-[#BF94FF]'>
+				<span className='flex items-center gap-1.5 rounded bg-[#9146FF]/15 px-2 py-1 font-semibold text-[#BF94FF] text-[10px]'>
 					<span className='h-1.5 w-1.5 animate-pulse rounded-full bg-[#9146FF]' />
 					LIVE
 				</span>
@@ -134,12 +134,12 @@ function ChatMock() {
 							className='text-[13px] leading-snug'
 						>
 							{line.kind === 'highlight' && (
-								<p className='rounded bg-[#9146FF]/10 px-2 py-1 text-[13px] font-medium text-[#BF94FF]'>
+								<p className='rounded bg-[#9146FF]/10 px-2 py-1 font-medium text-[#BF94FF] text-[13px]'>
 									{line.text}
 								</p>
 							)}
 							{line.kind === 'system' && (
-								<p className='px-1 py-0.5 text-[12px] text-[#ADADB8] italic'>{line.text}</p>
+								<p className='px-1 py-0.5 text-[#ADADB8] text-[12px] italic'>{line.text}</p>
 							)}
 							{(line.kind === 'chat' || line.kind === 'sandy') && (
 								<p className='px-1 py-0.5'>
@@ -168,7 +168,7 @@ function ChatMock() {
 							exit={{ opacity: 0, y: 8 }}
 							className='flex items-center gap-1 px-1 py-1'
 						>
-							<span className='mr-1 text-[12px] font-semibold text-[#9146FF]'>Sandy</span>
+							<span className='mr-1 font-semibold text-[#9146FF] text-[12px]'>Sandy</span>
 							{['', '', ''].map((_, i) => (
 								<motion.span
 									key={i}
@@ -182,8 +182,8 @@ function ChatMock() {
 				</AnimatePresence>
 			</div>
 
-			<div className='flex items-center gap-2 border-t border-[#26262C] bg-[#18181B] px-3 py-2.5'>
-				<div className='flex flex-1 items-center gap-2 rounded-md bg-[#1F1F23] px-3 py-1.5 text-[13px] text-[#ADADB8]'>
+			<div className='flex items-center gap-2 border-[#26262C] border-t bg-[#18181B] px-3 py-2.5'>
+				<div className='flex flex-1 items-center gap-2 rounded-md bg-[#1F1F23] px-3 py-1.5 text-[#ADADB8] text-[13px]'>
 					<Smile size={14} className='text-[#ADADB8]' />
 					Enviar un mensaje...
 				</div>
@@ -214,7 +214,7 @@ function VtuberMock() {
 				<source src='/hero.mp4' type='video/mp4' />
 			</video>
 			<div className='pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20' />
-			<div className='absolute right-3 bottom-3 flex items-center gap-1.5 rounded bg-black/60 px-2 py-1 text-[10px] text-[#EFEFF1]'>
+			<div className='absolute right-3 bottom-3 flex items-center gap-1.5 rounded bg-black/60 px-2 py-1 text-[#EFEFF1] text-[10px]'>
 				<Mic size={11} className='text-[#BF94FF]' />
 				Escuchando chat
 			</div>
