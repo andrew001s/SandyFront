@@ -8,6 +8,7 @@ import {
 	resolveAvatarPose,
 } from '@/lib/vtsAvatarPayload';
 import { createVtsLipSyncHandler, stopVtsLipSync } from '@/lib/vtsLipSync';
+import posthog from 'posthog-js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiClient, VTubeStudioError } from 'vtubestudio';
 
@@ -401,6 +402,7 @@ export function useVTubeStudio(): UseVTSReturn {
 
 				client.on('connect', () => {
 					sharedConnected = true;
+					posthog.capture('vtube_studio_connected');
 					setConnected(true);
 					AudioQueueManager.getInstance().setLipSyncHandler(
 						createVtsLipSyncHandler(injectParameters),
@@ -481,6 +483,7 @@ export function useVTubeStudio(): UseVTSReturn {
 
 	const disconnect = useCallback(async () => {
 		await clientRef.current?.disconnect();
+		posthog.capture('vtube_studio_disconnected');
 		sharedConnected = false;
 		sharedClient = null;
 		clientRef.current = null;
@@ -504,6 +507,7 @@ export function useVTubeStudio(): UseVTSReturn {
 				);
 
 				await client.modelLoad({ modelID });
+				posthog.capture('vtube_studio_model_loaded');
 
 				let modelResp = await client.currentModel();
 				for (

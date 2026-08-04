@@ -1,9 +1,10 @@
 import { type SettingsPayload, saveSettings } from '@/api/settings';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useAuth } from '@clerk/nextjs';
+import posthog from 'posthog-js';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { type BannedItem, type BannedItemType } from '@/components/Moderation/moderation.types';
+import type { BannedItem, BannedItemType } from '@/components/Moderation/moderation.types';
 
 const flattenBannedItems = (settings: SettingsPayload | null): BannedItem[] => {
 	const words = (settings?.custom_banned_words ?? []).map((value, index) => ({
@@ -38,7 +39,7 @@ export function useModerationPanel() {
 		}
 	}, [settings]);
 
-	const persist = async (next: BannedItem[]) => {
+	const persist = async (next: BannedItem[], action: 'added' | 'updated' | 'deleted') => {
 		try {
 			const token = await getToken();
 			const payload: SettingsPayload = {
@@ -51,6 +52,7 @@ export function useModerationPanel() {
 			};
 			await saveSettings(payload, { token });
 			await refreshSettings();
+			posthog.capture('moderation_rules_updated', { action, rule_count: next.length });
 			toast.success('Moderación guardada');
 		} catch (error) {
 			console.error('Error al guardar moderación:', error);
@@ -72,19 +74,19 @@ export function useModerationPanel() {
 	const handleAdd = (entries: BannedItem[]) => {
 		const next = [...items, ...entries];
 		setItems(next);
-		void persist(next);
+		void persist(next, 'added');
 	};
 
 	const handleUpdate = (id: string, value: string, type: BannedItemType) => {
 		const next = items.map((item) => (item.id === id ? { ...item, value, type } : item));
 		setItems(next);
-		void persist(next);
+		void persist(next, 'updated');
 	};
 
 	const handleDelete = (id: string) => {
 		const next = items.filter((item) => item.id !== id);
 		setItems(next);
-		void persist(next);
+		void persist(next, 'deleted');
 	};
 
 	return {

@@ -16,6 +16,7 @@ import type {
 	YoutubeServiceStatus,
 } from '@/interfaces/youtubeInterface';
 import { useAuth } from '@clerk/nextjs';
+import posthog from 'posthog-js';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -159,6 +160,7 @@ export const useYoutubeAuth = (): UseYoutubeAuthReturn => {
 
 				if (event.data?.ok) {
 					void refreshStatus();
+					posthog.capture('youtube_account_connected', { completion_method: 'callback' });
 					toast.success('Conectado a YouTube');
 				} else {
 					toast.error('La autenticación de YouTube falló');
@@ -180,8 +182,9 @@ export const useYoutubeAuth = (): UseYoutubeAuthReturn => {
 				void (async () => {
 					try {
 						const connected = await refreshStatus();
-						if (connected) {
+						if (!settled && connected) {
 							settled = true;
+							posthog.capture('youtube_account_connected', { completion_method: 'status_poll' });
 							if (pollId) window.clearInterval(pollId);
 							window.removeEventListener('message', handleCallback);
 							setIsLoading(false);
@@ -205,6 +208,7 @@ export const useYoutubeAuth = (): UseYoutubeAuthReturn => {
 		try {
 			setIsBusy(true);
 			await deleteYoutubeAuth();
+			posthog.capture('youtube_account_disconnected');
 			setProfile(null);
 			setStatus(false);
 			setTokensAuthenticated(false);
@@ -221,6 +225,7 @@ export const useYoutubeAuth = (): UseYoutubeAuthReturn => {
 	const handleToggleService = useCallback(async () => {
 		try {
 			setIsBusy(true);
+			const action = serviceStatus?.running ? 'paused' : 'started';
 			if (serviceStatus?.running) {
 				await stopYoutube();
 				toast.success('Servicios de YouTube pausados');
@@ -228,6 +233,7 @@ export const useYoutubeAuth = (): UseYoutubeAuthReturn => {
 				await startYoutube();
 				toast.success('Servicios de YouTube iniciados');
 			}
+			posthog.capture('youtube_service_toggled', { action });
 			await refreshStatus();
 		} catch (error) {
 			console.error('Error al cambiar estado de YouTube:', error);
@@ -253,6 +259,7 @@ export const useYoutubeAuth = (): UseYoutubeAuthReturn => {
 	const handleUpdateBroadcast = useCallback(async (payload: YoutubeBroadcastPayload) => {
 		try {
 			await updateYoutubeBroadcast(payload);
+			posthog.capture('youtube_broadcast_updated');
 			toast.success('Transmisión actualizada');
 		} catch (error) {
 			console.error('Error actualizando la transmisión de YouTube:', error);

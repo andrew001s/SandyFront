@@ -7,6 +7,7 @@ import { useStatusBot } from '@/context/StatusContextBot';
 import { useAuth } from '@clerk/nextjs';
 import type { ProfileModel } from '@/interfaces/profileInterface';
 import axios from 'axios';
+import posthog from 'posthog-js';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -122,6 +123,9 @@ export const useTwitchAuth = (defaultIsBot?: boolean): UseTwitchAuthReturn => {
 							});
 							await start(bot);
 							setStatus(true);
+							posthog.capture('twitch_account_connected', {
+								account_type: bot ? 'bot' : 'primary',
+							});
 							toast.success('Conectado a Twitch');
 						} catch (error) {
 							console.error('Error en la autenticación:', error);
@@ -152,6 +156,9 @@ export const useTwitchAuth = (defaultIsBot?: boolean): UseTwitchAuthReturn => {
 		try {
 			setIsLoading(true);
 			await deleteAuth(isBot);
+			posthog.capture('twitch_account_disconnected', {
+				account_type: isBot ? 'bot' : 'primary',
+			});
 			setStatus(false);
 			setProfile(null);
 			toast.info('Sesión Twitch cerrada');

@@ -9,6 +9,7 @@ import { useAudioQueue } from '@/hooks/useAudioQueue';
 import { getStoredSttProvider } from '@/lib/stt-provider';
 import { cn } from '@/lib/utils';
 import { Mic } from 'lucide-react';
+import posthog from 'posthog-js';
 import { useEffect, useState } from 'react';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { toast } from 'sonner';
@@ -126,9 +127,17 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 
 		if (checked) {
 			startListening();
+			posthog.capture('voice_recognition_toggled', {
+				enabled: true,
+				provider: effectiveSttProvider,
+			});
 			toast.success('Reconocimiento de voz activado');
 		} else {
 			SpeechRecognition.stopListening();
+			posthog.capture('voice_recognition_toggled', {
+				enabled: false,
+				provider: effectiveSttProvider,
+			});
 			resetTranscript();
 			toast.error('Reconocimiento de voz desactivado');
 		}

@@ -17,6 +17,7 @@ import { ServiceStartSkeleton } from '@/components/loading/dashboard-skeletons';
 import { cn } from '@/lib/utils';
 import { Power } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import posthog from 'posthog-js';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { ThinkingOrb } from 'thinking-orbs';
@@ -90,6 +91,7 @@ export function ServiceStartCard() {
 				return;
 			}
 			await start(false);
+			posthog.capture('twitch_service_started');
 			setStatus(true);
 			await refreshStatus();
 			toast.success('Servicios iniciados');
@@ -105,6 +107,7 @@ export function ServiceStartCard() {
 		try {
 			setIsBusy(true);
 			await stop(false);
+			posthog.capture('twitch_service_paused');
 			await refreshStatus();
 			toast.success('Servicios pausados');
 		} catch (error) {

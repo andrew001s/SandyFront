@@ -9,6 +9,7 @@ import { getStoredAiProvider, storeAiProvider } from '@/lib/ai-provider';
 import { getStoredSttProvider, storeSttProvider } from '@/lib/stt-provider';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useAuth } from '@clerk/nextjs';
+import posthog from 'posthog-js';
 import { type UIEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -16,10 +17,10 @@ import {
 	normalizeSettings,
 	sortOpenRouterModels,
 } from '@/components/Settings/settings.constants';
-import {
-	type OpenRouterModel,
-	type OpenRouterSort,
-	type SettingsFormState,
+import type {
+	OpenRouterModel,
+	OpenRouterSort,
+	SettingsFormState,
 } from '@/components/Settings/settings.types';
 
 export function useSettingsPanel() {
@@ -297,6 +298,12 @@ export function useSettingsPanel() {
 
 			await saveSettings(payload, { token });
 			await refreshSettings();
+			posthog.capture('settings_saved', {
+				ai_provider: form.ai_provider,
+				stt_provider: form.stt_provider,
+				tts_provider: form.tts_provider,
+				service_mode: form.service_mode,
+			});
 			setSandyHasLocalChanges(false);
 			toast.success('Ajustes guardados');
 		} catch (error) {
