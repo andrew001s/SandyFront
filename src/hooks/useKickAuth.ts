@@ -12,6 +12,7 @@ import { getKickAccessToken, getKickAuthUrl } from '@/api/kickAuth';
 import type { ProfileModel } from '@/interfaces/profileInterface';
 import type { ServiceStatus } from '@/api/sandycore';
 import { useAuth } from '@clerk/nextjs';
+import posthog from 'posthog-js';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -156,6 +157,7 @@ export const useKickAuth = (): UseKickAuthReturn => {
 
 						setTokensSaved(true);
 						await refreshStatus();
+						posthog.capture('kick_account_connected');
 						toast.success('Conectado a Kick');
 					} catch (error) {
 						console.error('Error en la autenticación de Kick:', error);
@@ -188,6 +190,7 @@ export const useKickAuth = (): UseKickAuthReturn => {
 		try {
 			setIsBusy(true);
 			await deleteKickAuth();
+			posthog.capture('kick_account_disconnected');
 			setProfile(null);
 			setStatus(false);
 			toast.info('Sesión Kick cerrada');
@@ -202,6 +205,7 @@ export const useKickAuth = (): UseKickAuthReturn => {
 	const handleToggleService = useCallback(async () => {
 		try {
 			setIsBusy(true);
+			const action = serviceStatus?.running ? 'paused' : 'started';
 			if (serviceStatus?.running) {
 				await stopKick();
 				toast.success('Servicios de Kick pausados');
@@ -209,6 +213,7 @@ export const useKickAuth = (): UseKickAuthReturn => {
 				await startKick();
 				toast.success('Servicios de Kick iniciados');
 			}
+			posthog.capture('kick_service_toggled', { action });
 			await refreshStatus();
 		} catch (error) {
 			console.error('Error al cambiar estado de Kick:', error);
