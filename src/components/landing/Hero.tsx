@@ -1,30 +1,62 @@
 'use client';
 
 import { AuthAction } from '@/components/landing/AuthAction';
-import { MoonGlow, StarField } from '@/components/landing/StarField';
+import { StarField } from '@/components/landing/StarField';
 import { useAuth } from '@clerk/nextjs';
-import { ArrowRight, Mic, Sparkle, Star, Tv } from 'lucide-react';
+import { ArrowRight, Mic, Smile, Sparkle, Star, Tv } from 'lucide-react';
 import { AnimatePresence, motion, useScroll, useTransform } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { BsMoonStarsFill } from 'react-icons/bs';
+import { SiKick, SiTwitch, SiYoutube } from 'react-icons/si';
 
-const script: Array<{ type: 'user' | 'sandy' | 'thinking'; text?: string }> = [
-	{ type: 'user', text: 'Alguien en el chat: "hola Sandy!" 👋' },
-	{ type: 'thinking' },
-	{ type: 'sandy', text: '¡Hola chat! Conectada y lista para la transmisión' },
-	{ type: 'user', text: '!hola  (audio de tu micrófono)' },
-	{ type: 'thinking' },
-	{ type: 'sandy', text: 'Te escucho perfecto, moviendo el modelo 🎭' },
-	{ type: 'user', text: '!comando openrouter' },
-	{ type: 'thinking' },
-	{ type: 'sandy', text: 'Modelo cargado. Respondo lo que quieras' },
-	{ type: 'user', text: 'Donación: "Eres increíble 💜"' },
-	{ type: 'thinking' },
-	{ type: 'sandy', text: '¡Gracias por la donación! Los quiero muchísimo 💜' },
-	{ type: 'user', text: '!hora' },
-	{ type: 'thinking' },
-	{ type: 'sandy', text: 'Son las 22:14, hora del stream ⏰' },
+type ChatLine = {
+	user?: string;
+	color?: string;
+	badge?: 'broadcaster' | 'mod' | 'vip';
+	text?: string;
+	kind: 'chat' | 'sandy' | 'system' | 'highlight' | 'thinking';
+};
+
+const script: ChatLine[] = [
+	{ kind: 'highlight', text: '🎉 ¡Bienvenidos a la transmisión!' },
+	{ kind: 'chat', user: 'ByBoxi', color: '#FF75A0', text: 'hola Sandy! 👋' },
+	{ kind: 'thinking' },
+	{ kind: 'sandy', text: '¡Hola chat! Conectada y lista para la transmisión' },
+	{ kind: 'chat', user: 'ElShandrew', color: '#7AC943', badge: 'mod', text: 'Buenas! 🎉' },
+	{ kind: 'highlight', text: '🔊 Voz: Sandy responde con su voz en vivo' },
+	{ kind: 'chat', user: 'BlackJack_Unity', color: '#1E90FF', badge: 'vip', text: 'hola que haces' },
+	{ kind: 'thinking' },
+	{ kind: 'sandy', text: 'Te escucho perfecto, moviendo el modelo 🎭' },
+	{ kind: 'chat', user: 'ReiraStone', color: '#B38373', text: 'se te escucha genial hoy' },
+	{ kind: 'highlight', text: '💬 Usa comandos para que Sandy reaccione' },
+	{ kind: 'system', text: '🎁 donación: "Eres increíble 💜"' },
+	{ kind: 'thinking' },
+	{ kind: 'sandy', text: '¡Gracias por la donación! Los quiero muchísimo 💜' },
+	{ kind: 'chat', user: 'ByBoxi', color: '#FF75A0', text: 'Sandy, ¿puedes hacer un bailecito?' },
+	{ kind: 'thinking' },
+	{ kind: 'sandy', text: '¡Claro! Bailando un poco 💃' },
+	{ kind: 'chat', user: 'FoxyNatore', color: '#7AC943', badge: 'mod', text: '¡Qué bien! 🎉' },
 ];
+
+function TwitchBadge({ badge }: { badge: NonNullable<ChatLine['badge']> }) {
+	const styles: Record<NonNullable<ChatLine['badge']>, string> = {
+		broadcaster: 'bg-[#9146FF]',
+		mod: 'bg-[#00AD03]',
+		vip: 'bg-[#E005B9]',
+	};
+	const labels: Record<NonNullable<ChatLine['badge']>, string> = {
+		broadcaster: 'S',
+		mod: 'MOD',
+		vip: 'VIP',
+	};
+	return (
+		<span
+			className={`mr-1 inline-flex h-[14px] min-w-[14px] items-center justify-center rounded-[4px] px-0.5 align-middle text-[8px] font-bold text-white ${styles[badge]}`}
+		>
+			{labels[badge]}
+		</span>
+	);
+}
 
 function ChatMock() {
 	const [step, setStep] = useState(0);
@@ -68,7 +100,7 @@ function ChatMock() {
 		};
 	}, []);
 
-	const shown = script.slice(0, step).filter((m) => m.type !== 'thinking');
+	const shown = script.slice(0, step).filter((m) => m.kind !== 'thinking');
 	const current = step < script.length ? script[step] : undefined;
 
 	return (
@@ -77,96 +109,125 @@ function ChatMock() {
 			initial={{ opacity: 0, y: 40, rotateX: 6 }}
 			animate={{ opacity: 1, y: 0, rotateX: 0 }}
 			transition={{ duration: 0.9, delay: 0.5, ease: [0.21, 0.47, 0.32, 0.98] }}
-			className='relative w-full max-w-md'
+			className='relative w-full overflow-hidden rounded-lg border border-[#26262C] bg-[#18181B] shadow-[0_20px_80px_rgba(0,0,0,0.5)] sm:w-[52%]'
 		>
-			<div className='-inset-6 -z-10 absolute rounded-[2rem] bg-gradient-to-tr from-[#8B5CF6]/30 via-transparent to-[#22D3EE]/20 blur-2xl' />
-			<MoonGlow flip className='-top-12 -right-4 absolute hidden sm:block' />
-
-			<div className='overflow-hidden rounded-2xl border border-[#1B1536]/10 bg-white/90 shadow-[0_20px_80px_rgba(109,91,208,0.18)] backdrop-blur-xl dark:border-white/10 dark:bg-[#100F1B]/90 dark:shadow-[0_20px_80px_rgba(0,0,0,0.5)]'>
-				<div className='z-50 flex items-center justify-between border-[#1B1536]/10 border-b bg-white/90 px-4 py-3 dark:border-white/10 dark:bg-[#100F1B]/90'>
-					<div className='flex items-center gap-2'>
-						<div className='flex gap-1.5'>
-							<span className='h-3 w-3 rounded-full bg-[#FF5F57]' />
-							<span className='h-3 w-3 rounded-full bg-[#FEBC2E]' />
-							<span className='h-3 w-3 rounded-full bg-[#28C840]' />
-						</div>
-						<span className='ml-3 flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400'>
-							<Tv size={12} className='text-violet-600 dark:text-[#A78BFA]' />
-							sandy-core · streaming
-						</span>
-					</div>
-					<span className='flex items-center gap-1.5 rounded-full bg-[#8B5CF6]/15 px-2.5 py-1 font-medium text-[10px] text-violet-700 dark:text-[#A78BFA]'>
-						<span className='h-1.5 w-1.5 animate-pulse rounded-full bg-[#A78BFA]' />
-						ON AIR
-					</span>
+			<div className='flex items-center justify-between border-b border-[#26262C] bg-[#18181B] px-3 py-2.5'>
+				<div className='flex items-center gap-1.5 text-xs font-semibold text-[#EFEFF1]'>
+					<Tv size={13} className='text-[#9146FF]' />
+					Chat de la transmisión
 				</div>
+				<span className='flex items-center gap-1.5 rounded bg-[#9146FF]/15 px-2 py-1 font-semibold text-[10px] text-[#BF94FF]'>
+					<span className='h-1.5 w-1.5 animate-pulse rounded-full bg-[#9146FF]' />
+					LIVE
+				</span>
+			</div>
 
-				<div className='flex h-[360px] flex-col justify-end gap-2.5 overflow-hidden px-4 py-4'>
-					<AnimatePresence initial={false}>
-						{shown.map((line, i) => (
-							<motion.div
-								key={i}
-								initial={{ opacity: 0, y: 14, scale: 0.97 }}
-								animate={{ opacity: 1, y: 0, scale: 1 }}
-								exit={{ opacity: 0, transition: { duration: 0.25 } }}
-								transition={{ duration: 0.4 }}
-								className={`flex ${line.type === 'user' ? 'justify-end' : 'justify-start'}`}
-							>
-								<div
-									className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-[13px] leading-snug ${
-										line.type === 'user'
-											? 'rounded-br-md bg-[#8B5CF6] text-white'
-											: 'rounded-bl-md border border-[#1B1536]/10 bg-[#8B5CF6]/5 text-zinc-800 dark:border-white/10 dark:bg-white/5 dark:text-zinc-100'
-									}`}
-								>
-									{line.type === 'sandy' && (
-										<span className='mb-0.5 block font-medium text-[10px] text-violet-600 dark:text-[#A78BFA]'>
-											Sandy
-										</span>
-									)}
+			<div className='flex h-[360px] flex-col justify-end gap-1 overflow-hidden px-3 py-3'>
+				<AnimatePresence initial={false}>
+					{shown.map((line, i) => (
+						<motion.div
+							key={i}
+							initial={{ opacity: 0, y: 10 }}
+							animate={{ opacity: 1, y: 0 }}
+							exit={{ opacity: 0, transition: { duration: 0.2 } }}
+							transition={{ duration: 0.35 }}
+							className='text-[13px] leading-snug'
+						>
+							{line.kind === 'highlight' && (
+								<p className='rounded bg-[#9146FF]/10 px-2 py-1 text-[13px] font-medium text-[#BF94FF]'>
 									{line.text}
-								</div>
-							</motion.div>
-						))}
-					</AnimatePresence>
+								</p>
+							)}
+							{line.kind === 'system' && (
+								<p className='px-1 py-0.5 text-[12px] text-[#ADADB8] italic'>{line.text}</p>
+							)}
+							{(line.kind === 'chat' || line.kind === 'sandy') && (
+								<p className='px-1 py-0.5'>
+									{line.kind === 'sandy' && <TwitchBadge badge='broadcaster' />}
+									{line.badge && <TwitchBadge badge={line.badge} />}
+									<span
+										className={`mr-1 font-semibold ${
+											line.kind === 'sandy' ? 'text-[#9146FF]' : ''
+										}`}
+										style={line.kind === 'sandy' ? undefined : { color: line.color }}
+									>
+										{line.kind === 'sandy' ? 'Sandy' : line.user}
+									</span>
+									<span className='text-[#EFEFF1]'>{line.text}</span>
+								</p>
+							)}
+						</motion.div>
+					))}
+				</AnimatePresence>
 
-					<AnimatePresence>
-						{current?.type === 'thinking' && (
-							<motion.div
-								initial={{ opacity: 0, y: 8 }}
-								animate={{ opacity: 1, y: 0 }}
-								exit={{ opacity: 0, y: 8 }}
-								className='flex justify-start'
-							>
-								<div className='flex items-center gap-1 rounded-2xl rounded-bl-md border border-[#1B1536]/10 bg-[#8B5CF6]/5 px-4 py-3 dark:border-white/10 dark:bg-white/5'>
-									{['S', 'A', 'N'].map((_, i) => (
-										<motion.span
-											key={i}
-											animate={{ opacity: [0.2, 1, 0.2] }}
-											transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, delay: i * 0.2 }}
-											className='h-1.5 w-1.5 rounded-full bg-violet-500 dark:bg-[#A78BFA]'
-										/>
-									))}
-								</div>
-							</motion.div>
-						)}
-					</AnimatePresence>
+				<AnimatePresence>
+					{current?.kind === 'thinking' && (
+						<motion.div
+							initial={{ opacity: 0, y: 8 }}
+							animate={{ opacity: 1, y: 0 }}
+							exit={{ opacity: 0, y: 8 }}
+							className='flex items-center gap-1 px-1 py-1'
+						>
+							<span className='mr-1 text-[12px] font-semibold text-[#9146FF]'>Sandy</span>
+							{['', '', ''].map((_, i) => (
+								<motion.span
+									key={i}
+									animate={{ opacity: [0.2, 1, 0.2] }}
+									transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, delay: i * 0.2 }}
+									className='h-1.5 w-1.5 rounded-full bg-[#9146FF]'
+								/>
+							))}
+						</motion.div>
+					)}
+				</AnimatePresence>
+			</div>
 
-					<motion.div
-						animate={{ opacity: [0.4, 1, 0.4] }}
-						transition={{ duration: 1.8, repeat: Number.POSITIVE_INFINITY }}
-						className='flex items-center gap-2 pt-2 text-[10px] text-zinc-500 uppercase tracking-[0.2em] dark:text-zinc-400'
-					>
-						<Mic size={10} />
-						Escuchando chat · en vivo
-					</motion.div>
+			<div className='flex items-center gap-2 border-t border-[#26262C] bg-[#18181B] px-3 py-2.5'>
+				<div className='flex flex-1 items-center gap-2 rounded-md bg-[#1F1F23] px-3 py-1.5 text-[13px] text-[#ADADB8]'>
+					<Smile size={14} className='text-[#ADADB8]' />
+					Enviar un mensaje...
 				</div>
 			</div>
 		</motion.div>
 	);
 }
 
-const integrations = ['Twitch', 'VTube Studio'];
+function VtuberMock() {
+	return (
+		<motion.div
+			initial={{ opacity: 0, y: 40, rotateX: 6 }}
+			animate={{ opacity: 1, y: 0, rotateX: 0 }}
+			transition={{ duration: 0.9, delay: 0.5, ease: [0.21, 0.47, 0.32, 0.98] }}
+			className='relative aspect-[3/4] w-full overflow-hidden rounded-lg border border-[#26262C] bg-[#18181B] shadow-[0_20px_80px_rgba(0,0,0,0.5)] sm:w-[48%]'
+		>
+			<video
+				autoPlay
+				muted
+				loop
+				playsInline
+				preload='auto'
+				poster='/hero-poster.jpg'
+				aria-label='Sandy VTuber en vivo'
+				className='absolute inset-0 size-full object-cover'
+			>
+				<source src='/hero.webm' type='video/webm' />
+				<source src='/hero.mp4' type='video/mp4' />
+			</video>
+			<div className='pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20' />
+			<div className='absolute right-3 bottom-3 flex items-center gap-1.5 rounded bg-black/60 px-2 py-1 text-[10px] text-[#EFEFF1]'>
+				<Mic size={11} className='text-[#BF94FF]' />
+				Escuchando chat
+			</div>
+		</motion.div>
+	);
+}
+
+const integrations = [
+	{ name: 'Twitch', icon: <SiTwitch size={13} className='text-[#9146FF]' /> },
+	{ name: 'Kick', icon: <SiKick size={13} className='text-[#53FC18]' /> },
+	{ name: 'YouTube', icon: <SiYoutube size={13} className='text-[#FF0000]' /> },
+	{ name: 'VTube Studio', icon: null },
+];
 
 export function Hero() {
 	const { isSignedIn } = useAuth();
@@ -231,8 +292,8 @@ export function Hero() {
 						transition={{ duration: 0.7, delay: 0.35 }}
 						className='mt-6 max-w-xl text-lg text-zinc-600 leading-relaxed dark:text-zinc-400'
 					>
-						Una VTuber con inteligencia artificial que lee tu chat de Twitch, responde con su voz,
-						se mueve en VTube Studio y entiende lo que dices por micrófono.
+						Una VTuber con inteligencia artificial que lee el chat de Twitch, Kick y YouTube,
+						responde con su voz, se mueve en VTube Studio y entiende lo que dices por micrófono.
 					</motion.p>
 
 					<motion.div
@@ -260,11 +321,12 @@ export function Hero() {
 							Conecta con las herramientas que ya usas
 						</p>
 						<div className='flex flex-wrap gap-2'>
-							{integrations.map((name) => (
+							{integrations.map(({ name, icon }) => (
 								<span
 									key={name}
-									className='rounded-full border border-[#1B1536]/10 bg-white/70 px-3.5 py-1.5 text-xs text-zinc-700 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300'
+									className='flex items-center gap-1.5 rounded-full border border-[#1B1536]/10 bg-white/70 px-3.5 py-1.5 text-xs text-zinc-700 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300'
 								>
+									{icon}
 									{name}
 								</span>
 							))}
@@ -273,7 +335,10 @@ export function Hero() {
 				</motion.div>
 
 				<div className='relative flex justify-center lg:justify-end' style={{ perspective: 1000 }}>
-					<ChatMock />
+					<div className='flex w-full max-w-[540px] flex-col gap-4 sm:flex-row'>
+						<VtuberMock />
+						<ChatMock />
+					</div>
 					<motion.span
 						animate={{ y: [0, -10, 0], opacity: [0.4, 1, 0.4] }}
 						transition={{ duration: 5, repeat: Number.POSITIVE_INFINITY }}

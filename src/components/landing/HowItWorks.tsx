@@ -12,7 +12,7 @@ const steps = [
 		icon: <Plug size={20} />,
 		title: 'Conecta tu canal',
 		description:
-			'Inicia sesión y conecta tu Twitch con OAuth. Sandy empieza a escuchar el chat al instante.',
+			'Inicia sesión y conecta tu Twitch, Kick o YouTube con OAuth. Sandy empieza a escuchar el chat al instante.',
 	},
 	{
 		number: '02',

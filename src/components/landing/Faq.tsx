@@ -19,9 +19,9 @@ const faqs: Array<Faq> = [
 		icon: <User size={14} />,
 		question: '¿Necesito experiencia técnica para usarlo?',
 		answer:
-			'No. Conectas tu canal de Twitch con OAuth, eliges el modelo de IA, la voz y el avatar desde el panel de Sandy Studio. Todo se configura con clics, sin tocar código ni abrir una terminal.',
+			'No. Conectas tu canal de Twitch, Kick o YouTube con OAuth, eliges el modelo de IA, la voz y el avatar desde el panel de Sandy Studio. Todo se configura con clics, sin tocar código ni abrir una terminal.',
 		details: [
-			'Conexión de Twitch en 1 clic con OAuth',
+			'Conexión de Twitch, Kick o YouTube en 1 clic con OAuth',
 			'Panel visual para configurar IA, voz y avatar',
 			'No necesitas instalar nada más que VTube Studio (opcional)',
 		],
@@ -43,7 +43,7 @@ const faqs: Array<Faq> = [
 		icon: <BrainCircuit size={14} />,
 		question: '¿Quién paga los servicios de IA?',
 		answer:
-			'Sandy Studio actúa como intermediario: te ofrece la plataforma y la integración con Twitch, VTube Studio y el chat, pero los costos de los servicios de IA los asume cada usuario con sus propias claves de API.',
+			'Sandy Studio actúa como intermediario: te ofrece la plataforma y la integración con Twitch, Kick, YouTube, VTube Studio y el chat, pero los costos de los servicios de IA los asume cada usuario con sus propias claves de API.',
 		details: [
 			'Pegas tus propias claves de API (BYOK)',
 			'Tú controlas cuánto gastas según el modelo y el uso',
@@ -67,9 +67,9 @@ const faqs: Array<Faq> = [
 		icon: <User size={14} />,
 		question: '¿Qué necesito para empezar?',
 		answer:
-			'Mínimo, una cuenta de Twitch. Creas tu cuenta en Sandy Studio, conectas tu canal y Sandy Studio empieza a leer el chat. Si quieres que el avatar se vea animado, instala VTube Studio en tu PC.',
+			'Mínimo, una cuenta de Twitch, Kick o YouTube. Creas tu cuenta en Sandy Studio, conectas tu canal y Sandy Studio empieza a leer el chat. Si quieres que el avatar se vea animado, instala VTube Studio en tu PC.',
 		details: [
-			'Una cuenta de Twitch (gratis)',
+			'Una cuenta de Twitch, Kick o YouTube (gratis)',
 			'VTube Studio en tu PC para el avatar animado',
 			'Micrófono si quieres que Sandy te escuche',
 		],

@@ -3,6 +3,7 @@ import { Moon, Star } from 'lucide-react';
 const items = [
 	'Chat de Twitch',
 	'Chat de Kick',
+	'Chat de YouTube',
 	'Reconocimiento de voz',
 	'VTube Studio',
 	'Respuestas con IA',
