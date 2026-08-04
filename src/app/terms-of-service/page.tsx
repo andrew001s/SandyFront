@@ -1,8 +1,9 @@
 import { LegalPage, type LegalSection } from '@/components/legal/LegalPage';
-import { metadataBase, sharedDescription, sharedOpenGraphImage, sharedSiteName } from '@/lib/seo';
+import { metadataBase, noIndexMetadata, sharedDescription, sharedOpenGraphImage, sharedSiteName } from '@/lib/seo';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
+	...noIndexMetadata,
 	metadataBase,
 	title: 'Términos del Servicio',
 	description: `Condiciones de uso de ${sharedSiteName}: cuenta, acceso, uso permitido, IA, moderación y responsabilidad.`,

@@ -72,11 +72,7 @@ export const metadata: Metadata = {
 		google: 'AL5En1HMHtQ2Q0tI5CsdqAgKRlzJY-kU7qZ02BZtABQ',
 	},
 	icons: {
-		icon: [
-			{ url: '/favicon.ico', type: 'image/x-icon', sizes: 'any' },
-			{ url: '/favicon-32x32.png', type: 'image/png', sizes: '32x32' },
-			{ url: '/favicon.svg', type: 'image/svg+xml' },
-		],
+		icon: [{ url: '/favicon.ico', type: 'image/x-icon', sizes: 'any' }],
 		apple: '/apple-touch-icon.png',
 	},
 };

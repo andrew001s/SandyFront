@@ -1,8 +1,9 @@
 import { LegalPage, type LegalSection } from '@/components/legal/LegalPage';
-import { metadataBase, sharedDescription, sharedOpenGraphImage, sharedSiteName } from '@/lib/seo';
+import { metadataBase, noIndexMetadata, sharedDescription, sharedOpenGraphImage, sharedSiteName } from '@/lib/seo';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
+	...noIndexMetadata,
 	metadataBase,
 	title: 'Política de Privacidad',
 	description: `Conoce cómo ${sharedSiteName} recopila, usa, almacena y protege tus datos personales.`,
