@@ -5,6 +5,7 @@ import { Geist, Geist_Mono, Unbounded } from 'next/font/google';
 import Script from 'next/script';
 import './globals.css';
 import { AppProviders } from '@/components/providers/AppProviders';
+import { AppRollbarProvider } from '@/components/providers/RollbarProvider';
 import { Footer } from '@/components/ui/footer';
 import { metadataBase, sharedDescription, sharedOpenGraphImage, sharedSiteName } from '@/lib/seo';
 import { ThemeProvider } from 'next-themes';
@@ -102,21 +103,24 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 					<iframe
 						src='https://www.googletagmanager.com/ns.html?id=GTM-PPZXNM4Q'
 						height='0'
+						title='Google Tag Manager'
 						width='0'
 						style={{ display: 'none', visibility: 'hidden' }}
 					/>
 				</noscript>
-				<ClerkProvider localization={esES}>
-					<ThemeProvider attribute='class' defaultTheme='dark' enableSystem>
-						<AppProviders>
-							<main className='w-full flex-grow'>
-								<Toaster richColors position='top-right' />
-								{children}
-							</main>
-							<Footer />
-						</AppProviders>
-					</ThemeProvider>
-				</ClerkProvider>
+				<AppRollbarProvider>
+					<ClerkProvider localization={esES}>
+						<ThemeProvider attribute='class' defaultTheme='dark' enableSystem>
+							<AppProviders>
+								<main className='w-full flex-grow'>
+									<Toaster richColors position='top-right' />
+									{children}
+								</main>
+								<Footer />
+							</AppProviders>
+						</ThemeProvider>
+					</ClerkProvider>
+				</AppRollbarProvider>
 			</body>
 		</html>
 	);
