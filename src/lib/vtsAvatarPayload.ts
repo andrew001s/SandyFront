@@ -22,6 +22,8 @@ export interface AvatarMetadata {
 	language?: string;
 	confidence?: number;
 	messageId?: string;
+	/** user_id de Clerk dueño del evento. El backend lo incluye en todos los eventos. */
+	user_id?: string;
 	[key: string]: unknown;
 }
 

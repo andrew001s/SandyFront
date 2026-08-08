@@ -51,10 +51,13 @@ Asegúrate de tener instalados los siguientes programas:
    ```ini
      # URL de la API de Sandy Core
       NEXT_PUBLIC_API_URL="http://localhost:8000"
-
-      # URL del WebSocket
-      NEXT_PUBLIC_SOCKET_URL="ws://localhost:8000/ws"
    ```
+
+   El stream en tiempo real (`/stream` por SSE y `/ws` por WebSocket) se deriva de
+   `NEXT_PUBLIC_API_URL`, así que no hace falta una variable aparte. Ambos endpoints
+   requieren un token efímero: primero `GET /stream/token` con la sesión de Clerk, y
+   luego se abre la conexión con `?token=...`. El token dura 300s y solo se valida al
+   conectar, por lo que hay que pedir uno nuevo en cada intento de conexión.
 
 ## Scripts disponibles
 

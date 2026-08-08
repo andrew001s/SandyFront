@@ -1,6 +1,7 @@
 'use client';
 
 import { getVoiceSandy } from '@/api/fetchFishAudio';
+import { fetchStreamToken } from '@/api/streamToken';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
 import { useAudioQueue } from '@/hooks/useAudioQueue';
@@ -16,7 +17,6 @@ type StreamEventPayload = AvatarBackendPayload & {
 type StreamEventName = 'speech' | 'reaction' | 'system';
 
 const backendUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
-const STREAM_TOKEN_URL = `${backendUrl}/stream/token`;
 const RECONNECT_BASE_DELAY_MS = 1500;
 const RECONNECT_MAX_DELAY_MS = 15000;
 const MAX_PROCESSED_MESSAGES = 500;
@@ -263,23 +263,11 @@ const StreamChat = () => {
 					throw new Error('No se pudo obtener el token de Clerk');
 				}
 
-				const tokenRes = await fetch(STREAM_TOKEN_URL, {
-					headers: {
-						Authorization: `Bearer ${clerkToken}`,
-					},
-				});
-
-				if (!tokenRes.ok) {
-					throw new Error(`No se pudo pedir el token efímero (${tokenRes.status})`);
-				}
-
-				const tokenData = (await tokenRes.json()) as { token?: string };
-				if (!tokenData.token) {
-					throw new Error('La respuesta de /stream/token no incluyó token');
-				}
+				// Token fresco en cada intento: el backend solo lo valida al abrir la conexión.
+				const { token } = await fetchStreamToken({ token: clerkToken });
 
 				const eventSource = new EventSource(
-					`${backendUrl}/stream?token=${encodeURIComponent(tokenData.token)}`,
+					`${backendUrl}/stream?token=${encodeURIComponent(token)}`,
 				);
 
 				streamRef.current = eventSource;
