@@ -59,8 +59,8 @@ export const useKickAuth = (): UseKickAuthReturn => {
 			}
 
 			const profileInfo = await getKickProfileInfo({ token });
-			setProfile(profileInfo);
-			setStatus(true);
+			setProfile(profileInfo ?? null);
+			setStatus(Boolean(profileInfo));
 		} catch (error) {
 			console.error('Error al obtener el perfil de Kick:', error);
 			setProfile(null);
@@ -79,11 +79,15 @@ export const useKickAuth = (): UseKickAuthReturn => {
 
 			if (tokensSnapshot.status === 'fulfilled') {
 				setTokensSaved(Boolean(tokensSnapshot.value?.tokens?.token && tokensSnapshot.value?.tokens?.refresh_token));
+			} else {
+				setTokensSaved(false);
 			}
 
 			if (profileSnapshot.status === 'fulfilled') {
-				setProfile(profileSnapshot.value);
-				setStatus(true);
+				// El endpoint responde 200 con perfil vacío cuando no hay cuenta vinculada,
+				// así que el estado sale del contenido, no de que la promesa haya resuelto.
+				setProfile(profileSnapshot.value ?? null);
+				setStatus(Boolean(profileSnapshot.value));
 			} else {
 				setProfile(null);
 				setStatus(false);
@@ -91,6 +95,8 @@ export const useKickAuth = (): UseKickAuthReturn => {
 
 			if (serviceSnapshot.status === 'fulfilled') {
 				setServiceStatus(serviceSnapshot.value);
+			} else {
+				setServiceStatus(null);
 			}
 		} catch (error) {
 			console.error('Error al refrescar estado de Kick:', error);
