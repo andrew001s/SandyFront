@@ -3,9 +3,10 @@
 import { saveSettings } from '@/api/settings';
 import { FishVoiceDialog } from '@/components/Settings/FishVoiceDialog';
 import { FishVoicePreviewCard } from '@/components/Settings/sections/FishVoicePreviewCard';
+import { OnboardingOfficialDocs } from '@/components/onboarding/OnboardingOfficialDocs';
 import { OnboardingSectionHeader } from '@/components/onboarding/OnboardingSectionHeader';
-import { OnboardingSplitCard } from '@/components/onboarding/OnboardingSplitCard';
 import { OnboardingStepFrame } from '@/components/onboarding/OnboardingStepFrame';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@clerk/nextjs';
 import type { OnboardingFlowData, StepProps, SandyOnboardingContext } from '@/components/onboarding/onboarding.types';
@@ -55,9 +56,9 @@ export function VoiceStep({ payload }: StepProps) {
 				animate={{ opacity: 1, y: 0 }}
 				transition={{ duration: 0.32 }}
 			>
-				<OnboardingSplitCard
-					left={
-						<>
+				<Card className='overflow-hidden border-border/60 bg-card/80 shadow-[0_20px_60px_rgba(0,0,0,0.10)] backdrop-blur-sm'>
+					<div className='flex flex-col gap-0'>
+						<div className='border-border/60 border-b p-5 sm:p-6'>
 							<OnboardingSectionHeader
 								eyebrow='Fish Audio'
 								title='API key'
@@ -84,12 +85,11 @@ export function VoiceStep({ payload }: StepProps) {
 
 							<p className='mt-4 flex items-start gap-2 text-muted-foreground text-xs leading-relaxed'>
 								<Smile className='mt-0.5 size-4 shrink-0' />
-								La voz se elige en la mitad derecha, sin repetir información.
+								La voz se elige abajo, sin repetir información.
 							</p>
-						</>
-					}
-					right={
-						<>
+						</div>
+
+						<div className='p-5 sm:p-6'>
 							<OnboardingSectionHeader
 								eyebrow='Fish Voice'
 								title='Selecciona la voz'
@@ -104,10 +104,28 @@ export function VoiceStep({ payload }: StepProps) {
 									onClick={() => setIsFishVoiceDialogOpen(true)}
 								/>
 							</div>
-						</>
-					}
-				/>
+						</div>
+					</div>
+				</Card>
 			</motion.div>
+
+			<OnboardingOfficialDocs
+				title='Documentación oficial'
+				description='Si quieres crear la key o revisar cómo funciona la voz, abre estas guías de Fish Audio.'
+				links={[
+					{
+						label: 'Crear API key',
+						href: 'https://fish.audio/app/api-keys/',
+						description: 'Abrir el panel oficial de claves.',
+					},
+					{
+						label: 'Quickstart',
+						href: 'https://docs.fish.audio/developer-guide/getting-started/quickstart',
+						description: 'Ver la guía oficial para empezar con TTS.',
+					},
+				]}
+				className='pt-2'
+			/>
 
 			<FishVoiceDialog
 				open={isFishVoiceDialogOpen}

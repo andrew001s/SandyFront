@@ -3,6 +3,7 @@
 import { AvatarConnectionCard } from '@/containers/avatar/components/AvatarConnectionCard';
 import { AvatarModelListCard } from '@/containers/avatar/components/AvatarModelListCard';
 import { useVTubeStudio } from '@/hooks/useVTubeStudio';
+import { OnboardingOfficialDocs } from '@/components/onboarding/OnboardingOfficialDocs';
 import type { SandyOnboardingContext, StepProps } from '@/components/onboarding/onboarding.types';
 import { OnboardingStepFrame } from '@/components/onboarding/OnboardingStepFrame';
 import { useOnboarding } from '@onboardjs/react';
@@ -70,6 +71,25 @@ export function VTubeStudioStep({ payload }: StepProps) {
 					/>
 				</motion.div>
 			</div>
+
+			<OnboardingOfficialDocs
+				title='Documentación oficial'
+				description='Si necesitas habilitar la API o entender cómo funcionan los plugins, abre estas guías de VTube Studio.'
+				links={[
+					{
+						label: 'Manual de VTube Studio',
+						href: 'https://github.com/DenchiSoft/VTubeStudio/wiki',
+						description: 'Ver la documentación oficial completa.',
+					},
+					{
+						label: 'Plugins y API',
+						href: 'https://github.com/DenchiSoft/VTubeStudio/wiki/Plugins',
+						description: 'Configurar el acceso de plugins e integración.',
+					},
+				]}
+				className='pt-2'
+			/>
+
 			<p className='flex items-center gap-1.5 text-muted-foreground text-xs'>
 				<MonitorSpeaker className='size-4 shrink-0' />
 				Tené VTube Studio abierto en tu PC y activá la opción &quot;Allow Plugin API access&quot; en

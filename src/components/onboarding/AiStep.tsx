@@ -4,6 +4,7 @@ import { saveSettings } from '@/api/settings';
 import { OpenRouterModelDialog } from '@/components/Settings/OpenRouterModelDialog';
 import { sortOpenRouterModels } from '@/components/Settings/settings.constants';
 import type { OpenRouterModel, OpenRouterSort } from '@/components/Settings/settings.types';
+import { OnboardingOfficialDocs } from '@/components/onboarding/OnboardingOfficialDocs';
 import { OnboardingSelectableCard } from '@/components/onboarding/OnboardingSelectableCard';
 import { OnboardingStepFrame } from '@/components/onboarding/OnboardingStepFrame';
 import { Button } from '@/components/ui/button';
@@ -174,6 +175,32 @@ export function AiStep({ payload }: StepProps) {
 			description: 'Cientos de modelos (GPT, Claude, Llama...) con una sola key.',
 		},
 	];
+	const officialDocs =
+		provider === 'gemini'
+			? [
+					{
+						label: 'Google AI Studio',
+						href: 'https://ai.google.dev/aistudio?hl=es-419',
+						description: 'Crear y gestionar tu clave de Gemini.',
+					},
+					{
+						label: 'Claves de API',
+						href: 'https://ai.google.dev/gemini-api/docs/api-key?hl=es-419',
+						description: 'Guía oficial para entender el uso de la key.',
+					},
+				]
+			: [
+					{
+						label: 'Crear API key',
+						href: 'https://openrouter.ai/docs/api/api-reference/api-keys/create-keys',
+						description: 'Generar una key nueva en OpenRouter.',
+					},
+					{
+						label: 'Modelos',
+						href: 'https://openrouter.ai/docs/guides/overview/models',
+						description: 'Ver qué modelos puedes usar y cómo filtrarlos.',
+					},
+				];
 
 	return (
 		<OnboardingStepFrame title={payload.title} description={payload.description}>
@@ -259,6 +286,13 @@ export function AiStep({ payload }: StepProps) {
 						</div>
 					</motion.div>
 				)}
+
+				<OnboardingOfficialDocs
+					title='Documentación oficial'
+					description='Abre la guía correcta si necesitas crear la clave o revisar cómo funciona la integración.'
+					links={officialDocs}
+					className='pt-2'
+				/>
 			</div>
 
 			<OpenRouterModelDialog
