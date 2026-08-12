@@ -6,6 +6,7 @@ import { ONBOARDING_DISMISSED_KEY } from '@/lib/onboarding/keys';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useOnboarding } from '@onboardjs/react';
 import { ArrowLeft, ArrowRight, LogOut, SkipForward } from 'lucide-react';
+import Image from 'next/image';
 import { useCallback } from 'react';
 import { stepOrder, type SandyOnboardingContext } from './onboardingSteps';
 
@@ -51,14 +52,15 @@ export function OnboardingShell() {
 			<div className='pointer-events-none fixed inset-0 bg-[linear-gradient(rgba(255,255,255,.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.035)_1px,transparent_1px)] bg-[size:80px_80px] opacity-20' />
 
 			<header className='relative z-10 flex h-16 items-center justify-between border-white/10 border-b px-4 backdrop-blur-xl md:px-8'>
-				<div className='flex items-center gap-2.5'>
-					<div className='flex size-9 items-center justify-center rounded-2xl border border-white/10 bg-white/5 shadow-lg shadow-black/20'>
-						<div className='h-4 w-4 rounded-[6px] border-2 border-white/90' />
-					</div>
-					<div className='leading-tight'>
-						<p className='font-semibold text-sm text-white/95'>Sandy Studio</p>
-						<p className='text-[11px] text-white/55'>Configuración inicial</p>
-					</div>
+				<div className='flex items-center'>
+					<Image
+						src='/icons/sandyDark.png'
+						alt='Sandy Studio'
+						width={120}
+						height={40}
+						priority
+						className='h-auto w-auto max-w-[120px] object-contain'
+					/>
 				</div>
 
 				{isFirst ? (
@@ -152,7 +154,7 @@ function renderLoading() {
 	return (
 		<div className='flex flex-col items-center justify-center gap-3 py-16'>
 			<div className='h-10 w-10 animate-spin rounded-full border-2 border-white/30 border-t-white' />
-			<p className='text-white/65 text-sm'>Guardando tu progreso...</p>
+			<p className='text-sm text-white/65'>Guardando tu progreso...</p>
 		</div>
 	);
 }
