@@ -201,8 +201,8 @@ export function OnboardingShell() {
 function renderLoading() {
 	return (
 		<div className='flex flex-col items-center justify-center gap-3 py-16'>
-			<div className='h-10 w-10 animate-spin rounded-full border-2 border-white/30 border-t-white' />
-			<p className='text-sm text-white/65'>Guardando tu progreso...</p>
+			<div className='h-10 w-10 animate-spin rounded-full border-2 border-primary/30 border-t-primary' />
+			<p className='text-sm text-muted-foreground'>Guardando tu progreso...</p>
 		</div>
 	);
 }
