@@ -6,10 +6,9 @@ import { motion } from "framer-motion";
 import { ChevronRight, Sparkles } from "lucide-react";
 import Image from "next/image";
 import { useTheme } from "next-themes";
-import type { StepProps } from "@/components/onboarding/onboarding.types";
 import { ONBOARDING_COMPLETE_KEY, ONBOARDING_DISMISSED_KEY } from "@/lib/onboarding/keys";
 
-export function CompletedStep(_: StepProps) {
+export function CompletedStep() {
   const { resolvedTheme, theme } = useTheme();
   const isLightTheme = (resolvedTheme ?? theme ?? 'dark') === 'light';
 
