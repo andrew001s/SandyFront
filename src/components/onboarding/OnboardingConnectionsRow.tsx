@@ -36,6 +36,7 @@ function ConnectionTile({
   title,
   subtitle,
   icon,
+  accentClassName,
   connected,
   loading,
   connectLabel,
@@ -55,6 +56,9 @@ function ConnectionTile({
       <div className="relative z-10 flex h-full flex-col">
         <div className="flex flex-1 flex-col gap-4">
           <div className="relative overflow-hidden rounded-[28px] border border-border/50 bg-background/35 p-5">
+            <div
+              className={`pointer-events-none absolute inset-0 bg-gradient-to-br opacity-30 ${accentClassName}`}
+            />
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="flex size-12 items-center justify-center rounded-2xl border border-border/70 bg-background/85 shadow-sm">
