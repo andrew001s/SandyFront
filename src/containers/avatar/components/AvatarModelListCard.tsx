@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useModelPreviews } from '@/hooks/useModelPreviews';
 import type { VTSModel } from '@/hooks/useVTubeStudio';
+import Image from 'next/image';
 import { useState } from 'react';
 import { FiFolder, FiGrid, FiImage } from 'react-icons/fi';
 
@@ -85,25 +86,27 @@ export function AvatarModelListCard({
 									onClick={() => {
 										void onLoadModel(model.modelID);
 									}}
-									disabled={isLoaded}
-									className='group relative mx-auto w-full max-w-sm overflow-hidden rounded-2xl border border-primary/50 bg-primary/5 text-left ring-1 ring-primary/20 transition-all'
-								>
-									<div className='relative aspect-[16/10] w-full overflow-hidden bg-muted/40'>
-										{previewUrl ? (
-											// biome-ignore lint/nursery/noImgElement: model previews are local object URLs
-											<img
-												src={previewUrl}
-												alt={model.modelName}
-												className='h-full w-full object-contain transition-transform duration-300 group-hover:scale-105'
-												onError={() => {
-													setFailedIds((prev) => new Set(prev).add(model.modelID));
-												}}
-											/>
-										) : (
-											<div className='flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 via-chart-2/10 to-chart-4/10'>
-												<span className='font-bold text-4xl text-muted-foreground/40'>
-													{model.modelName.charAt(0).toUpperCase()}
-												</span>
+								disabled={isLoaded}
+								className='group relative mx-auto w-full max-w-sm overflow-hidden rounded-2xl border border-primary/50 bg-primary/5 text-left ring-1 ring-primary/20 transition-all'
+							>
+								<div className='relative aspect-[16/10] w-full overflow-hidden bg-muted/40'>
+									{previewUrl ? (
+										<Image
+											src={previewUrl}
+											alt={model.modelName}
+											fill
+											unoptimized
+											sizes='(max-width: 640px) 92vw, 400px'
+											className='object-contain transition-transform duration-300 group-hover:scale-105'
+											onError={() => {
+												setFailedIds((prev) => new Set(prev).add(model.modelID));
+											}}
+										/>
+									) : (
+										<div className='flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 via-chart-2/10 to-chart-4/10'>
+											<span className='font-bold text-4xl text-muted-foreground/40'>
+												{model.modelName.charAt(0).toUpperCase()}
+											</span>
 											</div>
 										)}
 										<Badge
@@ -115,7 +118,7 @@ export function AvatarModelListCard({
 									</div>
 									<div className='space-y-0.5 p-4'>
 										<p className='truncate font-medium text-sm'>{model.modelName}</p>
-										<p className='truncate text-xs text-muted-foreground'>
+										<p className='truncate text-muted-foreground text-xs'>
 											{model.vtsModelName || model.modelID}
 										</p>
 									</div>
@@ -143,28 +146,30 @@ export function AvatarModelListCard({
 										void onLoadModel(model.modelID);
 									}}
 									disabled={isLoaded}
-									className={`group relative overflow-hidden rounded-xl border text-left transition-all ${
-										isLoaded
-											? 'border-primary/60 bg-primary/5 ring-1 ring-primary/30'
-											: 'hover:-translate-y-0.5 border-border hover:border-primary/40 hover:bg-muted/50 hover:shadow-lg'
-									}`}
-								>
-									<div className='relative aspect-[4/3] w-full overflow-hidden bg-muted/40'>
-										{previewUrl ? (
-											// biome-ignore lint/nursery/noImgElement: model previews are local object URLs
-											<img
-												src={previewUrl}
-												alt={model.modelName}
-												className='h-full w-full object-contain transition-transform duration-300 group-hover:scale-105'
-												onError={() => {
-													setFailedIds((prev) => new Set(prev).add(model.modelID));
-												}}
-											/>
-										) : (
-											<div className='flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 via-chart-2/10 to-chart-4/10'>
-												<span className='font-bold text-3xl text-muted-foreground/40'>
-													{model.modelName.charAt(0).toUpperCase()}
-												</span>
+							className={`group relative overflow-hidden rounded-xl border text-left transition-all ${
+								isLoaded
+									? 'border-primary/60 bg-primary/5 ring-1 ring-primary/30'
+									: 'hover:-translate-y-0.5 border-border hover:border-primary/40 hover:bg-muted/50 hover:shadow-lg'
+							}`}
+						>
+							<div className='relative aspect-[4/3] w-full overflow-hidden bg-muted/40'>
+								{previewUrl ? (
+									<Image
+										src={previewUrl}
+										alt={model.modelName}
+										fill
+										unoptimized
+										sizes='(max-width: 640px) 48vw, (max-width: 1024px) 32vw, 220px'
+										className='object-contain transition-transform duration-300 group-hover:scale-105'
+										onError={() => {
+											setFailedIds((prev) => new Set(prev).add(model.modelID));
+										}}
+									/>
+								) : (
+									<div className='flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 via-chart-2/10 to-chart-4/10'>
+										<span className='font-bold text-3xl text-muted-foreground/40'>
+											{model.modelName.charAt(0).toUpperCase()}
+										</span>
 											</div>
 										)}
 										{isLoaded && (

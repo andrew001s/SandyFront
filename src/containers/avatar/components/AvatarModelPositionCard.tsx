@@ -105,7 +105,7 @@ export function AvatarModelPositionCard({
 			valuesRef.current = next;
 			originalRef.current = next;
 		}
-	}, [currentModel?.modelID]);
+	}, [currentModel]);
 
 	useEffect(() => {
 		return () => {
