@@ -18,18 +18,26 @@ interface TwitchAuthContextType {
 const TwitchAuthContext = createContext<TwitchAuthContextType | null>(null);
 const TwitchAuthBotContext = createContext<TwitchAuthContextType | null>(null);
 
-export const TwitchAuthProvider = ({ children }: { children: ReactNode }) => {
-	const auth = useTwitchAuth(false);
+export const TwitchAuthProvider = ({
+	children,
+	disableInitialProfileLoad = false,
+}: {
+	children: ReactNode;
+	disableInitialProfileLoad?: boolean;
+}) => {
+	const auth = useTwitchAuth(false, { disableInitialProfileLoad });
 
 	return <TwitchAuthContext.Provider value={auth}>{children}</TwitchAuthContext.Provider>;
 };
 
 export const TwitchAuthBotProvider = ({
 	children,
+	disableInitialProfileLoad = false,
 }: {
 	children: ReactNode;
+	disableInitialProfileLoad?: boolean;
 }) => {
-	const auth = useTwitchAuth(true);
+	const auth = useTwitchAuth(true, { disableInitialProfileLoad });
 
 	return <TwitchAuthBotContext.Provider value={auth}>{children}</TwitchAuthBotContext.Provider>;
 };

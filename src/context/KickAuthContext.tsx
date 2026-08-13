@@ -23,8 +23,14 @@ interface KickAuthContextType {
 
 const KickAuthContext = createContext<KickAuthContextType | null>(null);
 
-export const KickAuthProvider = ({ children }: { children: ReactNode }) => {
-	const auth = useKickAuth();
+export const KickAuthProvider = ({
+	children,
+	disableInitialStatusLoad = false,
+}: {
+	children: ReactNode;
+	disableInitialStatusLoad?: boolean;
+}) => {
+	const auth = useKickAuth({ disableInitialStatusLoad });
 
 	return <KickAuthContext.Provider value={auth}>{children}</KickAuthContext.Provider>;
 };

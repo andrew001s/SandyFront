@@ -35,14 +35,19 @@ interface UseKickAuthReturn {
 	refreshStatus: () => Promise<void>;
 }
 
-export const useKickAuth = (): UseKickAuthReturn => {
+type UseKickAuthOptions = {
+	disableInitialStatusLoad?: boolean;
+};
+
+export const useKickAuth = (options: UseKickAuthOptions = {}): UseKickAuthReturn => {
+	const { disableInitialStatusLoad = false } = options;
 	const [profile, setProfile] = useState<ProfileModel | null>(null);
 	const [serviceStatus, setServiceStatus] = useState<ServiceStatus | null>(null);
 	const [tokensSaved, setTokensSaved] = useState(false);
 	const [status, setStatus] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 	const [isBusy, setIsBusy] = useState(false);
-	const [isRefreshing, setIsRefreshing] = useState(true);
+	const [isRefreshing, setIsRefreshing] = useState(!disableInitialStatusLoad);
 	const { getToken, isLoaded, isSignedIn } = useAuth();
 
 	const fetchProfile = useCallback(async () => {
@@ -106,6 +111,10 @@ export const useKickAuth = (): UseKickAuthReturn => {
 	}, []);
 
 	useEffect(() => {
+		if (disableInitialStatusLoad) {
+			setIsRefreshing(false);
+			return;
+		}
 		if (!isLoaded || !isSignedIn) {
 			setProfile(null);
 			setServiceStatus(null);
@@ -120,7 +129,7 @@ export const useKickAuth = (): UseKickAuthReturn => {
 		}, 30_000);
 
 		return () => window.clearInterval(intervalId);
-	}, [isLoaded, isSignedIn, refreshStatus]);
+	}, [disableInitialStatusLoad, isLoaded, isSignedIn, refreshStatus]);
 
 	const handleConnect = useCallback(async () => {
 		try {

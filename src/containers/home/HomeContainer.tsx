@@ -3,12 +3,14 @@ import { FeatureFlagsPanel } from '@/components/FeatureFlags/FeatureFlagsPanel';
 import { MicrophoneTile } from '@/components/ServiceControl/MicrophoneTile';
 import { ServiceStartCard } from '@/components/ServiceControl/ServiceStartCard';
 import { TerminalSandy } from '@/components/TerminalSandy/TerminalSandy';
+import { RequireOnboarding } from '@/components/onboarding/RequireOnboarding';
 import { Separator } from '@/components/ui/separator';
 import { Star } from 'lucide-react';
 
 export const HomeContainer = () => {
 	return (
 		<div className='mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-8 md:px-6'>
+			<RequireOnboarding />
 			<header className='mb-8'>
 				<h1 className='font-bold text-3xl [font-family:var(--font-unbounded)] sm:text-4xl'>
 					<span className='bg-gradient-to-r from-violet-600 to-cyan-600 bg-clip-text text-transparent dark:from-[#A78BFA] dark:to-[#22D3EE]'>

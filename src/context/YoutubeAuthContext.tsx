@@ -27,8 +27,14 @@ interface YoutubeAuthContextType {
 
 const YoutubeAuthContext = createContext<YoutubeAuthContextType | null>(null);
 
-export const YoutubeAuthProvider = ({ children }: { children: ReactNode }) => {
-	const auth = useYoutubeAuth();
+export const YoutubeAuthProvider = ({
+	children,
+	disableInitialStatusLoad = false,
+}: {
+	children: ReactNode;
+	disableInitialStatusLoad?: boolean;
+}) => {
+	const auth = useYoutubeAuth({ disableInitialStatusLoad });
 
 	return <YoutubeAuthContext.Provider value={auth}>{children}</YoutubeAuthContext.Provider>;
 };

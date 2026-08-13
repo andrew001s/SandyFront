@@ -37,14 +37,19 @@ interface UseYoutubeAuthReturn {
 	handleUpdateBroadcast: (payload: YoutubeBroadcastPayload) => Promise<void>;
 }
 
-export const useYoutubeAuth = (): UseYoutubeAuthReturn => {
+type UseYoutubeAuthOptions = {
+	disableInitialStatusLoad?: boolean;
+};
+
+export const useYoutubeAuth = (options: UseYoutubeAuthOptions = {}): UseYoutubeAuthReturn => {
+	const { disableInitialStatusLoad = false } = options;
 	const [profile, setProfile] = useState<YoutubeProfile | null>(null);
 	const [serviceStatus, setServiceStatus] = useState<YoutubeServiceStatus | null>(null);
 	const [tokensAuthenticated, setTokensAuthenticated] = useState(false);
 	const [status, setStatus] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 	const [isBusy, setIsBusy] = useState(false);
-	const [isRefreshing, setIsRefreshing] = useState(true);
+	const [isRefreshing, setIsRefreshing] = useState(!disableInitialStatusLoad);
 	const { getToken, isLoaded, isSignedIn } = useAuth();
 
 	const fetchProfile = useCallback(async () => {
@@ -114,6 +119,10 @@ export const useYoutubeAuth = (): UseYoutubeAuthReturn => {
 	}, []);
 
 	useEffect(() => {
+		if (disableInitialStatusLoad) {
+			setIsRefreshing(false);
+			return;
+		}
 		if (!isLoaded || !isSignedIn) {
 			setProfile(null);
 			setServiceStatus(null);
@@ -128,7 +137,7 @@ export const useYoutubeAuth = (): UseYoutubeAuthReturn => {
 		}, 30_000);
 
 		return () => window.clearInterval(intervalId);
-	}, [isLoaded, isSignedIn, refreshStatus]);
+	}, [disableInitialStatusLoad, isLoaded, isSignedIn, refreshStatus]);
 
 	const handleConnect = useCallback(async () => {
 		try {

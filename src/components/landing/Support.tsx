@@ -4,6 +4,7 @@ import { KoFiButton } from '@/components/landing/KoFi';
 import { Reveal } from '@/components/landing/Reveal';
 import { StarField } from '@/components/landing/StarField';
 import { Coffee, Heart } from 'lucide-react';
+import Image from 'next/image';
 
 export function Support() {
 	return (
@@ -46,19 +47,19 @@ export function Support() {
 									rel='noopener noreferrer'
 									className='transition-opacity hover:opacity-90'
 								>
-									{/* biome-ignore lint/nursery/noImgElement: Product Hunt badge is a static SVG embed */}
-									<img
+									<Image
 										alt='Sandy Studio - VTuber con IA que habla con tu chat de Twitch | Product Hunt'
-										width='250'
-										height='54'
+										width={250}
+										height={54}
+										unoptimized
 										className='block dark:hidden'
 										src='https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1214052&theme=light&t=1785779991881'
 									/>
-									{/* biome-ignore lint/nursery/noImgElement: Product Hunt badge is a static SVG embed */}
-									<img
+									<Image
 										alt='Sandy Studio - VTuber con IA que habla con tu chat de Twitch | Product Hunt'
-										width='250'
-										height='54'
+										width={250}
+										height={54}
+										unoptimized
 										className='hidden dark:block'
 										src='https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1214052&theme=dark&t=1785779991881'
 									/>

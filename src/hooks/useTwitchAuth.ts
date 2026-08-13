@@ -23,10 +23,18 @@ interface UseTwitchAuthReturn {
 	fetchProfile: () => Promise<void>;
 }
 
-export const useTwitchAuth = (defaultIsBot?: boolean): UseTwitchAuthReturn => {
+type UseTwitchAuthOptions = {
+	disableInitialProfileLoad?: boolean;
+};
+
+export const useTwitchAuth = (
+	defaultIsBot?: boolean,
+	options: UseTwitchAuthOptions = {},
+): UseTwitchAuthReturn => {
+	const { disableInitialProfileLoad = false } = options;
 	const [profile, setProfile] = useState<ProfileModel | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
-	const [isProfileLoading, setIsProfileLoading] = useState(true);
+	const [isProfileLoading, setIsProfileLoading] = useState(!disableInitialProfileLoad);
 	const { status: userStatus, setStatus: setUserStatus } = useStatus();
 	const { statusBot, setStatusBot } = useStatusBot();
 	const { getToken, isLoaded, isSignedIn } = useAuth();
@@ -81,8 +89,12 @@ export const useTwitchAuth = (defaultIsBot?: boolean): UseTwitchAuthReturn => {
 	}, [getToken, isBot, isLoaded, isSignedIn, setProfile, setStatus]);
 
 	useEffect(() => {
+		if (disableInitialProfileLoad) {
+			setIsProfileLoading(false);
+			return;
+		}
 		void fetchProfile();
-	}, [fetchProfile]);
+	}, [disableInitialProfileLoad, fetchProfile]);
 
 	const handleStart = useCallback(
 		async (bot: boolean) => {

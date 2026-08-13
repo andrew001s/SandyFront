@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import CountryFlag from 'react-country-flag';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 type FishVoiceDialogProps = {
@@ -238,6 +238,71 @@ export function FishVoiceDialog({
 	const loadMoreRef = useRef<HTMLDivElement | null>(null);
 	const resultsScrollRef = useRef<HTMLDivElement | null>(null);
 
+	const getSearchQuery = useCallback(
+		(query: string, quickFilterKey = activeQuickFilter, currentLanguage = languageKey) => {
+			const trimmedQuery = query.trim();
+
+			if (trimmedQuery) {
+				return trimmedQuery;
+			}
+
+			const language = LANGUAGE_OPTIONS.find((option) => option.key === currentLanguage);
+			const quickFilter = QUICK_FILTERS.find((filter) => filter.key === quickFilterKey);
+
+			return [language?.query, quickFilter?.query].filter(Boolean).join(' ').trim();
+		},
+		[activeQuickFilter, languageKey],
+	);
+
+	const handleSearch = useCallback(
+		async (
+			query = '',
+			nextPage = 1,
+			append = false,
+			sort = sortBy,
+			quickFilterKey = activeQuickFilter,
+			currentLanguage = languageKey,
+		) => {
+			if (!apiKey.trim()) {
+				toast.error('Agrega tu Fish Audio Key para buscar voces');
+				return;
+			}
+
+			try {
+				if (append) {
+					setIsAppending(true);
+				} else {
+					setIsLoading(true);
+				}
+				setError(null);
+				const response = await searchFishAudioModels({
+					apiKey: apiKey.trim(),
+					query: getSearchQuery(query, quickFilterKey, currentLanguage),
+					pageSize: 12,
+					pageNumber: nextPage,
+					sortBy: sort,
+				});
+				const nextModels = response.items ?? [];
+				setModels((current) => (append ? [...current, ...nextModels] : nextModels));
+				setPageNumber(nextPage);
+				setHasMore(Boolean(response.has_more));
+				if (nextModels.length === 0) {
+					setError('No encontramos voces con esa búsqueda.');
+				}
+			} catch (searchError) {
+				console.error('Error buscando voces de Fish Audio:', searchError);
+				if (!append) {
+					setModels([]);
+				}
+				setError('No se pudieron cargar las voces de Fish Audio.');
+			} finally {
+				setIsLoading(false);
+				setIsAppending(false);
+			}
+		},
+		[activeQuickFilter, apiKey, getSearchQuery, languageKey, sortBy],
+	);
+
 	useEffect(() => {
 		if (open) {
 			setManualVoiceId(voiceId);
@@ -268,7 +333,7 @@ export function FishVoiceDialog({
 		const detectedLanguageKey = detectFishLanguageKey();
 		setLanguageKey(detectedLanguageKey);
 		void handleSearch('', 1, false, 'score', activeQuickFilter, detectedLanguageKey);
-	}, [apiKey, open]);
+	}, [activeQuickFilter, apiKey, handleSearch, open]);
 
 	useEffect(() => {
 		const root = resultsScrollRef.current;
@@ -299,7 +364,7 @@ export function FishVoiceDialog({
 		return () => {
 			observer.disconnect();
 		};
-	}, [hasMore, isLoading, isAppending, open, pageNumber, search]);
+	}, [handleSearch, hasMore, isAppending, isLoading, open, pageNumber, search]);
 
 	useEffect(() => {
 		function handleDocumentClick(event: MouseEvent) {
@@ -326,65 +391,6 @@ export function FishVoiceDialog({
 			document.removeEventListener('keydown', handleDocumentKeyDown);
 		};
 	}, []);
-
-	function getSearchQuery(query: string, quickFilterKey = activeQuickFilter, currentLanguage = languageKey) {
-		const trimmedQuery = query.trim();
-
-		if (trimmedQuery) {
-			return trimmedQuery;
-		}
-
-		const language = LANGUAGE_OPTIONS.find((option) => option.key === currentLanguage);
-		const quickFilter = QUICK_FILTERS.find((filter) => filter.key === quickFilterKey);
-
-		return [language?.query, quickFilter?.query].filter(Boolean).join(' ').trim();
-	}
-
-	async function handleSearch(
-		query: string = search,
-		nextPage = 1,
-		append = false,
-		sort = sortBy,
-		quickFilterKey = activeQuickFilter,
-		currentLanguage = languageKey,
-	) {
-		if (!apiKey.trim()) {
-			toast.error('Agrega tu Fish Audio Key para buscar voces');
-			return;
-		}
-
-		try {
-			if (append) {
-				setIsAppending(true);
-			} else {
-				setIsLoading(true);
-			}
-			setError(null);
-			const response = await searchFishAudioModels({
-				apiKey: apiKey.trim(),
-				query: getSearchQuery(query, quickFilterKey, currentLanguage),
-				pageSize: 12,
-				pageNumber: nextPage,
-				sortBy: sort,
-			});
-			const nextModels = response.items ?? [];
-			setModels((current) => (append ? [...current, ...nextModels] : nextModels));
-			setPageNumber(nextPage);
-			setHasMore(Boolean(response.has_more));
-			if (nextModels.length === 0) {
-				setError('No encontramos voces con esa búsqueda.');
-			}
-		} catch (searchError) {
-			console.error('Error buscando voces de Fish Audio:', searchError);
-			if (!append) {
-				setModels([]);
-			}
-			setError('No se pudieron cargar las voces de Fish Audio.');
-		} finally {
-			setIsLoading(false);
-			setIsAppending(false);
-		}
-	}
 
 	const scrollQuickFilters = (direction: 'left' | 'right') => {
 		const container = quickFiltersRef.current;
@@ -423,7 +429,7 @@ export function FishVoiceDialog({
 									onKeyDown={(event) => {
 										if (event.key === 'Enter') {
 											event.preventDefault();
-											void handleSearch();
+											void handleSearch(search, 1, false, sortBy, activeQuickFilter, languageKey);
 										}
 									}}
 									className='h-12 rounded-full border-border/70 bg-background/80 pr-4 pl-11 text-[15px] shadow-sm'
@@ -434,7 +440,7 @@ export function FishVoiceDialog({
 								type='button'
 								variant='outline'
 								className='h-12 w-12 rounded-full border-border/70 bg-background/80 shadow-sm'
-								onClick={() => void handleSearch()}
+								onClick={() => void handleSearch(search, 1, false, sortBy, activeQuickFilter, languageKey)}
 								disabled={isLoading}
 								aria-label='Buscar voces'
 							>
