@@ -6,12 +6,14 @@ export type OnboardingFlowData = {
 	twitchConnected?: boolean;
 	kickConnected?: boolean;
 	youtubeConnected?: boolean;
+	uiTheme?: 'light' | 'dark';
 	aiProvider?: AiProvider;
 	geminiApiKey?: string;
 	openrouterApiKey?: string;
 	openrouterModel?: string;
 	fishAudioKey?: string;
 	voiceId?: string;
+	sttProvider?: 'azure' | 'browser';
 	vtubeConnected?: boolean;
 	completedAt?: number;
 };

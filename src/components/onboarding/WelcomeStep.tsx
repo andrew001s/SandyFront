@@ -6,9 +6,12 @@ import { useOnboarding } from '@onboardjs/react';
 import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 import Image from 'next/image';
+import { useTheme } from 'next-themes';
 
 export function WelcomeStep({ payload }: StepProps) {
 	const { next } = useOnboarding();
+	const { resolvedTheme, theme } = useTheme();
+	const isLightTheme = (resolvedTheme ?? theme ?? 'dark') === 'light';
 
 	return (
 		<motion.div
@@ -24,7 +27,11 @@ export function WelcomeStep({ payload }: StepProps) {
 					transition={{ duration: 0.35, delay: 0.05 }}
 					className='flex justify-center'
 				>
-					<div className='flex size-20 items-center justify-center rounded-[1.8rem] border border-white/10 bg-white/5 shadow-[0_20px_60px_rgba(0,0,0,0.24)] backdrop-blur-sm'>
+					<div
+						className={`flex size-20 items-center justify-center rounded-[1.8rem] border shadow-[0_20px_60px_rgba(0,0,0,0.24)] backdrop-blur-sm ${
+							isLightTheme ? 'border-black/10 bg-white' : 'border-white/10 bg-white/5'
+						}`}
+					>
 						<Image
 							src='/icons/icon.png'
 							alt='Sandy Studio'
@@ -38,10 +45,18 @@ export function WelcomeStep({ payload }: StepProps) {
 
 				<div className='space-y-5'>
 					<div className='space-y-3'>
-						<h2 className='font-semibold text-4xl text-white tracking-tight [font-family:var(--font-unbounded)] sm:text-5xl'>
+						<h2
+							className={`font-semibold text-4xl tracking-tight [font-family:var(--font-unbounded)] sm:text-5xl ${
+								isLightTheme ? 'text-zinc-900' : 'text-white'
+							}`}
+						>
 							{payload.title}
 						</h2>
-						<p className='mx-auto max-w-2xl text-balance text-lg text-white/60 leading-relaxed sm:text-xl'>
+						<p
+							className={`mx-auto max-w-2xl text-balance text-lg leading-relaxed sm:text-xl ${
+								isLightTheme ? 'text-zinc-600' : 'text-white/60'
+							}`}
+						>
 							{payload.description}
 						</p>
 					</div>
@@ -51,12 +66,18 @@ export function WelcomeStep({ payload }: StepProps) {
 							type='button'
 							size='lg'
 							onClick={() => void next()}
-							className='h-12 w-full max-w-md rounded-2xl bg-white px-8 text-base text-slate-900 shadow-[0_12px_40px_rgba(255,255,255,0.12)] hover:bg-white/90'
+							className={`h-12 w-full max-w-md rounded-2xl px-8 text-base shadow-[0_12px_40px_rgba(255,255,255,0.12)] ${
+								isLightTheme
+									? 'bg-[#101423] text-white hover:bg-[#0b1020]'
+									: 'bg-white text-slate-900 hover:bg-white/90'
+							}`}
 						>
 							Empezar
 							<ChevronRight className='size-4' />
 						</Button>
-						<p className='text-sm text-white/45'>Te tomará unos minutos dejarlo listo.</p>
+						<p className={`text-sm ${isLightTheme ? 'text-zinc-500' : 'text-white/45'}`}>
+							Te tomará unos minutos dejarlo listo.
+						</p>
 					</div>
 				</div>
 			</div>

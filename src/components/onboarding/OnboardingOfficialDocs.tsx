@@ -29,7 +29,7 @@ export function OnboardingOfficialDocs({
 				{description ? <p className='max-w-2xl text-muted-foreground text-sm leading-relaxed'>{description}</p> : null}
 			</div>
 
-			<div className='mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2'>
+			<div className='mt-4 grid grid-cols-1 gap-3'>
 				{links.map((link) => (
 					<Button
 						key={link.href}
@@ -38,7 +38,7 @@ export function OnboardingOfficialDocs({
 						size='sm'
 						className='h-auto w-full justify-start rounded-2xl border-border/70 bg-background/70 px-4 py-3 text-left shadow-sm hover:bg-background/90'
 					>
-						<a href={link.href} target='_blank' rel='noreferrer noopener' className='min-w-0'>
+						<a href={link.href} target='_blank' rel='noreferrer noopener' className='flex w-full min-w-0 items-start gap-3'>
 							<ExternalLink className='size-4' />
 							<span className='min-w-0 text-left'>
 								{link.label}

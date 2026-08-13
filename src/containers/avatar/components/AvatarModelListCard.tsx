@@ -14,6 +14,7 @@ type AvatarModelListCardProps = {
 	currentModelId: string | null;
 	modelsFolderPath?: string | null;
 	onLoadModel: (modelID: string) => void;
+	showOnlyActive?: boolean;
 };
 
 export function AvatarModelListCard({
@@ -22,25 +23,33 @@ export function AvatarModelListCard({
 	currentModelId,
 	modelsFolderPath,
 	onLoadModel,
+	showOnlyActive = false,
 }: AvatarModelListCardProps) {
 	const { status, urls, requestAccess } = useModelPreviews(models);
 	const [failedIds, setFailedIds] = useState<Set<string>>(() => new Set());
+	const activeModel = models.find((model) => currentModelId === model.modelID || model.modelLoaded) ?? null;
 
 	if (!connected) {
 		return null;
 	}
+
+	const displayedModels = showOnlyActive ? (activeModel ? [activeModel] : []) : models;
 
 	return (
 		<Card className='border-border/50 bg-card/50 backdrop-blur-sm'>
 			<CardHeader>
 				<CardTitle className='flex items-center gap-2 text-lg'>
 					<FiGrid size={18} className='text-chart-1' />
-					Modelos disponibles
+					{showOnlyActive ? 'Modelo activo' : 'Modelos disponibles'}
 				</CardTitle>
 				<CardDescription className='flex flex-wrap items-center justify-between gap-2'>
 					<span>
 						{models.length > 0
-							? `${models.length} modelo${models.length !== 1 ? 's' : ''} encontrado${models.length !== 1 ? 's' : ''} en VTube Studio`
+							? showOnlyActive
+								? activeModel
+									? `Activo en VTube Studio: ${activeModel.modelName}`
+									: 'Ningún modelo activo detectado'
+								: `${models.length} modelo${models.length !== 1 ? 's' : ''} encontrado${models.length !== 1 ? 's' : ''} en VTube Studio`
 							: 'No se encontraron modelos'}
 					</span>
 					{models.length > 0 && status !== 'unsupported' && (
@@ -63,9 +72,64 @@ export function AvatarModelListCard({
 					<p className='py-4 text-center text-muted-foreground text-xs'>
 						No hay modelos disponibles. Cargá uno en VTube Studio primero.
 					</p>
+				) : showOnlyActive ? (
+					displayedModels.length > 0 ? (
+						displayedModels.map((model) => {
+							const isLoaded = currentModelId === model.modelID || model.modelLoaded;
+							const previewUrl = failedIds.has(model.modelID) ? null : (urls[model.modelID] ?? null);
+
+							return (
+								<button
+									key={model.modelID}
+									type='button'
+									onClick={() => {
+										void onLoadModel(model.modelID);
+									}}
+									disabled={isLoaded}
+									className='group relative mx-auto w-full max-w-sm overflow-hidden rounded-2xl border border-primary/50 bg-primary/5 text-left ring-1 ring-primary/20 transition-all'
+								>
+									<div className='relative aspect-[16/10] w-full overflow-hidden bg-muted/40'>
+										{previewUrl ? (
+											// biome-ignore lint/nursery/noImgElement: model previews are local object URLs
+											<img
+												src={previewUrl}
+												alt={model.modelName}
+												className='h-full w-full object-contain transition-transform duration-300 group-hover:scale-105'
+												onError={() => {
+													setFailedIds((prev) => new Set(prev).add(model.modelID));
+												}}
+											/>
+										) : (
+											<div className='flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 via-chart-2/10 to-chart-4/10'>
+												<span className='font-bold text-4xl text-muted-foreground/40'>
+													{model.modelName.charAt(0).toUpperCase()}
+												</span>
+											</div>
+										)}
+										<Badge
+											variant='outline'
+											className='absolute top-3 right-3 border-primary/30 bg-background/90 px-2 py-0 text-[10px]'
+										>
+											Activo
+										</Badge>
+									</div>
+									<div className='space-y-0.5 p-4'>
+										<p className='truncate font-medium text-sm'>{model.modelName}</p>
+										<p className='truncate text-xs text-muted-foreground'>
+											{model.vtsModelName || model.modelID}
+										</p>
+									</div>
+								</button>
+							);
+						})
+					) : (
+						<p className='py-4 text-center text-muted-foreground text-xs'>
+							No hay un modelo activo ahora mismo. Abrí uno en VTube Studio para verlo aquí.
+						</p>
+					)
 				) : (
 					<div className='grid grid-cols-2 gap-3 sm:grid-cols-3'>
-						{models.map((model) => {
+						{displayedModels.map((model) => {
 							const isLoaded = currentModelId === model.modelID || model.modelLoaded;
 							const previewUrl = failedIds.has(model.modelID)
 								? null
