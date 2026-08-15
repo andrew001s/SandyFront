@@ -4,9 +4,13 @@ import { GlobalAudioPlayer } from '@/components/audio/GlobalAudioPlayer';
 import { MessagesProvider } from '@/context/MessagesContext';
 import { StatusProvider } from '@/context/StatusContext';
 import { StatusProviderBot } from '@/context/StatusContextBot';
+import { dashboardTourSteps, DASHBOARD_TOUR_STORAGE_KEY } from '@/components/tour/dashboardTour';
+import { DashboardTourCard } from '@/components/tour/DashboardTourCard';
 import { useUser } from '@clerk/nextjs';
+import { NextStep, NextStepProvider, useNextStep } from 'nextstepjs';
 import { usePathname } from 'next/navigation';
 import posthog from 'posthog-js';
+import { useTheme } from 'next-themes';
 import { type ReactNode, useEffect, useRef } from 'react';
 
 function PostHogUserIdentification() {
@@ -42,23 +46,93 @@ function PostHogUserIdentification() {
 	return null;
 }
 
+function DashboardTourLauncher() {
+	const pathname = usePathname();
+	const { isLoaded, isSignedIn, user } = useUser();
+	const { startNextStep, closeNextStep } = useNextStep();
+	const startedForUser = useRef<string | null>(null);
+
+	useEffect(() => {
+		if (!isLoaded || !isSignedIn || pathname !== '/home' || !user?.id) {
+			return;
+		}
+
+		if (typeof window === 'undefined') {
+			return;
+		}
+
+		const storageKey = `${DASHBOARD_TOUR_STORAGE_KEY}:${user.id}`;
+
+		if (window.localStorage.getItem(storageKey) === '1' || startedForUser.current === user.id) {
+			return;
+		}
+
+		startedForUser.current = user.id;
+		const timer = window.setTimeout(() => {
+			startNextStep('dashboard-tour');
+		}, 700);
+
+		return () => {
+			window.clearTimeout(timer);
+		};
+	}, [isLoaded, isSignedIn, pathname, startNextStep, user?.id]);
+
+	useEffect(() => {
+		if (pathname === '/home') {
+			return;
+		}
+
+		closeNextStep();
+	}, [closeNextStep, pathname]);
+
+	return null;
+}
+
 export function AppProviders({ children }: { children: ReactNode }) {
 	const pathname = usePathname();
+	const isAppRoute = pathname !== '/';
+	const { user } = useUser();
+	const { resolvedTheme, theme } = useTheme();
+	const activeTheme = resolvedTheme ?? theme ?? 'dark';
+	const isLightTheme = activeTheme === 'light';
 
 	return (
 		<>
 			<PostHogUserIdentification />
-			{pathname === '/' ? (
-				children
+			{isAppRoute ? (
+				<NextStepProvider>
+					<NextStep
+						steps={dashboardTourSteps}
+						cardComponent={DashboardTourCard}
+						shadowRgb={isLightTheme ? '109, 91, 208' : '3, 6, 23'}
+						shadowOpacity={isLightTheme ? '0.18' : '0.62'}
+						arrowStyle={{
+							color: isLightTheme ? '#ffffff' : '#0b1020',
+						}}
+						onComplete={() => {
+							if (typeof window === 'undefined' || !user?.id) return;
+							window.localStorage.setItem(`${DASHBOARD_TOUR_STORAGE_KEY}:${user.id}`, '1');
+						}}
+						onSkip={() => {
+							if (typeof window === 'undefined' || !user?.id) return;
+							window.localStorage.setItem(`${DASHBOARD_TOUR_STORAGE_KEY}:${user.id}`, '1');
+						}}
+						disableConsoleLogs
+						overlayZIndex={1400}
+					>
+						<StatusProvider>
+							<StatusProviderBot>
+								<MessagesProvider>
+									<GlobalAudioPlayer />
+									<DashboardTourLauncher />
+									{children}
+								</MessagesProvider>
+							</StatusProviderBot>
+						</StatusProvider>
+					</NextStep>
+				</NextStepProvider>
 			) : (
-				<StatusProvider>
-					<StatusProviderBot>
-						<MessagesProvider>
-							<GlobalAudioPlayer />
-							{children}
-						</MessagesProvider>
-					</StatusProviderBot>
-				</StatusProvider>
+				children
 			)}
 		</>
 	);

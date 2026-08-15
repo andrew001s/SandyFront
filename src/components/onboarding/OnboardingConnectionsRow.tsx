@@ -178,7 +178,7 @@ function KickConnectionTile() {
   return (
     <ConnectionTile
       title="Kick"
-      subtitle="Autentica tu cuenta de Kick"
+      subtitle="Autentica tu cuenta"
       icon={<SiKick className="size-5 text-[#53FC18]" />}
       avatarSrc={profile?.picProfile}
       avatarAlt={profile?.username ?? 'Avatar de Kick'}

@@ -136,20 +136,7 @@ export const SocialConnectionCard = ({
 						</div>
 					) : (
 						<div className='space-y-4'>
-							<div className='flex h-44 items-center justify-center overflow-hidden rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.18),_transparent_42%),linear-gradient(160deg,rgba(255,255,255,0.06),rgba(255,255,255,0.01))]'>
-								{avatarSrc ? (
-									<Avatar className='size-24 border border-white/10 shadow-[0_18px_60px_rgba(0,0,0,0.18)]'>
-										<AvatarImage src={avatarSrc} alt={avatarAlt} className='object-cover' />
-										<AvatarFallback className='font-bold text-2xl'>
-											{name.charAt(0).toUpperCase()}
-										</AvatarFallback>
-									</Avatar>
-								) : (
-									<Avatar className='size-24 border border-white/10 bg-white/10 shadow-[0_18px_60px_rgba(0,0,0,0.18)]'>
-										<AvatarFallback className='font-bold text-2xl'>{name.charAt(0).toUpperCase()}</AvatarFallback>
-									</Avatar>
-								)}
-							</div>
+							
 
 							<div className='flex flex-col items-center gap-3'>
 								<Button onClick={() => void onDisconnect()} disabled={isBusy} className={disconnectClasses}>
