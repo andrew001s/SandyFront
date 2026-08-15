@@ -1,27 +1,31 @@
-"use client";
+'use client';
 
-import type { ReactNode } from "react";
-import { motion } from "framer-motion";
-import { CheckCircle2, Loader2, ArrowRight } from "lucide-react";
-import { SiKick, SiTwitch, SiYoutube } from "react-icons/si";
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
-  KickAuthProvider,
-  useKickAuthContext,
-} from "@/context/KickAuthContext";
+	KickAuthProvider,
+	useKickAuthContext,
+} from '@/context/KickAuthContext';
 import {
-  TwitchAuthProvider,
-  useTwitchAuthContext,
-} from "@/context/TwitchAuthContext";
+	TwitchAuthProvider,
+	useTwitchAuthContext,
+} from '@/context/TwitchAuthContext';
 import {
-  YoutubeAuthProvider,
-  useYoutubeAuthContext,
-} from "@/context/YoutubeAuthContext";
-import { Button } from "@/components/ui/button";
+	YoutubeAuthProvider,
+	useYoutubeAuthContext,
+} from '@/context/YoutubeAuthContext';
+import type { ReactNode } from 'react';
+import { useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
+import { SiKick, SiTwitch, SiYoutube } from 'react-icons/si';
 
 type ConnectionTileProps = {
   title: string;
   subtitle: string;
   icon: ReactNode;
+  avatarSrc?: string | null;
+  avatarAlt: string;
   accentClassName: string;
   connected: boolean;
   loading: boolean;
@@ -36,6 +40,8 @@ function ConnectionTile({
   title,
   subtitle,
   icon,
+  avatarSrc,
+  avatarAlt,
   accentClassName,
   connected,
   loading,
@@ -51,20 +57,20 @@ function ConnectionTile({
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -2 }}
       transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-      className="min-w-0"
+      className="h-full min-w-0"
     >
       <div className="relative z-10 flex h-full flex-col">
-        <div className="flex flex-1 flex-col gap-4">
-          <div className="relative overflow-hidden rounded-[28px] border border-border/50 bg-background/35 p-5">
+        <div className="flex h-full flex-1 flex-col gap-4">
+          <div className="relative flex h-full flex-col overflow-hidden rounded-[28px] border border-border/50 bg-background/35 p-5">
             <div
               className={`pointer-events-none absolute inset-0 bg-gradient-to-br opacity-30 ${accentClassName}`}
             />
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-h-[3.5rem] items-start gap-3">
                 <div className="flex size-12 items-center justify-center rounded-2xl border border-border/70 bg-background/85 shadow-sm">
                   {icon}
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="font-medium text-lg">{title}</p>
                   <p className="text-muted-foreground text-sm">{subtitle}</p>
                 </div>
@@ -81,8 +87,19 @@ function ConnectionTile({
               </span>
             </div>
             <div className="mt-5 flex h-44 items-center justify-center rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.18),_transparent_42%),linear-gradient(160deg,rgba(255,255,255,0.06),rgba(255,255,255,0.01))]">
-              <div className="flex size-20 items-center justify-center rounded-full border border-white/10 bg-white/10 shadow-[0_18px_60px_rgba(0,0,0,0.18)]">
-                {icon}
+              <div className="flex size-24 items-center justify-center rounded-full border border-white/10 bg-white/10 shadow-[0_18px_60px_rgba(0,0,0,0.18)]">
+                {connected && avatarSrc ? (
+                  <Avatar className="size-20 border border-white/10">
+                    <AvatarImage src={avatarSrc} alt={avatarAlt} className="object-cover" />
+                    <AvatarFallback className="font-bold text-xl">
+                      {title.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <div className="flex size-20 items-center justify-center rounded-full bg-white/10">
+                    {icon}
+                  </div>
+                )}
               </div>
             </div>
             <div className="mt-auto">
@@ -121,14 +138,22 @@ function ConnectionTile({
 }
 
 function TwitchConnectionTile() {
-  const { status, isLoading, handleStart, handleClose } =
+  const { status, isLoading, handleStart, handleClose, profile, fetchProfile } =
     useTwitchAuthContext();
+
+  useEffect(() => {
+    if (status && !profile) {
+      void fetchProfile();
+    }
+  }, [fetchProfile, profile, status]);
 
   return (
     <ConnectionTile
       title="Twitch"
-      subtitle="Conecta tu cuenta principal"
+      subtitle="Conecta tu cuenta"
       icon={<SiTwitch className="size-5 text-[#9146FF]" />}
+      avatarSrc={profile?.picProfile}
+      avatarAlt={profile?.username ?? 'Avatar de Twitch'}
       accentClassName="from-[#9146FF]/18 to-transparent"
       connected={status}
       loading={isLoading}
@@ -141,14 +166,22 @@ function TwitchConnectionTile() {
 }
 
 function KickConnectionTile() {
-  const { status, isLoading, handleConnect, handleDisconnect } =
+  const { status, isLoading, handleConnect, handleDisconnect, profile, fetchProfile } =
     useKickAuthContext();
+
+  useEffect(() => {
+    if (status && !profile) {
+      void fetchProfile();
+    }
+  }, [fetchProfile, profile, status]);
 
   return (
     <ConnectionTile
       title="Kick"
       subtitle="Autentica tu cuenta de Kick"
       icon={<SiKick className="size-5 text-[#53FC18]" />}
+      avatarSrc={profile?.picProfile}
+      avatarAlt={profile?.username ?? 'Avatar de Kick'}
       accentClassName="from-[#53FC18]/18 to-transparent"
       connected={status}
       loading={isLoading}
@@ -167,14 +200,24 @@ function YoutubeConnectionTile() {
     isLoading,
     handleConnect,
     handleDisconnect,
+    profile,
+    fetchProfile,
   } = useYoutubeAuthContext();
   const connected = tokensAuthenticated || status;
+
+  useEffect(() => {
+    if (connected && !profile) {
+      void fetchProfile();
+    }
+  }, [connected, fetchProfile, profile]);
 
   return (
     <ConnectionTile
       title="YouTube"
       subtitle="Vincula tu canal de YouTube"
       icon={<SiYoutube className="size-5 text-[#FF0000]" />}
+      avatarSrc={profile?.picProfile}
+      avatarAlt={profile?.channel_title ?? profile?.username ?? 'Avatar de YouTube'}
       accentClassName="from-[#FF0000]/18 to-transparent"
       connected={connected}
       loading={isLoading}

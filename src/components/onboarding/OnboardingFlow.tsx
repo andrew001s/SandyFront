@@ -3,38 +3,42 @@
 import { OnboardingShell } from '@/components/onboarding/OnboardingShell';
 import { steps } from '@/components/onboarding/onboardingSteps';
 import {
-	ONBOARDING_COMPLETE_KEY,
-	ONBOARDING_DISMISSED_KEY,
-	ONBOARDING_PERSISTENCE_KEY,
+	getOnboardingPersistenceKey,
 	isOnboardingComplete,
+	markOnboardingComplete,
 } from '@/lib/onboarding/keys';
+import { useAuth } from '@clerk/nextjs';
 import { OnboardingProvider } from '@onboardjs/react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect } from 'react';
 
 export function OnboardingFlow() {
 	const router = useRouter();
+	const { isLoaded, isSignedIn, userId } = useAuth();
 
 	useEffect(() => {
-		if (isOnboardingComplete()) {
+		if (!isLoaded || !isSignedIn) {
+			return;
+		}
+
+		if (isOnboardingComplete(userId)) {
 			router.replace('/home');
 		}
-	}, [router]);
+	}, [isLoaded, isSignedIn, router, userId]);
 
 	const handleFlowComplete = useCallback(async () => {
-		try {
-			window.localStorage.setItem(ONBOARDING_COMPLETE_KEY, '1');
-			window.localStorage.removeItem(ONBOARDING_DISMISSED_KEY);
-		} catch {
-			// ignore storage errors
-		}
+		markOnboardingComplete(userId);
 		router.replace('/home');
-	}, [router]);
+	}, [router, userId]);
+
+	if (!isLoaded || !isSignedIn) {
+		return null;
+	}
 
 	return (
 		<OnboardingProvider
 			steps={steps}
-			localStoragePersistence={{ key: ONBOARDING_PERSISTENCE_KEY }}
+			localStoragePersistence={{ key: getOnboardingPersistenceKey(userId) }}
 			onFlowComplete={handleFlowComplete}
 			flowId='sandy-vtuber-setup'
 			flowName='Configuración inicial de Sandy Studio'

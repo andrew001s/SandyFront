@@ -1,27 +1,34 @@
 'use client';
 
-import { StarField } from '@/components/landing/StarField';
-import { Button } from '@/components/ui/button';
-import { ONBOARDING_DISMISSED_KEY } from '@/lib/onboarding/keys';
-import { AnimatePresence, motion } from 'framer-motion';
 import { useOnboarding } from '@onboardjs/react';
 import { ArrowLeft, ArrowRight, LogOut, SkipForward } from 'lucide-react';
 import Image from 'next/image';
-import { useCallback } from 'react';
 import { useTheme } from 'next-themes';
+import { useAuth } from '@clerk/nextjs';
+import { useCallback, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+
+import { submitOnboardingSettings } from '@/components/onboarding/onboardingSubmit';
+import { StarField } from '@/components/landing/StarField';
+import { Button } from '@/components/ui/button';
+import { markOnboardingDismissed } from '@/lib/onboarding/keys';
+import { toast } from 'sonner';
+
 import { stepOrder, type SandyOnboardingContext } from './onboardingSteps';
 
 export function OnboardingShell() {
 	const { state, currentStep, loading, next, goToStep, skip, renderStep } =
 		useOnboarding<SandyOnboardingContext>();
+	const { getToken, userId } = useAuth();
 	const { theme, resolvedTheme } = useTheme();
 	const activeTheme = resolvedTheme ?? theme ?? 'dark';
 	const isLightTheme = activeTheme === 'light';
+	const [isPersisting, setIsPersisting] = useState(false);
 
 	const isFirst = state?.isFirstStep ?? true;
 	const isLast = state?.isLastStep ?? false;
 	const isHydrating = loading.isHydrating ?? loading.isAnyLoading;
-	const isBusy = loading.isAnyLoading;
+	const isBusy = loading.isAnyLoading || isPersisting;
 	const isWelcome = currentStep?.id === 'welcome';
 	const isCompleted = currentStep?.id === 'completed';
 	const hidePrimaryAction = isWelcome || isCompleted;
@@ -30,18 +37,41 @@ export function OnboardingShell() {
 	const currentStepNumber = isCompleted ? state?.totalSteps ?? stepOrder.length : state?.currentStepNumber ?? 1;
 
 	const handleDismiss = useCallback(() => {
-		try {
-			window.localStorage.setItem(ONBOARDING_DISMISSED_KEY, '1');
-		} catch {
-			// ignore storage errors
-		}
+		markOnboardingDismissed(userId);
 		window.location.assign('/home');
-	}, []);
+	}, [userId]);
 
 	const handlePrevious = useCallback(() => {
 		if (!previousStepId) return;
 		void goToStep(previousStepId);
 	}, [goToStep, previousStepId]);
+
+	const persistCurrentStep = useCallback(async () => {
+		if (!state?.context.flowData) {
+			return;
+		}
+
+		try {
+			setIsPersisting(true);
+			const token = await getToken();
+			await submitOnboardingSettings(state.context.flowData, token);
+		} catch (error) {
+			console.error('Error guardando el progreso del onboarding:', error);
+			toast.error('No se pudo guardar el progreso del onboarding');
+		} finally {
+			setIsPersisting(false);
+		}
+	}, [getToken, state?.context.flowData]);
+
+	const handleContinue = useCallback(async () => {
+		await persistCurrentStep();
+		await next();
+	}, [next, persistCurrentStep]);
+
+	const handleSkipForward = useCallback(async () => {
+		await persistCurrentStep();
+		await skip();
+	}, [persistCurrentStep, skip]);
 
 	if (isHydrating || !state) {
 		return (
@@ -170,7 +200,7 @@ export function OnboardingShell() {
 												: 'text-white/70 hover:bg-white/5 hover:text-white'
 										}`}
 										disabled={isBusy}
-										onClick={() => void skip()}
+										onClick={() => void handleSkipForward()}
 									>
 										<SkipForward className='size-4' />
 										Omitir
@@ -184,7 +214,7 @@ export function OnboardingShell() {
 											: 'bg-white text-slate-900 hover:bg-white/90'
 									}`}
 									disabled={!state.canGoNext || isBusy}
-									onClick={() => void next()}
+									onClick={() => void handleContinue()}
 								>
 									{isLast ? 'Finalizar' : 'Continuar'}
 									<ArrowRight className='size-4' />
@@ -202,7 +232,7 @@ function renderLoading() {
 	return (
 		<div className='flex flex-col items-center justify-center gap-3 py-16'>
 			<div className='h-10 w-10 animate-spin rounded-full border-2 border-primary/30 border-t-primary' />
-			<p className='text-sm text-muted-foreground'>Guardando tu progreso...</p>
+			<p className='text-muted-foreground text-sm'>Guardando tu progreso...</p>
 		</div>
 	);
 }
