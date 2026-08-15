@@ -32,6 +32,30 @@ export function buildOnboardingSettingsPayload(flowData: OnboardingFlowData): Se
 		payload.stt_provider = flowData.sttProvider;
 	}
 
+	if (flowData.sandyCoreConfig?.persona_profile !== undefined) {
+		payload.persona_profile = flowData.sandyCoreConfig.persona_profile;
+	}
+
+	if (flowData.sandyCoreConfig?.prompt_overrides !== undefined) {
+		payload.prompt_overrides = flowData.sandyCoreConfig.prompt_overrides;
+	}
+
+	if (flowData.sandyCoreConfig?.feature_flags !== undefined) {
+		payload.feature_flags = flowData.sandyCoreConfig.feature_flags;
+	}
+
+	if (flowData.sandyCoreConfig?.custom_banned_words !== undefined) {
+		payload.custom_banned_words = flowData.sandyCoreConfig.custom_banned_words;
+	}
+
+	if (flowData.sandyCoreConfig?.custom_banned_symbols !== undefined) {
+		payload.custom_banned_symbols = flowData.sandyCoreConfig.custom_banned_symbols;
+	}
+
+	if (flowData.sandyCoreConfig?.custom_banned_links !== undefined) {
+		payload.custom_banned_links = flowData.sandyCoreConfig.custom_banned_links;
+	}
+
 	return payload;
 }
 
