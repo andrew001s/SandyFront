@@ -1,6 +1,7 @@
 import type { OnboardingContext, CustomComponentStepPayload } from '@onboardjs/core';
 import type { StepComponentProps } from '@onboardjs/react';
 import type { AiProvider } from '@/lib/ai-provider';
+import type { SandyCoreConfig } from '@/lib/sandycore-config';
 
 export type OnboardingFlowData = {
 	twitchConnected?: boolean;
@@ -15,6 +16,7 @@ export type OnboardingFlowData = {
 	voiceId?: string;
 	sttProvider?: 'azure' | 'browser';
 	vtubeConnected?: boolean;
+	sandyCoreConfig?: SandyCoreConfig;
 	completedAt?: number;
 };
 

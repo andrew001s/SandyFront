@@ -2,6 +2,7 @@
 
 import {
 	buildFishAudioCoverImageProxySrc,
+	getFishAudioModel,
 	searchFishAudioModels,
 	type FishAudioModel,
 } from '@/api/fetchFishModels';
@@ -157,6 +158,28 @@ function formatFishMinutes(samples?: FishAudioModel['samples']) {
 	return `${totalMinutes.toLocaleString('es-ES')} minutos`;
 }
 
+function looksLikeFishVoiceId(value: string) {
+	const trimmedValue = value.trim();
+
+	if (!trimmedValue || /\s/.test(trimmedValue)) {
+		return false;
+	}
+
+	return /^[a-zA-Z0-9._:-]{8,}$/.test(trimmedValue);
+}
+
+function uniqueFishModels(models: FishAudioModel[]) {
+	const seen = new Set<string>();
+	return models.filter((model) => {
+		if (seen.has(model._id)) {
+			return false;
+		}
+
+		seen.add(model._id);
+		return true;
+	});
+}
+
 function FishModelRow({
 	model,
 	isSelected,
@@ -282,8 +305,25 @@ export function FishVoiceDialog({
 					pageNumber: nextPage,
 					sortBy: sort,
 				});
-				const nextModels = response.items ?? [];
-				setModels((current) => (append ? [...current, ...nextModels] : nextModels));
+				const nextModels = uniqueFishModels(response.items ?? []);
+
+				if (nextModels.length === 0 && !append && looksLikeFishVoiceId(query)) {
+					try {
+						const exactModel = await getFishAudioModel({
+							apiKey: apiKey.trim(),
+							voiceId: query.trim(),
+						});
+						setModels(uniqueFishModels([exactModel]));
+						setPageNumber(1);
+						setHasMore(false);
+						setError(null);
+						return;
+					} catch (exactLookupError) {
+						console.error('No se pudo resolver el Voice ID de Fish Audio:', exactLookupError);
+					}
+				}
+
+				setModels((current) => uniqueFishModels(append ? [...current, ...nextModels] : nextModels));
 				setPageNumber(nextPage);
 				setHasMore(Boolean(response.has_more));
 				if (nextModels.length === 0) {

@@ -11,7 +11,7 @@ export const HomeContainer = () => {
 	return (
 		<div className='mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-8 md:px-6'>
 			<RequireOnboarding />
-			<header className='mb-8'>
+			<header id='home-tour-overview' className='mb-8'>
 				<h1 className='font-bold text-3xl [font-family:var(--font-unbounded)] sm:text-4xl'>
 					<span className='bg-gradient-to-r from-violet-600 to-cyan-600 bg-clip-text text-transparent dark:from-[#A78BFA] dark:to-[#22D3EE]'>
 						Dashboard
@@ -32,7 +32,7 @@ export const HomeContainer = () => {
 				<Separator className='flex-1' />
 			</div>
 
-			<div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+			<div id='home-tour-controls' className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
 				<ServiceStartCard />
 				<MicrophoneTile />
 			</div>

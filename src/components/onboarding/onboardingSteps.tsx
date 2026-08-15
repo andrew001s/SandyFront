@@ -1,10 +1,11 @@
 'use client';
 
 import type { OnboardingStep } from '@onboardjs/react';
-import { Bot, Check, GitBranch, Mic, MonitorSpeaker, Palette, Sparkles, Volume2 } from 'lucide-react';
+import { Bot, Check, FileJson, GitBranch, Mic, MonitorSpeaker, Palette, Sparkles, Volume2 } from 'lucide-react';
 import { ConnectionsStep } from '@/components/onboarding/ConnectionsStep';
 import { AiStep } from '@/components/onboarding/AiStep';
 import { CompletedStep } from '@/components/onboarding/CompletedStep';
+import { SandyCoreStep } from '@/components/onboarding/SandyCoreStep';
 import { ThemeStep } from '@/components/onboarding/ThemeStep';
 import { VTubeStudioStep } from '@/components/onboarding/VTubeStudioStep';
 import { VoiceStep } from '@/components/onboarding/VoiceStep';
@@ -35,6 +36,11 @@ const stepMeta = {
 		title: 'Elige tu modelo de IA',
 		description:
 			'Este modelo entiende el chat y decide cómo responder, así que aquí defines el tono, la velocidad y el costo de cada mensaje.',
+	},
+	'sandy-core': {
+		title: 'Personalidad de la VTuber',
+		description:
+			'Descarga la plantilla, completa cómo habla Sandy y vuelve a cargar el JSON para dejar su personalidad lista.',
 	},
 	voice: {
 		title: 'Configurá su voz',
@@ -87,6 +93,13 @@ export const steps: OnboardingStep<SandyOnboardingContext>[] = [
 		type: 'CUSTOM_COMPONENT',
 		component: AiStep,
 		payload: { ...stepMeta.ai, componentKey: 'ai' },
+		nextStep: 'sandy-core',
+	},
+	{
+		id: 'sandy-core',
+		type: 'CUSTOM_COMPONENT',
+		component: SandyCoreStep,
+		payload: { ...stepMeta['sandy-core'], componentKey: 'sandy-core' },
 		nextStep: 'voice',
 	},
 	{
@@ -128,6 +141,7 @@ export const onboardingStepsIcons: Record<OnboardingStepId, ReactNode> = {
 	theme: <Palette className='size-4' />,
 	connections: <GitBranch className='size-4' />,
 	ai: <Bot className='size-4' />,
+	'sandy-core': <FileJson className='size-4' />,
 	voice: <Volume2 className='size-4' />,
 	speech: <Mic className='size-4' />,
 	'vtube-studio': <MonitorSpeaker className='size-4' />,

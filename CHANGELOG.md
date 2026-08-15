@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.7](https://github.com/andrew001s/SandyFront/compare/v0.1.5...v0.1.7) (2026-08-15)
+
+
+### Features
+
+* ✨ actualizar metadatos de SEO en las páginas de política de privacidad y términos de servicio ([de6e2e3](https://github.com/andrew001s/SandyFront/commit/de6e2e323025211c7715cfb9a62e0ad60790a30f))
+* ✨ agregar carga de variables de entorno y mejorar la gestión de permisos en las acciones del servidor ([b492ddb](https://github.com/andrew001s/SandyFront/commit/b492ddb4709415d19ce83aee6e78c2f7ca58f806))
+* ✨ agregar Google Tag Manager para mejorar el seguimiento de eventos ([cc80d81](https://github.com/andrew001s/SandyFront/commit/cc80d815a518a80ddbea31126638a28c8dd7da65))
+* ✨ agregar integración de Microsoft Clarity para seguimiento de eventos ([8f6df2e](https://github.com/andrew001s/SandyFront/commit/8f6df2e21cb9bae2463080763db8a57a8452a838))
+* ✨ expand platform support in FAQ and features ([570a768](https://github.com/andrew001s/SandyFront/commit/570a768e4bf2411e8dce9495fa6542cac7a9c1b6))
+* ✨ implementar soporte para tokens efímeros en conexiones de stream y WebSocket ([535c69c](https://github.com/andrew001s/SandyFront/commit/535c69c3cf57525205aab7bc51777457e124f850))
+* ✨ integrar Rollbar para el seguimiento de errores en el cliente y servidor ([2d79011](https://github.com/andrew001s/SandyFront/commit/2d790113043f222cb8ccd59be2f252e45cee92c5))
+* ✨ mejorar manejo de búsqueda en FishVoiceDialog y optimizar imágenes en Support y AvatarModelListCard ([04c3d4c](https://github.com/andrew001s/SandyFront/commit/04c3d4c194accdea9e5d8a5b94e3acfb4239aeaa))
+* ✨ mejorar manejo de perfil y estado en useKickAuth para manejar respuestas vacías ([4d512f9](https://github.com/andrew001s/SandyFront/commit/4d512f9d56f399661348ea5d4d109feff2eb1e1a))
+* add PostHog analytics integration ([f02ea66](https://github.com/andrew001s/SandyFront/commit/f02ea66b0838641d731f2f75fe0d33feb7ef211e))
+* **onboarding:** ✨ add theme and speech recognition steps, enhance onboarding UI ([a543642](https://github.com/andrew001s/SandyFront/commit/a543642605858cf404636d71657b288498215b3e))
+* **onboarding:** ✨ agregar componente SandyCoreStep y soporte para configuración de personalidad VTuber ([46909fc](https://github.com/andrew001s/SandyFront/commit/46909fcbea3a1f4e5a273809b0e4abf5c47f325c))
+* **onboarding:** ✨ añadir documentación oficial en pasos de onboarding ([28a99a2](https://github.com/andrew001s/SandyFront/commit/28a99a29fef0abbe1a382412a8cb8bd816f06c5d))
+* **onboarding:** ✨ implementar mejoras en el flujo de onboarding y gestión de estado ([03ee957](https://github.com/andrew001s/SandyFront/commit/03ee95773bff93f398124c9eb5233a0a8b665032))
+* **onboarding:** implement onboarding flow and require onboarding component ([ece91a1](https://github.com/andrew001s/SandyFront/commit/ece91a177cde1ddfb6ef822d6558d380cfa2b909))
+* **tour:** ✨ agregar funcionalidad de tour en el dashboard y componentes relacionados ([e054cb6](https://github.com/andrew001s/SandyFront/commit/e054cb6a97689ce81eaaf8243097849a41c687f9))
+
+
+### Bug Fixes
+
+* **onboarding:** 🐛 eliminar tipo StepProps en CompletedStep ([0208c06](https://github.com/andrew001s/SandyFront/commit/0208c06c0fa688ae0f7a17c754b9164a7e2bad13))
+
 ### [0.1.6](https://github.com/andrew001s/SandyFront/compare/v0.1.5...v0.1.6) (2026-08-13)
 
 
