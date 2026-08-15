@@ -1,10 +1,10 @@
 {
 	"name": "sandy-front",
-	"version": "0.1.6",
+	"version": "0.1.7",
 	"type": "module",
 	"private": true,
 	"engines": {
-		"node": ">=18.0.0",
+		"node": "24.x",
 		"npm": "Please use pnpm as the package manager",
 		"yarn": "Please use pnpm as the package manager",
 		"pnpm": ">=8.0.0"
