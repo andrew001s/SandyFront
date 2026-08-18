@@ -15,6 +15,9 @@ export type OnboardingFlowData = {
 	fishAudioKey?: string;
 	voiceId?: string;
 	sttProvider?: 'azure' | 'browser';
+	azureSpeechKey?: string;
+	azureRegion?: string;
+	language?: string;
 	vtubeConnected?: boolean;
 	sandyCoreConfig?: SandyCoreConfig;
 	completedAt?: number;
@@ -30,3 +33,4 @@ export type OnboardingStepPayload = CustomComponentStepPayload & {
 };
 
 export type StepProps = StepComponentProps<OnboardingStepPayload, SandyOnboardingContext>;
+

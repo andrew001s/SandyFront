@@ -1,18 +1,21 @@
 'use client';
 
 import { saveSettings } from '@/api/settings';
+import { SettingsDropdownField } from '@/components/Settings/SettingsDropdownField';
+import { azureLanguages, azureRegions } from '@/components/Settings/settings.constants';
 import { OnboardingOfficialDocs } from '@/components/onboarding/OnboardingOfficialDocs';
 import { OnboardingSelectableCard } from '@/components/onboarding/OnboardingSelectableCard';
 import { OnboardingStepFrame } from '@/components/onboarding/OnboardingStepFrame';
-import type { SandyOnboardingContext, StepProps } from '@/components/onboarding/onboarding.types';
+import type { OnboardingFlowData, SandyOnboardingContext, StepProps } from '@/components/onboarding/onboarding.types';
 import { getStoredSttProvider, storeSttProvider, type SttProvider } from '@/lib/stt-provider';
-import { useOnboarding } from '@onboardjs/react';
 import { useAuth } from '@clerk/nextjs';
+import { useOnboarding } from '@onboardjs/react';
 import { motion } from 'framer-motion';
-import { Mic, Sparkles } from 'lucide-react';
-import { useTheme } from 'next-themes';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Mic } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const sttOptions: Array<{
 	id: SttProvider;
@@ -34,10 +37,14 @@ const sttOptions: Array<{
 export function SpeechRecognitionStep({ payload }: StepProps) {
 	const { state, updateContext } = useOnboarding<SandyOnboardingContext>();
 	const { getToken } = useAuth();
-	const { resolvedTheme, theme } = useTheme();
 	const [browserSupportsNativeSpeech, setBrowserSupportsNativeSpeech] = useState(false);
+	const [isAzureRegionOpen, setIsAzureRegionOpen] = useState(false);
+	const [isAzureLanguageOpen, setIsAzureLanguageOpen] = useState(false);
+	const [azureSpeechKey, setAzureSpeechKey] = useState(state?.context.flowData.azureSpeechKey ?? '');
+	const [azureRegion, setAzureRegion] = useState(state?.context.flowData.azureRegion ?? '');
+	const [language, setLanguage] = useState(state?.context.flowData.language ?? 'es-ES');
+	const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const selectedProvider = state?.context.flowData.sttProvider ?? getStoredSttProvider() ?? 'azure';
-	const isLightTheme = (resolvedTheme ?? theme ?? 'dark') === 'light';
 
 	useEffect(() => {
 		const speechWindow = window as Window & {
@@ -57,44 +64,73 @@ export function SpeechRecognitionStep({ payload }: StepProps) {
 		);
 	}, []);
 
+	useEffect(
+		() => () => {
+			if (saveTimer.current) {
+				clearTimeout(saveTimer.current);
+			}
+		},
+		[],
+	);
+
 	const persist = useCallback(
-		async (provider: SttProvider) => {
-			storeSttProvider(provider);
+		async (patch: Partial<OnboardingFlowData>) => {
+			const nextFlow = {
+				...state?.context.flowData,
+				...patch,
+			};
+
 			void updateContext({
-				flowData: {
-					...state?.context.flowData,
-					sttProvider: provider,
-				},
+				flowData: nextFlow,
 			});
 
-			try {
-				const token = await getToken();
-				await saveSettings({ stt_provider: provider }, { token });
-			} catch {
-				toast.error('No se pudo guardar el reconocimiento de voz');
+			if (saveTimer.current) {
+				clearTimeout(saveTimer.current);
 			}
+
+			saveTimer.current = setTimeout(async () => {
+				try {
+					const token = await getToken();
+					await saveSettings(
+						{
+							stt_provider: nextFlow.sttProvider,
+							azure_speech_key: nextFlow.azureSpeechKey,
+							azure_region: nextFlow.azureRegion,
+							language: nextFlow.language ?? 'es-ES',
+						},
+						{ token },
+					);
+				} catch {
+					toast.error('No se pudo guardar el reconocimiento de voz');
+				}
+			}, 500);
 		},
 		[getToken, state?.context.flowData, updateContext],
 	);
 
-	const docs = useMemo(
-		() =>
-			selectedProvider === 'browser'
-				? []
-				: [
-						{
-							label: 'Speech to text',
-							href: 'https://learn.microsoft.com/en-us/azure/ai-services/speech-service/speech-to-text',
-							description: 'Guía oficial para texto desde voz en Azure.',
-						},
-						{
-							label: 'Crear recurso Speech',
-							href: 'https://learn.microsoft.com/en-us/azure/ai-services/speech-service/get-started-speech-to-text',
-							description: 'Pasos para crear tu recurso y obtener la key.',
-						},
-				  ],
-		[selectedProvider],
+	const handleProviderChange = useCallback(
+		(provider: SttProvider) => {
+			storeSttProvider(provider);
+			void persist({ sttProvider: provider });
+		},
+		[persist],
 	);
+
+	const docs =
+		selectedProvider === 'browser'
+			? []
+			: [
+					{
+						label: 'Speech to text',
+						href: 'https://learn.microsoft.com/en-us/azure/ai-services/speech-service/speech-to-text',
+						description: 'Guía oficial para texto desde voz en Azure.',
+					},
+					{
+						label: 'Crear recurso Speech',
+						href: 'https://learn.microsoft.com/en-us/azure/ai-services/speech-service/get-started-speech-to-text',
+						description: 'Pasos para crear tu recurso y obtener la key.',
+					},
+			  ];
 
 	return (
 		<OnboardingStepFrame title={payload.title} description={payload.description}>
@@ -113,51 +149,105 @@ export function SpeechRecognitionStep({ payload }: StepProps) {
 							selected={selectedProvider === option.id}
 							delay={index * 0.06}
 							icon={<Mic className='size-4 text-primary' />}
-							onClick={() => void persist(option.id)}
+							onClick={() => void handleProviderChange(option.id)}
 						/>
 					))}
 				</motion.div>
 
-				<div
-					className={`rounded-2xl border px-4 py-3 text-sm leading-relaxed ${
-						selectedProvider === 'browser'
-							? browserSupportsNativeSpeech
-								? isLightTheme
-									? 'border-emerald-500/20 bg-emerald-500/8 text-emerald-900'
-									: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100'
-								: isLightTheme
-									? 'border-amber-500/20 bg-amber-500/8 text-amber-900'
-									: 'border-amber-500/30 bg-amber-500/10 text-amber-100'
-							: isLightTheme
-								? 'border-violet-500/20 bg-violet-500/8 text-violet-900'
-								: 'border-violet-500/30 bg-violet-500/10 text-violet-100'
-					}`}
-				>
-					<div className='flex items-start gap-2'>
-						<Sparkles
-							className={`mt-0.5 size-4 shrink-0 ${
-								isLightTheme ? 'text-violet-500' : 'text-current'
-							}`}
-						/>
-						<p className={isLightTheme ? 'text-zinc-800' : ''}>
-							{selectedProvider === 'browser'
-								? browserSupportsNativeSpeech
-									? 'Tu navegador soporta reconocimiento nativo. No necesitas claves adicionales.'
-									: 'Este navegador no soporta reconocimiento nativo. Si eliges esta opción, te recomendamos usar Chrome o Edge.'
-								: 'Con Azure podrás usar reconocimiento de voz con tu propia clave y región de Speech.'}
+				<div className='space-y-4 rounded-3xl border border-border/60 bg-card/70 p-5 shadow-sm backdrop-blur-sm sm:p-6'>
+					<div className='space-y-2'>
+						<p className='text-muted-foreground text-xs uppercase tracking-[0.22em]'>Configuración</p>
+						<h4 className='font-semibold text-lg'>Idioma de reconocimiento</h4>
+						<p className='max-w-xl text-muted-foreground text-sm leading-relaxed'>
+							Este idioma se usa tanto para Azure como para el reconocimiento del navegador.
 						</p>
 					</div>
-				</div>
 
-				{selectedProvider === 'browser' ? null : (
-					<OnboardingOfficialDocs
-						title='Documentación oficial'
-						description='Abre la guía correcta si quieres revisar soporte, crear la clave o entender cómo funciona el reconocimiento.'
-						links={docs}
-						className='pt-1'
+					<SettingsDropdownField
+						label='Idioma'
+						placeholder='Selecciona un idioma'
+						value={language}
+						options={azureLanguages}
+						open={isAzureLanguageOpen}
+						setOpen={setIsAzureLanguageOpen}
+						onChange={(value) => {
+							setLanguage(value);
+							void persist({ language: value });
+						}}
 					/>
-				)}
+
+					{selectedProvider === 'azure' ? (
+						<div className='space-y-4 border-border/60 border-t pt-4'>
+							<div className='space-y-2'>
+								<p className='text-muted-foreground text-xs uppercase tracking-[0.22em]'>Azure Speech</p>
+								<h4 className='font-semibold text-lg'>Credenciales y región</h4>
+								<p className='max-w-xl text-muted-foreground text-sm leading-relaxed'>
+									Completa estos datos para activar el reconocimiento de voz con Microsoft Azure.
+								</p>
+							</div>
+
+							<div className='grid gap-4 lg:grid-cols-2'>
+								<div className='space-y-2 lg:col-span-2'>
+									<Label htmlFor='azure_speech_key'>Azure Speech Key</Label>
+									<Input
+										id='azure_speech_key'
+										type='password'
+										placeholder='tu_clave_de_azure_speech'
+										value={azureSpeechKey}
+										onChange={(event) => {
+											const value = event.target.value;
+											setAzureSpeechKey(value);
+											void persist({ azureSpeechKey: value });
+										}}
+									/>
+								</div>
+
+								<SettingsDropdownField
+									label='Azure Region'
+									placeholder='Selecciona una región'
+									value={azureRegion}
+									options={azureRegions}
+									open={isAzureRegionOpen}
+									setOpen={setIsAzureRegionOpen}
+									onChange={(value) => {
+										setAzureRegion(value);
+										void persist({ azureRegion: value });
+									}}
+									className='lg:col-span-2'
+								/>
+							</div>
+						</div>
+					) : (
+						<div className='rounded-2xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 text-cyan-700 text-sm dark:text-cyan-300'>
+							Usa el reconocimiento de voz integrado en tu navegador, sin claves. Solo disponible en
+							navegadores basados en Chromium (Google Chrome, Edge, Brave, Opera, Vivaldi).
+						</div>
+					)}
+
+					{selectedProvider === 'browser' ? (
+						browserSupportsNativeSpeech ? (
+							<div className='rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-emerald-700 text-sm dark:text-emerald-300'>
+								Tu navegador es compatible. No hace falta configurar nada más.
+							</div>
+						) : (
+							<div className='rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-red-700 text-sm dark:text-red-300'>
+								Tu navegador no es compatible con esta opción. Solo funciona en Google Chrome y otros
+								navegadores basados en Chromium.
+							</div>
+						)
+					) : null}
+				</div>
 			</div>
+
+			{selectedProvider === 'azure' ? (
+				<OnboardingOfficialDocs
+					title='Documentación oficial'
+					description='Abre la guía correcta si quieres revisar soporte, crear la clave o entender cómo funciona el reconocimiento.'
+					links={docs}
+					className='pt-1'
+				/>
+			) : null}
 		</OnboardingStepFrame>
 	);
 }
+

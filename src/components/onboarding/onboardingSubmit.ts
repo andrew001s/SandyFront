@@ -32,6 +32,18 @@ export function buildOnboardingSettingsPayload(flowData: OnboardingFlowData): Se
 		payload.stt_provider = flowData.sttProvider;
 	}
 
+	if (flowData.azureSpeechKey !== undefined) {
+		payload.azure_speech_key = flowData.azureSpeechKey;
+	}
+
+	if (flowData.azureRegion !== undefined) {
+		payload.azure_region = flowData.azureRegion;
+	}
+
+	if (flowData.language !== undefined) {
+		payload.language = flowData.language;
+	}
+
 	if (flowData.sandyCoreConfig?.persona_profile !== undefined) {
 		payload.persona_profile = flowData.sandyCoreConfig.persona_profile;
 	}
@@ -68,3 +80,4 @@ export async function submitOnboardingSettings(flowData: OnboardingFlowData, tok
 
 	return saveSettings(payload, { token });
 }
+
