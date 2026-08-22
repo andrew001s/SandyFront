@@ -7,8 +7,15 @@ import { toast } from 'sonner';
 import { SocialConnectionCard } from './SocialConnectionCard';
 
 export const CardConnectionKick = () => {
-	const { profile, status, isLoading, isRefreshing, handleConnect, handleDisconnect, fetchProfile } =
-		useKickAuthContext();
+	const {
+		profile,
+		status,
+		isLoading,
+		isRefreshing,
+		handleConnect,
+		handleDisconnect,
+		fetchProfile,
+	} = useKickAuthContext();
 
 	useEffect(() => {
 		if (status && !profile) {

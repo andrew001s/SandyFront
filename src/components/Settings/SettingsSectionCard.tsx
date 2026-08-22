@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 type SettingsSectionCardProps = {
 	icon: ReactNode;
@@ -38,7 +38,9 @@ export function SettingsSectionCard({
 							<CardDescription className='max-w-xl'>{description}</CardDescription>
 						</div>
 					</div>
-					<div className={['rounded-full border px-3 py-1 text-xs font-medium', statusTone].join(' ')}>
+					<div
+						className={['rounded-full border px-3 py-1 font-medium text-xs', statusTone].join(' ')}
+					>
 						{statusLabel}
 					</div>
 				</div>

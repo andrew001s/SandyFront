@@ -1,8 +1,8 @@
 interface Tokens {
-    token: string;
-    refresh_token: string;
+	token: string;
+	refresh_token: string;
 }
 
 export interface TokensInterface {
-    tokens: Tokens | null;
+	tokens: Tokens | null;
 }

@@ -56,15 +56,24 @@ export const SocialConnectionCard = ({
 }: SocialConnectionCardProps) => {
 	const actionButtonClasses =
 		'h-12 w-full cursor-pointer font-normal text-base text-white duration-300 ease-in-out hover:scale-105';
-	const disconnectClasses = cn(actionButtonClasses, 'bg-[#604ABB] hover:bg-[#4f3fa3]', disconnectButtonClassName);
-	const connectClasses = cn(actionButtonClasses, connectButtonClassName ?? 'bg-[#604ABB] hover:bg-[#4f3fa3]');
+	const disconnectClasses = cn(
+		actionButtonClasses,
+		'bg-[#604ABB] hover:bg-[#4f3fa3]',
+		disconnectButtonClassName,
+	);
+	const connectClasses = cn(
+		actionButtonClasses,
+		connectButtonClassName ?? 'bg-[#604ABB] hover:bg-[#4f3fa3]',
+	);
 
 	return (
 		<BackgroundGradient className='rounded-[22px] bg-background p-2'>
 			<Card className='mt-3 w-full gap-0 border-none bg-transparent p-0.5 sm:p-0'>
 				<CardContent className='flex flex-col space-y-4 p-4'>
 					<div className='flex flex-row items-center space-x-4'>
-						<Avatar className={cn('relative ml-4 h-20 w-20 border-2 border-border', avatarClassName)}>
+						<Avatar
+							className={cn('relative ml-4 h-20 w-20 border-2 border-border', avatarClassName)}
+						>
 							{avatarSrc ? (
 								<>
 									<AvatarImage src={avatarSrc} alt={avatarAlt} className='object-cover' />
@@ -95,15 +104,12 @@ export const SocialConnectionCard = ({
 						<div className='min-w-0 flex-1'>
 							{connected ? (
 								<span className='truncate font-bold text-2xl text-foreground'>{name}</span>
+							) : isPrincipal ? (
+								<span className='truncate font-bold text-2xl text-foreground'>
+									Cuenta Principal
+								</span>
 							) : (
-								isPrincipal ? (
-									<span className='truncate font-bold text-2xl text-foreground'>
-										Cuenta Principal
-									</span>
-								) : (
-									<span className='truncate font-bold text-2xl text-foreground'>Cuenta Bot</span>
-								)
-
+								<span className='truncate font-bold text-2xl text-foreground'>Cuenta Bot</span>
 							)}
 							<span className='block pt-1 text-sm'>
 								{statusPrefix ?? 'Estado'}:{' '}
@@ -118,7 +124,6 @@ export const SocialConnectionCard = ({
 
 					{!connected ? (
 						<div className='flex flex-col items-center gap-3 rounded-2xl text-center'>
-							
 							<Button
 								onClick={() => void onConnect()}
 								disabled={isLoading || connectDisabled}
@@ -139,7 +144,11 @@ export const SocialConnectionCard = ({
 							
 
 							<div className='flex flex-col items-center gap-3'>
-								<Button onClick={() => void onDisconnect()} disabled={isBusy} className={disconnectClasses}>
+								<Button
+									onClick={() => void onDisconnect()}
+									disabled={isBusy}
+									className={disconnectClasses}
+								>
 									{isBusy ? (
 										<div className='flex flex-row items-center justify-center space-x-3'>
 											<span>Procesando</span>

@@ -34,7 +34,10 @@ export const getKickAuthUrl = async () => {
 	};
 };
 
-export const getKickAccessToken = async (code: string, codeVerifier: string): Promise<KickTokenResponse> => {
+export const getKickAccessToken = async (
+	code: string,
+	codeVerifier: string,
+): Promise<KickTokenResponse> => {
 	try {
 		const response = await axios.post('/api/kick/token', {
 			code,
@@ -62,4 +65,3 @@ export const refreshKickAccessToken = async (refreshToken: string): Promise<Kick
 		throw new Error('Error al refrescar el token de Kick');
 	}
 };
-

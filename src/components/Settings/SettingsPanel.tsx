@@ -66,7 +66,7 @@ export function SettingsPanel() {
 				<SettingsHeader isBusy={isBusy} isSaving={isSaving} onSave={handleSave} />
 
 				<Tabs defaultValue='sandy' className='space-y-4'>
-				<TabsList className=' h-auto w-full grid-cols-5 rounded-2xl bg-muted p-1'>
+					<TabsList className=' h-auto w-full grid-cols-5 rounded-2xl bg-muted p-1'>
 						<TabsTrigger
 							value='sandy'
 							className='rounded-xl py-2 text-xs data-[state=active]:bg-background sm:text-sm'

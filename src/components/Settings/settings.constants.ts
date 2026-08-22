@@ -1,5 +1,9 @@
 import { type SettingsPayload } from '@/api/settings';
-import { type OpenRouterModel, type OpenRouterSort, type SettingsFormState } from '@/components/Settings/settings.types';
+import {
+	type OpenRouterModel,
+	type OpenRouterSort,
+	type SettingsFormState,
+} from '@/components/Settings/settings.types';
 
 export const initialSettingsFormState: SettingsFormState = {
 	ai_provider: 'gemini',

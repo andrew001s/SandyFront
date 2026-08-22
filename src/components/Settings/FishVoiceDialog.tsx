@@ -17,13 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import {
-	Check,
-	ChevronDown,
-	ChevronLeft,
-	ChevronRight,
-	Search,
-} from 'lucide-react';
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import Image from 'next/image';
 import CountryFlag from 'react-country-flag';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -64,7 +58,12 @@ function detectFishLanguageKey() {
 	if (lowerLocale.startsWith('ar')) return 'ar';
 
 	const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone?.toLowerCase() ?? '';
-	if (timeZone.includes('madrid') || timeZone.includes('mexico') || timeZone.includes('bogota') || timeZone.includes('lima')) {
+	if (
+		timeZone.includes('madrid') ||
+		timeZone.includes('mexico') ||
+		timeZone.includes('bogota') ||
+		timeZone.includes('lima')
+	) {
 		return 'es';
 	}
 
@@ -147,8 +146,7 @@ const LANGUAGE_OPTIONS: FishLanguageOption[] = [
 ];
 
 function formatFishMinutes(samples?: FishAudioModel['samples']) {
-	const totalMs =
-		samples?.reduce((sum, sample) => sum + (sample.duration_ms ?? 0), 0) ?? 0;
+	const totalMs = samples?.reduce((sum, sample) => sum + (sample.duration_ms ?? 0), 0) ?? 0;
 
 	if (totalMs <= 0) {
 		return null;
@@ -432,6 +430,69 @@ export function FishVoiceDialog({
 		};
 	}, []);
 
+	function getSearchQuery(
+		query: string,
+		quickFilterKey = activeQuickFilter,
+		currentLanguage = languageKey,
+	) {
+		const trimmedQuery = query.trim();
+
+		if (trimmedQuery) {
+			return trimmedQuery;
+		}
+
+		const language = LANGUAGE_OPTIONS.find((option) => option.key === currentLanguage);
+		const quickFilter = QUICK_FILTERS.find((filter) => filter.key === quickFilterKey);
+
+		return [language?.query, quickFilter?.query].filter(Boolean).join(' ').trim();
+	}
+
+	async function handleSearch(
+		query: string = search,
+		nextPage = 1,
+		append = false,
+		sort = sortBy,
+		quickFilterKey = activeQuickFilter,
+		currentLanguage = languageKey,
+	) {
+		if (!apiKey.trim()) {
+			toast.error('Agrega tu Fish Audio Key para buscar voces');
+			return;
+		}
+
+		try {
+			if (append) {
+				setIsAppending(true);
+			} else {
+				setIsLoading(true);
+			}
+			setError(null);
+			const response = await searchFishAudioModels({
+				apiKey: apiKey.trim(),
+				query: getSearchQuery(query, quickFilterKey, currentLanguage),
+				pageSize: 12,
+				pageNumber: nextPage,
+				sortBy: sort,
+			});
+			const nextModels = response.items ?? [];
+			setModels((current) => (append ? [...current, ...nextModels] : nextModels));
+			setPageNumber(nextPage);
+			setHasMore(Boolean(response.has_more));
+			if (nextModels.length === 0) {
+				setError('No encontramos voces con esa búsqueda.');
+			}
+		} catch (searchError) {
+			console.error('Error buscando voces de Fish Audio:', searchError);
+			if (!append) {
+				setModels([]);
+			}
+			setError('No se pudieron cargar las voces de Fish Audio.');
+		} finally {
+			setIsLoading(false);
+			setIsAppending(false);
+		}
+	}
+
 	const scrollQuickFilters = (direction: 'left' | 'right') => {
 		const container = quickFiltersRef.current;
 		if (!container) {
@@ -444,7 +505,8 @@ export function FishVoiceDialog({
 		});
 	};
 
-	const selectedLanguage = LANGUAGE_OPTIONS.find((option) => option.key === languageKey) ?? LANGUAGE_OPTIONS[0];
+	const selectedLanguage =
+		LANGUAGE_OPTIONS.find((option) => option.key === languageKey) ?? LANGUAGE_OPTIONS[0];
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
@@ -452,8 +514,7 @@ export function FishVoiceDialog({
 				<DialogHeader className='px-6 pt-6'>
 					<DialogTitle>Buscar voces de Fish Audio</DialogTitle>
 					<DialogDescription>
-						Busca una voz por nombre o pega un Voice ID directo para usarlo en el campo de
-						síntesis.
+						Busca una voz por nombre o pega un Voice ID directo para usarlo en el campo de síntesis.
 					</DialogDescription>
 				</DialogHeader>
 
@@ -521,12 +582,20 @@ export function FishVoiceDialog({
 														type='button'
 														className={cn(
 															'flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition-colors hover:bg-orange-50 dark:hover:bg-orange-500/10',
-															isActive && 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-300',
+															isActive &&
+																'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-300',
 														)}
 														onClick={() => {
 															setLanguageKey(option.key);
 															setIsLanguageMenuOpen(false);
-															void handleSearch(search, 1, false, sortBy, activeQuickFilter, option.key);
+															void handleSearch(
+																search,
+																1,
+																false,
+																sortBy,
+																activeQuickFilter,
+																option.key,
+															);
 														}}
 													>
 														{option.countryCode ? (
@@ -603,8 +672,6 @@ export function FishVoiceDialog({
 								<ChevronRight className='size-4' />
 							</Button>
 						</div>
-
-						
 
 						{!apiKey.trim() ? (
 							<div className='rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-amber-700 text-sm dark:text-amber-300'>

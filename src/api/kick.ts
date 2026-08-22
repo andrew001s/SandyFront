@@ -36,7 +36,9 @@ export async function saveKickTokens(tokens: TokensInterface) {
 	return response.data.message;
 }
 
-export async function getKickProfileInfo(options: { token?: string | null } = {}): Promise<ProfileModel> {
+export async function getKickProfileInfo(
+	options: { token?: string | null } = {},
+): Promise<ProfileModel> {
 	const response = await backendClient.get('/kick/profile', {
 		params: {
 			bot: false,
@@ -68,4 +70,3 @@ export async function getKickServiceStatus() {
 	const response = await backendClient.get('/kick/service-status');
 	return response.data.service as ServiceStatus;
 }
-

@@ -33,7 +33,9 @@ export function AvatarConnectionCard({
 					<FiWifi size={18} className='text-primary' />
 					Conexión
 				</CardTitle>
-				<CardDescription>Conectate al WebSocket de VTube Studio (puerto por defecto: 8001)</CardDescription>
+				<CardDescription>
+					Conectate al WebSocket de VTube Studio (puerto por defecto: 8001)
+				</CardDescription>
 			</CardHeader>
 			<CardContent>
 				<div className='flex flex-wrap items-end gap-4'>

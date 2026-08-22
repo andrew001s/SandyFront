@@ -19,13 +19,18 @@ export function LipSyncTest({ connected }: Props) {
 					</div>
 					<Badge
 						variant='outline'
-						className={connected ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400' : 'border-border/70 text-muted-foreground'}
+						className={
+							connected
+								? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+								: 'border-border/70 text-muted-foreground'
+						}
 					>
 						{connected ? 'VTS conectado' : 'VTS desconectado'}
 					</Badge>
 				</div>
 				<p className='text-muted-foreground text-xs leading-relaxed'>
-					Cada audio reproducido desde Fish Audio anima la boca del modelo automáticamente. No necesitas botones de prueba.
+					Cada audio reproducido desde Fish Audio anima la boca del modelo automáticamente. No
+					necesitas botones de prueba.
 				</p>
 				<div className='flex items-center gap-2 text-muted-foreground text-xs'>
 					<FiWifi size={14} />

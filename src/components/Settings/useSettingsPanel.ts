@@ -202,7 +202,9 @@ export function useSettingsPanel() {
 		setForm((current) => ({
 			...current,
 			idle_timeout_minutes:
-				Number.isFinite(minutes) && minutes >= 0 ? Math.floor(minutes) : current.idle_timeout_minutes,
+				Number.isFinite(minutes) && minutes >= 0
+					? Math.floor(minutes)
+					: current.idle_timeout_minutes,
 		}));
 	}, []);
 

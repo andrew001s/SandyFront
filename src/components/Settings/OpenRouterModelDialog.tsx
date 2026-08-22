@@ -6,14 +6,20 @@ import {
 	getOpenRouterTokenCost,
 	openRouterSortOptions,
 } from '@/components/Settings/settings.constants';
-import { type OpenRouterModel, type OpenRouterSort } from '@/components/Settings/settings.types';
+import type { OpenRouterModel, OpenRouterSort } from '@/components/Settings/settings.types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ExternalLink } from 'lucide-react';
-import { type UIEvent } from 'react';
+import type { UIEvent } from 'react';
 import { SettingsModelIcon } from '@/components/Settings/SettingsModelIcon';
 
 type OpenRouterModelDialogProps = {
@@ -54,10 +60,7 @@ export function OpenRouterModelDialog({
 	onPickModel,
 }: OpenRouterModelDialogProps) {
 	return (
-		<Dialog
-			open={open}
-			onOpenChange={onOpenChange}
-		>
+		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className='max-h-[88vh] overflow-hidden'>
 				<DialogHeader className='px-6 pt-6'>
 					<DialogTitle>Buscar modelo de OpenRouter</DialogTitle>
@@ -94,7 +97,12 @@ export function OpenRouterModelDialog({
 							}}
 							hideLabel
 						/>
-						<Button type='button' onClick={() => void loadModels(search, sort)} disabled={isLoading} className='text-foreground'>
+						<Button
+							type='button'
+							onClick={() => void loadModels(search, sort)}
+							disabled={isLoading}
+							className='text-foreground'
+						>
 							{isLoading ? 'Buscando...' : 'Buscar'}
 						</Button>
 					</div>
@@ -109,7 +117,10 @@ export function OpenRouterModelDialog({
 						{isLoading ? (
 							<div className='grid gap-3'>
 								{Array.from({ length: 6 }).map((_, index) => (
-									<div key={index} className='flex flex-col gap-2 rounded-2xl border border-border/60 p-4'>
+									<div
+										key={index}
+										className='flex flex-col gap-2 rounded-2xl border border-border/60 p-4'
+									>
 										<Skeleton className='h-4 w-48' />
 										<Skeleton className='h-3 w-full' />
 										<Skeleton className='h-3 w-3/4' />
@@ -158,14 +169,23 @@ export function OpenRouterModelDialog({
 														</Badge>
 														{totalCost > 0 ? (
 															<>
-																<Badge variant='outline' className='border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400'>
+																<Badge
+																	variant='outline'
+																	className='border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400'
+																>
 																	Entrada {formatOpenRouterPrice(pricing.prompt)}
 																</Badge>
-																<Badge variant='outline' className='border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400'>
+																<Badge
+																	variant='outline'
+																	className='border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400'
+																>
 																	Salida {formatOpenRouterPrice(pricing.completion)}
 																</Badge>
 																{pricing.request > 0 ? (
-																	<Badge variant='outline' className='border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400'>
+																	<Badge
+																		variant='outline'
+																		className='border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400'
+																	>
 																		Petición {formatOpenRouterPrice(pricing.request)}
 																	</Badge>
 																) : null}
@@ -173,7 +193,10 @@ export function OpenRouterModelDialog({
 														) : null}
 													</div>
 													<div className='flex flex-wrap gap-2 text-muted-foreground text-xs'>
-														<Badge variant='outline' className='border-cyan-500/30 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400'>
+														<Badge
+															variant='outline'
+															className='border-cyan-500/30 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400'
+														>
 															{formatOpenRouterContext(model)}
 														</Badge>
 													</div>

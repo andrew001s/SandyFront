@@ -7,7 +7,8 @@ import type { ReactNode } from 'react';
 
 const clarityProjectId = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID;
 const enableClarityInDev = process.env.NEXT_PUBLIC_CLARITY_ENABLE_IN_DEV === 'true';
-const canInitializeClarity = Boolean(clarityProjectId) && (process.env.NODE_ENV === 'production' || enableClarityInDev);
+const canInitializeClarity =
+	Boolean(clarityProjectId) && (process.env.NODE_ENV === 'production' || enableClarityInDev);
 
 let clarityInitialized = false;
 

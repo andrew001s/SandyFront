@@ -2,7 +2,13 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const ALLOWED_HOSTS = new Set(['api.fish.audio', 'fish.audio', 'public-platform.r2.fish.audio']);
-const ALLOWED_CONTENT_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif']);
+const ALLOWED_CONTENT_TYPES = new Set([
+	'image/jpeg',
+	'image/png',
+	'image/webp',
+	'image/gif',
+	'image/avif',
+]);
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 
 function isAllowedImageUrl(src: string) {

@@ -12,7 +12,10 @@ const buildAuthHeaders = (token?: string | null) =>
 			}
 		: undefined;
 
-export async function getProfileInfo(bot: boolean, options: RequestAuthOptions = {}): Promise<ProfileModel> {
+export async function getProfileInfo(
+	bot: boolean,
+	options: RequestAuthOptions = {},
+): Promise<ProfileModel> {
 	const response = await backendClient.get('/profile', {
 		params: {
 			bot,

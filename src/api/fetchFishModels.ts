@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const FISH_AUDIO_COVER_BASE_URL = 'https://public-platform.r2.fish.audio/cdn-cgi/image/width=128,format=webp/';
+const FISH_AUDIO_COVER_BASE_URL =
+	'https://public-platform.r2.fish.audio/cdn-cgi/image/width=128,format=webp/';
 
 export type FishAudioModel = {
 	_id: string;
@@ -101,11 +102,14 @@ export async function getFishAudioModel({
 		throw new Error('Voice ID vacío');
 	}
 
-	const response = await axios.get<FishAudioModel>(`/fish-api/model/${encodeURIComponent(trimmedVoiceId)}`, {
-		headers: {
-			Authorization: `Bearer ${apiKey}`,
+	const response = await axios.get<FishAudioModel>(
+		`/fish-api/model/${encodeURIComponent(trimmedVoiceId)}`,
+		{
+			headers: {
+				Authorization: `Bearer ${apiKey}`,
+			},
 		},
-	});
+	);
 
 	return response.data;
 }

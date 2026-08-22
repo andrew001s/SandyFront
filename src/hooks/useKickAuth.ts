@@ -83,7 +83,11 @@ export const useKickAuth = (options: UseKickAuthOptions = {}): UseKickAuthReturn
 			]);
 
 			if (tokensSnapshot.status === 'fulfilled') {
-				setTokensSaved(Boolean(tokensSnapshot.value?.tokens?.token && tokensSnapshot.value?.tokens?.refresh_token));
+				setTokensSaved(
+					Boolean(
+						tokensSnapshot.value?.tokens?.token && tokensSnapshot.value?.tokens?.refresh_token,
+					),
+				);
 			} else {
 				setTokensSaved(false);
 			}
@@ -254,4 +258,3 @@ export const useKickAuth = (options: UseKickAuthOptions = {}): UseKickAuthReturn
 		refreshStatus,
 	};
 };
-

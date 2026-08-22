@@ -139,7 +139,7 @@ export function FishVoicePreviewCard({ apiKey, voiceId, onClick }: FishVoicePrev
 					>
 						{onClick && hasVoiceId ? (
 							<div className='absolute inset-0 z-10 flex items-center justify-center bg-black/55 px-4 opacity-0 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100'>
-								<span className='rounded-full border border-violet-400/40 bg-violet-500/20 px-4 py-1.5 text-sm font-medium text-white shadow-lg'>
+								<span className='rounded-full border border-violet-400/40 bg-violet-500/20 px-4 py-1.5 font-medium text-sm text-white shadow-lg'>
 									Clic para cambiar la voz
 								</span>
 							</div>
@@ -206,7 +206,7 @@ export function FishVoicePreviewCard({ apiKey, voiceId, onClick }: FishVoicePrev
 					>
 						{onClick && hasVoiceId ? (
 							<div className='absolute inset-0 z-10 flex items-center justify-center bg-black/55 px-4 opacity-0 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100'>
-								<span className='rounded-full border border-violet-400/40 bg-violet-500/20 px-4 py-1.5 text-sm font-medium text-white shadow-lg'>
+								<span className='rounded-full border border-violet-400/40 bg-violet-500/20 px-4 py-1.5 font-medium text-sm text-white shadow-lg'>
 									Clic para cambiar la voz
 								</span>
 							</div>

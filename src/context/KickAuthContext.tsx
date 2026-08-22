@@ -42,4 +42,3 @@ export const useKickAuthContext = () => {
 	}
 	return context;
 };
-

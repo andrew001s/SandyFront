@@ -22,8 +22,11 @@ export function SettingsHeader({ isBusy, isSaving, onSave }: SettingsHeaderProps
 						</CardDescription>
 					</div>
 					<div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
-						
-						<Button onClick={onSave} disabled={isBusy} className='bg-[#8B5CF6] text-white hover:bg-[#7C3AED]'>
+						<Button
+							onClick={onSave}
+							disabled={isBusy}
+							className='bg-[#8B5CF6] text-white hover:bg-[#7C3AED]'
+						>
 							<Save className='size-4' />
 							{isSaving ? 'Guardando...' : 'Guardar configuración'}
 						</Button>

@@ -1,5 +1,5 @@
 import { SettingsSectionCard } from '@/components/Settings/SettingsSectionCard';
-import { type SettingsFormState } from '@/components/Settings/settings.types';
+import type { SettingsFormState } from '@/components/Settings/settings.types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,7 +12,10 @@ type ServiceLifecycleSectionProps = {
 	isStopping: boolean;
 	onStopService: () => void;
 	updateField: (field: keyof SettingsFormState, value: string) => void;
-	updateLifecycleBoolean: (field: 'auto_start_on_live' | 'auto_stop_on_offline', value: boolean) => void;
+	updateLifecycleBoolean: (
+		field: 'auto_start_on_live' | 'auto_stop_on_offline',
+		value: boolean,
+	) => void;
 	updateIdleTimeout: (value: string) => void;
 };
 
@@ -54,8 +57,8 @@ export function ServiceLifecycleSection({
 						</TabsList>
 					</Tabs>
 					<p className='text-muted-foreground text-xs'>
-						En modo híbrido el monitor revisa el estado del stream y la inactividad para arrancar
-						y detener la VTuber automáticamente.
+						En modo híbrido el monitor revisa el estado del stream y la inactividad para arrancar y
+						detener la VTuber automáticamente.
 					</p>
 				</div>
 

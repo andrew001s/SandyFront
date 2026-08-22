@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { type DropdownOption } from '@/components/Settings/settings.types';
+import type { DropdownOption } from '@/components/Settings/settings.types';
 import ReactCountryFlag from 'react-country-flag';
 
 type SettingsDropdownFieldProps = {

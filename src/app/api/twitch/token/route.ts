@@ -26,9 +26,18 @@ const requireEnv = (value: string | undefined, name: string) => {
 export async function POST(request: Request) {
 	try {
 		const body = (await request.json()) as TokenRequestBody;
-		const clientId = requireEnv(process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID ?? process.env.TWITCH_CLIENT_ID, 'NEXT_PUBLIC_TWITCH_CLIENT_ID');
-		const clientSecret = requireEnv(process.env.TWITCH_CLIENT_SECRET ?? process.env.NEXT_PUBLIC_TWITCH_CLIENT_SECRET, 'TWITCH_CLIENT_SECRET');
-		const redirectUri = requireEnv(process.env.NEXT_PUBLIC_REDIRECT_URI ?? process.env.TWITCH_REDIRECT_URI, 'NEXT_PUBLIC_REDIRECT_URI');
+		const clientId = requireEnv(
+			process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID ?? process.env.TWITCH_CLIENT_ID,
+			'NEXT_PUBLIC_TWITCH_CLIENT_ID',
+		);
+		const clientSecret = requireEnv(
+			process.env.TWITCH_CLIENT_SECRET ?? process.env.NEXT_PUBLIC_TWITCH_CLIENT_SECRET,
+			'TWITCH_CLIENT_SECRET',
+		);
+		const redirectUri = requireEnv(
+			process.env.NEXT_PUBLIC_REDIRECT_URI ?? process.env.TWITCH_REDIRECT_URI,
+			'NEXT_PUBLIC_REDIRECT_URI',
+		);
 
 		if (body.grant_type !== 'authorization_code' && body.grant_type !== 'refresh_token') {
 			return NextResponse.json({ error: 'grant_type inválido' }, { status: 400 });
@@ -50,9 +59,13 @@ export async function POST(request: Request) {
 						refresh_token: requireEnv(body.refresh_token, 'refresh_token'),
 					};
 
-		const response = await axios.post<TwitchTokenResponse>('https://id.twitch.tv/oauth2/token', null, {
-			params,
-		});
+		const response = await axios.post<TwitchTokenResponse>(
+			'https://id.twitch.tv/oauth2/token',
+			null,
+			{
+				params,
+			},
+		);
 
 		return NextResponse.json(response.data);
 	} catch (error) {

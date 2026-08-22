@@ -1,5 +1,5 @@
-import { reactRouter } from "@react-router/dev/vite"
-import { defineConfig } from "vite"
+import { reactRouter } from '@react-router/dev/vite';
+import { defineConfig } from 'vite';
 
 export default defineConfig({
 	plugins: [reactRouter()],
@@ -8,6 +8,6 @@ export default defineConfig({
 	// two Router contexts, and useNavigate() throws inside ClerkProvider.
 	// See https://github.com/remix-run/react-router/issues/15232
 	ssr: {
-		noExternal: ["@clerk/react-router"],
+		noExternal: ['@clerk/react-router'],
 	},
-})
+});

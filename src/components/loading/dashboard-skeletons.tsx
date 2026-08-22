@@ -10,7 +10,9 @@ function HeaderSkeleton() {
 }
 
 function CardSkeleton({ className = '' }: { className?: string }) {
-	return <Skeleton className={`min-h-52 rounded-2xl border border-border/60 bg-card/70 ${className}`} />;
+	return (
+		<Skeleton className={`min-h-52 rounded-2xl border border-border/60 bg-card/70 ${className}`} />
+	);
 }
 
 export function HomeSkeleton() {

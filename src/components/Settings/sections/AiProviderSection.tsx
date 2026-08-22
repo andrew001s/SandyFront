@@ -1,5 +1,5 @@
 import { SettingsSectionCard } from '@/components/Settings/SettingsSectionCard';
-import { type SettingsFormState } from '@/components/Settings/settings.types';
+import type { SettingsFormState } from '@/components/Settings/settings.types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,7 +29,9 @@ export function AiProviderSection({
 			icon={<Bot className='size-5' />}
 			title='Proveedor de IA'
 			description='Selecciona el motor que usará tu asistente y guarda la clave correspondiente.'
-			statusLabel={geminiState === 'Configurado' || openRouterState === 'Configurado' ? 'Listo' : 'Pendiente'}
+			statusLabel={
+				geminiState === 'Configurado' || openRouterState === 'Configurado' ? 'Listo' : 'Pendiente'
+			}
 			statusTone={
 				geminiState === 'Configurado' || openRouterState === 'Configurado'
 					? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
@@ -99,7 +101,10 @@ export function AiProviderSection({
 				</TabsContent>
 			</Tabs>
 			<div className='flex flex-wrap gap-2 pt-1'>
-				<Badge variant='outline' className='border-border/70 bg-background/60 text-muted-foreground'>
+				<Badge
+					variant='outline'
+					className='border-border/70 bg-background/60 text-muted-foreground'
+				>
 					{form.ai_provider === 'gemini' ? 'Gemini activo' : 'OpenRouter activo'}
 				</Badge>
 			</div>

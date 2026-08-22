@@ -10,7 +10,7 @@ import { getStoredSttProvider } from '@/lib/stt-provider';
 import { cn } from '@/lib/utils';
 import { Mic } from 'lucide-react';
 import posthog from 'posthog-js';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { toast } from 'sonner';
 import { ThinkingOrb } from 'thinking-orbs';
@@ -20,7 +20,9 @@ import { TypingAnimation } from '../magicui/typing-animation';
 
 const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 	const { addToQueue } = useAudioQueue();
-	const [silenceTimer, setSilenceTimer] = useState<NodeJS.Timeout | null>(null);
+	const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+	const transcriptRef = useRef('');
+	const isSendingRef = useRef(false);
 	const { addMessage } = useMessages();
 	const { settings, isLoading } = useAppSettings();
 	const effectiveSttProvider = getStoredSttProvider() ?? settings?.stt_provider ?? 'azure';
@@ -63,46 +65,77 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 			],
 		});
 
-	const resetSilenceTimer = () => {
-		if (silenceTimer) clearTimeout(silenceTimer);
-		const timer = setTimeout(async () => {
-			if (transcript) {
-				try {
-					addMessage({
-						type: 'transcription',
-						content: `Transcripción: ${transcript}`,
-						timestamp: new Date().toISOString(),
-					});
+	// El temporizador lee el transcript desde un ref para no quedarse con el
+	// valor capturado en el render que lo programó.
+	useEffect(() => {
+		transcriptRef.current = transcript;
+	}, [transcript]);
 
-					const response = await getResponseGemini(transcript);
-					addMessage({
-						type: 'transcription',
-						content: `Sandy: ${response}`,
-						timestamp: new Date().toISOString(),
-					});
-					resetTranscript();
+	const sendTranscript = useCallback(async () => {
+		const pending = transcriptRef.current.trim();
+		if (!pending || isSendingRef.current) {
+			return;
+		}
 
-					if (settings?.feature_flags?.voice_replies !== false) {
-						const audioBlob = await getVoiceSandy(response, {
-							apiKey: settings?.fish_audio_key ?? '',
-							voiceId: settings?.voice_id ?? '',
-						});
-						addToQueue(audioBlob);
-					}
-				} catch (error) {
-					console.error('Error al obtener respuesta de audio:', error);
-					toast.error('Error al procesar el audio');
-				}
+		// Se limpia ANTES de enviar: si la petición falla, el texto no puede
+		// quedarse pegado y reenviarse acumulado en el siguiente intento.
+		// Con `continuous: true` el transcript se acumula hasta que se resetea.
+		isSendingRef.current = true;
+		resetTranscript();
+		transcriptRef.current = '';
+
+		const vtuberName = settings?.persona_profile?.name?.trim() || 'Sandy';
+
+		try {
+			addMessage({
+				type: 'transcription',
+				content: `Transcripción: ${pending}`,
+				timestamp: new Date().toISOString(),
+			});
+
+			const response = await getResponseGemini(pending);
+			addMessage({
+				type: 'transcription',
+				content: `${vtuberName}: ${response}`,
+				timestamp: new Date().toISOString(),
+			});
+
+			if (settings?.feature_flags?.voice_replies !== false) {
+				const audioBlob = await getVoiceSandy(response, {
+					apiKey: settings?.fish_audio_key ?? '',
+					voiceId: settings?.voice_id ?? '',
+				});
+				addToQueue(audioBlob);
 			}
+		} catch (error) {
+			console.error('Error al obtener respuesta de audio:', error);
+			toast.error('Error al procesar el audio');
+		} finally {
+			isSendingRef.current = false;
+		}
+	}, [addMessage, addToQueue, resetTranscript, settings]);
+
+	// El handle vive en un ref, no en estado: resetSilenceTimer se dispara en
+	// cada palabra reconocida, mucho más rápido de lo que React re-renderiza.
+	// Leyendo el handle desde estado se limpiaba uno ya cancelado y quedaban
+	// varios temporizadores vivos, cada uno con su propia petición.
+	const resetSilenceTimer = useCallback(() => {
+		if (silenceTimerRef.current) {
+			clearTimeout(silenceTimerRef.current);
+		}
+		silenceTimerRef.current = setTimeout(() => {
+			silenceTimerRef.current = null;
+			void sendTranscript();
 		}, 2000);
-		setSilenceTimer(timer);
-	};
+	}, [sendTranscript]);
 
 	useEffect(() => {
 		return () => {
-			if (silenceTimer) clearTimeout(silenceTimer);
+			if (silenceTimerRef.current) {
+				clearTimeout(silenceTimerRef.current);
+			}
 		};
-	}, [silenceTimer]);
+	}, []);
 
 	const startListening = () =>
 		SpeechRecognition.startListening({

@@ -18,7 +18,9 @@ type RequestAuthOptions = {
  * no se cae al expirar. Por eso hay que pedir un token nuevo en cada intento de
  * conexión en lugar de guardarlo al montar el componente.
  */
-export async function fetchStreamToken(options: RequestAuthOptions = {}): Promise<StreamTokenResponse> {
+export async function fetchStreamToken(
+	options: RequestAuthOptions = {},
+): Promise<StreamTokenResponse> {
 	let response: Awaited<ReturnType<typeof backendClient.get<Partial<StreamTokenResponse>>>>;
 
 	try {

@@ -51,7 +51,10 @@ class WebSocketService {
 		if (this.isConnecting) {
 			return;
 		}
-		if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
+		if (
+			this.socket &&
+			(this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)
+		) {
 			return;
 		}
 		void this.createConnection();
@@ -83,7 +86,10 @@ class WebSocketService {
 		if (this.isConnecting) {
 			return;
 		}
-		if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
+		if (
+			this.socket &&
+			(this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)
+		) {
 			return;
 		}
 

@@ -67,7 +67,7 @@ export const createVtsLipSyncHandler = (injectParameters: VTSInjectParameters) =
 					for (let i = start; i < end; i += 1) {
 						const sample = channel[i];
 						sumSq += sample * sample;
-						if (i > start && (sample >= 0) !== (prev >= 0)) {
+						if (i > start && sample >= 0 !== prev >= 0) {
 							zeroCrossings += 1;
 						}
 						prev = sample;

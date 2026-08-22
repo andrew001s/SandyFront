@@ -85,7 +85,9 @@ export const useYoutubeAuth = (options: UseYoutubeAuthOptions = {}): UseYoutubeA
 			]);
 
 			const tokensAuthenticatedResult =
-				tokensSnapshot.status === 'fulfilled' ? Boolean(tokensSnapshot.value?.tokens?.authenticated) : false;
+				tokensSnapshot.status === 'fulfilled'
+					? Boolean(tokensSnapshot.value?.tokens?.authenticated)
+					: false;
 			const profileAuthenticatedResult =
 				profileSnapshot.status === 'fulfilled' ? Boolean(profileSnapshot.value) : false;
 

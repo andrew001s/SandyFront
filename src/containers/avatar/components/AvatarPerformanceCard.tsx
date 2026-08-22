@@ -24,7 +24,9 @@ export function AvatarPerformanceCard({ stats, connected }: AvatarPerformanceCar
 				<div className='space-y-2'>
 					<div className='flex justify-between'>
 						<span className='text-muted-foreground text-xs'>FPS</span>
-						<span className='font-medium text-foreground text-xs'>{stats.framerate.toFixed(0)}</span>
+						<span className='font-medium text-foreground text-xs'>
+							{stats.framerate.toFixed(0)}
+						</span>
 					</div>
 					<div className='flex justify-between'>
 						<span className='text-muted-foreground text-xs'>Uptime</span>

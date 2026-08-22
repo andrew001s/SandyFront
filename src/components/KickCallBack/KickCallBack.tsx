@@ -140,7 +140,11 @@ export const KickCallback = () => {
 								animate='visible'
 								exit='exit'
 							>
-								{status === 'error' ? 'Kick: error' : status === 'success' ? 'Kick: listo' : 'Kick: procesando'}
+								{status === 'error'
+									? 'Kick: error'
+									: status === 'success'
+										? 'Kick: listo'
+										: 'Kick: procesando'}
 							</motion.span>
 						</AnimatePresence>
 					</motion.h1>

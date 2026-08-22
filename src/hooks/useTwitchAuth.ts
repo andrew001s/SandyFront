@@ -79,7 +79,12 @@ export const useTwitchAuth = (
 					? error.message
 					: '';
 
-			if (!(isBot && errorMessage.includes('No existe una sesión de bot autenticada para este usuario'))) {
+			if (
+				!(
+					isBot &&
+					errorMessage.includes('No existe una sesión de bot autenticada para este usuario')
+				)
+			) {
 				toast.error('No se pudo cargar el perfil');
 			}
 			setStatus(false);

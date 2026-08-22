@@ -1,5 +1,11 @@
 import { LegalPage, type LegalSection } from '@/components/legal/LegalPage';
-import { metadataBase, noIndexMetadata, sharedDescription, sharedOpenGraphImage, sharedSiteName } from '@/lib/seo';
+import {
+	metadataBase,
+	noIndexMetadata,
+	sharedDescription,
+	sharedOpenGraphImage,
+	sharedSiteName,
+} from '@/lib/seo';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {

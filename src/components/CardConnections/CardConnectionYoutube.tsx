@@ -27,7 +27,10 @@ export const CardConnectionYoutube = () => {
 	const connected = tokensAuthenticated || status;
 	const broadcastId = profile?.broadcast_id ?? serviceStatus?.youtube_broadcast_id;
 	const channelName =
-		profile?.channel_title ?? profile?.username ?? serviceStatus?.youtube_channel_title ?? 'YouTube';
+		profile?.channel_title ??
+		profile?.username ??
+		serviceStatus?.youtube_channel_title ??
+		'YouTube';
 
 	if (isRefreshing) {
 		return <ConnectionCardSkeleton />;
@@ -77,7 +80,10 @@ export const CardConnectionYoutube = () => {
 								if (e.key === 'Enter') void handleUpdateTitle();
 							}}
 						/>
-						<Button onClick={() => void handleUpdateTitle()} disabled={isUpdatingBroadcast || !broadcastTitle.trim()}>
+						<Button
+							onClick={() => void handleUpdateTitle()}
+							disabled={isUpdatingBroadcast || !broadcastTitle.trim()}
+						>
 							Actualizar
 						</Button>
 					</div>

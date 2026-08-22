@@ -154,7 +154,13 @@ export function ServiceStartCard() {
 			: isConfigured === false
 				? 'Conecta tu cuenta principal de Twitch para iniciar.'
 				: 'Inicia la VTuber para que responda a tu chat.';
-	const actionLabel = isBusy ? (isRunning ? 'Pausando...' : 'Iniciando...') : active ? 'Pausar servicios' : 'Iniciar servicios';
+	const actionLabel = isBusy
+		? isRunning
+			? 'Pausando...'
+			: 'Iniciando...'
+		: active
+			? 'Pausar servicios'
+			: 'Iniciar servicios';
 
 	if (!statusLoaded) {
 		return <ServiceStartSkeleton />;

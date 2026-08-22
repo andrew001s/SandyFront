@@ -26,28 +26,28 @@ function ChatMock() {
 
 	return (
 		<div className='relative overflow-hidden rounded-2xl border border-[#26262C] bg-[#18181B] shadow-[0_16px_60px_rgba(0,0,0,0.45)]'>
-			<div className='flex items-center justify-between border-b border-[#26262C] px-3 py-2'>
-				<div className='flex items-center gap-1.5 text-xs font-semibold text-[#EFEFF1]'>
+			<div className='flex items-center justify-between border-[#26262C] border-b px-3 py-2'>
+				<div className='flex items-center gap-1.5 font-semibold text-[#EFEFF1] text-xs'>
 					<SiTwitch size={13} className='text-[#9146FF]' />
 					<SiKick size={13} className='text-[#53FC18]' />
 					<SiYoutube size={13} className='text-[#FF0000]' />
 					<span className='ml-1'>Chat en vivo</span>
 				</div>
-				<span className='flex items-center gap-1.5 rounded bg-[#9146FF]/15 px-2 py-0.5 text-[10px] font-bold text-[#BF94FF]'>
+				<span className='flex items-center gap-1.5 rounded bg-[#9146FF]/15 px-2 py-0.5 font-bold text-[#BF94FF] text-[10px]'>
 					<span className='h-1.5 w-1.5 animate-pulse rounded-full bg-[#9146FF]' />
 					LIVE
 				</span>
 			</div>
 
 			<div className='space-y-1.5 px-3 py-3 text-left'>
-				<div className='flex items-center gap-1 rounded bg-[#9146FF]/10 px-2 py-1 text-[12px] font-medium text-[#BF94FF]'>
+				<div className='flex items-center gap-1 rounded bg-[#9146FF]/10 px-2 py-1 font-medium text-[#BF94FF] text-[12px]'>
 					<Sparkles size={12} />
 					¡Bienvenidos a la transmisión!
 				</div>
 				{messages.map((m) => (
 					<p key={m.user} className='px-1 py-0.5 text-[12px] leading-snug'>
 						{m.badge && (
-							<span className='mr-1 inline-flex h-[13px] items-center rounded-[3px] bg-[#E005B9] px-1 text-[7px] font-bold text-white'>
+							<span className='mr-1 inline-flex h-[13px] items-center rounded-[3px] bg-[#E005B9] px-1 font-bold text-[7px] text-white'>
 								{m.badge}
 							</span>
 						)}
@@ -58,7 +58,7 @@ function ChatMock() {
 					</p>
 				))}
 				<div className='flex items-center gap-1 px-1 py-1'>
-					<span className='mr-1 text-[12px] font-semibold text-[#9146FF]'>Sandy</span>
+					<span className='mr-1 font-semibold text-[#9146FF] text-[12px]'>Sandy</span>
 					{['', '', ''].map((_, i) => (
 						<span
 							key={i}
@@ -69,8 +69,8 @@ function ChatMock() {
 				</div>
 			</div>
 
-			<div className='flex items-center gap-2 border-t border-[#26262C] px-3 py-2'>
-				<div className='flex flex-1 items-center gap-2 rounded-md bg-[#1F1F23] px-2.5 py-1.5 text-[12px] text-[#ADADB8]'>
+			<div className='flex items-center gap-2 border-[#26262C] border-t px-3 py-2'>
+				<div className='flex flex-1 items-center gap-2 rounded-md bg-[#1F1F23] px-2.5 py-1.5 text-[#ADADB8] text-[12px]'>
 					<MessageSquare size={12} />
 					Enviar un mensaje...
 				</div>
@@ -85,11 +85,11 @@ function AvatarMock() {
 		<div className='relative overflow-hidden rounded-2xl border border-[#26262C] bg-gradient-to-b from-[#221C33] to-[#18181B] shadow-[0_16px_60px_rgba(0,0,0,0.45)]'>
 			<div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(139,92,246,0.35),transparent_60%)]' />
 			<div className='relative flex items-center justify-between px-3 py-2'>
-				<div className='flex items-center gap-1.5 text-xs font-semibold text-[#EFEFF1]'>
+				<div className='flex items-center gap-1.5 font-semibold text-[#EFEFF1] text-xs'>
 					<Sparkles size={13} className='text-[#BF94FF]' />
 					Lip sync
 				</div>
-				<span className='flex items-center gap-1.5 rounded bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-400'>
+				<span className='flex items-center gap-1.5 rounded bg-emerald-500/15 px-2 py-0.5 font-bold text-[10px] text-emerald-400'>
 					<span className='h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400' />
 					SYNC
 				</span>
@@ -97,7 +97,7 @@ function AvatarMock() {
 
 			<div className='relative flex flex-col items-center py-6'>
 				<div className='relative'>
-					<div className='absolute -inset-4 rounded-full bg-[#8B5CF6]/30 blur-2xl' />
+					<div className='-inset-4 absolute rounded-full bg-[#8B5CF6]/30 blur-2xl' />
 					<div className='relative flex size-20 flex-col items-center justify-center rounded-full border border-white/10 bg-gradient-to-b from-[#C4B5FD]/40 to-[#8B5CF6]/20'>
 						<div className='mb-1 flex gap-1.5'>
 							<span className='size-2 rounded-full bg-[#1A1630]' />
@@ -114,10 +114,10 @@ function AvatarMock() {
 						</div>
 					</div>
 				</div>
-				<p className='mt-4 text-[11px] font-medium text-[#ADADB8]'>
+				<p className='mt-4 font-medium text-[#ADADB8] text-[11px]'>
 					Cada palabra se convierte en movimiento
 				</p>
-				<div className='mt-2 flex items-center gap-1.5 rounded-full bg-[#9146FF]/15 px-2.5 py-1 text-[10px] font-semibold text-[#BF94FF]'>
+				<div className='mt-2 flex items-center gap-1.5 rounded-full bg-[#9146FF]/15 px-2.5 py-1 font-semibold text-[#BF94FF] text-[10px]'>
 					<Zap size={11} />
 					VTube Studio
 				</div>
@@ -129,12 +129,12 @@ function AvatarMock() {
 function VoiceMock() {
 	return (
 		<div className='relative overflow-hidden rounded-2xl border border-[#26262C] bg-[#18181B] shadow-[0_16px_60px_rgba(0,0,0,0.45)]'>
-			<div className='flex items-center justify-between border-b border-[#26262C] px-3 py-2'>
-				<div className='flex items-center gap-1.5 text-xs font-semibold text-[#EFEFF1]'>
+			<div className='flex items-center justify-between border-[#26262C] border-b px-3 py-2'>
+				<div className='flex items-center gap-1.5 font-semibold text-[#EFEFF1] text-xs'>
 					<Mic size={13} className='text-[#8B5CF6]' />
 					Entiende tu voz
 				</div>
-				<span className='flex items-center gap-1 rounded bg-[#8B5CF6]/15 px-2 py-0.5 text-[10px] font-bold text-[#BF94FF]'>
+				<span className='flex items-center gap-1 rounded bg-[#8B5CF6]/15 px-2 py-0.5 font-bold text-[#BF94FF] text-[10px]'>
 					<span className='h-1.5 w-1.5 animate-pulse rounded-full bg-[#8B5CF6]' />
 					LIVE
 				</span>
@@ -154,7 +154,7 @@ function VoiceMock() {
 						/>
 					))}
 				</div>
-				<p className='text-[11px] font-medium text-[#ADADB8]'>“Saluda al chat” → Sandy actúa</p>
+				<p className='font-medium text-[#ADADB8] text-[11px]'>“Saluda al chat” → Sandy actúa</p>
 			</div>
 		</div>
 	);
@@ -163,12 +163,12 @@ function VoiceMock() {
 function AudioMock() {
 	return (
 		<div className='relative overflow-hidden rounded-2xl border border-[#26262C] bg-[#18181B] shadow-[0_16px_60px_rgba(0,0,0,0.45)]'>
-			<div className='flex items-center justify-between border-b border-[#26262C] px-3 py-2'>
-				<div className='flex items-center gap-1.5 text-xs font-semibold text-[#EFEFF1]'>
+			<div className='flex items-center justify-between border-[#26262C] border-b px-3 py-2'>
+				<div className='flex items-center gap-1.5 font-semibold text-[#EFEFF1] text-xs'>
 					<AudioLines size={13} className='text-[#22D3EE]' />
 					Voz natural
 				</div>
-				<span className='rounded bg-[#22D3EE]/15 px-2 py-0.5 text-[10px] font-bold text-[#67E8F9]'>
+				<span className='rounded bg-[#22D3EE]/15 px-2 py-0.5 font-bold text-[#67E8F9] text-[10px]'>
 					Fish Audio
 				</span>
 			</div>
@@ -179,8 +179,8 @@ function AudioMock() {
 						<Play size={13} className='ml-0.5 fill-[#0B0A12]' />
 					</span>
 					<div className='flex-1'>
-						<p className='text-[12px] font-semibold text-[#EFEFF1]'>Sandy Studio</p>
-						<p className='text-[10px] text-[#ADADB8]'>Con voz propia · 0:24</p>
+						<p className='font-semibold text-[#EFEFF1] text-[12px]'>Sandy Studio</p>
+						<p className='text-[#ADADB8] text-[10px]'>Con voz propia · 0:24</p>
 					</div>
 				</div>
 				<div className='flex h-9 items-center gap-[2px]'>
@@ -211,12 +211,12 @@ function PlatformMock() {
 
 	return (
 		<div className='relative overflow-hidden rounded-2xl border border-[#26262C] bg-[#18181B] shadow-[0_16px_60px_rgba(0,0,0,0.45)]'>
-			<div className='flex items-center justify-between border-b border-[#26262C] px-3 py-2'>
-				<div className='flex items-center gap-1.5 text-xs font-semibold text-[#EFEFF1]'>
+			<div className='flex items-center justify-between border-[#26262C] border-b px-3 py-2'>
+				<div className='flex items-center gap-1.5 font-semibold text-[#EFEFF1] text-xs'>
 					<Zap size={13} className='text-[#53FC18]' />
 					Tus plataformas
 				</div>
-				<span className='rounded bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-400'>
+				<span className='rounded bg-emerald-500/15 px-2 py-0.5 font-bold text-[10px] text-emerald-400'>
 					Conectado
 				</span>
 			</div>
@@ -229,9 +229,9 @@ function PlatformMock() {
 					>
 						<div className='flex items-center gap-2'>
 							<span style={{ color: p.color }}>{p.icon}</span>
-							<span className='text-[12px] font-semibold text-[#EFEFF1]'>{p.name}</span>
+							<span className='font-semibold text-[#EFEFF1] text-[12px]'>{p.name}</span>
 						</div>
-						<span className='flex items-center gap-1 text-[10px] font-semibold text-emerald-400'>
+						<span className='flex items-center gap-1 font-semibold text-[10px] text-emerald-400'>
 							<Check size={11} />
 							En línea
 						</span>
@@ -260,8 +260,8 @@ function ModelMock() {
 
 	return (
 		<div className='relative overflow-hidden rounded-2xl border border-[#26262C] bg-[#18181B] shadow-[0_16px_60px_rgba(0,0,0,0.45)]'>
-			<div className='flex items-center justify-between border-b border-[#26262C] px-3 py-2'>
-				<div className='flex items-center gap-1.5 text-xs font-semibold text-[#EFEFF1]'>
+			<div className='flex items-center justify-between border-[#26262C] border-b px-3 py-2'>
+				<div className='flex items-center gap-1.5 font-semibold text-[#EFEFF1] text-xs'>
 					<Zap size={13} className='text-[#8B5CF6]' />
 					El cerebro que elijas
 				</div>
@@ -272,8 +272,8 @@ function ModelMock() {
 					<div className='flex items-center gap-2'>
 						<span className='text-[#BF94FF]'>{models[0].icon}</span>
 						<div>
-							<p className='text-[12px] font-semibold text-[#EFEFF1]'>{models[0].name}</p>
-							<p className='text-[10px] text-[#ADADB8]'>{models[0].desc}</p>
+							<p className='font-semibold text-[#EFEFF1] text-[12px]'>{models[0].name}</p>
+							<p className='text-[#ADADB8] text-[10px]'>{models[0].desc}</p>
 						</div>
 					</div>
 					<div className='flex items-center gap-1.5'>
@@ -288,8 +288,8 @@ function ModelMock() {
 					<div className='flex items-center gap-2'>
 						<span className='text-[#ADADB8]'>{models[1].icon}</span>
 						<div>
-							<p className='text-[12px] font-semibold text-[#EFEFF1]'>{models[1].name}</p>
-							<p className='text-[10px] text-[#ADADB8]'>{models[1].desc}</p>
+							<p className='font-semibold text-[#EFEFF1] text-[12px]'>{models[1].name}</p>
+							<p className='text-[#ADADB8] text-[10px]'>{models[1].desc}</p>
 						</div>
 					</div>
 					<ChevronDown size={13} className='text-[#ADADB8]' />
@@ -344,7 +344,7 @@ const features: Feature[] = [
 	{
 		title: 'El modelo que tú elijas',
 		description:
-			'Usa Gemini u OpenRouter para decidir cómo piensa Sandy: desde respuestas rápidas hasta el modelo de IA más capaz del mercado.',
+			'Usa Gemini u OpenRouter para decidir cómo piensa tu Vtuber: desde respuestas rápidas hasta el modelo de IA más capaz del mercado.',
 		mockup: <ModelMock />,
 		span: 'lg:col-span-6',
 	},

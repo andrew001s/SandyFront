@@ -12,9 +12,10 @@ export function AvatarHeader() {
 						<Star size={20} className='fill-amber-400 dark:fill-[#FDE68A]' />
 					</span>
 				</h1>
-				
 			</div>
-			<p className='text-muted-foreground'>Conectate a VTube Studio para controlar tu modelo Live2D</p>
+			<p className='text-muted-foreground'>
+				Conectate a VTube Studio para controlar tu modelo Live2D
+			</p>
 		</header>
 	);
 }

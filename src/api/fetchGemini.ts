@@ -6,4 +6,3 @@ export async function getResponseGemini(message: string) {
 	});
 	return response.data.message;
 }
-  

@@ -23,7 +23,9 @@ export function AvatarModelInfoCard({ currentModel }: AvatarModelInfoCardProps) 
 						<div className='space-y-2'>
 							<div className='flex justify-between'>
 								<span className='text-muted-foreground text-xs'>Nombre</span>
-								<span className='font-medium text-foreground text-xs'>{currentModel.modelName}</span>
+								<span className='font-medium text-foreground text-xs'>
+									{currentModel.modelName}
+								</span>
 							</div>
 							<div className='flex justify-between'>
 								<span className='text-muted-foreground text-xs'>ID</span>
