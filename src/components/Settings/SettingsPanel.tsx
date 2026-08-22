@@ -42,6 +42,7 @@ export function SettingsPanel() {
 		updateLifecycleBoolean,
 		updateSttProvider,
 		updateIdleTimeout,
+		updateChunkSize,
 		handleSandyConfigChange,
 		handleStopService,
 		handleProviderChange,
@@ -126,6 +127,7 @@ export function SettingsPanel() {
 							setOpenRouterModalOpen={setIsOpenRouterModalOpen}
 							updateField={updateField}
 							onProviderChange={handleProviderChange}
+							updateChunkSize={updateChunkSize}
 						/>
 					</TabsContent>
 

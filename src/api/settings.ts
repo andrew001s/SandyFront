@@ -28,6 +28,7 @@ export type SettingsPayload = {
 	auto_start_on_live?: boolean;
 	auto_stop_on_offline?: boolean;
 	idle_timeout_minutes?: number;
+	chunk_size?: number;
 };
 
 export type SettingsResponse = {

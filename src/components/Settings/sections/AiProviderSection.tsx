@@ -14,6 +14,7 @@ type AiProviderSectionProps = {
 	setOpenRouterModalOpen: (open: boolean) => void;
 	updateField: (field: keyof SettingsFormState, value: string) => void;
 	onProviderChange: (value: 'gemini' | 'openrouter') => void;
+	updateChunkSize: (value: string) => void;
 };
 
 export function AiProviderSection({
@@ -23,6 +24,7 @@ export function AiProviderSection({
 	setOpenRouterModalOpen,
 	updateField,
 	onProviderChange,
+	updateChunkSize,
 }: AiProviderSectionProps) {
 	return (
 		<SettingsSectionCard
@@ -100,6 +102,25 @@ export function AiProviderSection({
 					</div>
 				</TabsContent>
 			</Tabs>
+
+			<div className='space-y-2 pt-4'>
+				<Label htmlFor='chunk_size'>Mensajes de chat por respuesta</Label>
+				<Input
+					id='chunk_size'
+					type='number'
+					min={1}
+					max={10}
+					placeholder='3'
+					value={form.chunk_size}
+					onChange={(event) => updateChunkSize(event.target.value)}
+				/>
+				<p className='text-muted-foreground text-xs'>
+					Cuántos mensajes del chat se agrupan antes de pedirle una respuesta a la IA. Con 1
+					responde a cada mensaje; subirlo reduce el gasto de tokens y el spam en directos con mucho
+					movimiento. Entre 1 y 10.
+				</p>
+			</div>
+
 			<div className='flex flex-wrap gap-2 pt-1'>
 				<Badge
 					variant='outline'

@@ -21,6 +21,7 @@ export const initialSettingsFormState: SettingsFormState = {
 	auto_start_on_live: false,
 	auto_stop_on_offline: true,
 	idle_timeout_minutes: 60,
+	chunk_size: 3,
 };
 
 export const azureRegions = [
@@ -84,6 +85,7 @@ export const normalizeSettings = (settings?: SettingsPayload | null): SettingsFo
 	auto_start_on_live: settings?.auto_start_on_live ?? false,
 	auto_stop_on_offline: settings?.auto_stop_on_offline ?? true,
 	idle_timeout_minutes: settings?.idle_timeout_minutes ?? 60,
+	chunk_size: settings?.chunk_size ?? 3,
 });
 
 export const getOpenRouterTokenCost = (model: OpenRouterModel) => {

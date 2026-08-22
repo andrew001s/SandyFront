@@ -208,6 +208,18 @@ export function useSettingsPanel() {
 		}));
 	}, []);
 
+	// El backend acota a 1..10; aquí se recorta igual para que el input no
+	// muestre un valor que el servidor va a rechazar en silencio.
+	const updateChunkSize = useCallback((value: string) => {
+		const parsed = Number(value);
+		setForm((current) => ({
+			...current,
+			chunk_size: Number.isFinite(parsed)
+				? Math.min(10, Math.max(1, Math.floor(parsed)))
+				: current.chunk_size,
+		}));
+	}, []);
+
 	const handleStopService = useCallback(async () => {
 		try {
 			setIsStopping(true);
@@ -296,6 +308,7 @@ export function useSettingsPanel() {
 				auto_start_on_live: form.auto_start_on_live,
 				auto_stop_on_offline: form.auto_stop_on_offline,
 				idle_timeout_minutes: form.idle_timeout_minutes,
+				chunk_size: form.chunk_size,
 			};
 
 			await saveSettings(payload, { token });
@@ -352,6 +365,7 @@ export function useSettingsPanel() {
 		updateLifecycleBoolean,
 		updateSttProvider,
 		updateIdleTimeout,
+		updateChunkSize,
 		handleStopService,
 		handleProviderChange,
 		handlePickOpenRouterModel,
