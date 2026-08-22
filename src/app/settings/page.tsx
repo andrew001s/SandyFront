@@ -5,12 +5,18 @@ import { noIndexMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = noIndexMetadata;
 
-export default function SettingsPage() {
+export default async function SettingsPage({
+	searchParams,
+}: {
+	searchParams: Promise<{ tab?: string }>;
+}) {
+	const { tab } = await searchParams;
+
 	return (
 		<DashboardShell>
 			<div className='px-4 py-6'>
 				<div className='mx-auto max-w-7xl space-y-6'>
-					<SettingsPanel />
+					<SettingsPanel defaultTab={tab} />
 				</div>
 			</div>
 		</DashboardShell>

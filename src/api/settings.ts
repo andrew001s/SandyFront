@@ -1,6 +1,12 @@
 import { backendClient } from '@/api/backendClient';
 import type { FeatureFlags, PersonaProfile, PromptOverrides } from '@/lib/sandycore-config';
 
+/**
+ * Único proveedor de TTS soportado. El onboarding antiguo guardaba 'fish', así que
+ * el valor se normaliza a esta constante al leer y al escribir para no arrastrarlo.
+ */
+export const TTS_PROVIDER = 'fish_audio';
+
 export type SettingsPayload = {
 	twitch_channel?: string;
 	twitch_client_id?: string;
@@ -31,6 +37,15 @@ export type SettingsPayload = {
 	chunk_size?: number;
 };
 
+/**
+ * Payload de escritura. `tts_provider` va estrechado a la constante para que un
+ * literal suelto ('fish') no compile; la lectura sigue aceptando lo que haya
+ * guardado el backend en perfiles antiguos.
+ */
+export type SettingsUpdate = Omit<SettingsPayload, 'tts_provider'> & {
+	tts_provider?: typeof TTS_PROVIDER;
+};
+
 export type SettingsResponse = {
 	settings: SettingsPayload | null;
 };
@@ -54,7 +69,7 @@ export async function getSettings(options: RequestAuthOptions = {}): Promise<Set
 }
 
 export async function saveSettings(
-	payload: SettingsPayload,
+	payload: SettingsUpdate,
 	options: RequestAuthOptions = {},
 ): Promise<SettingsResponse> {
 	const response = await backendClient.put('/settings', payload, {

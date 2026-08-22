@@ -1,6 +1,6 @@
 'use client';
 
-import { saveSettings } from '@/api/settings';
+import { TTS_PROVIDER, saveSettings } from '@/api/settings';
 import { FishVoiceDialog } from '@/components/Settings/FishVoiceDialog';
 import { FishVoicePreviewCard } from '@/components/Settings/sections/FishVoicePreviewCard';
 import { OnboardingOfficialDocs } from '@/components/onboarding/OnboardingOfficialDocs';
@@ -39,7 +39,7 @@ export function VoiceStep({ payload }: StepProps) {
 					const token = await getToken();
 					await saveSettings(
 						{
-							tts_provider: 'fish',
+							tts_provider: TTS_PROVIDER,
 							fish_audio_key: nextFlow.fishAudioKey,
 							voice_id: nextFlow.voiceId,
 						},

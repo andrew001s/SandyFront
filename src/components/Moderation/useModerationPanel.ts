@@ -1,4 +1,9 @@
-import { type SettingsPayload, saveSettings } from '@/api/settings';
+import {
+	TTS_PROVIDER,
+	type SettingsPayload,
+	type SettingsUpdate,
+	saveSettings,
+} from '@/api/settings';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useAuth } from '@clerk/nextjs';
 import posthog from 'posthog-js';
@@ -42,8 +47,10 @@ export function useModerationPanel() {
 	const persist = async (next: BannedItem[], action: 'added' | 'updated' | 'deleted') => {
 		try {
 			const token = await getToken();
-			const payload: SettingsPayload = {
+			const payload: SettingsUpdate = {
 				...(settings ?? {}),
+				// Igual que en los flags: el spread no debe devolver el valor heredado.
+				tts_provider: TTS_PROVIDER,
 				custom_banned_words: next.filter((item) => item.type === 'word').map((item) => item.value),
 				custom_banned_symbols: next
 					.filter((item) => item.type === 'symbol')

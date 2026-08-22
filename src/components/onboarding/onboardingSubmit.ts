@@ -1,8 +1,8 @@
-import { saveSettings, type SettingsPayload } from '@/api/settings';
+import { TTS_PROVIDER, saveSettings, type SettingsUpdate } from '@/api/settings';
 import type { OnboardingFlowData } from '@/components/onboarding/onboarding.types';
 
-export function buildOnboardingSettingsPayload(flowData: OnboardingFlowData): SettingsPayload {
-	const payload: SettingsPayload = {};
+export function buildOnboardingSettingsPayload(flowData: OnboardingFlowData): SettingsUpdate {
+	const payload: SettingsUpdate = {};
 
 	if (flowData.aiProvider !== undefined) {
 		payload.ai_provider = flowData.aiProvider;
@@ -22,10 +22,12 @@ export function buildOnboardingSettingsPayload(flowData: OnboardingFlowData): Se
 
 	if (flowData.fishAudioKey !== undefined) {
 		payload.fish_audio_key = flowData.fishAudioKey;
+		payload.tts_provider = TTS_PROVIDER;
 	}
 
 	if (flowData.voiceId !== undefined) {
 		payload.voice_id = flowData.voiceId;
+		payload.tts_provider = TTS_PROVIDER;
 	}
 
 	if (flowData.sttProvider !== undefined) {

@@ -12,8 +12,24 @@ import { useSettingsPanel } from '@/components/Settings/useSettingsPanel';
 import { SettingsSkeleton } from '@/components/loading/dashboard-skeletons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Bot, Cpu, Mic, Power, Volume2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-export function SettingsPanel() {
+const SETTINGS_TABS = ['sandy', 'ai', 'voice', 'speech', 'services'] as const;
+
+type SettingsTab = (typeof SETTINGS_TABS)[number];
+
+const resolveTab = (value?: string): SettingsTab =>
+	SETTINGS_TABS.includes(value as SettingsTab) ? (value as SettingsTab) : 'sandy';
+
+export function SettingsPanel({ defaultTab }: { defaultTab?: string } = {}) {
+	const [activeTab, setActiveTab] = useState<SettingsTab>(() => resolveTab(defaultTab));
+
+	// El tab llega por query param (?tab=ai) desde los accesos directos del modal
+	// de micrófono, así que se sincroniza si la URL cambia sin desmontar el panel.
+	useEffect(() => {
+		setActiveTab(resolveTab(defaultTab));
+	}, [defaultTab]);
+
 	const {
 		form,
 		isSaving,
@@ -66,7 +82,11 @@ export function SettingsPanel() {
 			<section className='space-y-4'>
 				<SettingsHeader isBusy={isBusy} isSaving={isSaving} onSave={handleSave} />
 
-				<Tabs defaultValue='sandy' className='space-y-4'>
+				<Tabs
+					value={activeTab}
+					onValueChange={(value) => setActiveTab(resolveTab(value))}
+					className='space-y-4'
+				>
 					<TabsList className=' h-auto w-full grid-cols-5 rounded-2xl bg-muted p-1'>
 						<TabsTrigger
 							value='sandy'

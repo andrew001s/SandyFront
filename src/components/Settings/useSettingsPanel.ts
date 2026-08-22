@@ -1,5 +1,5 @@
 import { stop } from '@/api/sandycore';
-import { type SettingsPayload, saveSettings } from '@/api/settings';
+import { type SettingsUpdate, saveSettings } from '@/api/settings';
 import {
 	DEFAULT_FEATURE_FLAGS,
 	type SandyCoreConfig,
@@ -287,7 +287,7 @@ export function useSettingsPanel() {
 			setIsSaving(true);
 			const token = await getToken();
 
-			const payload: SettingsPayload = {
+			const payload: SettingsUpdate = {
 				ai_provider: form.ai_provider,
 				gemini_api_key: form.ai_provider === 'gemini' ? form.gemini_api_key : '',
 				openrouter_api_key: form.ai_provider === 'openrouter' ? form.openrouter_api_key : '',

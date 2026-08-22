@@ -1,4 +1,4 @@
-import type { SettingsPayload } from '@/api/settings';
+import { TTS_PROVIDER, type SettingsPayload } from '@/api/settings';
 import type {
 	OpenRouterModel,
 	OpenRouterSort,
@@ -11,7 +11,7 @@ export const initialSettingsFormState: SettingsFormState = {
 	openrouter_api_key: '',
 	openrouter_model: '',
 	stt_provider: 'azure',
-	tts_provider: 'fish_audio',
+	tts_provider: TTS_PROVIDER,
 	azure_speech_key: '',
 	azure_region: '',
 	language: 'es-ES',
@@ -75,7 +75,8 @@ export const normalizeSettings = (settings?: SettingsPayload | null): SettingsFo
 	openrouter_api_key: settings?.openrouter_api_key ?? '',
 	openrouter_model: settings?.openrouter_model ?? '',
 	stt_provider: settings?.stt_provider ?? 'azure',
-	tts_provider: settings?.tts_provider ?? 'fish_audio',
+	// Se ignora lo que venga del backend: los perfiles viejos traen 'fish'.
+	tts_provider: TTS_PROVIDER,
 	azure_speech_key: settings?.azure_speech_key ?? '',
 	azure_region: settings?.azure_region ?? '',
 	language: settings?.language ?? 'es-ES',

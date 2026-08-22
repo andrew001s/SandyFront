@@ -1,6 +1,6 @@
 'use client';
 
-import { type SettingsPayload, saveSettings } from '@/api/settings';
+import { TTS_PROVIDER, type SettingsUpdate, saveSettings } from '@/api/settings';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FeatureFlagsSkeleton } from '@/components/loading/dashboard-skeletons';
@@ -72,8 +72,11 @@ export function FeatureFlagsPanel() {
 		try {
 			setIsSaving(true);
 			const token = await getToken();
-			const payload: SettingsPayload = {
+			const payload: SettingsUpdate = {
 				...settings,
+				// El spread arrastra lo que devolvió el backend; se normaliza para no
+				// reescribir el 'fish' de los perfiles creados con el onboarding viejo.
+				tts_provider: TTS_PROVIDER,
 				feature_flags: flags,
 			};
 			await saveSettings(payload, { token });
