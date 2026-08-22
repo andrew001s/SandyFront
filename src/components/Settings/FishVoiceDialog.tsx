@@ -430,69 +430,6 @@ export function FishVoiceDialog({
 		};
 	}, []);
 
-	function getSearchQuery(
-		query: string,
-		quickFilterKey = activeQuickFilter,
-		currentLanguage = languageKey,
-	) {
-		const trimmedQuery = query.trim();
-
-		if (trimmedQuery) {
-			return trimmedQuery;
-		}
-
-		const language = LANGUAGE_OPTIONS.find((option) => option.key === currentLanguage);
-		const quickFilter = QUICK_FILTERS.find((filter) => filter.key === quickFilterKey);
-
-		return [language?.query, quickFilter?.query].filter(Boolean).join(' ').trim();
-	}
-
-	async function handleSearch(
-		query: string = search,
-		nextPage = 1,
-		append = false,
-		sort = sortBy,
-		quickFilterKey = activeQuickFilter,
-		currentLanguage = languageKey,
-	) {
-		if (!apiKey.trim()) {
-			toast.error('Agrega tu Fish Audio Key para buscar voces');
-			return;
-		}
-
-		try {
-			if (append) {
-				setIsAppending(true);
-			} else {
-				setIsLoading(true);
-			}
-			setError(null);
-			const response = await searchFishAudioModels({
-				apiKey: apiKey.trim(),
-				query: getSearchQuery(query, quickFilterKey, currentLanguage),
-				pageSize: 12,
-				pageNumber: nextPage,
-				sortBy: sort,
-			});
-			const nextModels = response.items ?? [];
-			setModels((current) => (append ? [...current, ...nextModels] : nextModels));
-			setPageNumber(nextPage);
-			setHasMore(Boolean(response.has_more));
-			if (nextModels.length === 0) {
-				setError('No encontramos voces con esa búsqueda.');
-			}
-		} catch (searchError) {
-			console.error('Error buscando voces de Fish Audio:', searchError);
-			if (!append) {
-				setModels([]);
-			}
-			setError('No se pudieron cargar las voces de Fish Audio.');
-		} finally {
-			setIsLoading(false);
-			setIsAppending(false);
-		}
-	}
-
 	const scrollQuickFilters = (direction: 'left' | 'right') => {
 		const container = quickFiltersRef.current;
 		if (!container) {
@@ -541,7 +478,9 @@ export function FishVoiceDialog({
 								type='button'
 								variant='outline'
 								className='h-12 w-12 rounded-full border-border/70 bg-background/80 shadow-sm'
-								onClick={() => void handleSearch(search, 1, false, sortBy, activeQuickFilter, languageKey)}
+								onClick={() =>
+									void handleSearch(search, 1, false, sortBy, activeQuickFilter, languageKey)
+								}
 								disabled={isLoading}
 								aria-label='Buscar voces'
 							>

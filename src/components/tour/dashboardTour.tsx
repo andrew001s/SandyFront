@@ -1,14 +1,7 @@
 'use client';
 
 import type { Tour } from 'nextstepjs';
-import {
-	CircleUserRound,
-	LayoutDashboard,
-	Plug,
-	Settings2,
-	ShieldCheck,
-	Tv,
-} from 'lucide-react';
+import { CircleUserRound, LayoutDashboard, Plug, Settings2, ShieldCheck, Tv } from 'lucide-react';
 
 export const DASHBOARD_TOUR_STORAGE_KEY = 'sandy-dashboard-tour-seen';
 
@@ -21,7 +14,8 @@ export const dashboardTourSteps: Tour[] = [
 				title: 'Tu dashboard',
 				content: (
 					<>
-						Aquí ves el estado general de Sandy y los accesos rápidos para operar sin salir del panel.
+						Aquí ves el estado general de Sandy y los accesos rápidos para operar sin salir del
+						panel.
 					</>
 				),
 				selector: '#home-tour-overview',
@@ -37,7 +31,8 @@ export const dashboardTourSteps: Tour[] = [
 				title: 'Controles principales',
 				content: (
 					<>
-						Desde esta sección enciendes las funciones clave del sistema y revisas el panel de control.
+						Desde esta sección enciendes las funciones clave del sistema y revisas el panel de
+						control.
 					</>
 				),
 				selector: '#home-tour-controls',
@@ -53,7 +48,8 @@ export const dashboardTourSteps: Tour[] = [
 				title: 'Conexiones',
 				content: (
 					<>
-						Usa esta pestaña para conectar Twitch, Kick y YouTube y centralizar la interacción con tu comunidad.
+						Usa esta pestaña para conectar Twitch, Kick y YouTube y centralizar la interacción con
+						tu comunidad.
 					</>
 				),
 				selector: '#sidebar-tour-conexiones',
@@ -68,9 +64,7 @@ export const dashboardTourSteps: Tour[] = [
 				icon: <ShieldCheck className='size-4' />,
 				title: 'Moderación',
 				content: (
-					<>
-						Aquí puedes controlar filtros, bloqueos y reglas para mantener limpio el chat.
-					</>
+					<>Aquí puedes controlar filtros, bloqueos y reglas para mantener limpio el chat.</>
 				),
 				selector: '#sidebar-tour-moderacion',
 				side: 'right',
@@ -115,11 +109,7 @@ export const dashboardTourSteps: Tour[] = [
 			{
 				icon: <CircleUserRound className='size-4' />,
 				title: 'Tu cuenta',
-				content: (
-					<>
-						Desde aquí revisas tus datos de acceso y la información de tu perfil.
-					</>
-				),
+				content: <>Desde aquí revisas tus datos de acceso y la información de tu perfil.</>,
 				selector: '#sidebar-tour-account',
 				side: 'right',
 				showControls: true,

@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { type VTSModelInfo } from '@/hooks/useVTubeStudio';
+import type { VTSModelInfo } from '@/hooks/useVTubeStudio';
 import { FiUser } from 'react-icons/fi';
 
 type AvatarModelInfoCardProps = {

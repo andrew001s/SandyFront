@@ -12,7 +12,11 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@clerk/nextjs';
 import { type AiProvider, storeAiProvider } from '@/lib/ai-provider';
 import { useOnboarding } from '@onboardjs/react';
-import type { StepProps, SandyOnboardingContext, OnboardingFlowData } from '@/components/onboarding/onboarding.types';
+import type {
+	StepProps,
+	SandyOnboardingContext,
+	OnboardingFlowData,
+} from '@/components/onboarding/onboarding.types';
 import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 import { type UIEvent, useCallback, useEffect, useRef, useState } from 'react';
@@ -73,47 +77,50 @@ export function AiStep({ payload }: StepProps) {
 		[getToken, state?.context.flowData, updateContext],
 	);
 
-	const loadOpenRouterModels = useCallback(async (query: string, sort: OpenRouterSort = openRouterSort) => {
-		try {
-			setIsLoadingOpenRouterModels(true);
-			setOpenRouterModelError(null);
+	const loadOpenRouterModels = useCallback(
+		async (query: string, sort: OpenRouterSort = openRouterSort) => {
+			try {
+				setIsLoadingOpenRouterModels(true);
+				setOpenRouterModelError(null);
 
-			const apiSort = sort === 'free-only' ? 'most-popular' : sort;
-			const params = new URLSearchParams({
-				output_modalities: 'text',
-				sort: apiSort,
-			});
+				const apiSort = sort === 'free-only' ? 'most-popular' : sort;
+				const params = new URLSearchParams({
+					output_modalities: 'text',
+					sort: apiSort,
+				});
 
-			if (query.trim()) {
-				params.set('q', query.trim());
+				if (query.trim()) {
+					params.set('q', query.trim());
+				}
+
+				const response = await fetch(`https://openrouter.ai/api/v1/models?${params.toString()}`);
+				if (!response.ok) {
+					throw new Error(`OpenRouter respondió ${response.status}`);
+				}
+
+				const data = (await response.json()) as { data?: OpenRouterModel[] };
+				const models = sortOpenRouterModels(
+					(data.data ?? []).filter(
+						(model) =>
+							model.architecture?.output_modalities?.includes('text') ||
+							model.architecture?.modality === 'text->text',
+					),
+					sort,
+				).slice(0, 120);
+
+				setOpenRouterModels(models);
+				setVisibleOpenRouterCount(24);
+			} catch (error) {
+				console.error('Error al cargar modelos de OpenRouter:', error);
+				setOpenRouterModelError('No se pudieron cargar los modelos de OpenRouter.');
+				setOpenRouterModels([]);
+				setVisibleOpenRouterCount(24);
+			} finally {
+				setIsLoadingOpenRouterModels(false);
 			}
-
-			const response = await fetch(`https://openrouter.ai/api/v1/models?${params.toString()}`);
-			if (!response.ok) {
-				throw new Error(`OpenRouter respondió ${response.status}`);
-			}
-
-			const data = (await response.json()) as { data?: OpenRouterModel[] };
-			const models = sortOpenRouterModels(
-				(data.data ?? []).filter(
-					(model) =>
-						model.architecture?.output_modalities?.includes('text') ||
-						model.architecture?.modality === 'text->text',
-				),
-				sort,
-			).slice(0, 120);
-
-			setOpenRouterModels(models);
-			setVisibleOpenRouterCount(24);
-		} catch (error) {
-			console.error('Error al cargar modelos de OpenRouter:', error);
-			setOpenRouterModelError('No se pudieron cargar los modelos de OpenRouter.');
-			setOpenRouterModels([]);
-			setVisibleOpenRouterCount(24);
-		} finally {
-			setIsLoadingOpenRouterModels(false);
-		}
-	}, [openRouterSort]);
+		},
+		[openRouterSort],
+	);
 
 	useEffect(() => {
 		if (isOpenRouterModalOpen && provider === 'openrouter') {
@@ -264,7 +271,7 @@ export function AiStep({ payload }: StepProps) {
 							/>
 						</div>
 						<div className='space-y-2'>
-							<label className='font-medium text-muted-foreground text-sm'>
+							<label htmlFor='openrouter-model' className='font-medium text-muted-foreground text-sm'>
 								Modelo (opcional, por defecto el mejor disponible)
 							</label>
 							<Button

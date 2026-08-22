@@ -32,9 +32,13 @@ export function OnboardingShell() {
 	const isWelcome = currentStep?.id === 'welcome';
 	const isCompleted = currentStep?.id === 'completed';
 	const hidePrimaryAction = isWelcome || isCompleted;
-	const previousStepId = currentStep ? stepOrder[stepOrder.indexOf(currentStep.id as (typeof stepOrder)[number]) - 1] : null;
+	const previousStepId = currentStep
+		? stepOrder[stepOrder.indexOf(currentStep.id as (typeof stepOrder)[number]) - 1]
+		: null;
 	const progressPercentage = isCompleted ? 100 : Math.round(state?.progressPercentage ?? 0);
-	const currentStepNumber = isCompleted ? state?.totalSteps ?? stepOrder.length : state?.currentStepNumber ?? 1;
+	const currentStepNumber = isCompleted
+		? (state?.totalSteps ?? stepOrder.length)
+		: (state?.currentStepNumber ?? 1);
 
 	const handleDismiss = useCallback(() => {
 		markOnboardingDismissed(userId);
@@ -78,7 +82,9 @@ export function OnboardingShell() {
 			<div className='flex min-h-screen items-center justify-center'>
 				<div
 					className={`h-10 w-10 animate-spin rounded-full border-2 ${
-						isLightTheme ? 'border-[#8B5CF6] border-t-transparent' : 'border-primary border-t-transparent'
+						isLightTheme
+							? 'border-[#8B5CF6] border-t-transparent'
+							: 'border-primary border-t-transparent'
 					}`}
 				/>
 			</div>
@@ -139,13 +145,17 @@ export function OnboardingShell() {
 
 			<main className='relative z-10 mx-auto flex w-full max-w-4xl flex-col px-4 py-8 md:px-6 md:py-12'>
 				<div className='mx-auto mb-8 w-full max-w-3xl'>
-					<div className={`mb-3 flex items-center justify-between text-xs ${isLightTheme ? 'text-zinc-500' : 'text-white/60'}`}>
+					<div
+						className={`mb-3 flex items-center justify-between text-xs ${isLightTheme ? 'text-zinc-500' : 'text-white/60'}`}
+					>
 						<span>
 							Paso {currentStepNumber} de {state.totalSteps ?? stepOrder.length}
 						</span>
 						<span>{progressPercentage}%</span>
 					</div>
-					<div className={`h-1.5 w-full overflow-hidden rounded-full ${isLightTheme ? 'bg-black/10' : 'bg-white/10'}`}>
+					<div
+						className={`h-1.5 w-full overflow-hidden rounded-full ${isLightTheme ? 'bg-black/10' : 'bg-white/10'}`}
+					>
 						<div
 							className='h-full rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-cyan-400 transition-all duration-500'
 							style={{ width: `${progressPercentage}%` }}

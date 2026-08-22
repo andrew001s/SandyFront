@@ -104,10 +104,7 @@ export function SandyCoreStep({ payload }: StepProps) {
 	const hasConfig = Boolean(config.persona_profile || config.prompt_overrides);
 
 	return (
-		<OnboardingStepFrame
-			title={payload.title}
-			description={payload.description}
-		>
+		<OnboardingStepFrame title={payload.title} description={payload.description}>
 			<motion.div
 				initial={{ opacity: 0, y: 12 }}
 				animate={{ opacity: 1, y: 0 }}
@@ -120,13 +117,13 @@ export function SandyCoreStep({ payload }: StepProps) {
 								<Sparkles className='size-5' />
 							</div>
 							<div className='space-y-1'>
-								<p className='font-semibold text-sm uppercase tracking-[0.18em] text-muted-foreground'>
+								<p className='font-semibold text-muted-foreground text-sm uppercase tracking-[0.18em]'>
 									Personalidad VTuber
 								</p>
 								<h3 className='font-semibold text-xl'>Descarga y carga tu JSON</h3>
 								<p className='max-w-2xl text-muted-foreground text-sm leading-relaxed'>
-									Usa la plantilla para definir cómo habla, responde y se comporta Sandy. Si ya tienes un
-									archivo listo, súbelo aquí mismo para dejarlo guardado en tu onboarding.
+									Usa la plantilla para definir cómo habla, responde y se comporta Sandy. Si ya
+									tienes un archivo listo, súbelo aquí mismo para dejarlo guardado en tu onboarding.
 								</p>
 							</div>
 						</div>
@@ -181,7 +178,9 @@ export function SandyCoreStep({ payload }: StepProps) {
 									{fileName ? `Archivo cargado: ${fileName}` : 'Arrastra tu archivo JSON aquí'}
 								</p>
 								<p className='text-muted-foreground text-sm'>
-									{fileName ? 'Suéltalo para reemplazar la personalidad actual' : 'o haz clic para seleccionarlo'}
+									{fileName
+										? 'Suéltalo para reemplazar la personalidad actual'
+										: 'o haz clic para seleccionarlo'}
 								</p>
 							</div>
 							{hasConfig && !fileName ? (
@@ -207,8 +206,9 @@ export function SandyCoreStep({ payload }: StepProps) {
 						/>
 
 						<p className='text-muted-foreground text-sm leading-relaxed'>
-							Carga un archivo con la personalidad, los prompts y las flags de la VTuber. Si más tarde
-							quieres cambiarlo, podrás volver a este paso o a Ajustes sin perder el resto del onboarding.
+							Carga un archivo con la personalidad, los prompts y las flags de la VTuber. Si más
+							tarde quieres cambiarlo, podrás volver a este paso o a Ajustes sin perder el resto del
+							onboarding.
 						</p>
 					</div>
 				</Card>

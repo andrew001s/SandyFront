@@ -1,8 +1,8 @@
-import { type SettingsPayload } from '@/api/settings';
-import {
-	type OpenRouterModel,
-	type OpenRouterSort,
-	type SettingsFormState,
+import type { SettingsPayload } from '@/api/settings';
+import type {
+	OpenRouterModel,
+	OpenRouterSort,
+	SettingsFormState,
 } from '@/components/Settings/settings.types';
 
 export const initialSettingsFormState: SettingsFormState = {

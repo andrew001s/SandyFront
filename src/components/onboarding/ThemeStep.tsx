@@ -29,7 +29,8 @@ const themeOptions: Array<{
 export function ThemeStep({ payload }: StepProps) {
 	const { state, updateContext } = useOnboarding<SandyOnboardingContext>();
 	const { theme, resolvedTheme, setTheme } = useTheme();
-	const currentThemePreference = state?.context.flowData?.uiTheme ?? resolvedTheme ?? theme ?? 'dark';
+	const currentThemePreference =
+		state?.context.flowData?.uiTheme ?? resolvedTheme ?? theme ?? 'dark';
 	const currentTheme: ThemeOption = currentThemePreference === 'light' ? 'light' : 'dark';
 	const isLightTheme = currentTheme === 'light';
 
@@ -72,7 +73,7 @@ export function ThemeStep({ payload }: StepProps) {
 							>
 								<div className='absolute top-4 right-4'>
 									<span
-									className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 font-medium text-[10px] uppercase tracking-[0.22em] ${
+										className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 font-medium text-[10px] uppercase tracking-[0.22em] ${
 											selected
 												? isLightTheme
 													? 'border-cyan-400/30 bg-cyan-400/10 text-cyan-700'
@@ -128,13 +129,25 @@ export function ThemeStep({ payload }: StepProps) {
 											}`}
 										/>
 										<div className='absolute top-12 right-4 left-[6.5rem] space-y-2'>
-											<div className={`h-3 w-24 rounded-full ${option.id === 'light' ? 'bg-slate-200' : 'bg-white/10'}`} />
-											<div className={`h-2.5 w-full rounded-full ${option.id === 'light' ? 'bg-slate-100' : 'bg-white/8'}`} />
-											<div className={`h-2.5 w-11/12 rounded-full ${option.id === 'light' ? 'bg-slate-100' : 'bg-white/8'}`} />
-											<div className={`h-2.5 w-9/12 rounded-full ${option.id === 'light' ? 'bg-slate-100' : 'bg-white/8'}`} />
+											<div
+												className={`h-3 w-24 rounded-full ${option.id === 'light' ? 'bg-slate-200' : 'bg-white/10'}`}
+											/>
+											<div
+												className={`h-2.5 w-full rounded-full ${option.id === 'light' ? 'bg-slate-100' : 'bg-white/8'}`}
+											/>
+											<div
+												className={`h-2.5 w-11/12 rounded-full ${option.id === 'light' ? 'bg-slate-100' : 'bg-white/8'}`}
+											/>
+											<div
+												className={`h-2.5 w-9/12 rounded-full ${option.id === 'light' ? 'bg-slate-100' : 'bg-white/8'}`}
+											/>
 											<div className='mt-4 flex gap-2'>
-												<div className={`h-7 w-20 rounded-full ${option.id === 'light' ? 'bg-violet-200' : 'bg-violet-500/20'}`} />
-												<div className={`h-7 w-16 rounded-full ${option.id === 'light' ? 'bg-slate-200' : 'bg-white/10'}`} />
+												<div
+													className={`h-7 w-20 rounded-full ${option.id === 'light' ? 'bg-violet-200' : 'bg-violet-500/20'}`}
+												/>
+												<div
+													className={`h-7 w-16 rounded-full ${option.id === 'light' ? 'bg-slate-200' : 'bg-white/10'}`}
+												/>
 											</div>
 										</div>
 
@@ -151,15 +164,23 @@ export function ThemeStep({ payload }: StepProps) {
 								<div className='mt-4 space-y-1.5'>
 									<div className='flex items-center gap-2'>
 										{option.id === 'light' ? (
-											<Sun className={`size-4 ${isLightTheme ? 'text-amber-500' : 'text-amber-300'}`} />
+											<Sun
+												className={`size-4 ${isLightTheme ? 'text-amber-500' : 'text-amber-300'}`}
+											/>
 										) : (
-											<Moon className={`size-4 ${isLightTheme ? 'text-cyan-600' : 'text-cyan-200'}`} />
+											<Moon
+												className={`size-4 ${isLightTheme ? 'text-cyan-600' : 'text-cyan-200'}`}
+											/>
 										)}
-										<h3 className={`font-semibold text-lg ${isLightTheme ? 'text-zinc-900' : 'text-white'}`}>
+										<h3
+											className={`font-semibold text-lg ${isLightTheme ? 'text-zinc-900' : 'text-white'}`}
+										>
 											{option.label}
 										</h3>
 									</div>
-									<p className={`max-w-sm text-sm leading-relaxed ${isLightTheme ? 'text-zinc-600' : 'text-white/60'}`}>
+									<p
+										className={`max-w-sm text-sm leading-relaxed ${isLightTheme ? 'text-zinc-600' : 'text-white/60'}`}
+									>
 										{option.description}
 									</p>
 								</div>

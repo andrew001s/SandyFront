@@ -33,4 +33,3 @@ export type OnboardingStepPayload = CustomComponentStepPayload & {
 };
 
 export type StepProps = StepComponentProps<OnboardingStepPayload, SandyOnboardingContext>;
-

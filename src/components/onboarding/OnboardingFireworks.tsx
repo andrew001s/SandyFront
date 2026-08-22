@@ -22,7 +22,16 @@ type Burst = {
 	particles: Spark[];
 };
 
-const sparkColors = ['#F472B6', '#22D3EE', '#A78BFA', '#FDE047', '#34D399', '#FB7185', '#60A5FA', '#C4B5FD'];
+const sparkColors = [
+	'#F472B6',
+	'#22D3EE',
+	'#A78BFA',
+	'#FDE047',
+	'#34D399',
+	'#FB7185',
+	'#60A5FA',
+	'#C4B5FD',
+];
 
 function makeBurst(x: number, y: number, delay: number): Burst {
 	return {
@@ -64,7 +73,7 @@ export function OnboardingFireworks({ className }: FireworksProps) {
 					style={{ left: `${burst.x}%`, top: `${burst.y}%` }}
 				>
 					<motion.div
-						className='absolute left-1/2 top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/80 blur-[2px]'
+						className='-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2 size-4 rounded-full bg-white/80 blur-[2px]'
 						initial={{ scale: 0, opacity: 0 }}
 						animate={{ scale: [0, 1.4, 0], opacity: [0, 1, 0] }}
 						transition={{
@@ -76,7 +85,7 @@ export function OnboardingFireworks({ className }: FireworksProps) {
 						}}
 					/>
 					<motion.div
-						className='absolute left-1/2 top-1/2 rounded-full border border-white/55'
+						className='absolute top-1/2 left-1/2 rounded-full border border-white/55'
 						initial={{ scale: 0.1, opacity: 0 }}
 						animate={{ scale: [0.1, 2.25], opacity: [0, 0.55, 0] }}
 						transition={{
@@ -96,7 +105,7 @@ export function OnboardingFireworks({ className }: FireworksProps) {
 						return (
 							<motion.span
 								key={`${burstIndex}-${sparkIndex}`}
-								className='absolute left-1/2 top-1/2 rounded-full shadow-[0_0_12px_rgba(255,255,255,0.45)]'
+								className='absolute top-1/2 left-1/2 rounded-full shadow-[0_0_12px_rgba(255,255,255,0.45)]'
 								style={{
 									width: `${spark.size}px`,
 									height: `${spark.size}px`,

@@ -35,7 +35,9 @@ export function OnboardingStepFrame({ title, description, children }: Onboarding
 					</span>
 				</h2>
 				{description ? (
-					<p className={`max-w-xl ${isLightTheme ? 'text-zinc-600' : 'text-muted-foreground'}`}>{description}</p>
+					<p className={`max-w-xl ${isLightTheme ? 'text-zinc-600' : 'text-muted-foreground'}`}>
+						{description}
+					</p>
 				) : null}
 			</div>
 			{children}

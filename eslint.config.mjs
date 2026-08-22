@@ -1,5 +1,5 @@
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { FlatCompat } from '@eslint/eslintrc';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -9,6 +9,12 @@ const compat = new FlatCompat({
 	baseDirectory: __dirname,
 });
 
-const eslintConfig = [...compat.extends('next/core-web-vitals', 'next/typescript')];
+const eslintConfig = [
+	// Plantillas y scripts de skills/agentes: código vendorizado, no se lintea.
+	{
+		ignores: ['.agents/**', '.claude/**'],
+	},
+	...compat.extends('next/core-web-vitals', 'next/typescript'),
+];
 
 export default eslintConfig;

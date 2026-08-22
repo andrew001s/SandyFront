@@ -71,7 +71,10 @@ export function buildOnboardingSettingsPayload(flowData: OnboardingFlowData): Se
 	return payload;
 }
 
-export async function submitOnboardingSettings(flowData: OnboardingFlowData, token?: string | null) {
+export async function submitOnboardingSettings(
+	flowData: OnboardingFlowData,
+	token?: string | null,
+) {
 	const payload = buildOnboardingSettingsPayload(flowData);
 
 	if (Object.keys(payload).length === 0) {
@@ -80,4 +83,3 @@ export async function submitOnboardingSettings(flowData: OnboardingFlowData, tok
 
 	return saveSettings(payload, { token });
 }
-

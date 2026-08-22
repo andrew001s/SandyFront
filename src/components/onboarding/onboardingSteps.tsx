@@ -1,7 +1,17 @@
 'use client';
 
 import type { OnboardingStep } from '@onboardjs/react';
-import { Bot, Check, FileJson, GitBranch, Mic, MonitorSpeaker, Palette, Sparkles, Volume2 } from 'lucide-react';
+import {
+	Bot,
+	Check,
+	FileJson,
+	GitBranch,
+	Mic,
+	MonitorSpeaker,
+	Palette,
+	Sparkles,
+	Volume2,
+} from 'lucide-react';
 import { ConnectionsStep } from '@/components/onboarding/ConnectionsStep';
 import { AiStep } from '@/components/onboarding/AiStep';
 import { CompletedStep } from '@/components/onboarding/CompletedStep';
@@ -14,7 +24,11 @@ import { WelcomeStep } from '@/components/onboarding/WelcomeStep';
 import type { ReactNode } from 'react';
 import type { SandyOnboardingContext } from '@/components/onboarding/onboarding.types';
 
-export type { OnboardingFlowData, OnboardingStepPayload, SandyOnboardingContext } from '@/components/onboarding/onboarding.types';
+export type {
+	OnboardingFlowData,
+	OnboardingStepPayload,
+	SandyOnboardingContext,
+} from '@/components/onboarding/onboarding.types';
 
 const stepMeta = {
 	welcome: {

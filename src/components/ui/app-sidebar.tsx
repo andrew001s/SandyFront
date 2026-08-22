@@ -39,7 +39,12 @@ import { useTheme } from 'next-themes';
 const navItems = [
 	{ href: '/home', label: 'Dashboard', icon: LayoutDashboard, tourId: 'sidebar-tour-dashboard' },
 	{ href: '/conexiones', label: 'Conexiones', icon: Plug, tourId: 'sidebar-tour-conexiones' },
-	{ href: '/moderacion', label: 'Moderación', icon: ShieldCheck, tourId: 'sidebar-tour-moderacion' },
+	{
+		href: '/moderacion',
+		label: 'Moderación',
+		icon: ShieldCheck,
+		tourId: 'sidebar-tour-moderacion',
+	},
 	{ href: '/avatar', label: 'VTube Studio', icon: Tv, tourId: 'sidebar-tour-avatar' },
 	{ href: '/settings', label: 'Configuración', icon: Settings2, tourId: 'sidebar-tour-settings' },
 	{ href: '/account', label: 'Cuenta', icon: CircleUserRound, tourId: 'sidebar-tour-account' },
@@ -100,14 +105,14 @@ export function AppSidebar() {
 							{navItems.map((item) => {
 								const isActive = pathname === item.href;
 								return (
-								<SidebarMenuItem key={item.href}>
-									<SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
-										<Link
-											href={item.href}
-											id={item.tourId}
-											className={cn(
-												'flex items-center gap-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0',
-												isActive && 'font-medium',
+									<SidebarMenuItem key={item.href}>
+										<SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
+											<Link
+												href={item.href}
+												id={item.tourId}
+												className={cn(
+													'flex items-center gap-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0',
+													isActive && 'font-medium',
 												)}
 											>
 												<item.icon className='h-4 w-4 shrink-0' />

@@ -28,7 +28,8 @@ export function AvatarModelListCard({
 }: AvatarModelListCardProps) {
 	const { status, urls, requestAccess } = useModelPreviews(models);
 	const [failedIds, setFailedIds] = useState<Set<string>>(() => new Set());
-	const activeModel = models.find((model) => currentModelId === model.modelID || model.modelLoaded) ?? null;
+	const activeModel =
+		models.find((model) => currentModelId === model.modelID || model.modelLoaded) ?? null;
 
 	if (!connected) {
 		return null;
@@ -77,7 +78,9 @@ export function AvatarModelListCard({
 					displayedModels.length > 0 ? (
 						displayedModels.map((model) => {
 							const isLoaded = currentModelId === model.modelID || model.modelLoaded;
-							const previewUrl = failedIds.has(model.modelID) ? null : (urls[model.modelID] ?? null);
+							const previewUrl = failedIds.has(model.modelID)
+								? null
+								: (urls[model.modelID] ?? null);
 
 							return (
 								<button
@@ -86,27 +89,27 @@ export function AvatarModelListCard({
 									onClick={() => {
 										void onLoadModel(model.modelID);
 									}}
-								disabled={isLoaded}
-								className='group relative mx-auto w-full max-w-sm overflow-hidden rounded-2xl border border-primary/50 bg-primary/5 text-left ring-1 ring-primary/20 transition-all'
-							>
-								<div className='relative aspect-[16/10] w-full overflow-hidden bg-muted/40'>
-									{previewUrl ? (
-										<Image
-											src={previewUrl}
-											alt={model.modelName}
-											fill
-											unoptimized
-											sizes='(max-width: 640px) 92vw, 400px'
-											className='object-contain transition-transform duration-300 group-hover:scale-105'
-											onError={() => {
-												setFailedIds((prev) => new Set(prev).add(model.modelID));
-											}}
-										/>
-									) : (
-										<div className='flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 via-chart-2/10 to-chart-4/10'>
-											<span className='font-bold text-4xl text-muted-foreground/40'>
-												{model.modelName.charAt(0).toUpperCase()}
-											</span>
+									disabled={isLoaded}
+									className='group relative mx-auto w-full max-w-sm overflow-hidden rounded-2xl border border-primary/50 bg-primary/5 text-left ring-1 ring-primary/20 transition-all'
+								>
+									<div className='relative aspect-[16/10] w-full overflow-hidden bg-muted/40'>
+										{previewUrl ? (
+											<Image
+												src={previewUrl}
+												alt={model.modelName}
+												fill
+												unoptimized
+												sizes='(max-width: 640px) 92vw, 400px'
+												className='object-contain transition-transform duration-300 group-hover:scale-105'
+												onError={() => {
+													setFailedIds((prev) => new Set(prev).add(model.modelID));
+												}}
+											/>
+										) : (
+											<div className='flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 via-chart-2/10 to-chart-4/10'>
+												<span className='font-bold text-4xl text-muted-foreground/40'>
+													{model.modelName.charAt(0).toUpperCase()}
+												</span>
 											</div>
 										)}
 										<Badge
@@ -146,30 +149,30 @@ export function AvatarModelListCard({
 										void onLoadModel(model.modelID);
 									}}
 									disabled={isLoaded}
-							className={`group relative overflow-hidden rounded-xl border text-left transition-all ${
-								isLoaded
-									? 'border-primary/60 bg-primary/5 ring-1 ring-primary/30'
-									: 'hover:-translate-y-0.5 border-border hover:border-primary/40 hover:bg-muted/50 hover:shadow-lg'
-							}`}
-						>
-							<div className='relative aspect-[4/3] w-full overflow-hidden bg-muted/40'>
-								{previewUrl ? (
-									<Image
-										src={previewUrl}
-										alt={model.modelName}
-										fill
-										unoptimized
-										sizes='(max-width: 640px) 48vw, (max-width: 1024px) 32vw, 220px'
-										className='object-contain transition-transform duration-300 group-hover:scale-105'
-										onError={() => {
-											setFailedIds((prev) => new Set(prev).add(model.modelID));
-										}}
-									/>
-								) : (
-									<div className='flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 via-chart-2/10 to-chart-4/10'>
-										<span className='font-bold text-3xl text-muted-foreground/40'>
-											{model.modelName.charAt(0).toUpperCase()}
-										</span>
+									className={`group relative overflow-hidden rounded-xl border text-left transition-all ${
+										isLoaded
+											? 'border-primary/60 bg-primary/5 ring-1 ring-primary/30'
+											: 'hover:-translate-y-0.5 border-border hover:border-primary/40 hover:bg-muted/50 hover:shadow-lg'
+									}`}
+								>
+									<div className='relative aspect-[4/3] w-full overflow-hidden bg-muted/40'>
+										{previewUrl ? (
+											<Image
+												src={previewUrl}
+												alt={model.modelName}
+												fill
+												unoptimized
+												sizes='(max-width: 640px) 48vw, (max-width: 1024px) 32vw, 220px'
+												className='object-contain transition-transform duration-300 group-hover:scale-105'
+												onError={() => {
+													setFailedIds((prev) => new Set(prev).add(model.modelID));
+												}}
+											/>
+										) : (
+											<div className='flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 via-chart-2/10 to-chart-4/10'>
+												<span className='font-bold text-3xl text-muted-foreground/40'>
+													{model.modelName.charAt(0).toUpperCase()}
+												</span>
 											</div>
 										)}
 										{isLoaded && (

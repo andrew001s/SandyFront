@@ -46,7 +46,9 @@ export function CompletedStep() {
 		>
 			<div
 				className={`relative isolate overflow-hidden rounded-[2rem] shadow-[0_30px_120px_rgba(0,0,0,0.46)] ${
-					isLightTheme ? 'border border-black/10 bg-white/90' : 'border border-white/10 bg-[#0b1020]'
+					isLightTheme
+						? 'border border-black/10 bg-white/90'
+						: 'border border-white/10 bg-[#0b1020]'
 				}`}
 			>
 				<div className='pointer-events-none absolute inset-0'>
@@ -86,7 +88,9 @@ export function CompletedStep() {
 
 					<div
 						className={`border-t px-5 pt-7 pb-6 sm:px-8 ${
-							isLightTheme ? 'border-black/10 bg-white text-zinc-900' : 'border-white/8 bg-white/[0.03] text-white'
+							isLightTheme
+								? 'border-black/10 bg-white text-zinc-900'
+								: 'border-white/8 bg-white/[0.03] text-white'
 						}`}
 					>
 						<div className='mx-auto max-w-2xl text-center'>
@@ -103,7 +107,9 @@ export function CompletedStep() {
 											: 'border-violet-400/20 bg-violet-400/10 text-violet-100'
 									}`}
 								>
-									<Sparkles className={`size-3.5 ${isLightTheme ? 'text-violet-500' : 'text-cyan-200'}`} />
+									<Sparkles
+										className={`size-3.5 ${isLightTheme ? 'text-violet-500' : 'text-cyan-200'}`}
+									/>
 									Sandy Studio listo
 								</p>
 								<h3
@@ -118,8 +124,8 @@ export function CompletedStep() {
 										isLightTheme ? 'text-zinc-600' : 'text-white/62'
 									}`}
 								>
-									Conectaste todo lo importante. Desde aquí Sandy puede leer,
-									responder, hablar y moverse sin salir del onboarding.
+									Conectaste todo lo importante. Desde aquí Sandy puede leer, responder, hablar y
+									moverse sin salir del onboarding.
 								</p>
 							</motion.div>
 
@@ -136,7 +142,9 @@ export function CompletedStep() {
 											: 'border-white/10 bg-white/[0.04] text-white/68'
 									}`}
 								>
-									<Sparkles className={`size-4 ${isLightTheme ? 'text-violet-500' : 'text-violet-300'}`} />
+									<Sparkles
+										className={`size-4 ${isLightTheme ? 'text-violet-500' : 'text-violet-300'}`}
+									/>
 									Todo quedó guardado y puedes volver a cambiarlo después.
 								</div>
 								<Button

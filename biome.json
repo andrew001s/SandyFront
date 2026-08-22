@@ -9,6 +9,8 @@
 		"ignoreUnknown": false,
 		"ignore": [
 			"**/node_modules",
+			".agents",
+			".claude",
 			"**/dist",
 			"CHANGELOG.md",
 			"pnpm-lock.yaml",

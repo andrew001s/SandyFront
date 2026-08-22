@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { type VTSStats } from '@/hooks/useVTubeStudio';
+import type { VTSStats } from '@/hooks/useVTubeStudio';
 import { FiAlertCircle, FiCheckCircle, FiRefreshCw, FiWifi, FiWifiOff } from 'react-icons/fi';
 import { useState } from 'react';
 

@@ -9,7 +9,11 @@ import { OnboardingStepFrame } from '@/components/onboarding/OnboardingStepFrame
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@clerk/nextjs';
-import type { OnboardingFlowData, StepProps, SandyOnboardingContext } from '@/components/onboarding/onboarding.types';
+import type {
+	OnboardingFlowData,
+	StepProps,
+	SandyOnboardingContext,
+} from '@/components/onboarding/onboarding.types';
 import { useOnboarding } from '@onboardjs/react';
 import { motion } from 'framer-motion';
 import { Smile, Sparkles, Volume2 } from 'lucide-react';

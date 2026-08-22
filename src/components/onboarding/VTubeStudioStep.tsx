@@ -97,8 +97,8 @@ export function VTubeStudioStep({ payload }: StepProps) {
 
 					<p className='flex items-start gap-1.5 text-muted-foreground text-xs leading-relaxed'>
 						<MonitorSpeaker className='mt-0.5 size-4 shrink-0' />
-						Ten VTube Studio abierto en tu PC y activá la opción &quot;Allow Plugin API access&quot; en
-						el puerto 8001. Cuando cargues un modelo, Sandy lo toma como el activo.
+						Ten VTube Studio abierto en tu PC y activá la opción &quot;Allow Plugin API access&quot;
+						en el puerto 8001. Cuando cargues un modelo, Sandy lo toma como el activo.
 					</p>
 				</div>
 			</div>

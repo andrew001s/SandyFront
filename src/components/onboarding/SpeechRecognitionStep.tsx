@@ -6,7 +6,11 @@ import { azureLanguages, azureRegions } from '@/components/Settings/settings.con
 import { OnboardingOfficialDocs } from '@/components/onboarding/OnboardingOfficialDocs';
 import { OnboardingSelectableCard } from '@/components/onboarding/OnboardingSelectableCard';
 import { OnboardingStepFrame } from '@/components/onboarding/OnboardingStepFrame';
-import type { OnboardingFlowData, SandyOnboardingContext, StepProps } from '@/components/onboarding/onboarding.types';
+import type {
+	OnboardingFlowData,
+	SandyOnboardingContext,
+	StepProps,
+} from '@/components/onboarding/onboarding.types';
 import { getStoredSttProvider, storeSttProvider, type SttProvider } from '@/lib/stt-provider';
 import { useAuth } from '@clerk/nextjs';
 import { useOnboarding } from '@onboardjs/react';
@@ -40,7 +44,9 @@ export function SpeechRecognitionStep({ payload }: StepProps) {
 	const [browserSupportsNativeSpeech, setBrowserSupportsNativeSpeech] = useState(false);
 	const [isAzureRegionOpen, setIsAzureRegionOpen] = useState(false);
 	const [isAzureLanguageOpen, setIsAzureLanguageOpen] = useState(false);
-	const [azureSpeechKey, setAzureSpeechKey] = useState(state?.context.flowData.azureSpeechKey ?? '');
+	const [azureSpeechKey, setAzureSpeechKey] = useState(
+		state?.context.flowData.azureSpeechKey ?? '',
+	);
 	const [azureRegion, setAzureRegion] = useState(state?.context.flowData.azureRegion ?? '');
 	const [language, setLanguage] = useState(state?.context.flowData.language ?? 'es-ES');
 	const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -130,7 +136,7 @@ export function SpeechRecognitionStep({ payload }: StepProps) {
 						href: 'https://learn.microsoft.com/en-us/azure/ai-services/speech-service/get-started-speech-to-text',
 						description: 'Pasos para crear tu recurso y obtener la key.',
 					},
-			  ];
+				];
 
 	return (
 		<OnboardingStepFrame title={payload.title} description={payload.description}>
@@ -156,7 +162,9 @@ export function SpeechRecognitionStep({ payload }: StepProps) {
 
 				<div className='space-y-4 rounded-3xl border border-border/60 bg-card/70 p-5 shadow-sm backdrop-blur-sm sm:p-6'>
 					<div className='space-y-2'>
-						<p className='text-muted-foreground text-xs uppercase tracking-[0.22em]'>Configuración</p>
+						<p className='text-muted-foreground text-xs uppercase tracking-[0.22em]'>
+							Configuración
+						</p>
 						<h4 className='font-semibold text-lg'>Idioma de reconocimiento</h4>
 						<p className='max-w-xl text-muted-foreground text-sm leading-relaxed'>
 							Este idioma se usa tanto para Azure como para el reconocimiento del navegador.
@@ -179,7 +187,9 @@ export function SpeechRecognitionStep({ payload }: StepProps) {
 					{selectedProvider === 'azure' ? (
 						<div className='space-y-4 border-border/60 border-t pt-4'>
 							<div className='space-y-2'>
-								<p className='text-muted-foreground text-xs uppercase tracking-[0.22em]'>Azure Speech</p>
+								<p className='text-muted-foreground text-xs uppercase tracking-[0.22em]'>
+									Azure Speech
+								</p>
 								<h4 className='font-semibold text-lg'>Credenciales y región</h4>
 								<p className='max-w-xl text-muted-foreground text-sm leading-relaxed'>
 									Completa estos datos para activar el reconocimiento de voz con Microsoft Azure.
@@ -231,8 +241,8 @@ export function SpeechRecognitionStep({ payload }: StepProps) {
 							</div>
 						) : (
 							<div className='rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-red-700 text-sm dark:text-red-300'>
-								Tu navegador no es compatible con esta opción. Solo funciona en Google Chrome y otros
-								navegadores basados en Chromium.
+								Tu navegador no es compatible con esta opción. Solo funciona en Google Chrome y
+								otros navegadores basados en Chromium.
 							</div>
 						)
 					) : null}
@@ -250,4 +260,3 @@ export function SpeechRecognitionStep({ payload }: StepProps) {
 		</OnboardingStepFrame>
 	);
 }
-

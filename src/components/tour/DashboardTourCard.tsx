@@ -50,14 +50,16 @@ export function DashboardTourCard({
 					<div className='space-y-2'>
 						<div
 							className={cn(
-								'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em]',
+								'inline-flex items-center gap-2 rounded-full border px-3 py-1 font-semibold text-[10px] uppercase tracking-[0.24em]',
 								isLightTheme
 									? 'border-violet-500/20 bg-violet-500/10 text-violet-700'
 									: 'border-violet-400/20 bg-violet-400/10 text-violet-200',
 							)}
 						>
 							<span className='text-sm leading-none'>{step.icon ?? '✦'}</span>
-							<span>Paso {currentStep + 1} de {totalSteps}</span>
+							<span>
+								Paso {currentStep + 1} de {totalSteps}
+							</span>
 						</div>
 						<div className='space-y-1'>
 							<h2
@@ -68,7 +70,12 @@ export function DashboardTourCard({
 							>
 								{step.title}
 							</h2>
-							<p className={cn('max-w-[32rem] text-sm leading-relaxed sm:text-[0.96rem]', isLightTheme ? 'text-zinc-600' : 'text-white/70')}>
+							<p
+								className={cn(
+									'max-w-[32rem] text-sm leading-relaxed sm:text-[0.96rem]',
+									isLightTheme ? 'text-zinc-600' : 'text-white/70',
+								)}
+							>
 								{step.content}
 							</p>
 						</div>
@@ -87,13 +94,23 @@ export function DashboardTourCard({
 				</div>
 
 				<div className='space-y-2'>
-					<div className={cn('h-2 overflow-hidden rounded-full', isLightTheme ? 'bg-black/10' : 'bg-white/10')}>
+					<div
+						className={cn(
+							'h-2 overflow-hidden rounded-full',
+							isLightTheme ? 'bg-black/10' : 'bg-white/10',
+						)}
+					>
 						<div
 							className='h-full rounded-full bg-violet-600 transition-all duration-300'
 							style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
 						/>
 					</div>
-					<div className={cn('flex items-center justify-between text-[11px]', isLightTheme ? 'text-zinc-500' : 'text-white/45')}>
+					<div
+						className={cn(
+							'flex items-center justify-between text-[11px]',
+							isLightTheme ? 'text-zinc-500' : 'text-white/45',
+						)}
+					>
 						<span>
 							{currentStep + 1} de {totalSteps}
 						</span>
