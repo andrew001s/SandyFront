@@ -1,5 +1,6 @@
 import { backendClient } from '@/api/backendClient';
-import type { FeatureFlags, PersonaProfile, PromptOverrides } from '@/lib/sandycore-config';
+import type { FeatureFlags } from '@/lib/feature-flags';
+import type { PersonaProfile } from '@/lib/persona-profile';
 
 /**
  * Único proveedor de TTS soportado. El onboarding antiguo guardaba 'fish', así que
@@ -25,7 +26,6 @@ export type SettingsPayload = {
 	fish_audio_key?: string;
 	voice_id?: string;
 	persona_profile?: PersonaProfile;
-	prompt_overrides?: PromptOverrides;
 	feature_flags?: FeatureFlags;
 	custom_banned_words?: string[];
 	custom_banned_symbols?: string[];

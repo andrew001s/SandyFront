@@ -1,5 +1,6 @@
-import { TTS_PROVIDER, saveSettings, type SettingsUpdate } from '@/api/settings';
+import { type SettingsUpdate, TTS_PROVIDER, saveSettings } from '@/api/settings';
 import type { OnboardingFlowData } from '@/components/onboarding/onboarding.types';
+import { type BannedContentPayload, toBannedContentPayload } from '@/lib/banned-content';
 
 export function buildOnboardingSettingsPayload(flowData: OnboardingFlowData): SettingsUpdate {
 	const payload: SettingsUpdate = {};
@@ -50,24 +51,18 @@ export function buildOnboardingSettingsPayload(flowData: OnboardingFlowData): Se
 		payload.persona_profile = flowData.sandyCoreConfig.persona_profile;
 	}
 
-	if (flowData.sandyCoreConfig?.prompt_overrides !== undefined) {
-		payload.prompt_overrides = flowData.sandyCoreConfig.prompt_overrides;
-	}
-
 	if (flowData.sandyCoreConfig?.feature_flags !== undefined) {
 		payload.feature_flags = flowData.sandyCoreConfig.feature_flags;
 	}
 
-	if (flowData.sandyCoreConfig?.custom_banned_words !== undefined) {
-		payload.custom_banned_words = flowData.sandyCoreConfig.custom_banned_words;
-	}
-
-	if (flowData.sandyCoreConfig?.custom_banned_symbols !== undefined) {
-		payload.custom_banned_symbols = flowData.sandyCoreConfig.custom_banned_symbols;
-	}
-
-	if (flowData.sandyCoreConfig?.custom_banned_links !== undefined) {
-		payload.custom_banned_links = flowData.sandyCoreConfig.custom_banned_links;
+	const banned = flowData.sandyCoreConfig?.banned_content;
+	if (banned) {
+		const bannedPayload = toBannedContentPayload(banned);
+		for (const [key, value] of Object.entries(bannedPayload)) {
+			if (value !== undefined) {
+				payload[key as keyof BannedContentPayload] = value;
+			}
+		}
 	}
 
 	return payload;

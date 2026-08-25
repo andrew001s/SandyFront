@@ -8,6 +8,7 @@ import {
 	type SandyCoreConfig,
 	downloadSandyCoreTemplate,
 	normalizeSandyCoreConfig,
+	toSandyCorePayload,
 } from '@/lib/sandycore-config';
 import type { StepProps, SandyOnboardingContext } from '@/components/onboarding/onboarding.types';
 import { useAuth } from '@clerk/nextjs';
@@ -38,17 +39,7 @@ export function SandyCoreStep({ payload }: StepProps) {
 
 			try {
 				const token = await getToken();
-				await saveSettings(
-					{
-						persona_profile: nextConfig.persona_profile,
-						prompt_overrides: nextConfig.prompt_overrides,
-						feature_flags: nextConfig.feature_flags,
-						custom_banned_words: nextConfig.custom_banned_words,
-						custom_banned_symbols: nextConfig.custom_banned_symbols,
-						custom_banned_links: nextConfig.custom_banned_links,
-					},
-					{ token },
-				);
+				await saveSettings(toSandyCorePayload(nextConfig), { token });
 			} catch (error) {
 				console.error('Error guardando la personalidad de la VTuber:', error);
 				toast.error('No se pudo guardar la personalidad de la VTuber');
@@ -101,7 +92,7 @@ export function SandyCoreStep({ payload }: StepProps) {
 	);
 
 	const personaName = config.persona_profile?.name ?? 'Sin personalidad cargada';
-	const hasConfig = Boolean(config.persona_profile || config.prompt_overrides);
+	const hasConfig = Boolean(config.persona_profile);
 
 	return (
 		<OnboardingStepFrame title={payload.title} description={payload.description}>

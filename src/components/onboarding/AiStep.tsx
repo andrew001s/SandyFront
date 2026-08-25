@@ -271,7 +271,10 @@ export function AiStep({ payload }: StepProps) {
 							/>
 						</div>
 						<div className='space-y-2'>
-							<label htmlFor='openrouter-model' className='font-medium text-muted-foreground text-sm'>
+							<label
+								htmlFor='openrouter-model'
+								className='font-medium text-muted-foreground text-sm'
+							>
 								Modelo (opcional, por defecto el mejor disponible)
 							</label>
 							<Button

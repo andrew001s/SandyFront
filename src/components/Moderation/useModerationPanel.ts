@@ -1,35 +1,38 @@
 import {
-	TTS_PROVIDER,
 	type SettingsPayload,
 	type SettingsUpdate,
+	TTS_PROVIDER,
 	saveSettings,
 } from '@/api/settings';
+import type { BannedItem, BannedItemType } from '@/components/Moderation/moderation.types';
 import { useAppSettings } from '@/context/AppSettingsContext';
+import {
+	type BannedContent,
+	normalizeBannedContent,
+	toBannedContentPayload,
+} from '@/lib/banned-content';
 import { useAuth } from '@clerk/nextjs';
 import posthog from 'posthog-js';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import type { BannedItem, BannedItemType } from '@/components/Moderation/moderation.types';
 
 const flattenBannedItems = (settings: SettingsPayload | null): BannedItem[] => {
-	const words = (settings?.custom_banned_words ?? []).map((value, index) => ({
-		id: `word-${index}`,
-		value,
-		type: 'word' as const,
-	}));
-	const symbols = (settings?.custom_banned_symbols ?? []).map((value, index) => ({
-		id: `symbol-${index}`,
-		value,
-		type: 'symbol' as const,
-	}));
-	const links = (settings?.custom_banned_links ?? []).map((value, index) => ({
-		id: `link-${index}`,
-		value,
-		type: 'link' as const,
-	}));
+	const { words = [], symbols = [], links = [] } = normalizeBannedContent(settings);
 
-	return [...words, ...symbols, ...links];
+	return [
+		...words.map((value, index) => ({ id: `word-${index}`, value, type: 'word' as const })),
+		...symbols.map((value, index) => ({ id: `symbol-${index}`, value, type: 'symbol' as const })),
+		...links.map((value, index) => ({ id: `link-${index}`, value, type: 'link' as const })),
+	];
 };
+
+const groupBannedItems = (items: BannedItem[]): BannedContent => ({
+	// Se mandan arrays aunque queden vacíos: es la única forma de borrar la
+	// última regla de una categoría.
+	words: items.filter((item) => item.type === 'word').map((item) => item.value),
+	symbols: items.filter((item) => item.type === 'symbol').map((item) => item.value),
+	links: items.filter((item) => item.type === 'link').map((item) => item.value),
+});
 
 export function useModerationPanel() {
 	const { getToken } = useAuth();
@@ -51,11 +54,7 @@ export function useModerationPanel() {
 				...(settings ?? {}),
 				// Igual que en los flags: el spread no debe devolver el valor heredado.
 				tts_provider: TTS_PROVIDER,
-				custom_banned_words: next.filter((item) => item.type === 'word').map((item) => item.value),
-				custom_banned_symbols: next
-					.filter((item) => item.type === 'symbol')
-					.map((item) => item.value),
-				custom_banned_links: next.filter((item) => item.type === 'link').map((item) => item.value),
+				...toBannedContentPayload(groupBannedItems(next)),
 			};
 			await saveSettings(payload, { token });
 			await refreshSettings();

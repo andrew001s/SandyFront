@@ -56,7 +56,7 @@ export function SandyCoreConfigPanel({ config, onConfigChange }: SandyCoreConfig
 	};
 
 	const personaName = config.persona_profile?.name ?? 'Sin personalidad cargada';
-	const hasConfig = Boolean(config.persona_profile || config.prompt_overrides);
+	const hasConfig = Boolean(config.persona_profile);
 
 	return (
 		<Card className='h-full overflow-hidden border-border/60 bg-card/90 shadow-[0_24px_80px_-36px_rgba(15,23,42,0.18)] backdrop-blur-xl'>

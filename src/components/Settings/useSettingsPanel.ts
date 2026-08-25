@@ -1,18 +1,6 @@
 import { stop } from '@/api/sandycore';
 import { type SettingsUpdate, saveSettings } from '@/api/settings';
 import {
-	DEFAULT_FEATURE_FLAGS,
-	type SandyCoreConfig,
-	normalizeSandyCoreConfig,
-} from '@/lib/sandycore-config';
-import { getStoredAiProvider, storeAiProvider } from '@/lib/ai-provider';
-import { getStoredSttProvider, storeSttProvider } from '@/lib/stt-provider';
-import { useAppSettings } from '@/context/AppSettingsContext';
-import { useAuth } from '@clerk/nextjs';
-import posthog from 'posthog-js';
-import { type UIEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
-import {
 	initialSettingsFormState,
 	normalizeSettings,
 	sortOpenRouterModels,
@@ -22,6 +10,16 @@ import type {
 	OpenRouterSort,
 	SettingsFormState,
 } from '@/components/Settings/settings.types';
+import { useAppSettings } from '@/context/AppSettingsContext';
+import { getStoredAiProvider, storeAiProvider } from '@/lib/ai-provider';
+import { toBannedContentPayload } from '@/lib/banned-content';
+import { DEFAULT_FEATURE_FLAGS } from '@/lib/feature-flags';
+import { type SandyCoreConfig, normalizeSandyCoreConfig } from '@/lib/sandycore-config';
+import { getStoredSttProvider, storeSttProvider } from '@/lib/stt-provider';
+import { useAuth } from '@clerk/nextjs';
+import posthog from 'posthog-js';
+import { type UIEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 export function useSettingsPanel() {
 	const { getToken } = useAuth();
@@ -42,6 +40,7 @@ export function useSettingsPanel() {
 	const [browserSupportsNativeSpeech, setBrowserSupportsNativeSpeech] = useState(false);
 	const [sandyConfig, setSandyConfig] = useState<SandyCoreConfig>({
 		feature_flags: { ...DEFAULT_FEATURE_FLAGS },
+		banned_content: {},
 	});
 	const [sandyHasLocalChanges, setSandyHasLocalChanges] = useState(false);
 
@@ -300,10 +299,7 @@ export function useSettingsPanel() {
 				fish_audio_key: form.fish_audio_key,
 				voice_id: form.voice_id,
 				persona_profile: sandyConfig.persona_profile,
-				prompt_overrides: sandyConfig.prompt_overrides,
-				custom_banned_words: sandyConfig.custom_banned_words,
-				custom_banned_symbols: sandyConfig.custom_banned_symbols,
-				custom_banned_links: sandyConfig.custom_banned_links,
+				...toBannedContentPayload(sandyConfig.banned_content),
 				service_mode: form.service_mode,
 				auto_start_on_live: form.auto_start_on_live,
 				auto_stop_on_offline: form.auto_stop_on_offline,

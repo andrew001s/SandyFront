@@ -11,7 +11,7 @@ import {
 	FEATURE_FLAG_LABELS,
 	type FeatureFlagKey,
 	type FeatureFlags,
-} from '@/lib/sandycore-config';
+} from '@/lib/feature-flags';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@clerk/nextjs';
 import {
