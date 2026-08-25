@@ -34,6 +34,9 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 	const { addMessage } = useMessages();
 	const { settings, isLoading } = useAppSettings();
 	const effectiveSttProvider = getStoredSttProvider() ?? settings?.stt_provider ?? 'azure';
+	// Espejo en estado de `shouldListen`: el módulo conserva la intención entre
+	// montajes, pero React necesita un estado para repintar el icono.
+	const [micEnabled, setMicEnabled] = useState(shouldListen);
 	const [missingRequirements, setMissingRequirements] = useState<VoiceRequirement[]>([]);
 	const [isSetupDialogOpen, setIsSetupDialogOpen] = useState(false);
 
@@ -169,6 +172,11 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 	// La intención del usuario se guarda aparte y se vuelve a llamar a
 	// startListening(), que es idempotente: si de verdad está escuchando no hace
 	// nada, y si no, arranca y reemite el estado, resincronizando la UI.
+	const setListenIntent = useCallback((next: boolean) => {
+		shouldListen = next;
+		setMicEnabled(next);
+	}, []);
+
 	const resumeListeningIfNeeded = useCallback(() => {
 		if (!shouldListen || document.visibilityState !== 'visible') {
 			return;
@@ -211,7 +219,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 				return;
 			}
 
-			shouldListen = true;
+			setListenIntent(true);
 			void startListening();
 			posthog.capture('voice_recognition_toggled', {
 				enabled: true,
@@ -219,7 +227,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 			});
 			toast.success('Reconocimiento de voz activado');
 		} else {
-			shouldListen = false;
+			setListenIntent(false);
 			void SpeechRecognition.stopListening();
 			posthog.capture('voice_recognition_toggled', {
 				enabled: false,
@@ -235,10 +243,10 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 			<>
 				<button
 					type='button'
-					onClick={() => handleSpeechToggle(!shouldListen)}
+					onClick={() => handleSpeechToggle(!micEnabled)}
 					className={cn(
 						'group relative flex h-full flex-col items-center gap-3 overflow-hidden rounded-2xl border p-5 text-center outline-none transition-all focus-visible:ring-2 focus-visible:ring-violet-500/50',
-						listening
+						micEnabled
 							? 'border-violet-500/30 bg-violet-500/5 hover:border-violet-500/50 hover:bg-violet-500/10'
 							: 'border-border/60 bg-background/60 hover:border-border hover:bg-accent/50',
 					)}
@@ -254,30 +262,34 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 					<span
 						className={cn(
 							'absolute top-3 right-3 flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-medium text-[10px] uppercase tracking-wide',
-							listening
-								? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-								: 'border-border/70 bg-background/80 text-muted-foreground',
+							!micEnabled
+								? 'border-border/70 bg-background/80 text-muted-foreground'
+								: listening
+									? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+									: 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400',
 						)}
 					>
 						<span
 							className={cn(
 								'size-1.5 rounded-full',
-								listening
-									? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.9)]'
-									: 'bg-muted-foreground',
+								!micEnabled
+									? 'bg-muted-foreground'
+									: listening
+										? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.9)]'
+										: 'bg-amber-500',
 							)}
 						/>
-						{listening ? 'Escuchando' : 'Inactivo'}
+						{!micEnabled ? 'Inactivo' : listening ? 'Escuchando' : 'Reconectando'}
 					</span>
 					<div
 						className={cn(
 							'mt-5 flex size-12 items-center justify-center rounded-2xl border shadow-sm transition-colors',
-							listening
+							micEnabled
 								? 'border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-[#A78BFA]'
 								: 'border-border/70 bg-background/80 text-muted-foreground',
 						)}
 					>
-						{listening ? (
+						{micEnabled ? (
 							<ThinkingOrb state='listening' size={64} speed={0.55} />
 						) : (
 							<Mic className='size-6' />
@@ -286,8 +298,10 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 					<div className='relative z-10'>
 						<p className='font-medium text-sm'>Micrófono</p>
 						<p className='text-muted-foreground text-xs'>
-							{listening
-								? 'Escuchando... di algo para hablar con Sandy.'
+							{micEnabled
+								? listening
+									? 'Escuchando... di algo para hablar con Sandy.'
+									: 'Reanudando el reconocimiento...'
 								: browserSupportsSpeechRecognition
 									? 'Activa el micrófono para hablar con Sandy.'
 									: 'Tu navegador no soporta reconocimiento de voz.'}
@@ -318,7 +332,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 					<Mic size={18} className='text-violet-600 dark:text-[#A78BFA]' />
 					<span className='font-medium text-sm'>Reconocimiento de Voz</span>
 					<div className='ml-auto'>
-						<SwitchComponent onCheckedChange={handleSpeechToggle} />
+						<SwitchComponent checked={micEnabled} onCheckedChange={handleSpeechToggle} />
 					</div>
 				</div>
 				{transcript && (

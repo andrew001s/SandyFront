@@ -3,14 +3,17 @@ import styled from 'styled-components';
 
 interface SwitchProps {
 	onCheckedChange?: (checked: boolean) => void;
+	/** Si se pasa, el switch queda controlado por el padre. */
+	checked?: boolean;
 }
 
-const SwitchComponent = ({ onCheckedChange }: SwitchProps) => {
-	const [checked, setChecked] = useState(false);
+const SwitchComponent = ({ onCheckedChange, checked: controlledChecked }: SwitchProps) => {
+	const [internalChecked, setInternalChecked] = useState(false);
+	const checked = controlledChecked ?? internalChecked;
 
 	const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const isChecked = event.target.checked;
-		setChecked(isChecked);
+		setInternalChecked(isChecked);
 		onCheckedChange?.(isChecked);
 	};
 
