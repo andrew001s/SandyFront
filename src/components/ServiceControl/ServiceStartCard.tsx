@@ -1,7 +1,6 @@
 'use client';
 
 import { getTokens } from '@/api/fetchAuth';
-import { getProfileInfo } from '@/api/fetchProfile';
 import { type ServiceStatus, getServiceStatus, start, stop } from '@/api/sandycore';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,6 +15,7 @@ import { useStatus } from '@/context/StatusContext';
 import { ServiceStartSkeleton } from '@/components/loading/dashboard-skeletons';
 import { cn } from '@/lib/utils';
 import { Power } from 'lucide-react';
+import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import posthog from 'posthog-js';
 import { useCallback, useEffect, useState } from 'react';
@@ -28,34 +28,37 @@ export function ServiceStartCard() {
 	const [isBusy, setIsBusy] = useState(false);
 	const [isStopConfirmOpen, setIsStopConfirmOpen] = useState(false);
 	const [isConfigured, setIsConfigured] = useState<boolean | null>(null);
-	const [isTwitchAuthenticated, setIsTwitchAuthenticated] = useState<boolean | null>(null);
 	const [serviceStatus, setServiceStatus] = useState<ServiceStatus | null>(null);
+	const [hasLoadedStatus, setHasLoadedStatus] = useState(false);
+	const [statusError, setStatusError] = useState(false);
+	const { isLoaded, isSignedIn } = useAuth();
 
 	const isRunning = serviceStatus?.running === true;
-	const statusLoaded = serviceStatus !== null && isTwitchAuthenticated !== null;
+	// Se mide "ya intentamos cargar", no "tenemos datos": antes, si /service-status
+	// fallaba, serviceStatus se quedaba en null y el esqueleto no se iba nunca.
+	const statusLoaded = hasLoadedStatus && isConfigured !== null;
 
 	const refreshStatus = useCallback(async () => {
 		try {
-			const [serviceSnapshot, profileSnapshot] = await Promise.allSettled([
-				getServiceStatus(),
-				getProfileInfo(false),
-			]);
-
-			if (serviceSnapshot.status === 'fulfilled') {
-				setServiceStatus(serviceSnapshot.value);
-			}
-
-			if (profileSnapshot.status === 'fulfilled') {
-				setIsTwitchAuthenticated(Boolean(profileSnapshot.value));
-			} else {
-				setIsTwitchAuthenticated(false);
-			}
+			setServiceStatus(await getServiceStatus());
+			setStatusError(false);
 		} catch (error) {
 			console.error('Error al obtener el estado del servicio:', error);
+			setStatusError(true);
+		} finally {
+			setHasLoadedStatus(true);
 		}
 	}, []);
 
+	// Las peticiones van con el token de Clerk que inyecta backendClient leyendo
+	// window.Clerk. Al montar puede no estar hidratado todavía: si se disparaban
+	// igual, volvían 401 y la tarjeta quedaba en su estado inicial hasta que el
+	// usuario navegaba a otra ruta y volvía.
 	useEffect(() => {
+		if (!isLoaded || !isSignedIn) {
+			return;
+		}
+
 		let active = true;
 		getTokens(false)
 			.then((stored) => {
@@ -71,15 +74,19 @@ export function ServiceStartCard() {
 		return () => {
 			active = false;
 		};
-	}, []);
+	}, [isLoaded, isSignedIn]);
 
 	useEffect(() => {
+		if (!isLoaded || !isSignedIn) {
+			return;
+		}
+
 		void refreshStatus();
 		const intervalId = window.setInterval(() => {
 			void refreshStatus();
 		}, 30_000);
 		return () => window.clearInterval(intervalId);
-	}, [refreshStatus]);
+	}, [isLoaded, isSignedIn, refreshStatus]);
 
 	const handleStart = async () => {
 		try {
@@ -132,16 +139,19 @@ export function ServiceStartCard() {
 	};
 
 	const active = isRunning;
+	const isStatusUnknown = statusError && serviceStatus === null;
 	const pillLabel = !statusLoaded
 		? 'Verificando'
 		: !isConfigured
 			? 'Sin conexión'
-			: active
-				? 'Activo'
-				: 'Inactivo';
+			: isStatusUnknown
+				? 'Sin datos'
+				: active
+					? 'Activo'
+					: 'Inactivo';
 	const pillTone = !statusLoaded
 		? 'border-border/70 bg-background/80 text-muted-foreground'
-		: !isConfigured
+		: !isConfigured || isStatusUnknown
 			? 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'
 			: active
 				? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
@@ -149,11 +159,13 @@ export function ServiceStartCard() {
 
 	const description = !statusLoaded
 		? 'Consultando el estado del servicio...'
-		: active
-			? 'La VTuber está activa y responde a tu chat.'
-			: isConfigured === false
-				? 'Conecta tu cuenta principal de Twitch para iniciar.'
-				: 'Inicia la VTuber para que responda a tu chat.';
+		: isConfigured === false
+			? 'Conecta tu cuenta principal de Twitch para iniciar.'
+			: isStatusUnknown
+				? 'No se pudo consultar el estado. Reintentando...'
+				: active
+					? 'La VTuber está activa y responde a tu chat.'
+					: 'Inicia la VTuber para que responda a tu chat.';
 	const actionLabel = isBusy
 		? isRunning
 			? 'Pausando...'
@@ -198,7 +210,7 @@ export function ServiceStartCard() {
 							'size-1.5 rounded-full',
 							!statusLoaded
 								? 'bg-muted-foreground'
-								: !isConfigured
+								: !isConfigured || isStatusUnknown
 									? 'bg-amber-500'
 									: active
 										? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.9)]'
