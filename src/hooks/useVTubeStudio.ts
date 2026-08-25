@@ -117,8 +117,49 @@ const LIPSYNC_INPUTS = [
 	},
 ] as const;
 
+// La conexión con VTS es única para toda la app, pero `useVTubeStudio` se usa
+// desde varios componentes a la vez (chat, avatar, onboarding). El estado vive
+// en el módulo y cada instancia se suscribe: antes, la que no había creado el
+// cliente nunca se enteraba de que la conexión se abría o se caía.
 let sharedClient: ApiClient | null = null;
 let sharedConnected = false;
+let sharedConnecting = false;
+let sharedParametersReady = false;
+let sharedConnectPromise: Promise<void> | null = null;
+let sharedAutoConnectTried = false;
+const VTS_TOKEN_KEY = 'vts_auth_token';
+const sharedListeners = new Set<() => void>();
+
+const notifySharedState = () => {
+	for (const listener of sharedListeners) {
+		listener();
+	}
+};
+
+/**
+ * Inyecta parámetros leyendo el cliente compartido en cada llamada, en vez de
+ * capturarlo en un closure: el handler de lip sync sobrevive a reconexiones.
+ */
+const injectSharedParameters = async (params: { id: string; value: number }[]) => {
+	const client = sharedClient;
+	if (!client || !sharedParametersReady) return;
+
+	await client.injectParameterData({
+		mode: 'set',
+		parameterValues: params.map((p) => ({ id: p.id, value: p.value })),
+	});
+};
+
+const attachLipSync = () => {
+	AudioQueueManager.getInstance().setLipSyncHandler(
+		createVtsLipSyncHandler(injectSharedParameters),
+	);
+};
+
+const detachLipSync = () => {
+	AudioQueueManager.getInstance().setLipSyncHandler(null);
+	stopVtsLipSync();
+};
 
 export function useVTubeStudio(): UseVTSReturn {
 	const [connecting, setConnecting] = useState(false);
@@ -190,17 +231,10 @@ export function useVTubeStudio(): UseVTSReturn {
 		[handleError],
 	);
 
-	const injectParameters = useCallback(async (params: { id: string; value: number }[]) => {
-		const client = clientRef.current;
-		if (!client) return;
-		await client.injectParameterData({
-			mode: 'set',
-			parameterValues: params.map((p) => ({
-				id: p.id,
-				value: p.value,
-			})),
-		});
-	}, []);
+	const injectParameters = useCallback(
+		(params: { id: string; value: number }[]) => injectSharedParameters(params),
+		[],
+	);
 
 	const triggerHotkey = useCallback(
 		async (key: string) => {
@@ -352,33 +386,51 @@ export function useVTubeStudio(): UseVTSReturn {
 	);
 
 	useEffect(() => {
-		clientRef.current = sharedClient;
-		setConnected(sharedConnected);
+		const syncFromShared = () => {
+			clientRef.current = sharedClient;
+			setConnected(sharedConnected);
+			setConnecting(sharedConnecting);
+		};
 
-		if (sharedClient && sharedConnected) {
-			void syncClientState(sharedClient);
-			AudioQueueManager.getInstance().setLipSyncHandler(createVtsLipSyncHandler(injectParameters));
+		syncFromShared();
+		sharedListeners.add(syncFromShared);
+		return () => {
+			sharedListeners.delete(syncFromShared);
+		};
+	}, []);
+
+	// Se recarga el catálogo del modelo cada vez que esta instancia pasa a
+	// conectada, venga de su propio connect() o de otra pestaña del dashboard.
+	useEffect(() => {
+		if (connected && clientRef.current) {
+			void syncClientState(clientRef.current);
 		}
-	}, [injectParameters, syncClientState]);
+	}, [connected, syncClientState]);
 
 	const connect = useCallback(
-		async (port = 8001) => {
-			if (connecting) return;
-			setConnecting(true);
+		async (port = 8001, options: { silent?: boolean } = {}) => {
+			// Una sola conexión en vuelo para toda la app: si dos componentes piden
+			// conectar a la vez, el segundo espera a la misma promesa en lugar de
+			// abrir un cliente paralelo o seguir sin conexión.
+			if (sharedConnectPromise) {
+				await sharedConnectPromise;
+				return;
+			}
+
+			if (sharedClient && sharedConnected && sharedParametersReady) {
+				clientRef.current = sharedClient;
+				setConnected(true);
+				attachLipSync();
+				await syncClientState(sharedClient);
+				return;
+			}
+
 			setError(null);
+			sharedConnecting = true;
+			notifySharedState();
 
-			try {
-				if (sharedClient && sharedConnected) {
-					clientRef.current = sharedClient;
-					setConnected(true);
-					AudioQueueManager.getInstance().setLipSyncHandler(
-						createVtsLipSyncHandler(injectParameters),
-					);
-					await syncClientState(sharedClient);
-					return;
-				}
-
-				if (sharedClient && !sharedConnected) {
+			const run = async () => {
+				if (sharedClient) {
 					try {
 						await sharedClient.disconnect();
 					} catch {
@@ -389,33 +441,30 @@ export function useVTubeStudio(): UseVTSReturn {
 				const client = new ApiClient({
 					pluginName: PLUGIN_NAME,
 					pluginDeveloper: PLUGIN_DEVELOPER,
-					authTokenGetter: () => localStorage.getItem('vts_auth_token'),
+					authTokenGetter: () => localStorage.getItem(VTS_TOKEN_KEY),
 					authTokenSetter: async (token) => {
-						localStorage.setItem('vts_auth_token', token);
+						localStorage.setItem(VTS_TOKEN_KEY, token);
 					},
 					port,
 					pluginIcon: undefined,
 				});
 
-				clientRef.current = client;
 				sharedClient = client;
+				sharedParametersReady = false;
 
 				client.on('connect', () => {
 					sharedConnected = true;
 					posthog.capture('vtube_studio_connected');
-					setConnected(true);
-					AudioQueueManager.getInstance().setLipSyncHandler(
-						createVtsLipSyncHandler(injectParameters),
-					);
+					notifySharedState();
 					void client.events.modelLoaded.subscribe(() => {
 						void syncModelState(client);
 					}, {});
 				});
 				client.on('disconnect', () => {
 					sharedConnected = false;
-					setConnected(false);
-					AudioQueueManager.getInstance().setLipSyncHandler(null);
-					stopVtsLipSync();
+					sharedParametersReady = false;
+					detachLipSync();
+					notifySharedState();
 				});
 				client.on('error', (err) => {
 					setError(handleError(err));
@@ -429,14 +478,14 @@ export function useVTubeStudio(): UseVTSReturn {
 				}
 
 				if (!apiState.currentSessionAuthenticated) {
-					let token = localStorage.getItem('vts_auth_token');
+					let token = localStorage.getItem(VTS_TOKEN_KEY);
 					if (!token) {
 						const tokenResp = await client.authenticationToken({
 							pluginName: PLUGIN_NAME,
 							pluginDeveloper: PLUGIN_DEVELOPER,
 						});
 						token = tokenResp.authenticationToken;
-						localStorage.setItem('vts_auth_token', token);
+						localStorage.setItem(VTS_TOKEN_KEY, token);
 					}
 
 					const authResp = await client.authentication({
@@ -470,26 +519,58 @@ export function useVTubeStudio(): UseVTSReturn {
 					}
 				}
 
+				// Recién acá se engancha el lip sync. Si se enganchaba en el evento
+				// 'connect' quedaba activo durante la autenticación (que la primera vez
+				// espera al popup de VTS) y antes de que existieran los parámetros
+				// custom, así que toda inyección de esa ventana se perdía.
+				sharedParametersReady = true;
+				attachLipSync();
+
 				await syncClientState(client);
+			};
+
+			sharedConnectPromise = run();
+
+			try {
+				await sharedConnectPromise;
 			} catch (e) {
-				const msg = handleError(e);
-				setError(msg);
+				// El reintento automático tras recargar no debe pintar un error si
+				// VTS simplemente no está abierto: el usuario no pidió conectar.
+				if (!options.silent) {
+					setError(handleError(e));
+				}
 			} finally {
-				setConnecting(false);
+				sharedConnectPromise = null;
+				sharedConnecting = false;
+				notifySharedState();
 			}
 		},
-		[connecting, handleError, injectParameters, syncClientState, syncModelState],
+		[handleError, syncClientState, syncModelState],
 	);
 
+	// Al recargar se pierde el WebSocket con VTS. Si ya hubo emparejamiento (hay
+	// token guardado) se reconecta solo: la autenticación es silenciosa y no
+	// dispara el popup de VTS. Una sola vez por carga, la dispare quien la dispare.
+	useEffect(() => {
+		if (sharedAutoConnectTried || sharedClient || typeof window === 'undefined') {
+			return;
+		}
+		if (!window.localStorage.getItem(VTS_TOKEN_KEY)) {
+			return;
+		}
+
+		sharedAutoConnectTried = true;
+		void connect(8001, { silent: true });
+	}, [connect]);
+
 	const disconnect = useCallback(async () => {
-		await clientRef.current?.disconnect();
+		await sharedClient?.disconnect();
 		posthog.capture('vtube_studio_disconnected');
 		sharedConnected = false;
+		sharedParametersReady = false;
 		sharedClient = null;
-		clientRef.current = null;
-		AudioQueueManager.getInstance().setLipSyncHandler(null);
-		stopVtsLipSync();
-		setConnected(false);
+		detachLipSync();
+		notifySharedState();
 		setStats(null);
 		setModels([]);
 		setCurrentModel(null);

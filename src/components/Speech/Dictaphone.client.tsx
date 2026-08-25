@@ -21,6 +21,11 @@ import { createSpeechServicesPonyfill } from 'web-speech-cognitive-services';
 import SwitchComponent from '../SwitchComponent/Switch';
 import { TypingAnimation } from '../magicui/typing-animation';
 
+// El reconocimiento de react-speech-recognition es un singleton de módulo, así que
+// la intención del usuario también: si fuera un ref del componente se perdería al
+// navegar fuera de /home y volver.
+let shouldListen = false;
+
 const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 	const { addToQueue } = useAudioQueue();
 	const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -145,11 +150,41 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 		};
 	}, []);
 
-	const startListening = () =>
-		SpeechRecognition.startListening({
-			continuous: true,
-			language: settings?.language || 'es-ES',
-		});
+	const startListening = useCallback(
+		() =>
+			SpeechRecognition.startListening({
+				continuous: true,
+				language: settings?.language || 'es-ES',
+			}),
+		[settings?.language],
+	);
+
+	// Cuando la pestaña pasa a segundo plano el navegador corta el reconocimiento.
+	// react-speech-recognition intenta reiniciarlo solo, pero si ese `start()` falla
+	// (Chrome lo rechaza en pestañas ocultas) se traga el error y deja su estado
+	// interno en `listening = false` SIN avisar a los suscriptores: la UI se queda
+	// en "Escuchando" y `stopListening()` tampoco hace nada, porque internamente ya
+	// no está escuchando. De ahí que solo se recuperara recargando.
+	//
+	// La intención del usuario se guarda aparte y se vuelve a llamar a
+	// startListening(), que es idempotente: si de verdad está escuchando no hace
+	// nada, y si no, arranca y reemite el estado, resincronizando la UI.
+	const resumeListeningIfNeeded = useCallback(() => {
+		if (!shouldListen || document.visibilityState !== 'visible') {
+			return;
+		}
+		void startListening();
+	}, [startListening]);
+
+	useEffect(() => {
+		document.addEventListener('visibilitychange', resumeListeningIfNeeded);
+		const watchdog = window.setInterval(resumeListeningIfNeeded, 5000);
+
+		return () => {
+			document.removeEventListener('visibilitychange', resumeListeningIfNeeded);
+			window.clearInterval(watchdog);
+		};
+	}, [resumeListeningIfNeeded]);
 
 	const handleSpeechToggle = (checked: boolean) => {
 		// Apagar siempre debe funcionar: la validación solo aplica al encender,
@@ -176,14 +211,16 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 				return;
 			}
 
-			startListening();
+			shouldListen = true;
+			void startListening();
 			posthog.capture('voice_recognition_toggled', {
 				enabled: true,
 				provider: effectiveSttProvider,
 			});
 			toast.success('Reconocimiento de voz activado');
 		} else {
-			SpeechRecognition.stopListening();
+			shouldListen = false;
+			void SpeechRecognition.stopListening();
 			posthog.capture('voice_recognition_toggled', {
 				enabled: false,
 				provider: effectiveSttProvider,
@@ -198,7 +235,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 			<>
 				<button
 					type='button'
-					onClick={() => handleSpeechToggle(!listening)}
+					onClick={() => handleSpeechToggle(!shouldListen)}
 					className={cn(
 						'group relative flex h-full flex-col items-center gap-3 overflow-hidden rounded-2xl border p-5 text-center outline-none transition-all focus-visible:ring-2 focus-visible:ring-violet-500/50',
 						listening
