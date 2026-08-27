@@ -199,7 +199,7 @@ export function AiStep({ payload }: StepProps) {
 			: [
 					{
 						label: 'Crear API key',
-						href: 'https://openrouter.ai/docs/api/api-reference/api-keys/create-keys',
+						href: 'https://openrouter.ai/workspaces/default/keys',
 						description: 'Generar una key nueva en OpenRouter.',
 					},
 					{
