@@ -107,11 +107,11 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 				timestamp: new Date().toISOString(),
 			});
 
-			// El modelo local ya no se llama desde aquí: el backend compone el
-			// prompt y delega la inferencia en el relevo SSE de la app.
+			const localAi = resolveLocalAiSettings(settings ?? null);
 			const stream = streamAiResponse({
 				provider: getStoredAiProvider() ?? settings?.ai_provider ?? 'gemini',
 				message: pending,
+				local: { baseUrl: localAi.baseUrl, model: localAi.model },
 			});
 
 			if (settings?.feature_flags?.voice_replies === false) {

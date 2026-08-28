@@ -4,23 +4,9 @@ import { StarField } from '@/components/landing/StarField';
 import { AppSidebar } from '@/components/ui/app-sidebar';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSettingsProvider } from '@/context/AppSettingsContext';
-import { useLocalAiRelay } from '@/hooks/useLocalAiRelay';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
-
-/**
- * Atiende las peticiones de inferencia que el backend publica por SSE cuando el
- * proveedor es el modelo local.
- *
- * Va dentro de AppSettingsProvider —lee la configuración— y a nivel del shell,
- * no de una pantalla concreta, para que el chat de Twitch y los eventos sigan
- * respondiendo aunque el panel de conversación no esté abierto.
- */
-function LocalAiRelay() {
-	useLocalAiRelay();
-	return null;
-}
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
 	const { theme, setTheme } = useTheme();
@@ -30,7 +16,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
 	return (
 		<AppSettingsProvider>
-			<LocalAiRelay />
 			<SidebarProvider defaultOpen={true}>
 				<AppSidebar />
 				<SidebarInset>
