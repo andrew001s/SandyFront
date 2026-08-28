@@ -1,12 +1,12 @@
 'use client';
 
+import { OpenRouterModelDialog } from '@/components/Settings/OpenRouterModelDialog';
 import { SandyCoreConfigPanel } from '@/components/Settings/SandyCoreConfigPanel';
+import { SettingsHeader } from '@/components/Settings/SettingsHeader';
 import { AiProviderSection } from '@/components/Settings/sections/AiProviderSection';
 import { ServiceLifecycleSection } from '@/components/Settings/sections/ServiceLifecycleSection';
-import { SettingsHeader } from '@/components/Settings/SettingsHeader';
 import { SpeechSection } from '@/components/Settings/sections/SpeechSection';
 import { VoiceSection } from '@/components/Settings/sections/VoiceSection';
-import { OpenRouterModelDialog } from '@/components/Settings/OpenRouterModelDialog';
 import { azureLanguages, azureRegions } from '@/components/Settings/settings.constants';
 import { useSettingsPanel } from '@/components/Settings/useSettingsPanel';
 import { SettingsSkeleton } from '@/components/loading/dashboard-skeletons';
@@ -56,9 +56,7 @@ export function SettingsPanel({ defaultTab }: { defaultTab?: string } = {}) {
 		isAzureLanguageOpen,
 		setIsAzureLanguageOpen,
 		updateField,
-		updateLifecycleBoolean,
 		updateSttProvider,
-		updateIdleTimeout,
 		updateChunkSize,
 		handleSandyConfigChange,
 		handleStopService,
@@ -174,14 +172,7 @@ export function SettingsPanel({ defaultTab }: { defaultTab?: string } = {}) {
 					</TabsContent>
 
 					<TabsContent value='services' className='mt-0'>
-						<ServiceLifecycleSection
-							form={form}
-							isStopping={isStopping}
-							onStopService={handleStopService}
-							updateField={updateField}
-							updateLifecycleBoolean={updateLifecycleBoolean}
-							updateIdleTimeout={updateIdleTimeout}
-						/>
+						<ServiceLifecycleSection isStopping={isStopping} onStopService={handleStopService} />
 					</TabsContent>
 				</Tabs>
 			</section>

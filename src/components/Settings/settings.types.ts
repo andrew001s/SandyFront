@@ -15,10 +15,6 @@ export type SettingsFormState = {
 	language: string;
 	fish_audio_key: string;
 	voice_id: string;
-	service_mode: 'manual' | 'hybrid';
-	auto_start_on_live: boolean;
-	auto_stop_on_offline: boolean;
-	idle_timeout_minutes: number;
 	chunk_size: number;
 };
 

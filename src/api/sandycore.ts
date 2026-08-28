@@ -30,15 +30,11 @@ export async function stop(bot: boolean) {
 
 export type ServiceStatus = {
 	user_id: string;
-	service_mode: 'manual' | 'hybrid';
 	running: boolean;
 	armed: boolean;
 	monitor_active: boolean;
 	last_known_live: boolean | null;
 	last_activity: string | null;
-	auto_start_on_live: boolean;
-	auto_stop_on_offline: boolean;
-	idle_timeout_minutes: number;
 	status: 'active' | 'inactive';
 };
 
