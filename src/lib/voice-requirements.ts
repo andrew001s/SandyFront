@@ -1,5 +1,7 @@
 import { isValidLocalAiUrl } from '@/api/localAi';
 import type { SettingsPayload } from '@/api/settings';
+import type { AiProvider } from '@/lib/ai-provider';
+import type { LocalAiSettings } from '@/lib/local-ai-config';
 import type { SttProvider } from '@/lib/stt-provider';
 
 export const SETTINGS_AI_TAB_HREF = '/settings?tab=ai';
@@ -18,6 +20,10 @@ export type VoiceRequirement = {
 
 type VoiceRequirementsInput = {
 	settings: SettingsPayload | null;
+	/** Resuelto por quien llama, igual que `sttProvider`: la elección vive en el
+	 *  navegador y el backend no siempre la devuelve. */
+	aiProvider: AiProvider;
+	localAi: LocalAiSettings;
 	sttProvider: SttProvider | string;
 	browserSupportsSpeechRecognition: boolean;
 };
@@ -30,17 +36,17 @@ const hasValue = (value?: string | null) => Boolean(value?.trim());
  */
 export function getMissingVoiceRequirements({
 	settings,
+	aiProvider,
+	localAi,
 	sttProvider,
 	browserSupportsSpeechRecognition,
 }: VoiceRequirementsInput): VoiceRequirement[] {
 	const missing: VoiceRequirement[] = [];
-
-	const aiProvider = settings?.ai_provider ?? 'gemini';
 	const isAiConfigured =
 		aiProvider === 'openrouter'
 			? hasValue(settings?.openrouter_api_key) && hasValue(settings?.openrouter_model)
 			: aiProvider === 'local'
-				? isValidLocalAiUrl(settings?.local_api_url)
+				? isValidLocalAiUrl(localAi.baseUrl)
 				: hasValue(settings?.gemini_api_key);
 
 	if (!isAiConfigured) {

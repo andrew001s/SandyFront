@@ -12,6 +12,8 @@ export type OnboardingFlowData = {
 	geminiApiKey?: string;
 	openrouterApiKey?: string;
 	openrouterModel?: string;
+	localApiUrl?: string;
+	localModel?: string;
 	fishAudioKey?: string;
 	voiceId?: string;
 	sttProvider?: 'azure' | 'browser';

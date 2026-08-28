@@ -6,6 +6,7 @@ import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
 import { getAiErrorCode, getAiErrorMessage } from '@/lib/ai-errors';
 import { getStoredAiProvider } from '@/lib/ai-provider';
+import { resolveLocalAiSettings } from '@/lib/local-ai-config';
 import { speakTextStream } from '@/lib/speechPipeline';
 import { getStoredSttProvider } from '@/lib/stt-provider';
 import { cn } from '@/lib/utils';
@@ -33,6 +34,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 	const { addMessage } = useMessages();
 	const { settings, isLoading } = useAppSettings();
 	const effectiveSttProvider = getStoredSttProvider() ?? settings?.stt_provider ?? 'azure';
+	const effectiveAiProvider = getStoredAiProvider() ?? settings?.ai_provider ?? 'gemini';
 	// Espejo en estado de `shouldListen`: el módulo conserva la intención entre
 	// montajes, pero React necesita un estado para repintar el icono.
 	const [micEnabled, setMicEnabled] = useState(shouldListen);
@@ -105,14 +107,11 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 				timestamp: new Date().toISOString(),
 			});
 
-			const provider = getStoredAiProvider() ?? settings?.ai_provider ?? 'gemini';
+			const localAi = resolveLocalAiSettings(settings ?? null);
 			const stream = streamAiResponse({
-				provider,
+				provider: getStoredAiProvider() ?? settings?.ai_provider ?? 'gemini',
 				message: pending,
-				local: {
-					baseUrl: settings?.local_api_url ?? '',
-					model: settings?.local_model,
-				},
+				local: { baseUrl: localAi.baseUrl, model: localAi.model },
 			});
 
 			if (settings?.feature_flags?.voice_replies === false) {
@@ -232,6 +231,8 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 
 			const missing = getMissingVoiceRequirements({
 				settings,
+				aiProvider: effectiveAiProvider,
+				localAi: resolveLocalAiSettings(settings ?? null),
 				sttProvider: effectiveSttProvider,
 				browserSupportsSpeechRecognition,
 			});

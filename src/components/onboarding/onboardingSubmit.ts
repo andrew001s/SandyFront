@@ -21,6 +21,14 @@ export function buildOnboardingSettingsPayload(flowData: OnboardingFlowData): Se
 		payload.openrouter_model = flowData.openrouterModel;
 	}
 
+	if (flowData.localApiUrl !== undefined) {
+		payload.local_api_url = flowData.localApiUrl;
+	}
+
+	if (flowData.localModel !== undefined) {
+		payload.local_model = flowData.localModel;
+	}
+
 	if (flowData.fishAudioKey !== undefined) {
 		payload.fish_audio_key = flowData.fishAudioKey;
 		payload.tts_provider = TTS_PROVIDER;

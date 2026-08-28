@@ -16,6 +16,7 @@ import { type AiProvider, getStoredAiProvider, storeAiProvider } from '@/lib/ai-
 import { toBannedContentPayload } from '@/lib/banned-content';
 import { DEFAULT_FEATURE_FLAGS } from '@/lib/feature-flags';
 import { type SandyCoreConfig, normalizeSandyCoreConfig } from '@/lib/sandycore-config';
+import { resolveLocalAiSettings, storeLocalAiSettings } from '@/lib/local-ai-config';
 import { getStoredSttProvider, storeSttProvider } from '@/lib/stt-provider';
 import { useAuth } from '@clerk/nextjs';
 import posthog from 'posthog-js';
@@ -72,16 +73,15 @@ export function useSettingsPanel() {
 		setForm(normalizeSettings(settings));
 		const storedStt = getStoredSttProvider();
 		const storedAi = getStoredAiProvider();
-		if (
-			(storedStt && storedStt !== (settings?.stt_provider ?? 'azure')) ||
-			(storedAi && storedAi !== (settings?.ai_provider ?? 'gemini'))
-		) {
-			setForm((current) => ({
-				...current,
-				stt_provider: storedStt ?? current.stt_provider,
-				ai_provider: storedAi ?? current.ai_provider,
-			}));
-		}
+		const storedLocal = resolveLocalAiSettings(settings);
+
+		setForm((current) => ({
+			...current,
+			stt_provider: storedStt ?? current.stt_provider,
+			ai_provider: storedAi ?? current.ai_provider,
+			local_api_url: storedLocal.baseUrl || current.local_api_url,
+			local_model: storedLocal.model || current.local_model,
+		}));
 	}, [settings]);
 
 	useEffect(() => {
@@ -312,6 +312,12 @@ export function useSettingsPanel() {
 				idle_timeout_minutes: form.idle_timeout_minutes,
 				chunk_size: form.chunk_size,
 			};
+
+			// El backend no devuelve estos campos, así que se conservan en el navegador.
+			storeLocalAiSettings({
+				baseUrl: form.ai_provider === 'local' ? form.local_api_url : '',
+				model: form.ai_provider === 'local' ? form.local_model : '',
+			});
 
 			await saveSettings(payload, { token });
 			await refreshSettings();
