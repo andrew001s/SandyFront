@@ -38,6 +38,7 @@ export function SettingsPanel({ defaultTab }: { defaultTab?: string } = {}) {
 		settingsLoading,
 		sandyConfig,
 		geminiState,
+		localAiState,
 		openRouterState,
 		speechState,
 		fishState,
@@ -143,6 +144,7 @@ export function SettingsPanel({ defaultTab }: { defaultTab?: string } = {}) {
 						<AiProviderSection
 							form={form}
 							geminiState={geminiState}
+							localAiState={localAiState}
 							openRouterState={openRouterState}
 							setOpenRouterModalOpen={setIsOpenRouterModalOpen}
 							updateField={updateField}

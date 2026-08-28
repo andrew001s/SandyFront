@@ -1,3 +1,4 @@
+import { isValidLocalAiUrl } from '@/api/localAi';
 import type { SettingsPayload } from '@/api/settings';
 import type { SttProvider } from '@/lib/stt-provider';
 
@@ -38,7 +39,9 @@ export function getMissingVoiceRequirements({
 	const isAiConfigured =
 		aiProvider === 'openrouter'
 			? hasValue(settings?.openrouter_api_key) && hasValue(settings?.openrouter_model)
-			: hasValue(settings?.gemini_api_key);
+			: aiProvider === 'local'
+				? isValidLocalAiUrl(settings?.local_api_url)
+				: hasValue(settings?.gemini_api_key);
 
 	if (!isAiConfigured) {
 		missing.push({
@@ -47,7 +50,9 @@ export function getMissingVoiceRequirements({
 			description:
 				aiProvider === 'openrouter'
 					? 'Falta tu API key de OpenRouter o el modelo que quieres usar. Sin eso tu VTuber no puede responder a lo que digas.'
-					: 'Falta tu API key de Gemini. Sin eso tu VTuber no puede responder a lo que digas.',
+					: aiProvider === 'local'
+						? 'Falta la URL de tu modelo local, o no es una URL válida. Sin eso tu VTuber no puede responder a lo que digas.'
+						: 'Falta tu API key de Gemini. Sin eso tu VTuber no puede responder a lo que digas.',
 			href: SETTINGS_AI_TAB_HREF,
 			actionLabel: 'Configurar IA',
 		});

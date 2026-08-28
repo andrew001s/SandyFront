@@ -11,7 +11,8 @@ import type {
 	SettingsFormState,
 } from '@/components/Settings/settings.types';
 import { useAppSettings } from '@/context/AppSettingsContext';
-import { getStoredAiProvider, storeAiProvider } from '@/lib/ai-provider';
+import { isValidLocalAiUrl } from '@/api/localAi';
+import { type AiProvider, getStoredAiProvider, storeAiProvider } from '@/lib/ai-provider';
 import { toBannedContentPayload } from '@/lib/banned-content';
 import { DEFAULT_FEATURE_FLAGS } from '@/lib/feature-flags';
 import { type SandyCoreConfig, normalizeSandyCoreConfig } from '@/lib/sandycore-config';
@@ -50,6 +51,7 @@ export function useSettingsPanel() {
 	}, []);
 
 	const geminiState = form.gemini_api_key ? 'Configurado' : 'Pendiente';
+	const localAiState = isValidLocalAiUrl(form.local_api_url) ? 'Configurado' : 'Pendiente';
 	const openRouterState =
 		form.openrouter_api_key && form.openrouter_model ? 'Configurado' : 'Pendiente';
 	const speechState =
@@ -232,7 +234,7 @@ export function useSettingsPanel() {
 		}
 	}, []);
 
-	const handleProviderChange = useCallback((value: 'gemini' | 'openrouter') => {
+	const handleProviderChange = useCallback((value: AiProvider) => {
 		storeAiProvider(value);
 		setForm((current) => ({
 			...current,
@@ -240,6 +242,8 @@ export function useSettingsPanel() {
 			gemini_api_key: value === 'gemini' ? current.gemini_api_key : '',
 			openrouter_api_key: value === 'openrouter' ? current.openrouter_api_key : '',
 			openrouter_model: value === 'openrouter' ? current.openrouter_model : '',
+			local_api_url: value === 'local' ? current.local_api_url : '',
+			local_model: value === 'local' ? current.local_model : '',
 		}));
 	}, []);
 
@@ -291,6 +295,8 @@ export function useSettingsPanel() {
 				gemini_api_key: form.ai_provider === 'gemini' ? form.gemini_api_key : '',
 				openrouter_api_key: form.ai_provider === 'openrouter' ? form.openrouter_api_key : '',
 				openrouter_model: form.ai_provider === 'openrouter' ? form.openrouter_model : '',
+				local_api_url: form.ai_provider === 'local' ? form.local_api_url.trim() : '',
+				local_model: form.ai_provider === 'local' ? form.local_model.trim() : '',
 				stt_provider: form.stt_provider,
 				tts_provider: form.tts_provider,
 				azure_speech_key: form.azure_speech_key,
@@ -336,6 +342,7 @@ export function useSettingsPanel() {
 		browserSupportsNativeSpeech,
 		sandyConfig,
 		geminiState,
+		localAiState,
 		openRouterState,
 		speechState,
 		fishState,

@@ -1,11 +1,10 @@
 'use client';
 
-import { getVoiceSandy } from '@/api/fetchFishAudio';
 import { fetchStreamToken } from '@/api/streamToken';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
-import { useAudioQueue } from '@/hooks/useAudioQueue';
 import { useVTubeStudio } from '@/hooks/useVTubeStudio';
+import { singleChunkStream, speakTextStream } from '@/lib/speechPipeline';
 import type { AvatarBackendPayload } from '@/lib/vtsAvatarPayload';
 import { useAuth } from '@clerk/nextjs';
 import { useCallback, useEffect, useRef, type MutableRefObject } from 'react';
@@ -37,7 +36,6 @@ const StreamChat = () => {
 	const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const reconnectAttemptRef = useRef(0);
 	const isMountedRef = useRef(false);
-	const { addToQueue } = useAudioQueue();
 	const { addMessage } = useMessages();
 	const addMessageRef = useRef(addMessage);
 	const { settings } = useAppSettings();
@@ -76,18 +74,20 @@ const StreamChat = () => {
 			if (settings?.feature_flags?.voice_replies === false) {
 				return;
 			}
-			const audioBlob = await getVoiceSandy(text, {
-				apiKey: settings?.fish_audio_key ?? '',
-				voiceId: settings?.voice_id ?? '',
+			// El backend manda la respuesta ya completa, pero trocearla en frases
+			// permite empezar a sonar tras sintetizar la primera en vez de esperar
+			// al audio de todo el texto.
+			await speakTextStream(singleChunkStream(text), {
+				fish: {
+					apiKey: settings?.fish_audio_key ?? '',
+					voiceId: settings?.voice_id ?? '',
+				},
+				onSegmentError: (segment, error) => {
+					console.error('Error sintetizando el segmento:', segment, error);
+				},
 			});
-			addToQueue(audioBlob);
 		},
-		[
-			addToQueue,
-			settings?.feature_flags?.voice_replies,
-			settings?.fish_audio_key,
-			settings?.voice_id,
-		],
+		[settings?.feature_flags?.voice_replies, settings?.fish_audio_key, settings?.voice_id],
 	);
 
 	useEffect(() => {

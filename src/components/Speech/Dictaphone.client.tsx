@@ -1,12 +1,12 @@
 // components/Speech/Dictaphone.client.tsx
 'use client';
 
-import { getVoiceSandy } from '@/api/fetchFishAudio';
-import { getResponseGemini } from '@/api/fetchGemini';
+import { streamAiResponse } from '@/api/aiResponse';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
-import { useAudioQueue } from '@/hooks/useAudioQueue';
 import { getAiErrorCode, getAiErrorMessage } from '@/lib/ai-errors';
+import { getStoredAiProvider } from '@/lib/ai-provider';
+import { speakTextStream } from '@/lib/speechPipeline';
 import { getStoredSttProvider } from '@/lib/stt-provider';
 import { cn } from '@/lib/utils';
 import { getMissingVoiceRequirements, type VoiceRequirement } from '@/lib/voice-requirements';
@@ -27,7 +27,6 @@ import { TypingAnimation } from '../magicui/typing-animation';
 let shouldListen = false;
 
 const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
-	const { addToQueue } = useAudioQueue();
 	const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
 	const transcriptRef = useRef('');
 	const isSendingRef = useRef(false);
@@ -106,20 +105,48 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 				timestamp: new Date().toISOString(),
 			});
 
-			const response = await getResponseGemini(pending);
-			addMessage({
-				type: 'transcription',
-				content: `${vtuberName}: ${response}`,
-				timestamp: new Date().toISOString(),
+			const provider = getStoredAiProvider() ?? settings?.ai_provider ?? 'gemini';
+			const stream = streamAiResponse({
+				provider,
+				message: pending,
+				local: {
+					baseUrl: settings?.local_api_url ?? '',
+					model: settings?.local_model,
+				},
 			});
 
-			if (settings?.feature_flags?.voice_replies !== false) {
-				const audioBlob = await getVoiceSandy(response, {
+			if (settings?.feature_flags?.voice_replies === false) {
+				// Sin voz no hay nada que trocear: se consume el flujo y se vuelca a texto.
+				let text = '';
+				for await (const delta of stream) {
+					text += delta;
+				}
+				addMessage({
+					type: 'transcription',
+					content: `${vtuberName}: ${text}`,
+					timestamp: new Date().toISOString(),
+				});
+				return;
+			}
+
+			// El audio de cada frase se pide en cuanto la frase está completa, sin
+			// esperar al final de la respuesta. Con el modelo local esto arranca la
+			// voz mientras el modelo sigue generando.
+			const fullText = await speakTextStream(stream, {
+				fish: {
 					apiKey: settings?.fish_audio_key ?? '',
 					voiceId: settings?.voice_id ?? '',
-				});
-				addToQueue(audioBlob);
-			}
+				},
+				onSegmentError: (segment, error) => {
+					console.error('Error sintetizando el segmento:', segment, error);
+				},
+			});
+
+			addMessage({
+				type: 'transcription',
+				content: `${vtuberName}: ${fullText}`,
+				timestamp: new Date().toISOString(),
+			});
 		} catch (error) {
 			console.error('Error al obtener respuesta de audio:', error);
 			// El backend devuelve un código estable; el texto sale del catálogo
@@ -129,7 +156,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 		} finally {
 			isSendingRef.current = false;
 		}
-	}, [addMessage, addToQueue, resetTranscript, settings]);
+	}, [addMessage, resetTranscript, settings]);
 
 	// El handle vive en un ref, no en estado: resetSilenceTimer se dispara en
 	// cada palabra reconocida, mucho más rápido de lo que React re-renderiza.

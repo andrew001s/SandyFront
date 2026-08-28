@@ -1,4 +1,5 @@
 import { backendClient } from '@/api/backendClient';
+import type { AiProvider } from '@/lib/ai-provider';
 import type { FeatureFlags } from '@/lib/feature-flags';
 import type { PersonaProfile } from '@/lib/persona-profile';
 
@@ -15,9 +16,11 @@ export type SettingsPayload = {
 	redirect_uri?: string;
 	gemini_api_key?: string;
 	twitch_bot_account?: string;
-	ai_provider?: 'gemini' | 'openrouter';
+	ai_provider?: AiProvider;
 	openrouter_api_key?: string;
 	openrouter_model?: string;
+	local_api_url?: string;
+	local_model?: string;
 	stt_provider?: string;
 	tts_provider?: string;
 	azure_speech_key?: string;
