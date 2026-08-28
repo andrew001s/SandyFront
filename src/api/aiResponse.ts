@@ -1,5 +1,5 @@
-import { getResponseGemini } from '@/api/fetchGemini';
 import { type LocalAiConfig, streamLocalCompletion } from '@/api/localAi';
+import { streamResponseGemini } from '@/api/streamGemini';
 import type { AiProvider } from '@/lib/ai-provider';
 
 export type AiStreamRequest = {
@@ -12,10 +12,9 @@ export type AiStreamRequest = {
 /**
  * Devuelve la respuesta del motor de IA como flujo de deltas de texto.
  *
- * Solo el proveedor local transmite de verdad: Gemini y OpenRouter se resuelven
- * en el backend (`POST /gemini`), que responde con el mensaje completo. Para esos
- * se emite un único delta, de modo que el resto del sistema —troceo en frases y
- * síntesis encadenada— funciona igual sin ramificar en cada punto.
+ * Los tres proveedores transmiten de verdad: el local contra su propio
+ * servidor, y Gemini y OpenRouter contra `POST /gemini/stream`, que entrega el
+ * texto por frases según lo genera el modelo.
  */
 export async function* streamAiResponse(request: AiStreamRequest): AsyncGenerator<string> {
 	if (request.provider === 'local') {
@@ -30,6 +29,5 @@ export async function* streamAiResponse(request: AiStreamRequest): AsyncGenerato
 		return;
 	}
 
-	const response = await getResponseGemini(request.message);
-	yield typeof response === 'string' ? response : String(response ?? '');
+	yield* streamResponseGemini(request.message, request.signal);
 }

@@ -78,7 +78,39 @@ export const AI_ERROR_MESSAGES: Record<AiErrorCode, string> = {
 
 const FALLBACK = AI_ERROR_MESSAGES['error.unknown'];
 
+/**
+ * Error de IA que ya viene clasificado por el backend. Lo usa el cliente de
+ * streaming, donde el fallo llega como evento SSE y no como respuesta de axios.
+ */
+export class AiResponseError extends Error {
+	readonly payload: AiErrorPayload;
+
+	constructor(payload: AiErrorPayload) {
+		super(payload.message ?? 'No se pudo generar una respuesta');
+		this.name = 'AiResponseError';
+		this.payload = payload;
+	}
+}
+
+function isPayload(value: unknown): value is AiErrorPayload {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		typeof (value as AiErrorPayload).code === 'string'
+	);
+}
+
 function extractPayload(error: unknown): AiErrorPayload | null {
+	if (!error || typeof error !== 'object') {
+		return null;
+	}
+	// Se detecta por forma, no con `instanceof`: si el módulo acaba cargado dos
+	// veces (bundles distintos), la comprobación de clase falla en silencio y el
+	// error clasificado se degradaría a 'error.unknown'.
+	const direct = (error as { payload?: unknown }).payload;
+	if (isPayload(direct)) {
+		return direct;
+	}
 	// Forma de axios: error.response.data.error
 	const data = (error as { response?: { data?: { error?: unknown } } })?.response?.data?.error;
 	if (data && typeof data === 'object' && 'code' in data) {
