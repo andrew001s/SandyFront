@@ -5,7 +5,18 @@ export type FishAudioConfig = {
 	voiceId: string;
 };
 
-export async function getVoiceSandy(message: string, config: FishAudioConfig): Promise<Blob> {
+export type FishAudioRequestOptions = {
+	/** 'low' prioriza tiempo hasta el primer byte; 'normal' prioriza calidad. */
+	latency?: 'low' | 'normal' | 'balanced';
+	format?: 'wav' | 'pcm' | 'mp3' | 'opus';
+	signal?: AbortSignal;
+};
+
+export async function getVoiceSandy(
+	message: string,
+	config: FishAudioConfig,
+	options: FishAudioRequestOptions = {},
+): Promise<Blob> {
 	const { apiKey, voiceId } = config;
 	if (!apiKey || !voiceId) {
 		throw new Error('Fish Audio no está configurado');
@@ -20,10 +31,13 @@ export async function getVoiceSandy(message: string, config: FishAudioConfig): P
 		{
 			text: message,
 			reference_id: voiceId,
+			latency: options.latency ?? 'normal',
+			format: options.format ?? 'mp3',
 		},
 		{
 			headers: headers,
 			responseType: 'blob',
+			signal: options.signal,
 		},
 	);
 

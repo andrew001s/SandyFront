@@ -10,6 +10,8 @@ export const initialSettingsFormState: SettingsFormState = {
 	gemini_api_key: '',
 	openrouter_api_key: '',
 	openrouter_model: '',
+	local_api_url: '',
+	local_model: '',
 	stt_provider: 'azure',
 	tts_provider: TTS_PROVIDER,
 	azure_speech_key: '',
@@ -74,6 +76,8 @@ export const normalizeSettings = (settings?: SettingsPayload | null): SettingsFo
 	gemini_api_key: settings?.gemini_api_key ?? '',
 	openrouter_api_key: settings?.openrouter_api_key ?? '',
 	openrouter_model: settings?.openrouter_model ?? '',
+	local_api_url: settings?.local_api_url ?? '',
+	local_model: settings?.local_model ?? '',
 	stt_provider: settings?.stt_provider ?? 'azure',
 	// Se ignora lo que venga del backend: los perfiles viejos traen 'fish'.
 	tts_provider: TTS_PROVIDER,

@@ -1,10 +1,13 @@
 import type { TTS_PROVIDER } from '@/api/settings';
+import type { AiProvider } from '@/lib/ai-provider';
 
 export type SettingsFormState = {
-	ai_provider: 'gemini' | 'openrouter';
+	ai_provider: AiProvider;
 	gemini_api_key: string;
 	openrouter_api_key: string;
 	openrouter_model: string;
+	local_api_url: string;
+	local_model: string;
 	stt_provider: string;
 	tts_provider: typeof TTS_PROVIDER;
 	azure_speech_key: string;

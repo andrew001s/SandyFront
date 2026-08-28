@@ -1,4 +1,7 @@
+import { isValidLocalAiUrl } from '@/api/localAi';
 import type { SettingsPayload } from '@/api/settings';
+import type { AiProvider } from '@/lib/ai-provider';
+import type { LocalAiSettings } from '@/lib/local-ai-config';
 import type { SttProvider } from '@/lib/stt-provider';
 
 export const SETTINGS_AI_TAB_HREF = '/settings?tab=ai';
@@ -17,6 +20,10 @@ export type VoiceRequirement = {
 
 type VoiceRequirementsInput = {
 	settings: SettingsPayload | null;
+	/** Resuelto por quien llama, igual que `sttProvider`: la elección vive en el
+	 *  navegador y el backend no siempre la devuelve. */
+	aiProvider: AiProvider;
+	localAi: LocalAiSettings;
 	sttProvider: SttProvider | string;
 	browserSupportsSpeechRecognition: boolean;
 };
@@ -29,16 +36,18 @@ const hasValue = (value?: string | null) => Boolean(value?.trim());
  */
 export function getMissingVoiceRequirements({
 	settings,
+	aiProvider,
+	localAi,
 	sttProvider,
 	browserSupportsSpeechRecognition,
 }: VoiceRequirementsInput): VoiceRequirement[] {
 	const missing: VoiceRequirement[] = [];
-
-	const aiProvider = settings?.ai_provider ?? 'gemini';
 	const isAiConfigured =
 		aiProvider === 'openrouter'
 			? hasValue(settings?.openrouter_api_key) && hasValue(settings?.openrouter_model)
-			: hasValue(settings?.gemini_api_key);
+			: aiProvider === 'local'
+				? isValidLocalAiUrl(localAi.baseUrl)
+				: hasValue(settings?.gemini_api_key);
 
 	if (!isAiConfigured) {
 		missing.push({
@@ -47,7 +56,9 @@ export function getMissingVoiceRequirements({
 			description:
 				aiProvider === 'openrouter'
 					? 'Falta tu API key de OpenRouter o el modelo que quieres usar. Sin eso tu VTuber no puede responder a lo que digas.'
-					: 'Falta tu API key de Gemini. Sin eso tu VTuber no puede responder a lo que digas.',
+					: aiProvider === 'local'
+						? 'Falta la URL de tu modelo local, o no es una URL válida. Sin eso tu VTuber no puede responder a lo que digas.'
+						: 'Falta tu API key de Gemini. Sin eso tu VTuber no puede responder a lo que digas.',
 			href: SETTINGS_AI_TAB_HREF,
 			actionLabel: 'Configurar IA',
 		});

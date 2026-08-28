@@ -6,8 +6,6 @@ const normalizeBackendUrl = (url: string) => url.replace(/\/+$/, '');
 
 export const getBackendUrl = () => normalizeBackendUrl(rawBackendUrl);
 
-export const getBackendWsUrl = () => getBackendUrl().replace(/^http/, 'ws');
-
 type ClerkSessionLike = {
 	getToken?: () => Promise<string | null> | string | null;
 };
