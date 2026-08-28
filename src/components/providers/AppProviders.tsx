@@ -1,17 +1,29 @@
 'use client';
 
 import { GlobalAudioPlayer } from '@/components/audio/GlobalAudioPlayer';
+import { DashboardTourCard } from '@/components/tour/DashboardTourCard';
+import { DASHBOARD_TOUR_STORAGE_KEY, dashboardTourSteps } from '@/components/tour/dashboardTour';
 import { MessagesProvider } from '@/context/MessagesContext';
 import { StatusProvider } from '@/context/StatusContext';
 import { StatusProviderBot } from '@/context/StatusContextBot';
-import { dashboardTourSteps, DASHBOARD_TOUR_STORAGE_KEY } from '@/components/tour/dashboardTour';
-import { DashboardTourCard } from '@/components/tour/DashboardTourCard';
+import { useLocalAiRelay } from '@/hooks/useLocalAiRelay';
 import { useUser } from '@clerk/nextjs';
-import { NextStep, NextStepProvider, useNextStep } from 'nextstepjs';
-import { usePathname } from 'next/navigation';
-import posthog from 'posthog-js';
 import { useTheme } from 'next-themes';
+import { usePathname } from 'next/navigation';
+import { NextStep, NextStepProvider, useNextStep } from 'nextstepjs';
+import posthog from 'posthog-js';
 import { type ReactNode, useEffect, useRef } from 'react';
+
+/**
+ * Atiende las peticiones de inferencia del backend cuando el proveedor es el
+ * modelo local. Va aquí, y no en una pantalla concreta, para que siga
+ * respondiendo al chat y a los eventos aunque el usuario no tenga abierto el
+ * panel de conversación.
+ */
+function LocalAiRelay() {
+	useLocalAiRelay();
+	return null;
+}
 
 function PostHogUserIdentification() {
 	const { isLoaded, isSignedIn, user } = useUser();
@@ -99,6 +111,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
 	return (
 		<>
 			<PostHogUserIdentification />
+			<LocalAiRelay />
 			{isAppRoute ? (
 				<NextStepProvider>
 					<NextStep

@@ -1,0 +1,162 @@
+'use client';
+
+import { parseRelayRequest, sendRelayError, sendRelayResult } from '@/api/aiRelay';
+import { getBackendUrl } from '@/api/backendClient';
+import { streamLocalCompletion } from '@/api/localAi';
+import { fetchStreamToken } from '@/api/streamToken';
+import { useAppSettings } from '@/context/AppSettingsContext';
+import { getStoredAiProvider } from '@/lib/ai-provider';
+import { resolveLocalAiSettings } from '@/lib/local-ai-config';
+import { useAuth } from '@clerk/nextjs';
+import { useEffect, useRef } from 'react';
+
+// Corte para mandar un trozo: fin de frase. Enviar cada token serían cientos de
+// peticiones HTTP por respuesta y saldría más lento que acumularlo todo.
+const SENTENCE_BOUNDARY = /[.!?…]+["')\]]*\s/;
+const MAX_CHUNK_CHARS = 160;
+
+const RECONNECT_BASE_MS = 1000;
+const RECONNECT_MAX_MS = 30000;
+
+/**
+ * Atiende las peticiones de inferencia que el backend publica por SSE.
+ *
+ * Con el modelo local, el backend no puede alcanzarlo: compone el prompt
+ * —persona, reglas e historial— y delega solo la inferencia en el navegador.
+ * Este hook escucha esas peticiones, consulta el modelo y devuelve el texto.
+ *
+ * Con Gemini u OpenRouter el backend resuelve por su cuenta y nunca publica
+ * nada, así que el hook se queda inactivo.
+ */
+export function useLocalAiRelay(): void {
+	const { getToken, isLoaded, isSignedIn } = useAuth();
+	const { settings } = useAppSettings();
+	const sourceRef = useRef<EventSource | null>(null);
+	const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const attemptRef = useRef(0);
+	const configRef = useRef({ baseUrl: '', model: '' });
+
+	const provider = getStoredAiProvider() ?? settings?.ai_provider ?? 'gemini';
+	const isLocal = provider === 'local';
+
+	// La config se lee desde un ref: el listener del SSE vive fuera del ciclo de
+	// render y se quedaría con el valor del render que lo creó.
+	useEffect(() => {
+		configRef.current = resolveLocalAiSettings(settings ?? null);
+	}, [settings]);
+
+	useEffect(() => {
+		if (!isLocal || !isLoaded || !isSignedIn) {
+			return;
+		}
+
+		let cancelled = false;
+
+		const close = () => {
+			sourceRef.current?.close();
+			sourceRef.current = null;
+		};
+
+		const scheduleReconnect = () => {
+			if (cancelled) return;
+			const delay = Math.min(RECONNECT_BASE_MS * 2 ** attemptRef.current, RECONNECT_MAX_MS);
+			attemptRef.current += 1;
+			reconnectRef.current = setTimeout(() => void open(), delay);
+		};
+
+		const handleRequest = async (raw: string) => {
+			const request = parseRelayRequest(JSON.parse(raw));
+			if (!request) return;
+
+			const { baseUrl, model } = configRef.current;
+			if (!baseUrl) {
+				await sendRelayError(
+					request.requestId,
+					'error.missing-config',
+					'Falta la URL del modelo local en Ajustes',
+				);
+				return;
+			}
+
+			try {
+				const deltas = streamLocalCompletion(
+					{ baseUrl, model },
+					{ message: request.message, systemPrompt: request.systemInstruction },
+				);
+
+				// La clasificación necesita el JSON entero; no tiene sentido trocearla.
+				if (request.kind === 'structured') {
+					let text = '';
+					for await (const delta of deltas) {
+						text += delta;
+					}
+					await sendRelayResult(request.requestId, text);
+					return;
+				}
+
+				// Los envíos van en serie a propósito: el backend reconstruye la
+				// respuesta en orden de llegada.
+				let pending = '';
+				for await (const delta of deltas) {
+					pending += delta;
+					const match = SENTENCE_BOUNDARY.exec(pending);
+					const corte = match ? match.index + match[0].length : -1;
+
+					if (corte > 0) {
+						await sendRelayResult(request.requestId, pending.slice(0, corte), true);
+						pending = pending.slice(corte);
+					} else if (pending.length >= MAX_CHUNK_CHARS) {
+						const espacio = pending.lastIndexOf(' ', MAX_CHUNK_CHARS);
+						const hasta = espacio > 0 ? espacio + 1 : MAX_CHUNK_CHARS;
+						await sendRelayResult(request.requestId, pending.slice(0, hasta), true);
+						pending = pending.slice(hasta);
+					}
+				}
+				// El último envío cierra la petición, aunque no quede texto.
+				await sendRelayResult(request.requestId, pending);
+			} catch (error) {
+				const message = error instanceof Error ? error.message : 'Error desconocido';
+				await sendRelayError(request.requestId, 'error.provider-unavailable', message);
+			}
+		};
+
+		const open = async () => {
+			try {
+				close();
+				const clerkToken = await getToken();
+				if (!clerkToken) throw new Error('Sin sesión de Clerk');
+
+				// Token fresco en cada intento: solo se valida al abrir la conexión.
+				const { token } = await fetchStreamToken({ token: clerkToken });
+				if (cancelled) return;
+
+				const source = new EventSource(
+					`${getBackendUrl()}/stream?token=${encodeURIComponent(token)}`,
+				);
+				sourceRef.current = source;
+
+				source.addEventListener('ai_request', (event) => {
+					void handleRequest((event as MessageEvent<string>).data);
+				});
+				source.onopen = () => {
+					attemptRef.current = 0;
+				};
+				source.onerror = () => {
+					if (sourceRef.current !== source) return;
+					close();
+					scheduleReconnect();
+				};
+			} catch {
+				scheduleReconnect();
+			}
+		};
+
+		void open();
+
+		return () => {
+			cancelled = true;
+			if (reconnectRef.current) clearTimeout(reconnectRef.current);
+			close();
+		};
+	}, [isLocal, isLoaded, isSignedIn, getToken]);
+}

@@ -2,6 +2,7 @@
 'use client';
 
 import { streamAiResponse } from '@/api/aiResponse';
+import { VoiceSetupDialog } from '@/components/Speech/VoiceSetupDialog';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
 import { getAiErrorCode, getAiErrorMessage } from '@/lib/ai-errors';
@@ -10,8 +11,7 @@ import { resolveLocalAiSettings } from '@/lib/local-ai-config';
 import { speakTextStream } from '@/lib/speechPipeline';
 import { getStoredSttProvider } from '@/lib/stt-provider';
 import { cn } from '@/lib/utils';
-import { getMissingVoiceRequirements, type VoiceRequirement } from '@/lib/voice-requirements';
-import { VoiceSetupDialog } from '@/components/Speech/VoiceSetupDialog';
+import { type VoiceRequirement, getMissingVoiceRequirements } from '@/lib/voice-requirements';
 import { Mic } from 'lucide-react';
 import posthog from 'posthog-js';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -107,11 +107,11 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 				timestamp: new Date().toISOString(),
 			});
 
-			const localAi = resolveLocalAiSettings(settings ?? null);
+			// El modelo local ya no se llama desde aquí: el backend compone el
+			// prompt y delega la inferencia en el relevo SSE de la app.
 			const stream = streamAiResponse({
 				provider: getStoredAiProvider() ?? settings?.ai_provider ?? 'gemini',
 				message: pending,
-				local: { baseUrl: localAi.baseUrl, model: localAi.model },
 			});
 
 			if (settings?.feature_flags?.voice_replies === false) {
