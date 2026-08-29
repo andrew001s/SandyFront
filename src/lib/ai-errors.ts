@@ -76,17 +76,56 @@ export const AI_ERROR_MESSAGES: Record<AiErrorCode, string> = {
 	'error.not-found': 'No se encontró el recurso solicitado.',
 };
 
+/**
+ * Textos específicos de la síntesis de voz.
+ *
+ * El catálogo general habla del "modelo" y del "proveedor de IA", que despista
+ * cuando lo que falla es Fish Audio: el usuario tiene que saber que la respuesta
+ * se generó bien y lo que no salió fue la voz.
+ */
+export const VOICE_ERROR_MESSAGES: Partial<Record<AiErrorCode, string>> = {
+	'error.invalid-api-key':
+		'Tu API key de Fish Audio no es válida. Revísala en Ajustes; la VTuber responderá por texto mientras tanto.',
+	'error.insufficient-credits':
+		'Te quedaste sin créditos en Fish Audio. Recarga tu cuenta para que la VTuber vuelva a hablar.',
+	'error.rate-limit':
+		'Fish Audio está limitando las peticiones de voz. Espera un momento antes de seguir.',
+	'error.provider-unavailable':
+		'Fish Audio no está respondiendo. La VTuber sigue generando texto pero no puede hablar.',
+	'error.forbidden': 'Tu cuenta de Fish Audio no tiene permiso para usar esa voz.',
+	'error.not-found': 'La voz configurada ya no existe en Fish Audio. Elige otra en Ajustes.',
+	'error.missing-config':
+		'Falta tu API key de Fish Audio o el Voice ID. Configúralos en Ajustes → Voz, o apaga «Respuestas por voz» si solo quieres texto.',
+	'error.unknown': 'No se pudo generar la voz con Fish Audio.',
+};
+
+export const VOICE_PROVIDER = 'fish_audio';
+
 const FALLBACK = AI_ERROR_MESSAGES['error.unknown'];
 
 /**
  * Error de IA que ya viene clasificado por el backend. Lo usa el cliente de
  * streaming, donde el fallo llega como evento SSE y no como respuesta de axios.
  */
+function resolveMessage(payload: AiErrorPayload): string {
+	const code = payload.code as AiErrorCode;
+	if (payload.provider === VOICE_PROVIDER) {
+		const voice = VOICE_ERROR_MESSAGES[code];
+		if (voice) {
+			return voice;
+		}
+	}
+	return AI_ERROR_MESSAGES[code] ?? AI_ERROR_MESSAGES['error.unknown'];
+}
+
 export class AiResponseError extends Error {
 	readonly payload: AiErrorPayload;
 
 	constructor(payload: AiErrorPayload) {
-		super(payload.message ?? 'No se pudo generar una respuesta');
+		// El texto del catálogo también en `message`: si no, tanto la consola como
+		// Rollbar mostraban "No se pudo generar una respuesta" y había que abrir el
+		// contexto para saber qué pasó de verdad.
+		super(payload.message ?? resolveMessage(payload));
 		this.name = 'AiResponseError';
 		this.payload = payload;
 	}
@@ -133,7 +172,14 @@ export function getAiErrorMessage(error: unknown): string {
 	if (!payload) {
 		return FALLBACK;
 	}
-	const known = AI_ERROR_MESSAGES[payload.code as AiErrorCode];
+	const code = payload.code as AiErrorCode;
+	if (payload.provider === VOICE_PROVIDER) {
+		const voice = VOICE_ERROR_MESSAGES[code];
+		if (voice) {
+			return voice;
+		}
+	}
+	const known = AI_ERROR_MESSAGES[code];
 	return known ?? payload.message ?? FALLBACK;
 }
 

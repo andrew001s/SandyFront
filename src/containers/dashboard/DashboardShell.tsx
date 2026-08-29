@@ -4,9 +4,19 @@ import { StarField } from '@/components/landing/StarField';
 import { AppSidebar } from '@/components/ui/app-sidebar';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSettingsProvider } from '@/context/AppSettingsContext';
+import { useShutdownOnExit } from '@/hooks/useShutdownOnExit';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
+
+/**
+ * Apaga los servicios del usuario si cierra o recarga la página, para que no
+ * quede el bot consumiendo tokens sin nadie delante.
+ */
+function ShutdownOnExit() {
+	useShutdownOnExit();
+	return null;
+}
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
 	const { theme, setTheme } = useTheme();
@@ -16,6 +26,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
 	return (
 		<AppSettingsProvider>
+			<ShutdownOnExit />
 			<SidebarProvider defaultOpen={true}>
 				<AppSidebar />
 				<SidebarInset>

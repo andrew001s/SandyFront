@@ -1,7 +1,8 @@
 'use client';
 
 import { getTokens } from '@/api/fetchAuth';
-import { type ServiceStatus, getServiceStatus, start, stop } from '@/api/sandycore';
+import { start, stop } from '@/api/sandycore';
+import { ServiceStartSkeleton } from '@/components/loading/dashboard-skeletons';
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -12,13 +13,15 @@ import {
 	DialogTitle,
 } from '@/components/ui/dialog';
 import { useStatus } from '@/context/StatusContext';
-import { ServiceStartSkeleton } from '@/components/loading/dashboard-skeletons';
+import { useServiceStatus } from '@/hooks/useServiceStatus';
+import { getAiErrorCode, getAiErrorMessage } from '@/lib/ai-errors';
+import { markServiceStarted, stopServiceRuntime } from '@/lib/serviceRuntime';
 import { cn } from '@/lib/utils';
-import { Power } from 'lucide-react';
 import { useAuth } from '@clerk/nextjs';
+import { Power } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import posthog from 'posthog-js';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { ThinkingOrb } from 'thinking-orbs';
 
@@ -28,27 +31,18 @@ export function ServiceStartCard() {
 	const [isBusy, setIsBusy] = useState(false);
 	const [isStopConfirmOpen, setIsStopConfirmOpen] = useState(false);
 	const [isConfigured, setIsConfigured] = useState<boolean | null>(null);
-	const [serviceStatus, setServiceStatus] = useState<ServiceStatus | null>(null);
-	const [hasLoadedStatus, setHasLoadedStatus] = useState(false);
-	const [statusError, setStatusError] = useState(false);
 	const { isLoaded, isSignedIn } = useAuth();
+	const {
+		serviceStatus,
+		isRunning,
+		hasLoaded: hasLoadedStatus,
+		hasError: statusError,
+		refresh: refreshStatus,
+	} = useServiceStatus();
 
-	const isRunning = serviceStatus?.running === true;
-	// Se mide "ya intentamos cargar", no "tenemos datos": antes, si /service-status
-	// fallaba, serviceStatus se quedaba en null y el esqueleto no se iba nunca.
+	// Se mide "ya intentamos cargar", no "tenemos datos": si /service-status falla,
+	// el esqueleto tiene que irse igual en vez de quedarse para siempre.
 	const statusLoaded = hasLoadedStatus && isConfigured !== null;
-
-	const refreshStatus = useCallback(async () => {
-		try {
-			setServiceStatus(await getServiceStatus());
-			setStatusError(false);
-		} catch (error) {
-			console.error('Error al obtener el estado del servicio:', error);
-			setStatusError(true);
-		} finally {
-			setHasLoadedStatus(true);
-		}
-	}, []);
 
 	// Las peticiones van con el token de Clerk que inyecta backendClient leyendo
 	// window.Clerk. Al montar puede no estar hidratado todavía: si se disparaban
@@ -76,18 +70,6 @@ export function ServiceStartCard() {
 		};
 	}, [isLoaded, isSignedIn]);
 
-	useEffect(() => {
-		if (!isLoaded || !isSignedIn) {
-			return;
-		}
-
-		void refreshStatus();
-		const intervalId = window.setInterval(() => {
-			void refreshStatus();
-		}, 30_000);
-		return () => window.clearInterval(intervalId);
-	}, [isLoaded, isSignedIn, refreshStatus]);
-
 	const handleStart = async () => {
 		try {
 			setIsBusy(true);
@@ -99,12 +81,17 @@ export function ServiceStartCard() {
 			}
 			await start(false);
 			posthog.capture('twitch_service_started');
+			markServiceStarted();
 			setStatus(true);
 			await refreshStatus();
 			toast.success('Servicios iniciados');
 		} catch (error) {
+			// El backend devuelve un código estable: se muestra el motivo real
+			// (sin vincular, hay que reautorizar, falta canal...) en vez de un
+			// "no se pudo" que no dice qué arreglar.
 			console.error('Error al iniciar servicios:', error);
-			toast.error('No se pudieron iniciar los servicios');
+			toast.error(getAiErrorMessage(error));
+			posthog.capture('twitch_service_start_failed', { code: getAiErrorCode(error) });
 		} finally {
 			setIsBusy(false);
 		}
@@ -115,6 +102,12 @@ export function ServiceStartCard() {
 			setIsBusy(true);
 			await stop(false);
 			posthog.capture('twitch_service_paused');
+			// Corta lo que siguiera en vuelo: respuesta generándose, voz
+			// sintetizándose, audio encolado y la boca del modelo.
+			stopServiceRuntime();
+			// Antes solo se marcaba al arrancar: el estado global se quedaba en
+			// activo tras pausar y todo lo que dependía de él seguía habilitado.
+			setStatus(false);
 			await refreshStatus();
 			toast.success('Servicios pausados');
 		} catch (error) {

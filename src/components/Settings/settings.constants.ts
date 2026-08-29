@@ -19,10 +19,6 @@ export const initialSettingsFormState: SettingsFormState = {
 	language: 'es-ES',
 	fish_audio_key: '',
 	voice_id: '',
-	service_mode: 'manual',
-	auto_start_on_live: false,
-	auto_stop_on_offline: true,
-	idle_timeout_minutes: 60,
 	chunk_size: 3,
 };
 
@@ -86,10 +82,6 @@ export const normalizeSettings = (settings?: SettingsPayload | null): SettingsFo
 	language: settings?.language ?? 'es-ES',
 	fish_audio_key: settings?.fish_audio_key ?? '',
 	voice_id: settings?.voice_id ?? '',
-	service_mode: settings?.service_mode ?? 'manual',
-	auto_start_on_live: settings?.auto_start_on_live ?? false,
-	auto_stop_on_offline: settings?.auto_stop_on_offline ?? true,
-	idle_timeout_minutes: settings?.idle_timeout_minutes ?? 60,
 	chunk_size: settings?.chunk_size ?? 3,
 });
 
