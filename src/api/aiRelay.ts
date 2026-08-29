@@ -50,3 +50,32 @@ export async function sendRelayError(
 		error_message: message,
 	});
 }
+
+export type AiTask = {
+	/** 'chat', 'reaction' o 'speech': de dónde vino el evento. */
+	kind: string;
+	message: string;
+	systemInstruction: string;
+	stop: string[];
+};
+
+export function parseAiTask(raw: unknown): AiTask | null {
+	if (!raw || typeof raw !== 'object') {
+		return null;
+	}
+	const data = raw as Record<string, unknown>;
+	if (typeof data.message !== 'string') {
+		return null;
+	}
+	return {
+		kind: typeof data.kind === 'string' ? data.kind : 'chat',
+		message: data.message,
+		systemInstruction: typeof data.systemInstruction === 'string' ? data.systemInstruction : '',
+		stop: Array.isArray(data.stop) ? (data.stop as string[]) : [],
+	};
+}
+
+/** Devuelve el texto final para que el backend lo limpie y lo guarde. */
+export async function sendTaskResult(message: string, response: string): Promise<void> {
+	await backendClient.post('/ai/local/task-result', { message, response });
+}

@@ -1,12 +1,21 @@
 'use client';
 
-import { parseRelayRequest, sendRelayError, sendRelayResult } from '@/api/aiRelay';
+import {
+	parseAiTask,
+	parseRelayRequest,
+	sendRelayError,
+	sendRelayResult,
+	sendTaskResult,
+} from '@/api/aiRelay';
 import { getBackendUrl } from '@/api/backendClient';
 import { streamLocalCompletion } from '@/api/localAi';
 import { fetchStreamToken } from '@/api/streamToken';
 import { useAppSettings } from '@/context/AppSettingsContext';
+import { useMessages } from '@/context/MessagesContext';
+import { useVoiceErrorReporter } from '@/hooks/useVoiceErrorReporter';
 import { getStoredAiProvider } from '@/lib/ai-provider';
 import { resolveLocalAiSettings } from '@/lib/local-ai-config';
+import { speakTextStream } from '@/lib/speechPipeline';
 import { useAuth } from '@clerk/nextjs';
 import { useEffect, useRef } from 'react';
 
@@ -35,10 +44,13 @@ const RECONNECT_MAX_MS = 30000;
 export function useLocalAiRelay(): void {
 	const { getToken, isLoaded, isSignedIn } = useAuth();
 	const { settings } = useAppSettings();
+	const { addMessage } = useMessages();
+	const { report: reportVoiceError, reset: resetVoiceErrors } = useVoiceErrorReporter();
 	const sourceRef = useRef<EventSource | null>(null);
 	const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const attemptRef = useRef(0);
 	const configRef = useRef({ baseUrl: '', model: '' });
+	const settingsRef = useRef(settings);
 
 	const provider = getStoredAiProvider() ?? settings?.ai_provider ?? 'gemini';
 	const isLocal = provider === 'local';
@@ -47,6 +59,7 @@ export function useLocalAiRelay(): void {
 	// y se quedaría con el valor del render que lo creó.
 	useEffect(() => {
 		configRef.current = resolveLocalAiSettings(settings ?? null);
+		settingsRef.current = settings;
 	}, [settings]);
 
 	useEffect(() => {
@@ -66,6 +79,58 @@ export function useLocalAiRelay(): void {
 			const delay = Math.min(RECONNECT_BASE_MS * 2 ** attemptRef.current, RECONNECT_MAX_MS);
 			attemptRef.current += 1;
 			reconnectRef.current = setTimeout(() => void open(), delay);
+		};
+
+		/**
+		 * Tarea completa: el navegador llama a su modelo y encadena la voz sin
+		 * devolver el texto al backend para hablar. Es el mismo recorrido que el
+		 * micrófono, y por eso el audio arranca con la primera frase en vez de
+		 * esperar a la respuesta entera.
+		 */
+		const handleTask = async (raw: string) => {
+			const task = parseAiTask(JSON.parse(raw));
+			if (!task) return;
+
+			const { baseUrl, model } = configRef.current;
+			const ajustes = settingsRef.current;
+			if (!baseUrl) return;
+
+			const vtuberName = ajustes?.persona_profile?.name?.trim() || 'Sandy';
+			const conVoz = ajustes?.feature_flags?.voice_replies !== false;
+			const apiKey = ajustes?.fish_audio_key?.trim() ?? '';
+			const voiceId = ajustes?.voice_id?.trim() ?? '';
+
+			const deltas = streamLocalCompletion(
+				{ baseUrl, model },
+				{ message: task.message, systemPrompt: task.systemInstruction },
+			);
+
+			try {
+				let texto = '';
+				if (conVoz && apiKey && voiceId) {
+					resetVoiceErrors();
+					texto = await speakTextStream(deltas, {
+						fish: { apiKey, voiceId },
+						onSegmentError: reportVoiceError,
+					});
+				} else {
+					for await (const delta of deltas) {
+						texto += delta;
+					}
+				}
+
+				// Un solo mensaje en la transcripción, no uno por frase.
+				addMessage({
+					type: 'chat',
+					content: `${vtuberName}: ${texto}`,
+					timestamp: new Date().toISOString(),
+				});
+
+				// El backend solo necesita el texto para el historial.
+				await sendTaskResult(task.message, texto);
+			} catch (error) {
+				console.error('No se pudo resolver la tarea local:', error);
+			}
 		};
 
 		const handleRequest = async (raw: string) => {
@@ -142,6 +207,9 @@ export function useLocalAiRelay(): void {
 				source.addEventListener('ai_request', (event) => {
 					void handleRequest((event as MessageEvent<string>).data);
 				});
+				source.addEventListener('ai_task', (event) => {
+					void handleTask((event as MessageEvent<string>).data);
+				});
 				source.onopen = () => {
 					attemptRef.current = 0;
 				};
@@ -162,5 +230,5 @@ export function useLocalAiRelay(): void {
 			if (reconnectRef.current) clearTimeout(reconnectRef.current);
 			close();
 		};
-	}, [isLocal, isLoaded, isSignedIn, getToken]);
+	}, [isLocal, isLoaded, isSignedIn, getToken, addMessage, reportVoiceError, resetVoiceErrors]);
 }
