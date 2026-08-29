@@ -76,6 +76,29 @@ export const AI_ERROR_MESSAGES: Record<AiErrorCode, string> = {
 	'error.not-found': 'No se encontró el recurso solicitado.',
 };
 
+/**
+ * Textos específicos de la síntesis de voz.
+ *
+ * El catálogo general habla del "modelo" y del "proveedor de IA", que despista
+ * cuando lo que falla es Fish Audio: el usuario tiene que saber que la respuesta
+ * se generó bien y lo que no salió fue la voz.
+ */
+export const VOICE_ERROR_MESSAGES: Partial<Record<AiErrorCode, string>> = {
+	'error.invalid-api-key':
+		'Tu API key de Fish Audio no es válida. Revísala en Ajustes; la VTuber responderá por texto mientras tanto.',
+	'error.insufficient-credits':
+		'Te quedaste sin créditos en Fish Audio. Recarga tu cuenta para que la VTuber vuelva a hablar.',
+	'error.rate-limit':
+		'Fish Audio está limitando las peticiones de voz. Espera un momento antes de seguir.',
+	'error.provider-unavailable':
+		'Fish Audio no está respondiendo. La VTuber sigue generando texto pero no puede hablar.',
+	'error.forbidden': 'Tu cuenta de Fish Audio no tiene permiso para usar esa voz.',
+	'error.not-found': 'La voz configurada ya no existe en Fish Audio. Elige otra en Ajustes.',
+	'error.unknown': 'No se pudo generar la voz con Fish Audio.',
+};
+
+export const VOICE_PROVIDER = 'fish_audio';
+
 const FALLBACK = AI_ERROR_MESSAGES['error.unknown'];
 
 /**
@@ -133,7 +156,14 @@ export function getAiErrorMessage(error: unknown): string {
 	if (!payload) {
 		return FALLBACK;
 	}
-	const known = AI_ERROR_MESSAGES[payload.code as AiErrorCode];
+	const code = payload.code as AiErrorCode;
+	if (payload.provider === VOICE_PROVIDER) {
+		const voice = VOICE_ERROR_MESSAGES[code];
+		if (voice) {
+			return voice;
+		}
+	}
+	const known = AI_ERROR_MESSAGES[code];
 	return known ?? payload.message ?? FALLBACK;
 }
 

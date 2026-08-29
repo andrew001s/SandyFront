@@ -150,6 +150,7 @@ export function FishVoicePreviewCard({ apiKey, voiceId, onClick }: FishVoicePrev
 									<Image
 										src={thumbnailUrl}
 										alt={model.title}
+										unoptimized
 										fill
 										sizes='(max-width: 640px) 92vw, 160px'
 										className='object-cover transition-transform duration-500 group-hover:scale-105'

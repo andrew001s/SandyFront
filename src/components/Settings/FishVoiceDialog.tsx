@@ -1,10 +1,10 @@
 'use client';
 
 import {
+	type FishAudioModel,
 	buildFishAudioCoverImageProxySrc,
 	getFishAudioModel,
 	searchFishAudioModels,
-	type FishAudioModel,
 } from '@/api/fetchFishModels';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,8 +19,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Check, ChevronDown, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import Image from 'next/image';
-import CountryFlag from 'react-country-flag';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import CountryFlag from 'react-country-flag';
 import { toast } from 'sonner';
 
 type FishVoiceDialogProps = {
@@ -210,6 +210,7 @@ function FishModelRow({
 						<Image
 							src={thumbnailUrl}
 							alt={model.title}
+							unoptimized
 							fill
 							sizes='(max-width: 640px) 46vw, (max-width: 1024px) 24vw, 16vw'
 							className='object-cover transition-transform duration-500 group-hover:scale-105'

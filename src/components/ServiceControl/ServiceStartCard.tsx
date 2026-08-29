@@ -2,6 +2,7 @@
 
 import { getTokens } from '@/api/fetchAuth';
 import { type ServiceStatus, getServiceStatus, start, stop } from '@/api/sandycore';
+import { ServiceStartSkeleton } from '@/components/loading/dashboard-skeletons';
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -12,10 +13,10 @@ import {
 	DialogTitle,
 } from '@/components/ui/dialog';
 import { useStatus } from '@/context/StatusContext';
-import { ServiceStartSkeleton } from '@/components/loading/dashboard-skeletons';
+import { markServiceStarted, stopServiceRuntime } from '@/lib/serviceRuntime';
 import { cn } from '@/lib/utils';
-import { Power } from 'lucide-react';
 import { useAuth } from '@clerk/nextjs';
+import { Power } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import posthog from 'posthog-js';
 import { useCallback, useEffect, useState } from 'react';
@@ -99,6 +100,7 @@ export function ServiceStartCard() {
 			}
 			await start(false);
 			posthog.capture('twitch_service_started');
+			markServiceStarted();
 			setStatus(true);
 			await refreshStatus();
 			toast.success('Servicios iniciados');
@@ -115,6 +117,12 @@ export function ServiceStartCard() {
 			setIsBusy(true);
 			await stop(false);
 			posthog.capture('twitch_service_paused');
+			// Corta lo que siguiera en vuelo: respuesta generándose, voz
+			// sintetizándose, audio encolado y la boca del modelo.
+			stopServiceRuntime();
+			// Antes solo se marcaba al arrancar: el estado global se quedaba en
+			// activo tras pausar y todo lo que dependía de él seguía habilitado.
+			setStatus(false);
 			await refreshStatus();
 			toast.success('Servicios pausados');
 		} catch (error) {

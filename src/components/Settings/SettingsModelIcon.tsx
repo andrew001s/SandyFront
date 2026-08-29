@@ -26,7 +26,8 @@ export function SettingsModelIcon({ modelId }: SettingsModelIconProps) {
 				alt=''
 				width={48}
 				height={48}
-				quality={100}
+				// SVG: no hay nada que optimizar y evita una transformación por icono.
+				unoptimized
 				loading='lazy'
 				onError={() => setFailed(true)}
 				className='size-12 object-contain'

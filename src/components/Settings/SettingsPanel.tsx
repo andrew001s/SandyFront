@@ -11,6 +11,8 @@ import { azureLanguages, azureRegions } from '@/components/Settings/settings.con
 import { useSettingsPanel } from '@/components/Settings/useSettingsPanel';
 import { SettingsSkeleton } from '@/components/loading/dashboard-skeletons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useStatus } from '@/context/StatusContext';
+import { Lock } from 'lucide-react';
 import { Bot, Cpu, Mic, Power, Volume2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -76,105 +78,123 @@ export function SettingsPanel({ defaultTab }: { defaultTab?: string } = {}) {
 		return <SettingsSkeleton />;
 	}
 
+	const { status: serviceRunning } = useStatus();
+
+	// Cambiar el modelo, la voz o la personalidad con el servicio en marcha deja
+	// la sesión a medias: parte de la conversación con una configuración y parte
+	// con otra. Se bloquea el formulario entero hasta que se pause.
+	const locked = serviceRunning;
+
 	return (
 		<div>
 			<section className='space-y-4'>
-				<SettingsHeader isBusy={isBusy} isSaving={isSaving} onSave={handleSave} />
+				{locked && (
+					<div className='flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-amber-700 dark:text-amber-400'>
+						<Lock className='mt-0.5 size-4 shrink-0' />
+						<p className='text-sm'>
+							La configuración está bloqueada mientras el servicio está activo. Pausa la VTuber
+							desde el panel para poder editarla.
+						</p>
+					</div>
+				)}
+				<SettingsHeader isBusy={isBusy || locked} isSaving={isSaving} onSave={handleSave} />
 
-				<Tabs
-					value={activeTab}
-					onValueChange={(value) => setActiveTab(resolveTab(value))}
-					className='space-y-4'
-				>
-					<TabsList className=' h-auto w-full grid-cols-5 rounded-2xl bg-muted p-1'>
-						<TabsTrigger
-							value='sandy'
-							className='rounded-xl py-2 text-xs data-[state=active]:bg-background sm:text-sm'
-						>
-							<span className='flex items-center gap-2'>
-								<Cpu className='size-4' />
-								<span className='hidden sm:inline'>Personalida Vtuber</span>
-							</span>
-						</TabsTrigger>
-						<TabsTrigger
-							value='ai'
-							className='rounded-xl py-2 text-xs data-[state=active]:bg-background sm:text-sm'
-						>
-							<span className='flex items-center gap-2'>
-								<Bot className='size-4' />
-								<span className='hidden sm:inline'>IA</span>
-							</span>
-						</TabsTrigger>
-						<TabsTrigger
-							value='voice'
-							className='rounded-xl py-2 text-xs data-[state=active]:bg-background sm:text-sm'
-						>
-							<span className='flex items-center gap-2'>
-								<Volume2 className='size-4' />
-								<span className='hidden sm:inline'>Voz</span>
-							</span>
-						</TabsTrigger>
-						<TabsTrigger
-							value='speech'
-							className='rounded-xl py-2 text-xs data-[state=active]:bg-background sm:text-sm'
-						>
-							<span className='flex items-center gap-2'>
-								<Mic className='size-4' />
-								<span className='hidden sm:inline'>Reconocimiento</span>
-							</span>
-						</TabsTrigger>
-						<TabsTrigger
-							value='services'
-							className='rounded-xl py-2 text-xs data-[state=active]:bg-background sm:text-sm'
-						>
-							<span className='flex items-center gap-2'>
-								<Power className='size-4' />
-								<span className='hidden sm:inline'>Servicios</span>
-							</span>
-						</TabsTrigger>
-					</TabsList>
+				<fieldset disabled={locked} className='contents'>
+					<Tabs
+						value={activeTab}
+						onValueChange={(value) => setActiveTab(resolveTab(value))}
+						className='space-y-4'
+					>
+						<TabsList className=' h-auto w-full grid-cols-5 rounded-2xl bg-muted p-1'>
+							<TabsTrigger
+								value='sandy'
+								className='rounded-xl py-2 text-xs data-[state=active]:bg-background sm:text-sm'
+							>
+								<span className='flex items-center gap-2'>
+									<Cpu className='size-4' />
+									<span className='hidden sm:inline'>Personalida Vtuber</span>
+								</span>
+							</TabsTrigger>
+							<TabsTrigger
+								value='ai'
+								className='rounded-xl py-2 text-xs data-[state=active]:bg-background sm:text-sm'
+							>
+								<span className='flex items-center gap-2'>
+									<Bot className='size-4' />
+									<span className='hidden sm:inline'>IA</span>
+								</span>
+							</TabsTrigger>
+							<TabsTrigger
+								value='voice'
+								className='rounded-xl py-2 text-xs data-[state=active]:bg-background sm:text-sm'
+							>
+								<span className='flex items-center gap-2'>
+									<Volume2 className='size-4' />
+									<span className='hidden sm:inline'>Voz</span>
+								</span>
+							</TabsTrigger>
+							<TabsTrigger
+								value='speech'
+								className='rounded-xl py-2 text-xs data-[state=active]:bg-background sm:text-sm'
+							>
+								<span className='flex items-center gap-2'>
+									<Mic className='size-4' />
+									<span className='hidden sm:inline'>Reconocimiento</span>
+								</span>
+							</TabsTrigger>
+							<TabsTrigger
+								value='services'
+								className='rounded-xl py-2 text-xs data-[state=active]:bg-background sm:text-sm'
+							>
+								<span className='flex items-center gap-2'>
+									<Power className='size-4' />
+									<span className='hidden sm:inline'>Servicios</span>
+								</span>
+							</TabsTrigger>
+						</TabsList>
 
-					<TabsContent value='sandy' className='mt-0'>
-						<SandyCoreConfigPanel config={sandyConfig} onConfigChange={handleSandyConfigChange} />
-					</TabsContent>
+						<TabsContent value='sandy' className='mt-0'>
+							<SandyCoreConfigPanel config={sandyConfig} onConfigChange={handleSandyConfigChange} />
+						</TabsContent>
 
-					<TabsContent value='ai' className='mt-0'>
-						<AiProviderSection
-							form={form}
-							geminiState={geminiState}
-							localAiState={localAiState}
-							openRouterState={openRouterState}
-							setOpenRouterModalOpen={setIsOpenRouterModalOpen}
-							updateField={updateField}
-							onProviderChange={handleProviderChange}
-							updateChunkSize={updateChunkSize}
-						/>
-					</TabsContent>
+						<TabsContent value='ai' className='mt-0'>
+							<AiProviderSection
+								form={form}
+								geminiState={geminiState}
+								localAiState={localAiState}
+								openRouterState={openRouterState}
+								setOpenRouterModalOpen={setIsOpenRouterModalOpen}
+								updateField={updateField}
+								onProviderChange={handleProviderChange}
+								updateChunkSize={updateChunkSize}
+							/>
+						</TabsContent>
 
-					<TabsContent value='voice' className='mt-0'>
-						<VoiceSection form={form} fishState={fishState} updateField={updateField} />
-					</TabsContent>
+						<TabsContent value='voice' className='mt-0'>
+							<VoiceSection form={form} fishState={fishState} updateField={updateField} />
+						</TabsContent>
 
-					<TabsContent value='speech' className='mt-0'>
-						<SpeechSection
-							form={form}
-							speechState={speechState}
-							browserSupportsNativeSpeech={browserSupportsNativeSpeech}
-							isAzureRegionOpen={isAzureRegionOpen}
-							setIsAzureRegionOpen={setIsAzureRegionOpen}
-							isAzureLanguageOpen={isAzureLanguageOpen}
-							setIsAzureLanguageOpen={setIsAzureLanguageOpen}
-							updateField={updateField}
-							updateSttProvider={updateSttProvider}
-							azureRegions={azureRegions}
-							azureLanguages={azureLanguages}
-						/>
-					</TabsContent>
+						<TabsContent value='speech' className='mt-0'>
+							<SpeechSection
+								form={form}
+								speechState={speechState}
+								browserSupportsNativeSpeech={browserSupportsNativeSpeech}
+								isAzureRegionOpen={isAzureRegionOpen}
+								setIsAzureRegionOpen={setIsAzureRegionOpen}
+								isAzureLanguageOpen={isAzureLanguageOpen}
+								setIsAzureLanguageOpen={setIsAzureLanguageOpen}
+								updateField={updateField}
+								updateSttProvider={updateSttProvider}
+								azureRegions={azureRegions}
+								azureLanguages={azureLanguages}
+							/>
+						</TabsContent>
 
-					<TabsContent value='services' className='mt-0'>
-						<ServiceLifecycleSection isStopping={isStopping} onStopService={handleStopService} />
-					</TabsContent>
-				</Tabs>
+						<TabsContent value='services' className='mt-0'>
+							<ServiceLifecycleSection isStopping={isStopping} onStopService={handleStopService} />
+						</TabsContent>
+					</Tabs>
+				</fieldset>
 			</section>
 
 			<OpenRouterModelDialog
