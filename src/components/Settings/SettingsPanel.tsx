@@ -74,11 +74,13 @@ export function SettingsPanel({ defaultTab }: { defaultTab?: string } = {}) {
 		handleSave,
 	} = useSettingsPanel();
 
+	// Todos los hooks van antes del primer return: si este se llamara después del
+	// esqueleto, React vería un número de hooks distinto en cada render.
+	const { status: serviceRunning } = useStatus();
+
 	if (settingsLoading) {
 		return <SettingsSkeleton />;
 	}
-
-	const { status: serviceRunning } = useStatus();
 
 	// Cambiar el modelo, la voz o la personalidad con el servicio en marcha deja
 	// la sesión a medias: parte de la conversación con una configuración y parte
