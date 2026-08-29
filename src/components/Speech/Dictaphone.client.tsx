@@ -42,6 +42,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 		isRunning: serviceRunning,
 		hasLoaded: serviceLoaded,
 		hasError: serviceError,
+		refresh: refreshService,
 	} = useServiceStatus();
 	const { report: reportVoiceError, reset: resetVoiceErrors } = useVoiceErrorReporter();
 	const effectiveSttProvider = getStoredSttProvider() ?? settings?.stt_provider ?? 'azure';
@@ -244,18 +245,18 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 		}
 	}, [serviceRunning, serviceLoaded, serviceError, micEnabled, resetTranscript]);
 
-	const handleSpeechToggle = (checked: boolean) => {
+	const handleSpeechToggle = async (checked: boolean) => {
 		// Apagar siempre debe funcionar: la validación solo aplica al encender,
 		// para no dejar el micrófono atrapado si la configuración cambia mientras escucha.
 		if (checked) {
 			// El micrófono solo activa el reconocimiento de voz; sin el servicio
 			// de VTuber en marcha no hay nada que responda, así que no arranca.
-			if (!serviceLoaded) {
-				toast.info('Comprobando el estado del servicio, espera un momento...');
-				return;
-			}
-
-			if (!serviceRunning) {
+			// Se pregunta al backend AHORA en vez de mirar el último sondeo: entre
+			// uno y otro pasan 30 segundos, y arrancar el servicio y pulsar aquí
+			// seguido entra de lleno en esa ventana. Con el valor viejo el aviso
+			// salía justo al revés de la realidad.
+			const estado = await refreshService();
+			if (!estado?.running) {
 				toast.error('Inicia el servicio de VTuber antes de activar el micrófono');
 				return;
 			}

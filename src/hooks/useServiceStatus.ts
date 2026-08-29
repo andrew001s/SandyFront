@@ -20,13 +20,24 @@ export function useServiceStatus(pollMs: number = DEFAULT_POLL_MS) {
 	const [hasLoaded, setHasLoaded] = useState(false);
 	const [hasError, setHasError] = useState(false);
 
-	const refresh = useCallback(async () => {
+	/**
+	 * Consulta el estado y lo devuelve, además de guardarlo.
+	 *
+	 * Lo devuelve porque el sondeo va cada 30 s: quien necesite decidir en el
+	 * momento —como el interruptor del micrófono— no puede fiarse del último
+	 * valor guardado, que puede ser de medio minuto antes y estar al revés de la
+	 * realidad si el servicio acaba de arrancar o de pararse.
+	 */
+	const refresh = useCallback(async (): Promise<ServiceStatus | null> => {
 		try {
-			setServiceStatus(await getServiceStatus());
+			const estado = await getServiceStatus();
+			setServiceStatus(estado);
 			setHasError(false);
+			return estado;
 		} catch (error) {
 			console.error('Error al obtener el estado del servicio:', error);
 			setHasError(true);
+			return null;
 		} finally {
 			setHasLoaded(true);
 		}
