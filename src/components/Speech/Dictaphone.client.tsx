@@ -5,7 +5,7 @@ import { streamAiResponse } from '@/api/aiResponse';
 import { VoiceSetupDialog } from '@/components/Speech/VoiceSetupDialog';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
-import { useStatus } from '@/context/StatusContext';
+import { useServiceStatus } from '@/hooks/useServiceStatus';
 import { useVoiceErrorReporter } from '@/hooks/useVoiceErrorReporter';
 import { getAiErrorCode, getAiErrorMessage } from '@/lib/ai-errors';
 import { getStoredAiProvider } from '@/lib/ai-provider';
@@ -35,7 +35,14 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 	const isSendingRef = useRef(false);
 	const { addMessage } = useMessages();
 	const { settings, isLoading } = useAppSettings();
-	const { status: serviceRunning } = useStatus();
+	// El estado sale del backend, no de StatusContext: ese booleano vive en
+	// localStorage y lo escribe también la conexión de Twitch, así que estaba en
+	// true con el servicio parado y dejaba encender el micrófono.
+	const {
+		isRunning: serviceRunning,
+		hasLoaded: serviceLoaded,
+		hasError: serviceError,
+	} = useServiceStatus();
 	const { report: reportVoiceError, reset: resetVoiceErrors } = useVoiceErrorReporter();
 	const effectiveSttProvider = getStoredSttProvider() ?? settings?.stt_provider ?? 'azure';
 	const effectiveAiProvider = getStoredAiProvider() ?? settings?.ai_provider ?? 'gemini';
@@ -226,12 +233,16 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 	// Si el servicio se detiene, el micrófono no puede quedarse escuchando:
 	// seguiría transcribiendo y disparando peticiones sin nadie que responda.
 	useEffect(() => {
-		if (!serviceRunning && micEnabled) {
+		// Solo con una respuesta confirmada del backend. Mientras carga, o si la
+		// consulta falla, `serviceRunning` es false sin que el servicio se haya
+		// parado: apagar ahí cortaría el micrófono en mitad de un directo por un
+		// corte de red.
+		if (serviceLoaded && !serviceError && !serviceRunning && micEnabled) {
 			SpeechRecognition.stopListening();
 			resetTranscript();
 			setMicEnabled(false);
 		}
-	}, [serviceRunning, micEnabled, resetTranscript]);
+	}, [serviceRunning, serviceLoaded, serviceError, micEnabled, resetTranscript]);
 
 	const handleSpeechToggle = (checked: boolean) => {
 		// Apagar siempre debe funcionar: la validación solo aplica al encender,
@@ -239,6 +250,11 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 		if (checked) {
 			// El micrófono solo activa el reconocimiento de voz; sin el servicio
 			// de VTuber en marcha no hay nada que responda, así que no arranca.
+			if (!serviceLoaded) {
+				toast.info('Comprobando el estado del servicio, espera un momento...');
+				return;
+			}
+
 			if (!serviceRunning) {
 				toast.error('Inicia el servicio de VTuber antes de activar el micrófono');
 				return;
