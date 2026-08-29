@@ -27,8 +27,16 @@ export function parseRelayRequest(raw: unknown): AiRelayRequest | null {
 	};
 }
 
-export async function sendRelayResult(requestId: string, text: string): Promise<void> {
-	await backendClient.post('/ai/local/result', { request_id: requestId, text });
+/**
+ * Entrega texto al backend. Con `partial` la petición sigue abierta y se pueden
+ * mandar más trozos; el último envío va sin él y la cierra.
+ */
+export async function sendRelayResult(
+	requestId: string,
+	text: string,
+	partial = false,
+): Promise<void> {
+	await backendClient.post('/ai/local/result', { request_id: requestId, text, partial });
 }
 
 export async function sendRelayError(

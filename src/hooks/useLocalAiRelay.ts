@@ -10,6 +10,11 @@ import { resolveLocalAiSettings } from '@/lib/local-ai-config';
 import { useAuth } from '@clerk/nextjs';
 import { useEffect, useRef } from 'react';
 
+// Corte para enviar un trozo: fin de frase. Un POST por token serían cientos de
+// peticiones por respuesta y saldría más lento que acumularlo todo.
+const SENTENCE_BOUNDARY = /[.!?…]+["')\]]*\s/;
+const MAX_CHUNK_CHARS = 160;
+
 const RECONNECT_BASE_MS = 1000;
 const RECONNECT_MAX_MS = 30000;
 
@@ -78,16 +83,41 @@ export function useLocalAiRelay(): void {
 			}
 
 			try {
-				// El backend espera el texto completo: aquí no hay nada que
-				// mostrar en pantalla, solo devolver el resultado.
-				let text = '';
-				for await (const delta of streamLocalCompletion(
+				const deltas = streamLocalCompletion(
 					{ baseUrl, model },
 					{ message: request.message, systemPrompt: request.systemInstruction },
-				)) {
-					text += delta;
+				);
+
+				// La clasificación necesita el JSON entero; trocearla no tiene sentido.
+				if (request.kind === 'structured') {
+					let text = '';
+					for await (const delta of deltas) {
+						text += delta;
+					}
+					await sendRelayResult(request.requestId, text);
+					return;
 				}
-				await sendRelayResult(request.requestId, text);
+
+				// Los envíos van en serie a propósito: el backend reconstruye la
+				// respuesta en orden de llegada.
+				let pending = '';
+				for await (const delta of deltas) {
+					pending += delta;
+					const match = SENTENCE_BOUNDARY.exec(pending);
+					const corte = match ? match.index + match[0].length : -1;
+
+					if (corte > 0) {
+						await sendRelayResult(request.requestId, pending.slice(0, corte), true);
+						pending = pending.slice(corte);
+					} else if (pending.length >= MAX_CHUNK_CHARS) {
+						const espacio = pending.lastIndexOf(' ', MAX_CHUNK_CHARS);
+						const hasta = espacio > 0 ? espacio + 1 : MAX_CHUNK_CHARS;
+						await sendRelayResult(request.requestId, pending.slice(0, hasta), true);
+						pending = pending.slice(hasta);
+					}
+				}
+				// El último envío cierra la petición, aunque no quede texto.
+				await sendRelayResult(request.requestId, pending);
 			} catch (error) {
 				const message = error instanceof Error ? error.message : 'Error desconocido';
 				await sendRelayError(request.requestId, 'error.provider-unavailable', message);
