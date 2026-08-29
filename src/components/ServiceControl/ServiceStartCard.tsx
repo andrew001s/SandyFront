@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { useStatus } from '@/context/StatusContext';
 import { useServiceStatus } from '@/hooks/useServiceStatus';
+import { getAiErrorCode, getAiErrorMessage } from '@/lib/ai-errors';
 import { markServiceStarted, stopServiceRuntime } from '@/lib/serviceRuntime';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@clerk/nextjs';
@@ -85,8 +86,12 @@ export function ServiceStartCard() {
 			await refreshStatus();
 			toast.success('Servicios iniciados');
 		} catch (error) {
+			// El backend devuelve un código estable: se muestra el motivo real
+			// (sin vincular, hay que reautorizar, falta canal...) en vez de un
+			// "no se pudo" que no dice qué arreglar.
 			console.error('Error al iniciar servicios:', error);
-			toast.error('No se pudieron iniciar los servicios');
+			toast.error(getAiErrorMessage(error));
+			posthog.capture('twitch_service_start_failed', { code: getAiErrorCode(error) });
 		} finally {
 			setIsBusy(false);
 		}
