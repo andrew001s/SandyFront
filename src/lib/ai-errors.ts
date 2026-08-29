@@ -94,6 +94,8 @@ export const VOICE_ERROR_MESSAGES: Partial<Record<AiErrorCode, string>> = {
 		'Fish Audio no está respondiendo. La VTuber sigue generando texto pero no puede hablar.',
 	'error.forbidden': 'Tu cuenta de Fish Audio no tiene permiso para usar esa voz.',
 	'error.not-found': 'La voz configurada ya no existe en Fish Audio. Elige otra en Ajustes.',
+	'error.missing-config':
+		'Falta tu API key de Fish Audio o el Voice ID. Configúralos en Ajustes → Voz, o apaga «Respuestas por voz» si solo quieres texto.',
 	'error.unknown': 'No se pudo generar la voz con Fish Audio.',
 };
 

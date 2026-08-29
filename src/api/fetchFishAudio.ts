@@ -93,7 +93,12 @@ export async function getVoiceSandy(
 ): Promise<Blob> {
 	const { apiKey, voiceId } = config;
 	if (!apiKey || !voiceId) {
-		throw new Error('Fish Audio no está configurado');
+		// Clasificado, no un Error suelto: si no, llega como 'error.unknown' y el
+		// usuario ve un mensaje genérico en vez de saber que le falta la voz.
+		throw new AiResponseError({
+			code: 'error.missing-config',
+			provider: VOICE_PROVIDER,
+		});
 	}
 
 	const headers = {
