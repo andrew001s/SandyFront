@@ -34,6 +34,7 @@ export type SettingsPayload = {
 	custom_banned_symbols?: string[];
 	custom_banned_links?: string[];
 	chunk_size?: number;
+	onboarding_completed?: boolean;
 };
 
 /**
