@@ -3,9 +3,17 @@ export class AudioQueueManager {
 	private queue: { blob: Blob; url: string }[] = [];
 	private isPlaying = false;
 	private audioElement: HTMLAudioElement | null = null;
-	private processedUrls = new Set<string>();
+	// Huella del contenido -> instante en que se encoló. `URL.createObjectURL`
+	// devuelve una URL distinta en cada llamada, incluso para el mismo blob, así
+	// que deduplicar por URL no filtraba nada: el mismo audio podía sonar dos
+	// veces. La ventana evita descartar una frase legítimamente repetida más
+	// tarde en la conversación.
+	private recentAudio = new Map<string, number>();
+	private static readonly DEDUPE_WINDOW_MS = 30_000;
 	private callbacks: Set<(isPlaying: boolean) => void> = new Set();
-	private lipSyncHandler: ((audioBlob: Blob) => Promise<void> | void) | null = null;
+	/** El segundo argumento es el reloj del audio que suena, en segundos. */
+	private lipSyncHandler: ((audioBlob: Blob, clock?: () => number) => Promise<void> | void) | null =
+		null;
 
 	private constructor() {}
 
@@ -35,7 +43,9 @@ export class AudioQueueManager {
 		}
 	}
 
-	setLipSyncHandler(handler: ((audioBlob: Blob) => Promise<void> | void) | null) {
+	setLipSyncHandler(
+		handler: ((audioBlob: Blob, clock?: () => number) => Promise<void> | void) | null,
+	) {
 		this.lipSyncHandler = handler;
 	}
 
@@ -52,14 +62,47 @@ export class AudioQueueManager {
 		}
 	}
 
-	async addToQueue(audioBlob: Blob) {
-		const audioUrl = URL.createObjectURL(audioBlob);
-		if (!this.processedUrls.has(audioUrl)) {
-			this.processedUrls.add(audioUrl);
-			this.queue.push({ blob: audioBlob, url: audioUrl });
-			if (!this.isPlaying) {
-				await this.playNext();
+	/** Identifica el audio por su contenido, no por su URL. */
+	private async fingerprint(blob: Blob): Promise<string> {
+		try {
+			const buffer = await blob.arrayBuffer();
+			const digest = await crypto.subtle.digest('SHA-256', buffer);
+			return Array.from(new Uint8Array(digest))
+				.map((byte) => byte.toString(16).padStart(2, '0'))
+				.join('');
+		} catch {
+			// Sin contexto seguro no hay crypto.subtle: tamaño y tipo son una
+			// aproximación pobre, pero mejor que no filtrar nada.
+			return `${blob.size}:${blob.type}`;
+		}
+	}
+
+	private isDuplicate(key: string): boolean {
+		const now = Date.now();
+		for (const [previous, at] of this.recentAudio) {
+			if (now - at > AudioQueueManager.DEDUPE_WINDOW_MS) {
+				this.recentAudio.delete(previous);
 			}
+		}
+		if (this.recentAudio.has(key)) {
+			return true;
+		}
+		this.recentAudio.set(key, now);
+		return false;
+	}
+
+	async addToQueue(audioBlob: Blob) {
+		const key = await this.fingerprint(audioBlob);
+		if (this.isDuplicate(key)) {
+			return;
+		}
+
+		// La URL se crea después del filtro: crearla antes dejaba un objeto
+		// colgado por cada duplicado descartado.
+		const audioUrl = URL.createObjectURL(audioBlob);
+		this.queue.push({ blob: audioBlob, url: audioUrl });
+		if (!this.isPlaying) {
+			await this.playNext();
 		}
 	}
 
@@ -71,7 +114,14 @@ export class AudioQueueManager {
 			if (nextAudio) {
 				this.audioElement.src = nextAudio.url;
 				this.audioElement.onplay = () => {
-					void this.lipSyncHandler?.(nextAudio.blob);
+					// El reloj sale del propio audio: así la boca sigue a lo que de
+					// verdad se está oyendo, en vez de a un cronómetro aparte que se
+					// desfasa si la reproducción arranca tarde o se ralentiza.
+					const element = this.audioElement;
+					void this.lipSyncHandler?.(
+						nextAudio.blob,
+						element ? () => element.currentTime : undefined,
+					);
 				};
 				try {
 					await this.audioElement.play();
@@ -91,7 +141,7 @@ export class AudioQueueManager {
 			URL.revokeObjectURL(audio.url);
 		}
 		this.queue = [];
-		this.processedUrls.clear();
+		this.recentAudio.clear();
 		if (this.audioElement) {
 			this.audioElement.pause();
 			this.audioElement.onplay = null;

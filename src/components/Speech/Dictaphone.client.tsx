@@ -5,6 +5,8 @@ import { streamAiResponse } from '@/api/aiResponse';
 import { VoiceSetupDialog } from '@/components/Speech/VoiceSetupDialog';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
+import { useStatus } from '@/context/StatusContext';
+import { useVoiceErrorReporter } from '@/hooks/useVoiceErrorReporter';
 import { getAiErrorCode, getAiErrorMessage } from '@/lib/ai-errors';
 import { getStoredAiProvider } from '@/lib/ai-provider';
 import { resolveLocalAiSettings } from '@/lib/local-ai-config';
@@ -33,6 +35,8 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 	const isSendingRef = useRef(false);
 	const { addMessage } = useMessages();
 	const { settings, isLoading } = useAppSettings();
+	const { status: serviceRunning } = useStatus();
+	const { report: reportVoiceError, reset: resetVoiceErrors } = useVoiceErrorReporter();
 	const effectiveSttProvider = getStoredSttProvider() ?? settings?.stt_provider ?? 'azure';
 	const effectiveAiProvider = getStoredAiProvider() ?? settings?.ai_provider ?? 'gemini';
 	// Espejo en estado de `shouldListen`: el módulo conserva la intención entre
@@ -98,6 +102,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 		resetTranscript();
 		transcriptRef.current = '';
 
+		resetVoiceErrors();
 		const vtuberName = settings?.persona_profile?.name?.trim() || 'Sandy';
 
 		try {
@@ -136,9 +141,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 					apiKey: settings?.fish_audio_key ?? '',
 					voiceId: settings?.voice_id ?? '',
 				},
-				onSegmentError: (segment, error) => {
-					console.error('Error sintetizando el segmento:', segment, error);
-				},
+				onSegmentError: reportVoiceError,
 			});
 
 			addMessage({
@@ -155,7 +158,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 		} finally {
 			isSendingRef.current = false;
 		}
-	}, [addMessage, resetTranscript, settings]);
+	}, [addMessage, resetTranscript, settings, reportVoiceError, resetVoiceErrors]);
 
 	// El handle vive en un ref, no en estado: resetSilenceTimer se dispara en
 	// cada palabra reconocida, mucho más rápido de lo que React re-renderiza.
@@ -220,10 +223,27 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 		};
 	}, [resumeListeningIfNeeded]);
 
+	// Si el servicio se detiene, el micrófono no puede quedarse escuchando:
+	// seguiría transcribiendo y disparando peticiones sin nadie que responda.
+	useEffect(() => {
+		if (!serviceRunning && micEnabled) {
+			SpeechRecognition.stopListening();
+			resetTranscript();
+			setMicEnabled(false);
+		}
+	}, [serviceRunning, micEnabled, resetTranscript]);
+
 	const handleSpeechToggle = (checked: boolean) => {
 		// Apagar siempre debe funcionar: la validación solo aplica al encender,
 		// para no dejar el micrófono atrapado si la configuración cambia mientras escucha.
 		if (checked) {
+			// El micrófono solo activa el reconocimiento de voz; sin el servicio
+			// de VTuber en marcha no hay nada que responda, así que no arranca.
+			if (!serviceRunning) {
+				toast.error('Inicia el servicio de VTuber antes de activar el micrófono');
+				return;
+			}
+
 			if (isLoading) {
 				toast.info('Cargando tu configuración, espera un momento...');
 				return;

@@ -1,3 +1,4 @@
+import { isValidLocalAiUrl } from '@/api/localAi';
 import { stop } from '@/api/sandycore';
 import { type SettingsUpdate, saveSettings } from '@/api/settings';
 import {
@@ -11,12 +12,11 @@ import type {
 	SettingsFormState,
 } from '@/components/Settings/settings.types';
 import { useAppSettings } from '@/context/AppSettingsContext';
-import { isValidLocalAiUrl } from '@/api/localAi';
 import { type AiProvider, getStoredAiProvider, storeAiProvider } from '@/lib/ai-provider';
 import { toBannedContentPayload } from '@/lib/banned-content';
 import { DEFAULT_FEATURE_FLAGS } from '@/lib/feature-flags';
-import { type SandyCoreConfig, normalizeSandyCoreConfig } from '@/lib/sandycore-config';
 import { resolveLocalAiSettings, storeLocalAiSettings } from '@/lib/local-ai-config';
+import { type SandyCoreConfig, normalizeSandyCoreConfig } from '@/lib/sandycore-config';
 import { getStoredSttProvider, storeSttProvider } from '@/lib/stt-provider';
 import { useAuth } from '@clerk/nextjs';
 import posthog from 'posthog-js';
@@ -180,32 +180,11 @@ export function useSettingsPanel() {
 		}));
 	}, []);
 
-	const updateLifecycleBoolean = useCallback(
-		(field: 'auto_start_on_live' | 'auto_stop_on_offline', value: boolean) => {
-			setForm((current) => ({
-				...current,
-				[field]: value,
-			}));
-		},
-		[],
-	);
-
 	const updateSttProvider = useCallback((value: 'azure' | 'browser') => {
 		storeSttProvider(value);
 		setForm((current) => ({
 			...current,
 			stt_provider: value,
-		}));
-	}, []);
-
-	const updateIdleTimeout = useCallback((value: string) => {
-		const minutes = Number(value);
-		setForm((current) => ({
-			...current,
-			idle_timeout_minutes:
-				Number.isFinite(minutes) && minutes >= 0
-					? Math.floor(minutes)
-					: current.idle_timeout_minutes,
 		}));
 	}, []);
 
@@ -306,10 +285,6 @@ export function useSettingsPanel() {
 				voice_id: form.voice_id,
 				persona_profile: sandyConfig.persona_profile,
 				...toBannedContentPayload(sandyConfig.banned_content),
-				service_mode: form.service_mode,
-				auto_start_on_live: form.auto_start_on_live,
-				auto_stop_on_offline: form.auto_stop_on_offline,
-				idle_timeout_minutes: form.idle_timeout_minutes,
 				chunk_size: form.chunk_size,
 			};
 
@@ -325,7 +300,6 @@ export function useSettingsPanel() {
 				ai_provider: form.ai_provider,
 				stt_provider: form.stt_provider,
 				tts_provider: form.tts_provider,
-				service_mode: form.service_mode,
 			});
 			setSandyHasLocalChanges(false);
 			toast.success('Ajustes guardados');
@@ -371,9 +345,7 @@ export function useSettingsPanel() {
 		setIsOpenRouterSortOpen,
 		handleSandyConfigChange,
 		updateField,
-		updateLifecycleBoolean,
 		updateSttProvider,
-		updateIdleTimeout,
 		updateChunkSize,
 		handleStopService,
 		handleProviderChange,

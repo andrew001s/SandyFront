@@ -5,6 +5,7 @@ import { AppSidebar } from '@/components/ui/app-sidebar';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSettingsProvider } from '@/context/AppSettingsContext';
 import { useLocalAiRelay } from '@/hooks/useLocalAiRelay';
+import { useShutdownOnExit } from '@/hooks/useShutdownOnExit';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
@@ -21,6 +22,15 @@ function LocalAiRelay() {
 	return null;
 }
 
+/**
+ * Apaga los servicios del usuario si cierra o recarga la página, para que no
+ * quede el bot consumiendo tokens sin nadie delante.
+ */
+function ShutdownOnExit() {
+	useShutdownOnExit();
+	return null;
+}
+
 export function DashboardShell({ children }: { children: React.ReactNode }) {
 	const { theme, setTheme } = useTheme();
 	const [mounted, setMounted] = useState(false);
@@ -29,6 +39,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
 	return (
 		<AppSettingsProvider>
+			<ShutdownOnExit />
 			<LocalAiRelay />
 			<SidebarProvider defaultOpen={true}>
 				<AppSidebar />

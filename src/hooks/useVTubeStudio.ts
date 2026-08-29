@@ -127,7 +127,23 @@ let sharedConnecting = false;
 let sharedParametersReady = false;
 let sharedConnectPromise: Promise<void> | null = null;
 let sharedAutoConnectTried = false;
+// Reconexión tras una caída inesperada: VTS reiniciado, el equipo despertando
+// de suspensión o un corte de red. Sin esto la conexión quedaba muerta hasta que
+// el usuario recargaba, y el modelo se quedaba sin recibir parámetros.
+let sharedReconnectTimer: ReturnType<typeof setTimeout> | null = null;
+let sharedReconnectAttempt = 0;
+let sharedManualDisconnect = false;
+const RECONNECT_BASE_MS = 1000;
+const RECONNECT_MAX_MS = 30000;
 const VTS_TOKEN_KEY = 'vts_auth_token';
+
+const cancelReconnect = () => {
+	if (sharedReconnectTimer) {
+		clearTimeout(sharedReconnectTimer);
+		sharedReconnectTimer = null;
+	}
+	sharedReconnectAttempt = 0;
+};
 const sharedListeners = new Set<() => void>();
 
 const notifySharedState = () => {
@@ -407,11 +423,36 @@ export function useVTubeStudio(): UseVTSReturn {
 		}
 	}, [connected, syncClientState]);
 
+	// Se declara antes de `connect` y lo invoca por referencia para no crear una
+	// dependencia circular entre ambos callbacks.
+	const connectRef = useRef<
+		((port?: number, options?: { silent?: boolean }) => Promise<void>) | null
+	>(null);
+
+	const scheduleReconnect = useCallback(() => {
+		// Una desconexión pedida por el usuario no se deshace sola.
+		if (sharedManualDisconnect || sharedReconnectTimer) {
+			return;
+		}
+		if (typeof window === 'undefined' || !window.localStorage.getItem(VTS_TOKEN_KEY)) {
+			return;
+		}
+
+		const delay = Math.min(RECONNECT_BASE_MS * 2 ** sharedReconnectAttempt, RECONNECT_MAX_MS);
+		sharedReconnectAttempt += 1;
+		sharedReconnectTimer = setTimeout(() => {
+			sharedReconnectTimer = null;
+			void connectRef.current?.(8001, { silent: true });
+		}, delay);
+	}, []);
+
 	const connect = useCallback(
 		async (port = 8001, options: { silent?: boolean } = {}) => {
 			// Una sola conexión en vuelo para toda la app: si dos componentes piden
 			// conectar a la vez, el segundo espera a la misma promesa en lugar de
 			// abrir un cliente paralelo o seguir sin conexión.
+			sharedManualDisconnect = false;
+
 			if (sharedConnectPromise) {
 				await sharedConnectPromise;
 				return;
@@ -454,6 +495,7 @@ export function useVTubeStudio(): UseVTSReturn {
 
 				client.on('connect', () => {
 					sharedConnected = true;
+					cancelReconnect();
 					posthog.capture('vtube_studio_connected');
 					notifySharedState();
 					void client.events.modelLoaded.subscribe(() => {
@@ -463,8 +505,10 @@ export function useVTubeStudio(): UseVTSReturn {
 				client.on('disconnect', () => {
 					sharedConnected = false;
 					sharedParametersReady = false;
+					sharedClient = null;
 					detachLipSync();
 					notifySharedState();
+					scheduleReconnect();
 				});
 				client.on('error', (err) => {
 					setError(handleError(err));
@@ -563,7 +607,13 @@ export function useVTubeStudio(): UseVTSReturn {
 		void connect(8001, { silent: true });
 	}, [connect]);
 
+	useEffect(() => {
+		connectRef.current = connect;
+	}, [connect]);
+
 	const disconnect = useCallback(async () => {
+		sharedManualDisconnect = true;
+		cancelReconnect();
 		await sharedClient?.disconnect();
 		posthog.capture('vtube_studio_disconnected');
 		sharedConnected = false;

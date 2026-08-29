@@ -10,8 +10,8 @@ import { toast } from 'sonner';
  * Reporte único de los fallos de síntesis de voz.
  *
  * Vive aquí y no en cada componente porque hay más de un sitio que sintetiza
- * —el micrófono y las tareas que llegan del backend— y basta con que uno se
- * olvide para que el usuario se quede sin voz y sin explicación.
+ * —el dictáfono y las respuestas que llegan del backend por SSE— y basta con
+ * que uno se olvide para que el usuario se quede sin voz y sin explicación.
  */
 export function useVoiceErrorReporter() {
 	const rollbar = useRollbar();

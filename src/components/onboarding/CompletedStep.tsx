@@ -2,17 +2,17 @@
 
 import { useAuth } from '@clerk/nextjs';
 import { useOnboarding } from '@onboardjs/react';
-import { ChevronRight, Sparkles } from 'lucide-react';
-import Image from 'next/image';
-import { useTheme } from 'next-themes';
-import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { ChevronRight, Sparkles } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import Image from 'next/image';
+import { useState } from 'react';
 
-import { submitOnboardingSettings } from '@/components/onboarding/onboardingSubmit';
 import { OnboardingFireworks } from '@/components/onboarding/OnboardingFireworks';
-import { Button } from '@/components/ui/button';
-import { markOnboardingComplete } from '@/lib/onboarding/keys';
 import type { SandyOnboardingContext } from '@/components/onboarding/onboarding.types';
+import { submitOnboardingSettings } from '@/components/onboarding/onboardingSubmit';
+import { Button } from '@/components/ui/button';
+import { markOnboardingComplete, markOnboardingCompleteRemote } from '@/lib/onboarding/keys';
 import { toast } from 'sonner';
 
 export function CompletedStep() {
@@ -27,6 +27,8 @@ export function CompletedStep() {
 			setIsSaving(true);
 			const token = await getToken();
 			await submitOnboardingSettings(state?.context.flowData ?? {}, token);
+			// Se marca en la cuenta para que no reaparezca en otro dispositivo.
+			await markOnboardingCompleteRemote(token);
 		} catch (error) {
 			console.error('Error guardando el onboarding final:', error);
 			toast.error('No se pudo guardar el onboarding final');

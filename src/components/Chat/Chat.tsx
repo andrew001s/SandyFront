@@ -4,10 +4,11 @@ import { fetchStreamToken } from '@/api/streamToken';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
 import { useVTubeStudio } from '@/hooks/useVTubeStudio';
+import { useVoiceErrorReporter } from '@/hooks/useVoiceErrorReporter';
 import { singleChunkStream, speakTextStream } from '@/lib/speechPipeline';
 import type { AvatarBackendPayload } from '@/lib/vtsAvatarPayload';
 import { useAuth } from '@clerk/nextjs';
-import { useCallback, useEffect, useRef, type MutableRefObject } from 'react';
+import { type MutableRefObject, useCallback, useEffect, useRef } from 'react';
 
 type StreamEventPayload = AvatarBackendPayload & {
 	client_id?: number;
@@ -69,11 +70,14 @@ const StreamChat = () => {
 		[connect, connected, connecting, sendAvatarPayload],
 	);
 
+	const { report: reportVoiceError, reset: resetVoiceErrors } = useVoiceErrorReporter();
+
 	const queueVoice = useCallback(
 		async (text: string) => {
 			if (settings?.feature_flags?.voice_replies === false) {
 				return;
 			}
+			resetVoiceErrors();
 			// El backend manda la respuesta ya completa, pero trocearla en frases
 			// permite empezar a sonar tras sintetizar la primera en vez de esperar
 			// al audio de todo el texto.
@@ -82,13 +86,30 @@ const StreamChat = () => {
 					apiKey: settings?.fish_audio_key ?? '',
 					voiceId: settings?.voice_id ?? '',
 				},
-				onSegmentError: (segment, error) => {
-					console.error('Error sintetizando el segmento:', segment, error);
-				},
+				onSegmentError: reportVoiceError,
 			});
 		},
-		[settings?.feature_flags?.voice_replies, settings?.fish_audio_key, settings?.voice_id],
+		[
+			settings?.feature_flags?.voice_replies,
+			settings?.fish_audio_key,
+			settings?.voice_id,
+			reportVoiceError,
+			resetVoiceErrors,
+		],
 	);
+
+	// El stream SSE no se puede reabrir cada vez que cambia un callback: mientras
+	// se cierra y se pide un token nuevo, los mensajes que empuje el backend se
+	// pierden (SSE no reenvía lo perdido). `connected`/`connecting` de VTube Studio
+	// cambian varias veces al cargar la página, así que estos dos viajan por ref y
+	// el efecto solo depende de la sesión de Clerk.
+	const forwardToAvatarRef = useRef(forwardToAvatar);
+	const queueVoiceRef = useRef(queueVoice);
+
+	useEffect(() => {
+		forwardToAvatarRef.current = forwardToAvatar;
+		queueVoiceRef.current = queueVoice;
+	}, [forwardToAvatar, queueVoice]);
 
 	useEffect(() => {
 		isMountedRef.current = true;
@@ -160,13 +181,13 @@ const StreamChat = () => {
 						timestamp: parsedData.timestamp || new Date().toISOString(),
 					});
 
-					void forwardToAvatar({
+					void forwardToAvatarRef.current({
 						...parsedData,
 						type: 'speech',
 						text: speechText,
 					});
 
-					queueVoice(speechText).catch((error) => {
+					queueVoiceRef.current(speechText).catch((error) => {
 						processedMessages.current.delete(messageKey);
 						console.error('Error al procesar el audio:', error);
 					});
@@ -182,7 +203,7 @@ const StreamChat = () => {
 						timestamp: parsedData.timestamp || new Date().toISOString(),
 					});
 
-					void forwardToAvatar({
+					void forwardToAvatarRef.current({
 						...parsedData,
 						type: 'reaction',
 						text: reactionText || parsedData.text,
@@ -290,7 +311,7 @@ const StreamChat = () => {
 			streamRef.current?.close();
 			streamRef.current = null;
 		};
-	}, [getToken, isLoaded, isSignedIn, forwardToAvatar, queueVoice, pushSystemMessage]);
+	}, [getToken, isLoaded, isSignedIn, pushSystemMessage]);
 
 	return <div className='mx-auto space-y-4 p-4' />;
 };
