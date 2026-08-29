@@ -44,7 +44,7 @@ export async function POST(request: Request) {
 			return NextResponse.json({ error: 'grant_type inválido' }, { status: 400 });
 		}
 
-		const params =
+		const params: Record<string, string> =
 			body.grant_type === 'authorization_code'
 				? {
 						client_id: clientId,
@@ -61,13 +61,27 @@ export async function POST(request: Request) {
 						refresh_token: requireEnv(body.refresh_token, 'refresh_token'),
 					};
 
-		const response = await axios.post<KickTokenResponse>('https://id.kick.com/oauth/token', null, {
-			params,
-		});
+		// Kick exige los parámetros en el CUERPO, form-urlencoded. Mandándolos en
+		// la query —con cuerpo null, que además no pone el Content-Type— rechaza
+		// el intercambio. Twitch los acepta en la query y por eso allí no se notó.
+		const response = await axios.post<KickTokenResponse>(
+			'https://id.kick.com/oauth/token',
+			new URLSearchParams(params),
+			{ headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
+		);
 
 		return NextResponse.json(response.data);
 	} catch (error) {
-		console.error('Error intercambiando token de Kick:', error);
-		return NextResponse.json({ error: 'Error al obtener el token de Kick' }, { status: 500 });
+		const respuesta = (error as { response?: { status?: number; data?: unknown } }).response;
+		// El motivo lo da Kick ("invalid_grant", "redirect_uri_mismatch"...). Antes
+		// se quedaba solo en la consola del servidor y el usuario veía un 500 mudo.
+		console.error('Error intercambiando token de Kick:', respuesta?.data ?? error);
+		return NextResponse.json(
+			{
+				error: 'Error al obtener el token de Kick',
+				detail: respuesta?.data ?? (error as Error).message,
+			},
+			{ status: respuesta?.status ?? 500 },
+		);
 	}
 }
