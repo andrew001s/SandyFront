@@ -26,6 +26,8 @@ import { toast } from 'sonner';
 // peticiones por respuesta y saldría más lento que acumularlo todo.
 const SENTENCE_BOUNDARY = /[.!?…]+["')\]]*\s/;
 const MAX_CHUNK_CHARS = 160;
+// Tope para un veredicto de moderación: es un sí/no, no una respuesta hablada.
+const MAX_VERDICT_CHARS = 400;
 
 const RECONNECT_BASE_MS = 1000;
 const RECONNECT_MAX_MS = 30000;
@@ -160,12 +162,22 @@ export function useLocalAiRelay(): void {
 					{ message: request.message, systemPrompt: request.systemInstruction },
 				);
 
-				// La clasificación necesita el JSON entero; trocearla no tiene sentido.
-				if (request.kind === 'structured') {
+				// Respuestas de una sola pieza: la clasificación necesita el JSON entero
+				// y el veredicto de moderación es una decisión, no algo que se lea en
+				// voz alta. Trocearlas haría que el backend reensamblara fragmentos
+				// como "Sí, debería elimin" + "arse porque...".
+				if (request.kind === 'structured' || request.kind === 'moderation') {
 					let text = '';
 					for await (const delta of deltas) {
 						text += delta;
+						// Un veredicto es corto. Si el modelo local se enrolla, se corta:
+						// el backend espera una decisión, no una redacción.
+						if (request.kind === 'moderation' && text.length > MAX_VERDICT_CHARS) {
+							break;
+						}
 					}
+					// El formato lo define el prompt que compuso el backend, así que el
+					// texto va tal cual: normalizarlo aquí lo rompería.
 					await sendRelayResult(request.requestId, text);
 					return;
 				}
