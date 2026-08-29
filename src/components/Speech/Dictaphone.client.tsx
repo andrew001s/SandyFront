@@ -6,6 +6,7 @@ import { VoiceSetupDialog } from '@/components/Speech/VoiceSetupDialog';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
 import { useStatus } from '@/context/StatusContext';
+import { useVoiceErrorReporter } from '@/hooks/useVoiceErrorReporter';
 import { getAiErrorCode, getAiErrorMessage } from '@/lib/ai-errors';
 import { getStoredAiProvider } from '@/lib/ai-provider';
 import { resolveLocalAiSettings } from '@/lib/local-ai-config';
@@ -13,7 +14,6 @@ import { speakTextStream } from '@/lib/speechPipeline';
 import { getStoredSttProvider } from '@/lib/stt-provider';
 import { cn } from '@/lib/utils';
 import { type VoiceRequirement, getMissingVoiceRequirements } from '@/lib/voice-requirements';
-import { useRollbar } from '@rollbar/react';
 import { Mic } from 'lucide-react';
 import posthog from 'posthog-js';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -36,10 +36,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 	const { addMessage } = useMessages();
 	const { settings, isLoading } = useAppSettings();
 	const { status: serviceRunning } = useStatus();
-	const rollbar = useRollbar();
-	// Un fallo de Fish Audio suele repetirse en cada frase de la misma respuesta:
-	// se avisa una vez por código y no una por segmento.
-	const reportedVoiceErrors = useRef(new Set<string>());
+	const { report: reportVoiceError, reset: resetVoiceErrors } = useVoiceErrorReporter();
 	const effectiveSttProvider = getStoredSttProvider() ?? settings?.stt_provider ?? 'azure';
 	const effectiveAiProvider = getStoredAiProvider() ?? settings?.ai_provider ?? 'gemini';
 	// Espejo en estado de `shouldListen`: el módulo conserva la intención entre
@@ -105,7 +102,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 		resetTranscript();
 		transcriptRef.current = '';
 
-		reportedVoiceErrors.current.clear();
+		resetVoiceErrors();
 		const vtuberName = settings?.persona_profile?.name?.trim() || 'Sandy';
 
 		try {
@@ -144,25 +141,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 					apiKey: settings?.fish_audio_key ?? '',
 					voiceId: settings?.voice_id ?? '',
 				},
-				onSegmentError: (segment, error) => {
-					const code = getAiErrorCode(error);
-					console.error('Error sintetizando el segmento:', segment, code, error);
-
-					if (reportedVoiceErrors.current.has(code)) {
-						return;
-					}
-					reportedVoiceErrors.current.add(code);
-
-					// Antes esto solo iba a la consola: si se acababan los créditos o
-					// la key era inválida, la VTuber se quedaba muda sin explicación
-					// y sin rastro en ningún sitio.
-					toast.error(getAiErrorMessage(error));
-					posthog.capture('tts_request_failed', { code, provider: 'fish_audio' });
-					rollbar.error('Fallo de síntesis de voz (Fish Audio)', error as Error, {
-						code,
-						segment: segment.slice(0, 120),
-					});
-				},
+				onSegmentError: reportVoiceError,
 			});
 
 			addMessage({
@@ -179,7 +158,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 		} finally {
 			isSendingRef.current = false;
 		}
-	}, [addMessage, resetTranscript, settings, rollbar]);
+	}, [addMessage, resetTranscript, settings, reportVoiceError, resetVoiceErrors]);
 
 	// El handle vive en un ref, no en estado: resetSilenceTimer se dispara en
 	// cada palabra reconocida, mucho más rápido de lo que React re-renderiza.

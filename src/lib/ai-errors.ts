@@ -107,11 +107,25 @@ const FALLBACK = AI_ERROR_MESSAGES['error.unknown'];
  * Error de IA que ya viene clasificado por el backend. Lo usa el cliente de
  * streaming, donde el fallo llega como evento SSE y no como respuesta de axios.
  */
+function resolveMessage(payload: AiErrorPayload): string {
+	const code = payload.code as AiErrorCode;
+	if (payload.provider === VOICE_PROVIDER) {
+		const voice = VOICE_ERROR_MESSAGES[code];
+		if (voice) {
+			return voice;
+		}
+	}
+	return AI_ERROR_MESSAGES[code] ?? AI_ERROR_MESSAGES['error.unknown'];
+}
+
 export class AiResponseError extends Error {
 	readonly payload: AiErrorPayload;
 
 	constructor(payload: AiErrorPayload) {
-		super(payload.message ?? 'No se pudo generar una respuesta');
+		// El texto del catálogo también en `message`: si no, tanto la consola como
+		// Rollbar mostraban "No se pudo generar una respuesta" y había que abrir el
+		// contexto para saber qué pasó de verdad.
+		super(payload.message ?? resolveMessage(payload));
 		this.name = 'AiResponseError';
 		this.payload = payload;
 	}
