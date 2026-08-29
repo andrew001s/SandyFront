@@ -11,7 +11,7 @@ import { azureLanguages, azureRegions } from '@/components/Settings/settings.con
 import { useSettingsPanel } from '@/components/Settings/useSettingsPanel';
 import { SettingsSkeleton } from '@/components/loading/dashboard-skeletons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useStatus } from '@/context/StatusContext';
+import { useServiceStatus } from '@/hooks/useServiceStatus';
 import { Lock } from 'lucide-react';
 import { Bot, Cpu, Mic, Power, Volume2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -76,7 +76,11 @@ export function SettingsPanel({ defaultTab }: { defaultTab?: string } = {}) {
 
 	// Todos los hooks van antes del primer return: si este se llamara después del
 	// esqueleto, React vería un número de hooks distinto en cada render.
-	const { status: serviceRunning } = useStatus();
+	//
+	// El estado sale del backend, no de StatusContext: ese booleano vive en
+	// localStorage y lo escriben también la conexión de Twitch y la reconexión de
+	// perfil, así que estaba en true con el servicio parado y bloqueaba el formulario.
+	const { isRunning: serviceRunning } = useServiceStatus();
 
 	if (settingsLoading) {
 		return <SettingsSkeleton />;
