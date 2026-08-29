@@ -30,8 +30,11 @@ export function AppSettingsProvider({ children }: { children: React.ReactNode })
 			const data = await getSettings({ token });
 			setSettings(data.settings);
 		} catch (error) {
+			// Se conserva lo que ya estaba cargado: un fallo pasajero de red o una
+			// renovación de token no significa que el usuario haya perdido su
+			// configuración. Vaciarla dejaba la voz como "no configurada" —y el
+			// error.missing-config correspondiente— con las claves bien puestas.
 			console.error('Error al cargar settings:', error);
-			setSettings(null);
 		} finally {
 			setIsLoading(false);
 		}

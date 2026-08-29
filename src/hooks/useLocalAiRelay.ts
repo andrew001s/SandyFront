@@ -13,11 +13,14 @@ import { fetchStreamToken } from '@/api/streamToken';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
 import { useVoiceErrorReporter } from '@/hooks/useVoiceErrorReporter';
+import { getAiErrorCode, getAiErrorMessage } from '@/lib/ai-errors';
 import { getStoredAiProvider } from '@/lib/ai-provider';
 import { resolveLocalAiSettings } from '@/lib/local-ai-config';
 import { speakTextStream } from '@/lib/speechPipeline';
 import { useAuth } from '@clerk/nextjs';
+import posthog from 'posthog-js';
 import { useEffect, useRef } from 'react';
+import { toast } from 'sonner';
 
 // Corte para enviar un trozo: fin de frase. Un POST por token serían cientos de
 // peticiones por respuesta y saldría más lento que acumularlo todo.
@@ -129,7 +132,11 @@ export function useLocalAiRelay(): void {
 				// El backend solo necesita el texto para el historial.
 				await sendTaskResult(task.message, texto);
 			} catch (error) {
+				// El chat y los eventos no los origina el usuario, así que sin aviso
+				// el fallo es invisible: la VTuber se queda muda y nadie sabe por qué.
 				console.error('No se pudo resolver la tarea local:', error);
+				toast.error(getAiErrorMessage(error));
+				posthog.capture('ai_task_failed', { code: getAiErrorCode(error), kind: task.kind });
 			}
 		};
 
