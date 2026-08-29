@@ -33,6 +33,8 @@ export type AiErrorCode =
 	| 'error.no-broadcast'
 	| 'error.service-not-running'
 	| 'error.storage-unavailable'
+	| 'error.order-failed'
+	| 'error.category-not-found'
 	// Genéricos
 	| 'error.not-found'
 	| 'error.unknown';
@@ -71,6 +73,10 @@ export const AI_ERROR_MESSAGES: Record<AiErrorCode, string> = {
 		'Falta configurar el canal. Guarda la configuración o vuelve a vincular la cuenta.',
 	'error.no-broadcast': 'No hay una transmisión activa en este momento.',
 	'error.service-not-running': 'El servicio no está en marcha. Inícialo desde el panel.',
+	'error.order-failed':
+		'No se pudo aplicar la orden en tu canal. Revisa que Twitch siga conectado.',
+	'error.category-not-found':
+		'Twitch no tiene ninguna categoría con ese nombre. Prueba a decirlo tal cual aparece en Twitch.',
 	'error.storage-unavailable':
 		'No se pudo acceder a la base de datos. Inténtalo de nuevo en unos minutos.',
 	'error.not-found': 'No se encontró el recurso solicitado.',

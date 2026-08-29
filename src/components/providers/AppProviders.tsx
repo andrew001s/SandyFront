@@ -1,16 +1,16 @@
 'use client';
 
 import { GlobalAudioPlayer } from '@/components/audio/GlobalAudioPlayer';
+import { DashboardTourCard } from '@/components/tour/DashboardTourCard';
+import { DASHBOARD_TOUR_STORAGE_KEY, dashboardTourSteps } from '@/components/tour/dashboardTour';
 import { MessagesProvider } from '@/context/MessagesContext';
 import { StatusProvider } from '@/context/StatusContext';
 import { StatusProviderBot } from '@/context/StatusContextBot';
-import { dashboardTourSteps, DASHBOARD_TOUR_STORAGE_KEY } from '@/components/tour/dashboardTour';
-import { DashboardTourCard } from '@/components/tour/DashboardTourCard';
 import { useUser } from '@clerk/nextjs';
-import { NextStep, NextStepProvider, useNextStep } from 'nextstepjs';
-import { usePathname } from 'next/navigation';
-import posthog from 'posthog-js';
 import { useTheme } from 'next-themes';
+import { usePathname } from 'next/navigation';
+import { NextStep, NextStepProvider, useNextStep } from 'nextstepjs';
+import posthog from 'posthog-js';
 import { type ReactNode, useEffect, useRef } from 'react';
 
 function PostHogUserIdentification() {
