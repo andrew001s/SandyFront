@@ -98,6 +98,19 @@ const StreamChat = () => {
 		],
 	);
 
+	// El stream SSE no se puede reabrir cada vez que cambia un callback: mientras
+	// se cierra y se pide un token nuevo, los mensajes que empuje el backend se
+	// pierden (SSE no reenvía lo perdido). `connected`/`connecting` de VTube Studio
+	// cambian varias veces al cargar la página, así que estos dos viajan por ref y
+	// el efecto solo depende de la sesión de Clerk.
+	const forwardToAvatarRef = useRef(forwardToAvatar);
+	const queueVoiceRef = useRef(queueVoice);
+
+	useEffect(() => {
+		forwardToAvatarRef.current = forwardToAvatar;
+		queueVoiceRef.current = queueVoice;
+	}, [forwardToAvatar, queueVoice]);
+
 	useEffect(() => {
 		isMountedRef.current = true;
 
@@ -168,13 +181,13 @@ const StreamChat = () => {
 						timestamp: parsedData.timestamp || new Date().toISOString(),
 					});
 
-					void forwardToAvatar({
+					void forwardToAvatarRef.current({
 						...parsedData,
 						type: 'speech',
 						text: speechText,
 					});
 
-					queueVoice(speechText).catch((error) => {
+					queueVoiceRef.current(speechText).catch((error) => {
 						processedMessages.current.delete(messageKey);
 						console.error('Error al procesar el audio:', error);
 					});
@@ -190,7 +203,7 @@ const StreamChat = () => {
 						timestamp: parsedData.timestamp || new Date().toISOString(),
 					});
 
-					void forwardToAvatar({
+					void forwardToAvatarRef.current({
 						...parsedData,
 						type: 'reaction',
 						text: reactionText || parsedData.text,
@@ -298,7 +311,7 @@ const StreamChat = () => {
 			streamRef.current?.close();
 			streamRef.current = null;
 		};
-	}, [getToken, isLoaded, isSignedIn, forwardToAvatar, queueVoice, pushSystemMessage]);
+	}, [getToken, isLoaded, isSignedIn, pushSystemMessage]);
 
 	return <div className='mx-auto space-y-4 p-4' />;
 };
