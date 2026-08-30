@@ -2,8 +2,6 @@ import { deleteAuth, postAuth, saveTokens } from '@/api/fetchAuth';
 import { getProfileInfo } from '@/api/fetchProfile';
 import { start } from '@/api/sandycore';
 import { getAccessToken, getTwitchAuthUrl } from '@/api/twitchAuth';
-import { useStatus } from '@/context/StatusContext';
-import { useStatusBot } from '@/context/StatusContextBot';
 import { useAuth } from '@clerk/nextjs';
 import type { ProfileModel } from '@/interfaces/profileInterface';
 import axios from 'axios';

@@ -17,11 +17,10 @@ import { useServiceStatus } from '@/hooks/useServiceStatus';
 import { getAiErrorCode, getAiErrorMessage } from '@/lib/ai-errors';
 import { markServiceStarted, stopServiceRuntime } from '@/lib/serviceRuntime';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@clerk/nextjs';
 import { Power } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import posthog from 'posthog-js';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { ThinkingOrb } from 'thinking-orbs';
 
@@ -30,7 +29,6 @@ export function ServiceStartCard() {
 	const { setStatus } = useStatus();
 	const [isBusy, setIsBusy] = useState(false);
 	const [isStopConfirmOpen, setIsStopConfirmOpen] = useState(false);
-	const { isLoaded, isSignedIn } = useAuth();
 	const {
 		serviceStatus,
 		isRunning,
