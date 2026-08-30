@@ -81,6 +81,14 @@ export function useLocalAiRelay(): void {
 
 		const scheduleReconnect = () => {
 			if (cancelled) return;
+			// Se cancela el anterior antes de programar otro. Sin esto, dos avisos
+			// de error seguidos dejaban un temporizador huérfano que abría una
+			// segunda conexión: las dos recibían la misma tarea y la VTuber
+			// acababa diciendo cada frase dos veces.
+			if (reconnectRef.current) {
+				clearTimeout(reconnectRef.current);
+				reconnectRef.current = null;
+			}
 			const delay = Math.min(RECONNECT_BASE_MS * 2 ** attemptRef.current, RECONNECT_MAX_MS);
 			attemptRef.current += 1;
 			reconnectRef.current = setTimeout(() => void open(), delay);
@@ -211,7 +219,14 @@ export function useLocalAiRelay(): void {
 			}
 		};
 
+		// Solo la apertura más reciente puede quedarse con la conexión. Entre pedir
+		// el token y abrir el EventSource hay dos await, y en ese hueco puede
+		// entrar otra apertura; sin este contador las dos creaban su conexión y
+		// solo una quedaba registrada para cerrarse.
+		let generacion = 0;
+
 		const open = async () => {
+			const mia = ++generacion;
 			try {
 				close();
 				const clerkToken = await getToken();
@@ -219,7 +234,7 @@ export function useLocalAiRelay(): void {
 
 				// Token fresco en cada intento: solo se valida al abrir.
 				const { token } = await fetchStreamToken({ token: clerkToken });
-				if (cancelled) return;
+				if (cancelled || mia !== generacion) return;
 
 				const source = new EventSource(
 					`${getBackendUrl()}/stream?token=${encodeURIComponent(token)}`,
