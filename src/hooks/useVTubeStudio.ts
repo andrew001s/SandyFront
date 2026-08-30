@@ -589,7 +589,7 @@ export function useVTubeStudio(): UseVTSReturn {
 				notifySharedState();
 			}
 		},
-		[handleError, syncClientState, syncModelState],
+		[handleError, scheduleReconnect, syncClientState, syncModelState],
 	);
 
 	// Al recargar se pierde el WebSocket con VTS. Si ya hubo emparejamiento (hay

@@ -52,3 +52,29 @@ export async function getServiceStatus() {
 	const response = await backendClient.get('/service-status');
 	return response.data.service as ServiceStatus;
 }
+
+export type RewardConfig = {
+	reward_id: string;
+	platform: 'twitch' | 'kick';
+	title: string;
+	cost: number;
+	enabled: boolean;
+	prompt: string;
+	background_color?: string | null;
+	image_url?: string | null;
+};
+
+export type RewardsResponse = {
+	twitch: RewardConfig[];
+	kick: RewardConfig[];
+};
+
+export async function getRewards(): Promise<RewardsResponse> {
+	const response = await backendClient.get('/rewards');
+	return response.data;
+}
+
+export async function saveRewards(rewards: RewardConfig[]): Promise<unknown> {
+	const response = await backendClient.post('/rewards', { rewards });
+	return response.data;
+}

@@ -26,6 +26,7 @@ import {
 	LayoutDashboard,
 	LogIn,
 	LogOut,
+	Gift,
 	Plug,
 	Settings2,
 	ShieldCheck,
@@ -39,6 +40,7 @@ import { useTheme } from 'next-themes';
 const navItems = [
 	{ href: '/home', label: 'Dashboard', icon: LayoutDashboard, tourId: 'sidebar-tour-dashboard' },
 	{ href: '/conexiones', label: 'Conexiones', icon: Plug, tourId: 'sidebar-tour-conexiones' },
+	{ href: '/recompensas', label: 'Recompensas', icon: Gift, tourId: 'sidebar-tour-recompensas' },
 	{
 		href: '/moderacion',
 		label: 'Moderación',
