@@ -50,6 +50,16 @@ const nextConfig: NextConfig = {
 				hostname: 'api.producthunt.com',
 				pathname: '/**',
 			},
+			{
+				protocol: 'https',
+				hostname: 'static-cdn.jtvnw.net',
+				pathname: '/**',
+			},
+			{
+				protocol: 'https',
+				hostname: 'files.kick.com',
+				pathname: '/**',
+			},
 		],
 	},
 };
