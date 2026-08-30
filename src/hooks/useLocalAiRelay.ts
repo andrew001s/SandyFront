@@ -117,6 +117,9 @@ export function useLocalAiRelay(): void {
 					texto = await speakTextStream(deltas, {
 						fish: { apiKey, voiceId },
 						onSegmentError: reportVoiceError,
+						// Las calcula el backend a partir del personaje. Cortan al modelo
+						// si empieza a escribir el turno del espectador.
+						stopMarkers: task.stop,
 					});
 				} else {
 					for await (const delta of deltas) {

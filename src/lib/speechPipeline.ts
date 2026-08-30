@@ -1,5 +1,6 @@
 import { type FishAudioConfig, getVoiceSandy } from '@/api/fetchFishAudio';
 import { AudioQueueManager } from '@/lib/audioQueueSingleton';
+import { cleanSpokenText, turnMarkerIndex } from '@/lib/replyCleanup';
 import { createSentenceChunker } from '@/lib/sentenceChunker';
 
 export type SpeechPipelineOptions = {
@@ -10,6 +11,13 @@ export type SpeechPipelineOptions = {
 	signal?: AbortSignal;
 	/** Peticiones de TTS simultáneas. Más alto no acelera y arriesga rate limit. */
 	concurrency?: number;
+	/**
+	 * Etiquetas con las que el modelo abre un turno que no le toca escribir
+	 * ("user:", el nombre del personaje...). Al encontrarlas se corta ahí y se
+	 * deja de hablar. Sin esto, un modelo local que sigue la conversación solo
+	 * acaba leyendo en voz alta el turno del espectador.
+	 */
+	stopMarkers?: string[];
 };
 
 /** Semáforo mínimo para no disparar una petición por cada frase a la vez. */
@@ -49,7 +57,7 @@ export async function speakTextStream(
 	stream: AsyncIterable<string>,
 	options: SpeechPipelineOptions,
 ): Promise<string> {
-	const { fish, onSegment, onSegmentError, signal, concurrency = 2 } = options;
+	const { fish, onSegment, onSegmentError, signal, concurrency = 2, stopMarkers = [] } = options;
 	const chunker = createSentenceChunker();
 	const queue = AudioQueueManager.getInstance();
 	const limit = createLimiter(concurrency);
@@ -76,17 +84,35 @@ export async function speakTextStream(
 		});
 	};
 
+	// Se limpia la frase YA cortada, no cada trozo suelto: así las marcas llegan
+	// completas (`*acción*`, `**negrita**`) y no cuesta latencia, porque el
+	// segmento ya estaba listo para mandarse a voz.
+	let cortado = false;
+	const procesar = (segment: string): void => {
+		const corte = turnMarkerIndex(segment, stopMarkers);
+		const util = corte >= 0 ? segment.slice(0, corte) : segment;
+		if (corte >= 0) {
+			cortado = true;
+		}
+		const limpio = cleanSpokenText(util);
+		if (!limpio) return;
+		fullText += fullText ? ` ${limpio}` : limpio;
+		enqueueSegment(limpio);
+	};
+
 	for await (const delta of stream) {
-		if (signal?.aborted) break;
-		fullText += delta;
+		if (signal?.aborted || cortado) break;
 		for (const segment of chunker.push(delta)) {
-			enqueueSegment(segment);
+			procesar(segment);
+			if (cortado) break;
 		}
 	}
 
-	const tail = chunker.flush();
-	if (tail && !signal?.aborted) {
-		enqueueSegment(tail);
+	if (!cortado && !signal?.aborted) {
+		const tail = chunker.flush();
+		if (tail) {
+			procesar(tail);
+		}
 	}
 
 	await chain;
