@@ -28,6 +28,11 @@ export async function stop(bot: boolean) {
 	return response.data;
 }
 
+export type PlatformStatus = {
+	connected: boolean;
+	running: boolean;
+};
+
 export type ServiceStatus = {
 	user_id: string;
 	running: boolean;
@@ -36,6 +41,11 @@ export type ServiceStatus = {
 	last_known_live: boolean | null;
 	last_activity: string | null;
 	status: 'active' | 'inactive';
+	platforms?: {
+		twitch?: PlatformStatus;
+		kick?: PlatformStatus;
+		youtube?: PlatformStatus;
+	};
 };
 
 export async function getServiceStatus() {

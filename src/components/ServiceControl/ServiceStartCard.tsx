@@ -1,6 +1,6 @@
 'use client';
 
-import { getTokens } from '@/api/fetchAuth';
+
 import { start, stop } from '@/api/sandycore';
 import { ServiceStartSkeleton } from '@/components/loading/dashboard-skeletons';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,6 @@ export function ServiceStartCard() {
 	const { setStatus } = useStatus();
 	const [isBusy, setIsBusy] = useState(false);
 	const [isStopConfirmOpen, setIsStopConfirmOpen] = useState(false);
-	const [isConfigured, setIsConfigured] = useState<boolean | null>(null);
 	const { isLoaded, isSignedIn } = useAuth();
 	const {
 		serviceStatus,
@@ -42,43 +41,22 @@ export function ServiceStartCard() {
 
 	// Se mide "ya intentamos cargar", no "tenemos datos": si /service-status falla,
 	// el esqueleto tiene que irse igual en vez de quedarse para siempre.
-	const statusLoaded = hasLoadedStatus && isConfigured !== null;
+	const statusLoaded = hasLoadedStatus;
 
-	// Las peticiones van con el token de Clerk que inyecta backendClient leyendo
-	// window.Clerk. Al montar puede no estar hidratado todavía: si se disparaban
-	// igual, volvían 401 y la tarjeta quedaba en su estado inicial hasta que el
-	// usuario navegaba a otra ruta y volvía.
-	useEffect(() => {
-		if (!isLoaded || !isSignedIn) {
-			return;
-		}
-
-		let active = true;
-		getTokens(false)
-			.then((stored) => {
-				if (active) {
-					setIsConfigured(Boolean(stored?.tokens?.token && stored?.tokens?.refresh_token));
-				}
-			})
-			.catch(() => {
-				if (active) {
-					setIsConfigured(false);
-				}
-			});
-		return () => {
-			active = false;
-		};
-	}, [isLoaded, isSignedIn]);
+	// Determinamos si hay al menos una plataforma conectada (para poder arrancar)
+	const isConfigured = serviceStatus?.platforms
+		? Boolean(
+				serviceStatus.platforms.twitch?.connected ||
+				serviceStatus.platforms.kick?.connected ||
+				serviceStatus.platforms.youtube?.connected
+		  )
+		: hasLoadedStatus
+			? false
+			: null;
 
 	const handleStart = async () => {
 		try {
 			setIsBusy(true);
-			const stored = await getTokens(false);
-			if (!stored?.tokens?.token || !stored?.tokens?.refresh_token) {
-				setIsConfigured(false);
-				toast.error('Conecta primero tu cuenta principal de Twitch para iniciar el servicio');
-				return;
-			}
 			await start(false);
 			posthog.capture('twitch_service_started');
 			markServiceStarted();
@@ -153,7 +131,7 @@ export function ServiceStartCard() {
 	const description = !statusLoaded
 		? 'Consultando el estado del servicio...'
 		: isConfigured === false
-			? 'Conecta tu cuenta principal de Twitch para iniciar.'
+			? 'Conecta al menos una cuenta (Twitch, Kick o YouTube) para iniciar.'
 			: isStatusUnknown
 				? 'No se pudo consultar el estado. Reintentando...'
 				: active
