@@ -1,8 +1,6 @@
-import { Button } from '@/components/ui/button';
 import { noIndexMetadata } from '@/lib/seo';
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import { LogIn, Wrench } from 'lucide-react';
+import { Wrench } from 'lucide-react';
 
 export const metadata: Metadata = noIndexMetadata;
 
@@ -28,12 +26,7 @@ export default function MantenimientoPage() {
 				Tu configuración y tus cuentas conectadas no se ven afectadas.
 			</p>
 
-			<Button asChild variant='outline' className='mt-8'>
-				<Link href='/sign-in'>
-					<LogIn className='size-4' />
-					Iniciar sesión
-				</Link>
-			</Button>
+			
 		</div>
 	);
 }
