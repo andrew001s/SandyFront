@@ -29,7 +29,7 @@ interface UseYoutubeAuthReturn {
 	isBusy: boolean;
 	isRefreshing: boolean;
 	fetchProfile: () => Promise<void>;
-	refreshStatus: () => Promise<boolean>;
+	refreshStatus: (options?: { showSkeleton?: boolean }) => Promise<boolean>;
 	handleConnect: () => Promise<void>;
 	handleDisconnect: () => Promise<void>;
 	handleToggleService: () => Promise<void>;
@@ -75,50 +75,59 @@ export const useYoutubeAuth = (options: UseYoutubeAuthOptions = {}): UseYoutubeA
 		}
 	}, [getToken, isLoaded, isSignedIn]);
 
-	const refreshStatus = useCallback(async () => {
-		try {
-			setIsRefreshing(true);
-			const [tokensSnapshot, profileSnapshot, serviceSnapshot] = await Promise.allSettled([
-				getYoutubeTokens(),
-				getYoutubeProfile(),
-				getYoutubeServiceStatus(),
-			]);
+	const refreshStatus = useCallback(
+		async (options: { showSkeleton?: boolean } = {}) => {
+			const { showSkeleton = false } = options;
+			try {
+				if (showSkeleton) {
+					setIsRefreshing(true);
+				}
+				const token = isSignedIn ? await getToken() : null;
+				const [tokensSnapshot, profileSnapshot, serviceSnapshot] = await Promise.allSettled([
+					getYoutubeTokens(),
+					getYoutubeProfile({ token }),
+					getYoutubeServiceStatus(),
+				]);
 
-			const tokensAuthenticatedResult =
-				tokensSnapshot.status === 'fulfilled'
-					? Boolean(tokensSnapshot.value?.tokens?.authenticated)
-					: false;
-			const profileAuthenticatedResult =
-				profileSnapshot.status === 'fulfilled' ? Boolean(profileSnapshot.value) : false;
+				const tokensAuthenticatedResult =
+					tokensSnapshot.status === 'fulfilled'
+						? Boolean(tokensSnapshot.value?.tokens?.authenticated)
+						: false;
+				const profileAuthenticatedResult =
+					profileSnapshot.status === 'fulfilled' ? Boolean(profileSnapshot.value) : false;
 
-			if (tokensSnapshot.status === 'fulfilled') {
-				setTokensAuthenticated(tokensAuthenticatedResult);
-			} else {
-				setTokensAuthenticated(false);
+				if (tokensSnapshot.status === 'fulfilled') {
+					setTokensAuthenticated(tokensAuthenticatedResult);
+				} else {
+					setTokensAuthenticated(false);
+				}
+
+				if (profileSnapshot.status === 'fulfilled') {
+					setProfile(profileSnapshot.value);
+					setStatus(Boolean(profileSnapshot.value));
+				} else {
+					setProfile(null);
+					setStatus(false);
+				}
+
+				if (serviceSnapshot.status === 'fulfilled') {
+					setServiceStatus(serviceSnapshot.value);
+				} else {
+					setServiceStatus(null);
+				}
+
+				return tokensAuthenticatedResult || profileAuthenticatedResult;
+			} catch (error) {
+				console.error('Error al refrescar estado de YouTube:', error);
+				return false;
+			} finally {
+				if (showSkeleton) {
+					setIsRefreshing(false);
+				}
 			}
-
-			if (profileSnapshot.status === 'fulfilled') {
-				setProfile(profileSnapshot.value);
-				setStatus(Boolean(profileSnapshot.value));
-			} else {
-				setProfile(null);
-				setStatus(false);
-			}
-
-			if (serviceSnapshot.status === 'fulfilled') {
-				setServiceStatus(serviceSnapshot.value);
-			} else {
-				setServiceStatus(null);
-			}
-
-			return tokensAuthenticatedResult || profileAuthenticatedResult;
-		} catch (error) {
-			console.error('Error al refrescar estado de YouTube:', error);
-			return false;
-		} finally {
-			setIsRefreshing(false);
-		}
-	}, []);
+		},
+		[getToken, isSignedIn],
+	);
 
 	useEffect(() => {
 		if (disableInitialStatusLoad) {
@@ -133,9 +142,9 @@ export const useYoutubeAuth = (options: UseYoutubeAuthOptions = {}): UseYoutubeA
 			return;
 		}
 
-		void refreshStatus();
+		void refreshStatus({ showSkeleton: true });
 		const intervalId = window.setInterval(() => {
-			void refreshStatus();
+			void refreshStatus({ showSkeleton: false });
 		}, 30_000);
 
 		return () => window.clearInterval(intervalId);
@@ -159,48 +168,98 @@ export const useYoutubeAuth = (options: UseYoutubeAuthOptions = {}): UseYoutubeA
 			const startedAt = Date.now();
 			const maxWaitMs = 180_000;
 
+			const cleanup = () => {
+				settled = true;
+				if (pollId) {
+					window.clearInterval(pollId);
+					pollId = null;
+				}
+				window.removeEventListener('message', handleCallback);
+			};
+
+			const finishSuccess = async (method: 'callback' | 'status_poll' | 'window_closed') => {
+				cleanup();
+				try {
+					const token = await getToken();
+					const profileInfo = await getYoutubeProfile({ token });
+					if (profileInfo) {
+						setProfile(profileInfo);
+						setStatus(true);
+						setTokensAuthenticated(true);
+					}
+					await refreshStatus({ showSkeleton: false });
+				} catch (err) {
+					console.error('Error cargando perfil de YouTube tras conectar:', err);
+					await refreshStatus({ showSkeleton: false });
+				} finally {
+					setIsLoading(false);
+				}
+				posthog.capture('youtube_account_connected', { completion_method: method });
+				toast.success('Conectado a YouTube');
+			};
+
 			const handleCallback = (event: MessageEvent) => {
 				const backendOrigin = getBackendUrl();
 				if (event.origin !== backendOrigin && event.origin !== window.location.origin) return;
 				if (event.data?.type !== 'youtube-auth-complete') return;
 
-				settled = true;
-				if (pollId) window.clearInterval(pollId);
-				window.removeEventListener('message', handleCallback);
-				setIsLoading(false);
+				if (settled) return;
 
 				if (event.data?.ok) {
-					void refreshStatus();
-					posthog.capture('youtube_account_connected', { completion_method: 'callback' });
-					toast.success('Conectado a YouTube');
+					void finishSuccess('callback');
 				} else {
+					cleanup();
+					setIsLoading(false);
 					toast.error('La autenticación de YouTube falló');
 				}
 			};
 
 			pollId = window.setInterval(() => {
-				if (settled || pollInFlight) return;
+				if (settled) return;
+
+				if (authWindow.closed) {
+					cleanup();
+					void (async () => {
+						try {
+							const token = await getToken();
+							const profileInfo = await getYoutubeProfile({ token });
+							if (profileInfo) {
+								setProfile(profileInfo);
+								setStatus(true);
+								setTokensAuthenticated(true);
+								await refreshStatus({ showSkeleton: false });
+								setIsLoading(false);
+								posthog.capture('youtube_account_connected', { completion_method: 'window_closed' });
+								toast.success('Conectado a YouTube');
+								return;
+							}
+						} catch {
+							// Ignorado si el usuario canceló
+						}
+						setIsLoading(false);
+					})();
+					return;
+				}
+
 				if (Date.now() - startedAt > maxWaitMs) {
-					settled = true;
-					if (pollId) window.clearInterval(pollId);
-					window.removeEventListener('message', handleCallback);
+					cleanup();
 					setIsLoading(false);
 					toast.error('La autenticación de YouTube tardó demasiado');
 					return;
 				}
 
+				if (pollInFlight) return;
 				pollInFlight = true;
+
 				void (async () => {
 					try {
-						const connected = await refreshStatus();
-						if (!settled && connected) {
-							settled = true;
-							posthog.capture('youtube_account_connected', { completion_method: 'status_poll' });
-							if (pollId) window.clearInterval(pollId);
-							window.removeEventListener('message', handleCallback);
-							setIsLoading(false);
-							toast.success('Conectado a YouTube');
+						const tokensRes = await getYoutubeTokens();
+						const isAuthed = Boolean(tokensRes?.tokens?.authenticated);
+						if (!settled && isAuthed) {
+							await finishSuccess('status_poll');
 						}
+					} catch {
+						// Ignorado durante el sondeo
 					} finally {
 						pollInFlight = false;
 					}
@@ -213,7 +272,7 @@ export const useYoutubeAuth = (options: UseYoutubeAuthOptions = {}): UseYoutubeA
 			toast.error('Error al conectar con YouTube');
 			setIsLoading(false);
 		}
-	}, [refreshStatus]);
+	}, [getToken, refreshStatus]);
 
 	const handleDisconnect = useCallback(async () => {
 		try {
