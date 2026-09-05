@@ -15,7 +15,7 @@ import { Bot, Coffee, ExternalLink, Gift, Heart, Mic, Sparkles, Youtube } from '
 import { useCallback, useEffect, useState } from 'react';
 
 export const SANDY_NEWS_STORAGE_KEY = 'sandy_news_last_seen_version';
-export const CURRENT_NEWS_VERSION = '0.1.8';
+export const CURRENT_NEWS_VERSION = '0.1.9';
 export const OPEN_NEWS_MODAL_EVENT = 'open-sandy-news-modal';
 
 export const openNewsModal = () => {
