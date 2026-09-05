@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.9](https://github.com/andrew001s/SandyFront/compare/v0.1.8...v0.1.9) (2026-09-05)
+
+
+### Features
+
+* ✨ actualizar la gestión del estado del servicio en Dictaphone para mejorar la activación del micrófono ([d8bf377](https://github.com/andrew001s/SandyFront/commit/d8bf37728bd539fc4157c8940ee53bf78cc6ef29))
+* ✨ add Home dashboard layout with support card and latest features modal ([2be3827](https://github.com/andrew001s/SandyFront/commit/2be38276c1870767b124a00d6e38a089c58979a4))
+* ✨ añadir clasificación y ejecución de órdenes locales en el modelo de IA ([4249bc6](https://github.com/andrew001s/SandyFront/commit/4249bc6403ae95962bf6859dbf3e7f01779f116a))
+* ✨ añadir función de actualización del estado del servicio para mejorar la gestión del micrófono en Dictaphone ([2ef12b8](https://github.com/andrew001s/SandyFront/commit/2ef12b8822c4aa054c08e53eca09613ddbcd2c96))
+* ✨ añadir opciones de longitud para el primer segmento en SentenceChunker ([fa4be75](https://github.com/andrew001s/SandyFront/commit/fa4be75b546e85689e61d8defba161f955ed6f6c))
+* ✨ añadir página de recompensas y lógica para gestionar recompensas de Twitch y Kick ([2f322d3](https://github.com/andrew001s/SandyFront/commit/2f322d367b620be9cd2878373f7a000434e4c50e))
+* ✨ añadir patrones remotos para static-cdn.jtvnw.net y files.kick.com ([bc82332](https://github.com/andrew001s/SandyFront/commit/bc82332cf9a079cc1ba8ed901146844b8edc44e6))
+* ✨ añadir soporte para envíos parciales en sendRelayResult y mejorar la gestión de resultados en useLocalAiRelay ([20e4202](https://github.com/andrew001s/SandyFront/commit/20e42027d5fde77163e33ca8e6f633ed2bf2d16e))
+* ✨ añadir tipos de estado de plataforma y actualizar la lógica de conexión en el servicio de Twitch ([ea937da](https://github.com/andrew001s/SandyFront/commit/ea937dac6fe1e3b5bc766480eeb9f949c3c2ec46))
+* ✨ eliminar botón de inicio de sesión en la página de mantenimiento ([8b95faa](https://github.com/andrew001s/SandyFront/commit/8b95faa64af0ed96c355d23bd8f2a400e35c8557))
+* ✨ eliminar dependencias no utilizadas de autenticación en ServiceStartCard y useTwitchAuth ([a385989](https://github.com/andrew001s/SandyFront/commit/a385989ea0daf9688f3b17506d2072e7f33eb715))
+* ✨ implementar el hook useServiceStatus para gestionar el estado del servicio desde el backend ([8ae4d59](https://github.com/andrew001s/SandyFront/commit/8ae4d59428c51ae2249706cd058486cb1efdb4a7))
+* ✨ implementar el hook useVoiceErrorReporter para gestionar errores de síntesis de voz ([9c7de12](https://github.com/andrew001s/SandyFront/commit/9c7de12f3c9ee01abe4a582cdbec778ccea425aa))
+* ✨ implementar el manejo de peticiones de inferencia local y la gestión de resultados y errores ([073cd32](https://github.com/andrew001s/SandyFront/commit/073cd321eac4a5f3ecbbba6cd449853981f02573))
+* ✨ implementar el relay de IA local y gestionar peticiones SSE ([0b2c163](https://github.com/andrew001s/SandyFront/commit/0b2c163f6fc9cbea1b8f71dde4df8a3cf375e625))
+* ✨ mejorar el flujo de onboarding, añadiendo gestión remota y verificación de estado ([c916fc4](https://github.com/andrew001s/SandyFront/commit/c916fc4dfdfc459682da1fdff11c065f4d86b987))
+* ✨ mejorar el manejo de errores al iniciar servicios, mostrando mensajes específicos del backend ([bc3db48](https://github.com/andrew001s/SandyFront/commit/bc3db485f355737fef585fc223577429d43ff50d))
+* ✨ mejorar el manejo de errores y la solicitud de token en la API de Kick ([7b6f894](https://github.com/andrew001s/SandyFront/commit/7b6f894cffa6c101a226b4eb248acf288c3827aa))
+* ✨ mejorar la gestión de errores en la función getVoiceSandy, añadiendo un manejo específico para configuración faltante ([eebd636](https://github.com/andrew001s/SandyFront/commit/eebd636e629649d35f119d3e99a54eca8669e3b0))
+* ✨ mejorar la gestión de veredictos de moderación y clasificación en useLocalAiRelay ([23dee6c](https://github.com/andrew001s/SandyFront/commit/23dee6cc5de2841b10a6b9389cbf5ceef7443dee))
+* ✨ mejorar la gestión del servicio de VTuber, incluyendo reconexión automática y manejo de errores de síntesis de voz ([935c1aa](https://github.com/andrew001s/SandyFront/commit/935c1aa850fde39faa44642929a03be517915625))
+* ✨ optimizar el manejo de referencias en StreamChat para evitar pérdidas de mensajes en el stream SSE ([147ca43](https://github.com/andrew001s/SandyFront/commit/147ca43c10a9e00b8d54f8a1a817036cfa26c2b2))
+* ✨ refactor el manejo de IA local, eliminando el relay y añadiendo soporte para la configuración de prompts ([8ea7a66](https://github.com/andrew001s/SandyFront/commit/8ea7a66f119d0e4d43871433fc5b2d6cf18bee2a))
+* ✨ reorganizar el uso de hooks en SettingsPanel para cumplir con las reglas de React ([9d7a410](https://github.com/andrew001s/SandyFront/commit/9d7a4104de3a870f6045a1c01e178bba99dd8f14))
+* ✨ reubicar el relay de IA local en DashboardShell y eliminar su instancia en AppProviders ([bbb01b0](https://github.com/andrew001s/SandyFront/commit/bbb01b09902777ae082d064090413877558b1e3b))
+* ✨ simplificar la gestión del ciclo de vida del servicio y eliminar configuraciones innecesarias ([8626a25](https://github.com/andrew001s/SandyFront/commit/8626a252293af5e33330f5b7512293be1719c19f))
+* **ai-local:** resolver las tareas de IA local en el navegador ([eae9c8a](https://github.com/andrew001s/SandyFront/commit/eae9c8a57d9e5b1a56279d770b0e553d8dcfbf81))
+* implement YouTube account authentication, profile management, and integration card component ([4c39be2](https://github.com/andrew001s/SandyFront/commit/4c39be24e71bf0ee2d42be7251d4e7595171f526))
+* integrate flags-sdk for maintenance mode and Vercel flags support ([73e2c22](https://github.com/andrew001s/SandyFront/commit/73e2c2203636dc0c55b611a9bc55c94f78436ad6))
+
 ### [0.1.8](https://github.com/andrew001s/SandyFront/compare/v0.1.5...v0.1.8) (2026-08-28)
 
 

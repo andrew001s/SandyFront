@@ -1,12 +1,13 @@
 'use client';
 
 import { StarField } from '@/components/landing/StarField';
+import { NewsModal, openNewsModal } from '@/components/modals/NewsModal';
 import { AppSidebar } from '@/components/ui/app-sidebar';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSettingsProvider } from '@/context/AppSettingsContext';
 import { useLocalAiRelay } from '@/hooks/useLocalAiRelay';
 import { useShutdownOnExit } from '@/hooks/useShutdownOnExit';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sparkles, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 
@@ -47,16 +48,28 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 					<header className='sticky top-0 z-20 flex h-14 items-center justify-between border-b bg-background/70 px-4 backdrop-blur-sm'>
 						<SidebarTrigger />
 						{mounted && (
-							<button
-								type='button'
-								onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-								className='flex size-9 items-center justify-center rounded-full border border-border/70 bg-background/60 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
-								aria-label='Cambiar tema'
-							>
-								{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-							</button>
+							<div className='flex items-center gap-2'>
+								<button
+									type='button'
+									onClick={() => openNewsModal()}
+									className='flex h-9 items-center gap-1.5 rounded-full border border-border/70 bg-background/60 px-3 font-medium text-muted-foreground text-xs transition-colors hover:bg-accent hover:text-accent-foreground'
+									aria-label='Ver novedades'
+								>
+									<Sparkles className='size-3.5 text-violet-500' />
+									<span>Novedades</span>
+								</button>
+								<button
+									type='button'
+									onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+									className='flex size-9 items-center justify-center rounded-full border border-border/70 bg-background/60 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
+									aria-label='Cambiar tema'
+								>
+									{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+								</button>
+							</div>
 						)}
 					</header>
+					<NewsModal />
 					<div className='relative flex-1'>
 						<StarField
 							count={40}

@@ -3,6 +3,7 @@ import { FeatureFlagsPanel } from '@/components/FeatureFlags/FeatureFlagsPanel';
 import { MicrophoneTile } from '@/components/ServiceControl/MicrophoneTile';
 import { ServiceStartCard } from '@/components/ServiceControl/ServiceStartCard';
 import { TerminalSandy } from '@/components/TerminalSandy/TerminalSandy';
+import { SupportCard } from '@/components/home/SupportCard';
 import { RequireOnboarding } from '@/components/onboarding/RequireOnboarding';
 import { Separator } from '@/components/ui/separator';
 import { Star } from 'lucide-react';
@@ -36,6 +37,7 @@ export const HomeContainer = () => {
 				<ServiceStartCard />
 				<MicrophoneTile />
 			</div>
+			<SupportCard />
 			<div className='mt-4'>
 				<TerminalSandy />
 				<StreamChat />
