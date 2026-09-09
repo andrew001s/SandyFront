@@ -59,6 +59,7 @@ export function SettingsPanel({ defaultTab }: { defaultTab?: string } = {}) {
 		setIsAzureLanguageOpen,
 		updateField,
 		updateSttProvider,
+		updateTtsProvider,
 		updateChunkSize,
 		handleSandyConfigChange,
 		handleStopService,
@@ -177,7 +178,12 @@ export function SettingsPanel({ defaultTab }: { defaultTab?: string } = {}) {
 						</TabsContent>
 
 						<TabsContent value='voice' className='mt-0'>
-							<VoiceSection form={form} fishState={fishState} updateField={updateField} />
+							<VoiceSection
+								form={form}
+								fishState={fishState}
+								updateField={updateField}
+								onProviderChange={updateTtsProvider}
+							/>
 						</TabsContent>
 
 						<TabsContent value='speech' className='mt-0'>

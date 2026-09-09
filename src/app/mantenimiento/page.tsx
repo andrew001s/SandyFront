@@ -25,8 +25,6 @@ export default function MantenimientoPage() {
 			<p className='mt-2 max-w-md text-muted-foreground text-sm'>
 				Tu configuración y tus cuentas conectadas no se ven afectadas.
 			</p>
-
-			
 		</div>
 	);
 }

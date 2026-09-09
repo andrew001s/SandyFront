@@ -40,7 +40,8 @@ const createTicker = (onTick: () => void): (() => void) => {
 	}
 
 	const url = URL.createObjectURL(new Blob([TICKER_SOURCE], { type: 'text/javascript' }));
-	const worker = new Worker(url);
+	const WorkerConstructor = (window as unknown as { Worker: typeof Worker }).Worker;
+	const worker = new WorkerConstructor(url);
 	worker.onmessage = onTick;
 	worker.postMessage({ type: 'start', interval: TICK_MS });
 
@@ -75,7 +76,11 @@ export const createVtsLipSyncHandler = (injectParameters: VTSInjectParameters) =
 			const buffer = await audioBlob.arrayBuffer();
 			audioContext = new AudioContext();
 			if (audioContext.state === 'suspended') {
-				await audioContext.resume();
+				try {
+					await audioContext.resume();
+				} catch {
+					// decodeAudioData funciona incluso con el AudioContext suspendido.
+				}
 			}
 
 			const audioBuffer = await audioContext.decodeAudioData(buffer);
