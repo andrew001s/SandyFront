@@ -229,7 +229,9 @@ export const useYoutubeAuth = (options: UseYoutubeAuthOptions = {}): UseYoutubeA
 								setTokensAuthenticated(true);
 								await refreshStatus({ showSkeleton: false });
 								setIsLoading(false);
-								posthog.capture('youtube_account_connected', { completion_method: 'window_closed' });
+								posthog.capture('youtube_account_connected', {
+									completion_method: 'window_closed',
+								});
 								toast.success('Conectado a YouTube');
 								return;
 							}

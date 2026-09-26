@@ -1,6 +1,5 @@
 'use client';
 
-
 import { start, stop } from '@/api/sandycore';
 import { ServiceStartSkeleton } from '@/components/loading/dashboard-skeletons';
 import { Button } from '@/components/ui/button';
@@ -45,9 +44,9 @@ export function ServiceStartCard() {
 	const isConfigured = serviceStatus?.platforms
 		? Boolean(
 				serviceStatus.platforms.twitch?.connected ||
-				serviceStatus.platforms.kick?.connected ||
-				serviceStatus.platforms.youtube?.connected
-		  )
+					serviceStatus.platforms.kick?.connected ||
+					serviceStatus.platforms.youtube?.connected,
+			)
 		: hasLoadedStatus
 			? false
 			: null;

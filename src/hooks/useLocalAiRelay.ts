@@ -17,6 +17,7 @@ import { getAiErrorCode, getAiErrorMessage } from '@/lib/ai-errors';
 import { getStoredAiProvider } from '@/lib/ai-provider';
 import { resolveLocalAiSettings } from '@/lib/local-ai-config';
 import { speakTextStream } from '@/lib/speechPipeline';
+import { getStoredTtsProvider } from '@/lib/tts-provider';
 import { useAuth } from '@clerk/nextjs';
 import posthog from 'posthog-js';
 import { useEffect, useRef } from 'react';
@@ -104,6 +105,12 @@ export function useLocalAiRelay(): void {
 			const conVoz = ajustes?.feature_flags?.voice_replies !== false;
 			const apiKey = ajustes?.fish_audio_key?.trim() ?? '';
 			const voiceId = ajustes?.voice_id?.trim() ?? '';
+			const ttsProvider = getStoredTtsProvider();
+			const canVoice =
+				conVoz &&
+				(ttsProvider === 'edge_tts' ||
+					ttsProvider === 'local_tts' ||
+					(ttsProvider === 'fish_audio' && Boolean(apiKey && voiceId)));
 
 			const deltas = streamLocalCompletion(
 				{ baseUrl, model },
@@ -112,9 +119,10 @@ export function useLocalAiRelay(): void {
 
 			try {
 				let texto = '';
-				if (conVoz && apiKey && voiceId) {
+				if (canVoice) {
 					resetVoiceErrors();
 					texto = await speakTextStream(deltas, {
+						provider: ttsProvider,
 						fish: { apiKey, voiceId },
 						onSegmentError: reportVoiceError,
 					});

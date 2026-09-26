@@ -1,5 +1,5 @@
-import type { TTS_PROVIDER } from '@/api/settings';
 import type { AiProvider } from '@/lib/ai-provider';
+import type { TtsProvider } from '@/lib/tts-provider';
 
 export type SettingsFormState = {
 	ai_provider: AiProvider;
@@ -9,7 +9,7 @@ export type SettingsFormState = {
 	local_api_url: string;
 	local_model: string;
 	stt_provider: string;
-	tts_provider: typeof TTS_PROVIDER;
+	tts_provider: TtsProvider;
 	azure_speech_key: string;
 	azure_region: string;
 	language: string;

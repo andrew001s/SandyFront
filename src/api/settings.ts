@@ -43,7 +43,7 @@ export type SettingsPayload = {
  * guardado el backend en perfiles antiguos.
  */
 export type SettingsUpdate = Omit<SettingsPayload, 'tts_provider'> & {
-	tts_provider?: typeof TTS_PROVIDER;
+	tts_provider?: string;
 };
 
 export type SettingsResponse = {

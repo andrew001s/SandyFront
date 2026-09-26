@@ -18,6 +18,7 @@ import { DEFAULT_FEATURE_FLAGS } from '@/lib/feature-flags';
 import { resolveLocalAiSettings, storeLocalAiSettings } from '@/lib/local-ai-config';
 import { type SandyCoreConfig, normalizeSandyCoreConfig } from '@/lib/sandycore-config';
 import { getStoredSttProvider, storeSttProvider } from '@/lib/stt-provider';
+import { type TtsProvider, getStoredTtsProvider, storeTtsProvider } from '@/lib/tts-provider';
 import { useAuth } from '@clerk/nextjs';
 import posthog from 'posthog-js';
 import { type UIEvent, useCallback, useEffect, useMemo, useState } from 'react';
@@ -63,7 +64,16 @@ export function useSettingsPanel() {
 			: form.azure_speech_key && form.azure_region && form.language
 				? 'Configurado'
 				: 'Pendiente';
-	const fishState = form.fish_audio_key && form.voice_id ? 'Configurado' : 'Pendiente';
+	const fishState =
+		form.tts_provider === 'edge_tts'
+			? 'Gratuito (Listo)'
+			: form.tts_provider === 'local_tts'
+				? form.local_api_url
+					? 'Configurado'
+					: 'Pendiente'
+				: form.fish_audio_key && form.voice_id
+					? 'Configurado'
+					: 'Pendiente';
 	const visibleOpenRouterModels = useMemo(
 		() => openRouterModels.slice(0, visibleOpenRouterCount),
 		[openRouterModels, visibleOpenRouterCount],
@@ -74,11 +84,13 @@ export function useSettingsPanel() {
 		const storedStt = getStoredSttProvider();
 		const storedAi = getStoredAiProvider();
 		const storedLocal = resolveLocalAiSettings(settings);
+		const storedTts = getStoredTtsProvider();
 
 		setForm((current) => ({
 			...current,
 			stt_provider: storedStt ?? current.stt_provider,
 			ai_provider: storedAi ?? current.ai_provider,
+			tts_provider: storedTts ?? current.tts_provider,
 			local_api_url: storedLocal.baseUrl || current.local_api_url,
 			local_model: storedLocal.model || current.local_model,
 		}));
@@ -188,6 +200,14 @@ export function useSettingsPanel() {
 		}));
 	}, []);
 
+	const updateTtsProvider = useCallback((value: TtsProvider) => {
+		storeTtsProvider(value);
+		setForm((current) => ({
+			...current,
+			tts_provider: value,
+		}));
+	}, []);
+
 	// El backend acota a 1..10; aquí se recorta igual para que el input no
 	// muestre un valor que el servidor va a rechazar en silencio.
 	const updateChunkSize = useCallback((value: string) => {
@@ -293,6 +313,7 @@ export function useSettingsPanel() {
 				baseUrl: form.ai_provider === 'local' ? form.local_api_url : '',
 				model: form.ai_provider === 'local' ? form.local_model : '',
 			});
+			storeTtsProvider(form.tts_provider);
 
 			await saveSettings(payload, { token });
 			await refreshSettings();
@@ -346,6 +367,7 @@ export function useSettingsPanel() {
 		handleSandyConfigChange,
 		updateField,
 		updateSttProvider,
+		updateTtsProvider,
 		updateChunkSize,
 		handleStopService,
 		handleProviderChange,

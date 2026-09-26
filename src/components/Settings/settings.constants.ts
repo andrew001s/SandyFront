@@ -1,9 +1,10 @@
-import { TTS_PROVIDER, type SettingsPayload } from '@/api/settings';
+import type { SettingsPayload } from '@/api/settings';
 import type {
 	OpenRouterModel,
 	OpenRouterSort,
 	SettingsFormState,
 } from '@/components/Settings/settings.types';
+import { getStoredTtsProvider } from '@/lib/tts-provider';
 
 export const initialSettingsFormState: SettingsFormState = {
 	ai_provider: 'gemini',
@@ -13,7 +14,7 @@ export const initialSettingsFormState: SettingsFormState = {
 	local_api_url: '',
 	local_model: '',
 	stt_provider: 'azure',
-	tts_provider: TTS_PROVIDER,
+	tts_provider: 'edge_tts',
 	azure_speech_key: '',
 	azure_region: '',
 	language: 'es-ES',
@@ -75,8 +76,12 @@ export const normalizeSettings = (settings?: SettingsPayload | null): SettingsFo
 	local_api_url: settings?.local_api_url ?? '',
 	local_model: settings?.local_model ?? '',
 	stt_provider: settings?.stt_provider ?? 'azure',
-	// Se ignora lo que venga del backend: los perfiles viejos traen 'fish'.
-	tts_provider: TTS_PROVIDER,
+	tts_provider:
+		settings?.tts_provider === 'local_tts' ||
+		settings?.tts_provider === 'fish_audio' ||
+		settings?.tts_provider === 'edge_tts'
+			? settings.tts_provider
+			: getStoredTtsProvider(),
 	azure_speech_key: settings?.azure_speech_key ?? '',
 	azure_region: settings?.azure_region ?? '',
 	language: settings?.language ?? 'es-ES',

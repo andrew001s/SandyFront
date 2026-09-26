@@ -3,6 +3,7 @@ import type { SettingsPayload } from '@/api/settings';
 import type { AiProvider } from '@/lib/ai-provider';
 import type { LocalAiSettings } from '@/lib/local-ai-config';
 import type { SttProvider } from '@/lib/stt-provider';
+import { getStoredLocalTtsConfig, getStoredTtsProvider } from '@/lib/tts-provider';
 
 export const SETTINGS_AI_TAB_HREF = '/settings?tab=ai';
 export const SETTINGS_SPEECH_TAB_HREF = '/settings?tab=speech';
@@ -82,20 +83,37 @@ export function getMissingVoiceRequirements({
 		});
 	}
 
-	// Fish Audio solo hace falta si las respuestas por voz están activas: con el
-	// flag apagado la conversación funciona en texto y no hay nada que configurar.
+	// La voz solo hace falta si las respuestas por voz están activas.
 	const needsVoiceReplies = settings?.feature_flags?.voice_replies !== false;
-	const isTtsConfigured = hasValue(settings?.fish_audio_key) && hasValue(settings?.voice_id);
+	const ttsProvider = getStoredTtsProvider();
 
-	if (needsVoiceReplies && !isTtsConfigured) {
-		missing.push({
-			id: 'tts-voice',
-			title: 'Configura la voz de Sandy',
-			description:
-				'Faltan tu API key de Fish Audio o el Voice ID. Sin eso Sandy te responde en texto pero no puede hablar. Si solo quieres texto, apaga «Respuestas por voz» en los flags de esta pantalla.',
-			href: SETTINGS_VOICE_TAB_HREF,
-			actionLabel: 'Configurar voz',
-		});
+	if (needsVoiceReplies) {
+		if (ttsProvider === 'fish_audio') {
+			const isFishConfigured = hasValue(settings?.fish_audio_key) && hasValue(settings?.voice_id);
+			if (!isFishConfigured) {
+				missing.push({
+					id: 'tts-voice',
+					title: 'Configura la voz de Sandy (Fish Audio)',
+					description:
+						'Faltan tu API key de Fish Audio o el Voice ID. Sin eso Sandy no puede hablar con voz de nube. Puedes cambiar a Edge TTS (gratuito) en Ajustes > Voz.',
+					href: SETTINGS_VOICE_TAB_HREF,
+					actionLabel: 'Configurar voz',
+				});
+			}
+		} else if (ttsProvider === 'local_tts') {
+			const localConfig = getStoredLocalTtsConfig();
+			if (!hasValue(localConfig.baseUrl)) {
+				missing.push({
+					id: 'tts-voice',
+					title: 'Configura el servidor TTS local',
+					description:
+						'Falta la URL de tu servidor TTS local (XTTS-v2 / Kokoro). Asegúrate de tener el servidor encendido o cambia a Edge TTS en Ajustes > Voz.',
+					href: SETTINGS_VOICE_TAB_HREF,
+					actionLabel: 'Configurar TTS local',
+				});
+			}
+		}
+		// edge_tts está siempre configurado por defecto y no requiere credenciales
 	}
 
 	return missing;
