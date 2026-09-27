@@ -5,7 +5,12 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
 	try {
-		const body = await req.json();
+		let body: Record<string, unknown>;
+		try {
+			body = await req.json();
+		} catch {
+			return new NextResponse('Body JSON inválido', { status: 400 });
+		}
 		const { text, voice, rate, pitch } = body;
 
 		if (!text || typeof text !== 'string') {
