@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.1](https://github.com/andrew001s/SandyFront/compare/v0.1.9...v0.2.1) (2026-09-27)
+
+
+### Features
+
+* ✨ add custom Railway feature flags client and maintenance mode middleware ([132449c](https://github.com/andrew001s/SandyFront/commit/132449c707d74b95e89f9feea421402b7d05c94b))
+* ✨ add version 0.2.0 news modal component ([a47ce06](https://github.com/andrew001s/SandyFront/commit/a47ce06752d95fee0e36a5446720dc2d035a9b35))
+* ✨ implement comprehensive settings management system with TTS and STT configuration support ([dd708f5](https://github.com/andrew001s/SandyFront/commit/dd708f57d0a99b9a5d6c2f5e6dc2aac337239644))
+* **NewsModal:** ✨ add NewsModal component to showcase release updates and community support links ([2a31250](https://github.com/andrew001s/SandyFront/commit/2a312503c28e8be6824107a36d4626d39734ee9e))
+
 ### [0.1.9](https://github.com/andrew001s/SandyFront/compare/v0.1.8...v0.1.9) (2026-09-05)
 
 
