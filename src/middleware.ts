@@ -5,18 +5,14 @@ import { NextResponse } from 'next/server';
 const isProtectedRoute = createRouteMatcher(['/home(.*)', '/avatar(.*)', '/onboarding(.*)']);
 
 /**
- * Lo único que sigue en pie con el modo mantenimiento activo.
- *
- * Además del login va el endpoint del Flags Explorer: si se bloqueara, no se
- * podría apagar el flag desde el toolbar de Vercel y haría falta un despliegue
- * para salir del mantenimiento.
+ * Rutas exentas de la pantalla de modo mantenimiento.
+ * Solo se permite el acceso a la propia página de aviso y a los flujos de autenticación.
  */
 const isMaintenanceExempt = createRouteMatcher([
 	'/mantenimiento',
 	'/sign-in(.*)',
 	'/sign-up(.*)',
 	'/__clerk(.*)',
-	'/.well-known/vercel/flags(.*)',
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
