@@ -95,7 +95,7 @@ function executeEdgeSynthesis({
 
 		ws.on('unexpected-response', (_req, res) => {
 			let body = '';
-			res.on('data', (chunk) => {
+			res.on('data', (chunk: Buffer) => {
 				body += chunk;
 			});
 			res.on('end', () => {
