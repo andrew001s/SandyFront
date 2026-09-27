@@ -34,16 +34,16 @@ function escapeXml(unsafe: string): string {
 		.replace(/'/g, '&apos;');
 }
 
-export async function synthesizeEdgeSpeech({
+function executeEdgeSynthesis({
 	text,
 	voice = 'es-ES-ElviraNeural',
 	rate = '+0%',
 	pitch = '+0Hz',
-	timeoutMs = 15000,
+	timeoutMs = 10000,
 }: EdgeSynthesizeOptions): Promise<Buffer> {
 	const trimmedText = text.trim();
 	if (!trimmedText) {
-		return Buffer.alloc(0);
+		return Promise.resolve(Buffer.alloc(0));
 	}
 
 	const connectionId = crypto.randomUUID().replace(/-/g, '');
@@ -54,7 +54,7 @@ export async function synthesizeEdgeSpeech({
 		const ws = new WebSocket(url, {
 			headers: {
 				'User-Agent': `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROMIUM_MAJOR_VERSION}.0.0.0 Safari/537.36 Edg/${CHROMIUM_MAJOR_VERSION}.0.0.0`,
-				Origin: 'chrome-extension://jdiccldimpdaibmpdkgikdelajnnfcfa',
+				Origin: 'chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold',
 				'Accept-Encoding': 'gzip, deflate, br, zstd',
 				'Accept-Language': 'en-US,en;q=0.9',
 				Pragma: 'no-cache',
@@ -64,11 +64,49 @@ export async function synthesizeEdgeSpeech({
 
 		const chunks: Buffer[] = [];
 		const requestId = crypto.randomUUID().replace(/-/g, '');
+		let isSettled = false;
+
+		const settle = (isSuccess: boolean, result: Buffer | Error) => {
+			if (isSettled) return;
+			isSettled = true;
+			clearTimeout(timer);
+			try {
+				if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+					ws.close();
+				}
+			} catch {
+				// Socket ya cerrado o en estado inválido
+			}
+			if (isSuccess) {
+				resolve(result as Buffer);
+			} else {
+				reject(result as Error);
+			}
+		};
 
 		const timer = setTimeout(() => {
-			ws.terminate();
-			reject(new Error(`Timeout de síntesis de Edge TTS tras ${timeoutMs}ms`));
+			try {
+				ws.terminate();
+			} catch {
+				// Socket ya terminado
+			}
+			settle(false, new Error(`Timeout de síntesis de Edge TTS tras ${timeoutMs}ms`));
 		}, timeoutMs);
+
+		ws.on('unexpected-response', (_req, res) => {
+			let body = '';
+			res.on('data', (chunk) => {
+				body += chunk;
+			});
+			res.on('end', () => {
+				settle(
+					false,
+					new Error(
+						`Edge TTS rechazó la conexión (HTTP ${res.statusCode}: ${body || res.statusMessage})`,
+					),
+				);
+			});
+		});
 
 		ws.on('open', () => {
 			const date = new Date().toUTCString();
@@ -98,36 +136,73 @@ export async function synthesizeEdgeSpeech({
 			ws.send(ssmlMsg);
 		});
 
-		ws.on('message', (data: WebSocket.RawData, isBinary: boolean) => {
-			if (!isBinary) {
-				const msgText = data.toString('utf-8');
-				if (msgText.includes('Path:turn.end')) {
-					clearTimeout(timer);
-					ws.close();
-					resolve(Buffer.concat(chunks));
-				}
-			} else {
-				const buf = Buffer.from(data as Buffer);
-				if (buf.length >= 2) {
-					const headerLen = buf.readUInt16BE(0);
-					if (buf.length > 2 + headerLen) {
-						const headerStr = buf.subarray(2, 2 + headerLen).toString('utf-8');
-						if (headerStr.includes('Path:audio')) {
-							const audioData = buf.subarray(2 + headerLen);
+		ws.on('message', (data: WebSocket.RawData) => {
+			// ws v7 y v8 pueden entregar data como Buffer, ArrayBuffer o string
+			const buf = Buffer.isBuffer(data)
+				? data
+				: typeof data === 'string'
+					? Buffer.from(data)
+					: Buffer.from(data as ArrayBuffer);
+
+			// Las tramas binarias de audio tienen un encabezado de 2 bytes indicando la longitud de los headers de texto
+			if (buf.length >= 2) {
+				const headerLen = buf.readUInt16BE(0);
+				if (headerLen > 0 && buf.length > 2 + headerLen) {
+					const headerStr = buf.subarray(2, 2 + headerLen).toString('utf-8');
+					if (headerStr.includes('Path:audio')) {
+						const audioData = buf.subarray(2 + headerLen);
+						if (audioData.length > 0) {
 							chunks.push(audioData);
 						}
+						return;
 					}
 				}
+			}
+
+			// Tramas de texto y control
+			const msgText = buf.toString('utf-8');
+			if (msgText.includes('Path:turn.end')) {
+				settle(true, Buffer.concat(chunks));
 			}
 		});
 
 		ws.on('error', (err: unknown) => {
-			clearTimeout(timer);
-			reject(err);
+			settle(false, err instanceof Error ? err : new Error(String(err)));
 		});
 
-		ws.on('close', () => {
-			clearTimeout(timer);
+		ws.on('close', (code: number, reason: Buffer) => {
+			if (chunks.length > 0) {
+				settle(true, Buffer.concat(chunks));
+			} else {
+				settle(
+					false,
+					new Error(
+						`Conexión cerrada prematuramente por Edge TTS (código: ${code}, motivo: ${reason?.toString() || 'desconocido'})`,
+					),
+				);
+			}
 		});
 	});
+}
+
+export async function synthesizeEdgeSpeech(options: EdgeSynthesizeOptions): Promise<Buffer> {
+	const maxRetries = 2;
+	let lastError: unknown;
+
+	for (let attempt = 1; attempt <= maxRetries; attempt++) {
+		try {
+			return await executeEdgeSynthesis(options);
+		} catch (err) {
+			lastError = err;
+			console.error(
+				`[Edge TTS] Intento ${attempt}/${maxRetries} falló:`,
+				err instanceof Error ? err.message : err,
+			);
+			if (attempt < maxRetries) {
+				await new Promise((r) => setTimeout(r, 400));
+			}
+		}
+	}
+
+	throw lastError;
 }
