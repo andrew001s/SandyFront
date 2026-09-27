@@ -32,7 +32,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 export const SANDY_NEWS_STORAGE_KEY = 'sandy_news_last_seen_version';
-export const CURRENT_NEWS_VERSION = '0.2.0';
+export const CURRENT_NEWS_VERSION = '0.2.1';
 export const OPEN_NEWS_MODAL_EVENT = 'open-sandy-news-modal';
 
 export const openNewsModal = () => {

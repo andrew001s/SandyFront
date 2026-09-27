@@ -132,7 +132,7 @@ function resolveBooleanSignal(signal: RailwaySignal, fallback = false): boolean 
  * Evalúa el estado del modo mantenimiento ("mantain") consultando
  * exclusivamente el feature flag configurado en Railway.
  */
-export async function mantainFlag(_ctx?: FlagContext): Promise<boolean> {
+export async function mantainFlag(): Promise<boolean> {
 	const signals = await fetchRailwaySignals();
 	if (signals) {
 		const signal = signals.get('mantain') ?? signals.get('maintain');

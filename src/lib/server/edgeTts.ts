@@ -126,7 +126,7 @@ export async function synthesizeEdgeSpeech({
 			reject(err);
 		});
 
-		ws.on('close', (_code: number, _reason: unknown) => {
+		ws.on('close', () => {
 			clearTimeout(timer);
 		});
 	});

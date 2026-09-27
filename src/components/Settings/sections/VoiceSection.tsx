@@ -1,5 +1,7 @@
 'use client';
 
+import { getVoiceEdge } from '@/api/fetchEdgeTts';
+import { getVoiceLocal } from '@/api/fetchLocalTts';
 import { FishVoiceDialog } from '@/components/Settings/FishVoiceDialog';
 import { SettingsSectionCard } from '@/components/Settings/SettingsSectionCard';
 import { FishVoicePreviewCard } from '@/components/Settings/sections/FishVoicePreviewCard';
@@ -9,8 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getVoiceEdge } from '@/api/fetchEdgeTts';
-import { getVoiceLocal } from '@/api/fetchLocalTts';
 import {
 	EDGE_VOICE_PRESETS,
 	type EdgeTtsConfig,
@@ -21,15 +21,7 @@ import {
 	storeEdgeTtsConfig,
 	storeLocalTtsConfig,
 } from '@/lib/tts-provider';
-import {
-	Cloud,
-	Cpu,
-	Play,
-	Server,
-	Sparkles,
-	Square,
-	Volume2,
-} from 'lucide-react';
+import { Cloud, Cpu, Play, Server, Sparkles, Square, Volume2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
