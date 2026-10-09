@@ -13,6 +13,7 @@ const isMaintenanceExempt = createRouteMatcher([
 	'/sign-in(.*)',
 	'/sign-up(.*)',
 	'/__clerk(.*)',
+	'/api/avatar(.*)',
 ]);
 
 export default clerkMiddleware(async (auth, req) => {

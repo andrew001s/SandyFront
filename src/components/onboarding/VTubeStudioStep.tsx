@@ -1,11 +1,11 @@
 'use client';
 
+import { OnboardingOfficialDocs } from '@/components/onboarding/OnboardingOfficialDocs';
+import { OnboardingStepFrame } from '@/components/onboarding/OnboardingStepFrame';
+import type { SandyOnboardingContext, StepProps } from '@/components/onboarding/onboarding.types';
 import { AvatarConnectionCard } from '@/containers/avatar/components/AvatarConnectionCard';
 import { AvatarModelListCard } from '@/containers/avatar/components/AvatarModelListCard';
 import { useVTubeStudio } from '@/hooks/useVTubeStudio';
-import { OnboardingOfficialDocs } from '@/components/onboarding/OnboardingOfficialDocs';
-import type { SandyOnboardingContext, StepProps } from '@/components/onboarding/onboarding.types';
-import { OnboardingStepFrame } from '@/components/onboarding/OnboardingStepFrame';
 import { useOnboarding } from '@onboardjs/react';
 import { motion } from 'framer-motion';
 import { MonitorSpeaker } from 'lucide-react';
@@ -40,7 +40,7 @@ export function VTubeStudioStep({ payload }: StepProps) {
 							connected={connected}
 							error={error}
 							stats={stats}
-							onConnect={connect}
+							onConnect={(opts) => connect(typeof opts === 'number' ? opts : opts?.port)}
 							onDisconnect={async () => {
 								await disconnect();
 								void updateContext({

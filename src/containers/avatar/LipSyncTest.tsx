@@ -25,7 +25,7 @@ export function LipSyncTest({ connected }: Props) {
 								: 'border-border/70 text-muted-foreground'
 						}
 					>
-						{connected ? 'VTS conectado' : 'VTS desconectado'}
+						{connected ? 'Activo' : 'Desconectado'}
 					</Badge>
 				</div>
 				<p className='text-muted-foreground text-xs leading-relaxed'>
