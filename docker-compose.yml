@@ -1,0 +1,24 @@
+services:
+  sandyfrontend:
+    image: ghcr.io/andrew001s/sandyfront:latest
+    container_name: sandyfrontend
+    restart: unless-stopped
+    expose:
+      - "3000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    networks:
+      - web-gateway
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  web-gateway:
+    name: web-gateway
+    external: true
