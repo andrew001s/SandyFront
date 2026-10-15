@@ -15,17 +15,23 @@ const isMaintenanceExempt = createRouteMatcher([
 	'/__clerk(.*)',
 ]);
 
-export default clerkMiddleware(async (auth, req) => {
-	if (!isMaintenanceExempt(req) && (await mantainFlag())) {
-		// Rewrite y no redirect: la URL se conserva, así que al apagar el flag
-		// basta recargar para volver a donde estabas.
-		return NextResponse.rewrite(new URL('/mantenimiento', req.url));
-	}
+export default clerkMiddleware(
+	async (auth, req) => {
+		if (!isMaintenanceExempt(req) && (await mantainFlag())) {
+			return NextResponse.rewrite(new URL('/mantenimiento', req.url));
+		}
 
-	if (isProtectedRoute(req)) {
-		await auth.protect();
-	}
-});
+		if (isProtectedRoute(req)) {
+			await auth.protect();
+		}
+	},
+	{
+		publishableKey:
+			process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+			process.env.CLERK_PUBLISHABLE_KEY ||
+			'pk_live_Y2xlcmsuc2FuZHlzdHVkaW8ubmV0JA',
+	},
+);
 
 export const config = {
 	matcher: [

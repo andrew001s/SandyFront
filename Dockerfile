@@ -19,24 +19,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Argumentos de compilación públicos para Next.js
-ARG NEXT_PUBLIC_API_URL=https://api.sandystudio.net
-ARG NEXT_PUBLIC_REDIRECT_URI=https://sandystudio.net/auth/callback
-ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-ARG NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
-ARG NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
-ARG NEXT_PUBLIC_CLARITY_PROJECT_ID
-ARG NEXT_PUBLIC_TWITCH_CLIENT_ID
-
 ENV NEXT_TELEMETRY_DISABLED=1 \
-    NODE_ENV=production \
-    NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
-    NEXT_PUBLIC_REDIRECT_URI=$NEXT_PUBLIC_REDIRECT_URI \
-    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY \
-    NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN=$NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN \
-    NEXT_PUBLIC_POSTHOG_HOST=$NEXT_PUBLIC_POSTHOG_HOST \
-    NEXT_PUBLIC_CLARITY_PROJECT_ID=$NEXT_PUBLIC_CLARITY_PROJECT_ID \
-    NEXT_PUBLIC_TWITCH_CLIENT_ID=$NEXT_PUBLIC_TWITCH_CLIENT_ID
+    NODE_ENV=production
 
 RUN pnpm run build
 
@@ -60,8 +44,5 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 USER nextjs
 
 EXPOSE 3000
-
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD wget -qO- http://localhost:3000/ || exit 1
 
 CMD ["node", "server.js"]
