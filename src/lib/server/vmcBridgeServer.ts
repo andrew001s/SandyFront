@@ -1,23 +1,32 @@
 import dgram from 'node:dgram';
-import { encodeOscBundle, encodeOscMessage } from '@/lib/server/osc';
+import { VMC_BRIDGE_PORT } from '@/lib/avatar/constants';
+import { encodeOscBundle, encodeOscMessage, parseOscBlendshape } from '@/lib/server/osc';
 import WebSocket from 'ws';
 
-import { VMC_BRIDGE_PORT } from '@/lib/avatar/constants';
+// biome-ignore lint/suspicious/noExplicitAny: ws typing bridge
+type WsClient = any;
+// biome-ignore lint/suspicious/noExplicitAny: ws typing bridge
+type WsServerInstance = any;
 
-interface ClientSocket {
-	send(data: string): void;
-	on(event: 'message', listener: (data: { toString(): string }) => void): void;
-	on(event: 'close' | 'error', listener: () => void): void;
-}
+// Soporta entornos Node ESM y CommonJS para instanciar WebSocketServer
+const WebSocketServerConstructor =
+	(WebSocket as unknown as { WebSocketServer?: new (...args: unknown[]) => WsServerInstance })
+		.WebSocketServer ||
+	(WebSocket as unknown as { Server?: new (...args: unknown[]) => WsServerInstance }).Server ||
+	(WebSocket as unknown as new (
+		...args: unknown[]
+	) => WsServerInstance);
 
-interface BridgeServer {
-	on(event: 'connection', listener: (ws: ClientSocket) => void): void;
-	close(callback?: () => void): void;
+const discoveredBlendshapes = new Set<string>();
+
+export function getDiscoveredBlendshapes(): string[] {
+	return Array.from(discoveredBlendshapes);
 }
 
 declare global {
-	var __sandy_vmc_bridge: BridgeServer | undefined;
+	var __sandy_vmc_bridge: WsServerInstance | undefined;
 	var __sandy_udp_client: dgram.Socket | undefined;
+	var __sandy_vmc_receiver: dgram.Socket | undefined;
 }
 
 export function startVmcBridgeServer(): void {
@@ -25,35 +34,38 @@ export function startVmcBridgeServer(): void {
 	if (globalThis.__sandy_vmc_bridge) return;
 
 	try {
+		// Socket UDP emisor para VSeeFace (por defecto hacia 127.0.0.1:39539)
 		const udp = dgram.createSocket('udp4');
 		globalThis.__sandy_udp_client = udp;
 
-		const wsAny = WebSocket as unknown as {
-			WebSocketServer?: new (opts: { port: number; host: string }) => BridgeServer;
-			Server?: new (opts: { port: number; host: string }) => BridgeServer;
-			default?: {
-				WebSocketServer?: new (opts: { port: number; host: string }) => BridgeServer;
-				Server?: new (opts: { port: number; host: string }) => BridgeServer;
-			};
-		};
-		const ServerConstructor =
-			wsAny.WebSocketServer ||
-			wsAny.Server ||
-			wsAny.default?.WebSocketServer ||
-			wsAny.default?.Server;
-
-		if (!ServerConstructor) {
-			return;
+		// Socket UDP receptor pasivo para descubrir blendshapes si VSeeFace tiene VMC Out activo (39540)
+		try {
+			const receiver = dgram.createSocket('udp4');
+			globalThis.__sandy_vmc_receiver = receiver;
+			receiver.on('message', (msg) => {
+				const bs = parseOscBlendshape(msg);
+				if (bs?.name) {
+					discoveredBlendshapes.add(bs.name);
+				}
+			});
+			receiver.bind(39540, '127.0.0.1', () => {
+				// biome-ignore lint/suspicious/noConsole: server init logging
+				console.log('[VMC Bridge] Receptor VMC Out escuchando en 127.0.0.1:39540');
+			});
+		} catch {
+			// Puerto 39540 ocupado o no disponible
 		}
 
-		const wss = new ServerConstructor({
+		// Servidor WebSocket local de ultra-baja latencia (<1ms)
+		const wss = new WebSocketServerConstructor({
 			port: VMC_BRIDGE_PORT,
-			host: '127.0.0.1',
 		});
 
 		globalThis.__sandy_vmc_bridge = wss;
+		// biome-ignore lint/suspicious/noConsole: server init logging
+		console.log(`[VMC Bridge] Servidor WebSocket activo en ws://127.0.0.1:${VMC_BRIDGE_PORT}`);
 
-		wss.on('connection', (ws: ClientSocket) => {
+		wss.on('connection', (ws: WsClient) => {
 			ws.on('message', (rawData: { toString(): string }) => {
 				try {
 					const parsed = JSON.parse(rawData.toString());
@@ -62,6 +74,16 @@ export function startVmcBridgeServer(): void {
 
 					if (parsed.ping) {
 						ws.send(JSON.stringify({ pong: true, timestamp: Date.now() }));
+						return;
+					}
+
+					if (parsed.getBlendshapes || parsed.type === 'get_blendshapes') {
+						ws.send(
+							JSON.stringify({
+								type: 'blendshapes',
+								blendshapes: Array.from(discoveredBlendshapes),
+							}),
+						);
 						return;
 					}
 
@@ -86,7 +108,7 @@ export function startVmcBridgeServer(): void {
 				}
 			});
 		});
-	} catch {
-		// Ignorar fallo al inicializar puente
+	} catch (err) {
+		console.error('[VMC Bridge] Error iniciando servidor:', err);
 	}
 }

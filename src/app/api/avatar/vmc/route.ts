@@ -1,6 +1,6 @@
 import dgram from 'node:dgram';
 import { encodeOscBundle, encodeOscMessage } from '@/lib/server/osc';
-import { startVmcBridgeServer } from '@/lib/server/vmcBridgeServer';
+import { getDiscoveredBlendshapes, startVmcBridgeServer } from '@/lib/server/vmcBridgeServer';
 import { type NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -12,6 +12,15 @@ function getUdpSocket(): dgram.Socket {
 		cachedSocket = dgram.createSocket('udp4');
 	}
 	return cachedSocket;
+}
+
+export async function GET() {
+	startVmcBridgeServer();
+	return NextResponse.json({
+		ok: true,
+		bridgePort: 39542,
+		blendshapes: getDiscoveredBlendshapes(),
+	});
 }
 
 export async function POST(req: NextRequest) {

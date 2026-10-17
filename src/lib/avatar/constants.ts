@@ -68,6 +68,9 @@ export const VRM_EMOTIONS: VRMEmotionPreset[] = [
 			Sorrow: 0,
 			Fun: 0,
 			Surprised: 0,
+			Blink: 0,
+			Blink_L: 0,
+			Blink_R: 0,
 		},
 		vrm1Blendshapes: {
 			happy: 0,
@@ -75,6 +78,9 @@ export const VRM_EMOTIONS: VRMEmotionPreset[] = [
 			sad: 0,
 			relaxed: 0,
 			surprised: 0,
+			blink: 0,
+			blinkLeft: 0,
+			blinkRight: 0,
 		},
 	},
 	{
@@ -85,14 +91,26 @@ export const VRM_EMOTIONS: VRMEmotionPreset[] = [
 		vrm0Blendshapes: {
 			Joy: 1.0,
 			Fun: 0.5,
-			Angry: 0,
-			Sorrow: 0,
 		},
 		vrm1Blendshapes: {
 			happy: 1.0,
 			relaxed: 0.5,
-			angry: 0,
-			sad: 0,
+		},
+	},
+	{
+		id: 'excited',
+		name: 'Emocionada',
+		description: 'Entusiasmo radiante y gran felicidad',
+		emoji: '🤩',
+		vrm0Blendshapes: {
+			Joy: 1.0,
+			Fun: 0.9,
+			Surprised: 0.25,
+		},
+		vrm1Blendshapes: {
+			happy: 1.0,
+			relaxed: 0.9,
+			surprised: 0.25,
 		},
 	},
 	{
@@ -102,13 +120,9 @@ export const VRM_EMOTIONS: VRMEmotionPreset[] = [
 		emoji: '😠',
 		vrm0Blendshapes: {
 			Angry: 1.0,
-			Joy: 0,
-			Sorrow: 0,
 		},
 		vrm1Blendshapes: {
 			angry: 1.0,
-			happy: 0,
-			sad: 0,
 		},
 	},
 	{
@@ -118,13 +132,9 @@ export const VRM_EMOTIONS: VRMEmotionPreset[] = [
 		emoji: '😢',
 		vrm0Blendshapes: {
 			Sorrow: 1.0,
-			Joy: 0,
-			Angry: 0,
 		},
 		vrm1Blendshapes: {
 			sad: 1.0,
-			happy: 0,
-			angry: 0,
 		},
 	},
 	{
@@ -154,10 +164,114 @@ export const VRM_EMOTIONS: VRMEmotionPreset[] = [
 		},
 	},
 	{
-		id: 'blink',
-		name: 'Parpadeo / Guiño',
-		description: 'Ojos cerrados o guiño suave',
+		id: 'thinking',
+		name: 'Pensativa',
+		description: 'Mirada hacia arriba reflexionando',
+		emoji: '🤔',
+		vrm0Blendshapes: {
+			LookUp: 0.7,
+			Fun: 0.3,
+			Joy: 0.2,
+		},
+		vrm1Blendshapes: {
+			lookUp: 0.7,
+			relaxed: 0.3,
+			happy: 0.2,
+		},
+	},
+	{
+		id: 'confused',
+		name: 'Confundida',
+		description: 'Gesto de duda o desconcierto',
+		emoji: '😕',
+		vrm0Blendshapes: {
+			Sorrow: 0.45,
+			Surprised: 0.35,
+			Angry: 0.2,
+		},
+		vrm1Blendshapes: {
+			sad: 0.45,
+			surprised: 0.35,
+			angry: 0.2,
+		},
+	},
+	{
+		id: 'shy',
+		name: 'Tímida',
+		description: 'Sonrisa suave y mirada recatada',
+		emoji: '😳',
+		vrm0Blendshapes: {
+			Joy: 0.6,
+			Sorrow: 0.3,
+			LookDown: 0.4,
+		},
+		vrm1Blendshapes: {
+			happy: 0.6,
+			sad: 0.3,
+			lookDown: 0.4,
+		},
+	},
+	{
+		id: 'sleepy',
+		name: 'Somnolienta',
+		description: 'Ojos pesados con cansancio o sueño',
+		emoji: '🥱',
+		vrm0Blendshapes: {
+			Blink: 0.65,
+			Sorrow: 0.3,
+		},
+		vrm1Blendshapes: {
+			blink: 0.65,
+			sad: 0.3,
+		},
+	},
+	{
+		id: 'smug',
+		name: 'Presumida',
+		description: 'Sonrisa confiada y astuta',
+		emoji: '😏',
+		vrm0Blendshapes: {
+			Fun: 0.8,
+			Joy: 0.4,
+		},
+		vrm1Blendshapes: {
+			relaxed: 0.8,
+			happy: 0.4,
+		},
+	},
+	{
+		id: 'wink_l',
+		name: 'Guiño Izquierdo',
+		description: 'Guiño de complicidad con ojo izquierdo',
 		emoji: '😉',
+		vrm0Blendshapes: {
+			Blink_L: 1.0,
+			Joy: 0.5,
+		},
+		vrm1Blendshapes: {
+			blinkLeft: 1.0,
+			happy: 0.5,
+		},
+	},
+	{
+		id: 'wink_r',
+		name: 'Guiño Derecho',
+		description: 'Guiño de complicidad con ojo derecho',
+		emoji: '😜',
+		vrm0Blendshapes: {
+			Blink_R: 1.0,
+			Joy: 0.5,
+		},
+		vrm1Blendshapes: {
+			blinkRight: 1.0,
+			happy: 0.5,
+		},
+	},
+	{
+		id: 'blink',
+		name: 'Ojos Cerrados',
+		description: 'Ambos ojos cerrados suavemente',
+		emoji: '😌',
 		vrm0Blendshapes: {
 			Blink: 1.0,
 		},

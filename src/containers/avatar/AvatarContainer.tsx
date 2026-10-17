@@ -31,6 +31,7 @@ export const AvatarContainer = () => {
 		disconnect,
 		setEmotion,
 		resetEmotions,
+		setCustomBlendshape,
 
 		vts,
 	} = useAvatar();
@@ -102,6 +103,7 @@ export const AvatarContainer = () => {
 							}
 							onSetEmotion={setEmotion}
 							onResetEmotions={resetEmotions}
+							onSetCustomBlendshape={setCustomBlendshape}
 						/>
 					)}
 				</motion.div>
