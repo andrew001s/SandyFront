@@ -10,7 +10,7 @@ import { generateVowelTestWav, playLipSyncTest } from '@/lib/avatar/testAudioGen
 import type { AvatarConnectionStats, AvatarSoftware, SoftwareConfig } from '@/types/avatar';
 import { Box, HelpCircle, RefreshCw, Tv, WifiOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { FiAlertCircle, FiCheckCircle, FiPlay } from 'react-icons/fi';
+import { FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
 import { toast } from 'sonner';
 
 type AvatarConnectionCardProps = {
@@ -43,7 +43,7 @@ export function AvatarConnectionCard({
 
 	const [port, setPort] = useState(String(config?.port ?? currentMeta.defaultPort));
 	const [host, setHost] = useState(config?.host ?? '127.0.0.1');
-	const [transitionDuration, setTransitionDuration] = useState(
+	const [_transitionDuration, setTransitionDuration] = useState(
 		String(config?.transitionDurationMs ?? 120),
 	);
 	const [showTips, setShowTips] = useState(false);
@@ -68,7 +68,7 @@ export function AvatarConnectionCard({
 		onUpdateConfig?.({ host: val });
 	};
 
-	const handleDurationChange = (val: string) => {
+	const _handleDurationChange = (val: string) => {
 		setTransitionDuration(val);
 		const num = Number(val);
 		if (!Number.isNaN(num) && num >= 0) {
@@ -76,7 +76,7 @@ export function AvatarConnectionCard({
 		}
 	};
 
-	const handleQuickLipSyncTest = async () => {
+	const _handleQuickLipSyncTest = async () => {
 		try {
 			const wav = generateVowelTestWav();
 			await playLipSyncTest(wav);
@@ -171,28 +171,6 @@ export function AvatarConnectionCard({
 						/>
 					</div>
 
-					{isVSeeFace && (
-						<div className='w-28 space-y-1.5'>
-							<label
-								htmlFor='avatar-duration'
-								className='font-medium text-muted-foreground text-xs'
-							>
-								Transición (ms)
-							</label>
-							<Input
-								id='avatar-duration'
-								type='number'
-								min='0'
-								max='600'
-								step='10'
-								value={transitionDuration}
-								onChange={(event) => handleDurationChange(event.target.value)}
-								className='h-9 font-mono text-xs'
-								placeholder='120'
-							/>
-						</div>
-					)}
-
 					<div className='flex items-center gap-2'>
 						{connected ? (
 							<>
@@ -204,14 +182,6 @@ export function AvatarConnectionCard({
 									className='h-9 border-destructive/40 text-destructive text-xs hover:bg-destructive/10'
 								>
 									Desconectar
-								</Button>
-								<Button
-									onClick={handleQuickLipSyncTest}
-									variant='outline'
-									className='h-9 gap-1.5 border-primary/30 text-primary text-xs hover:bg-primary/10'
-									title='Reproduce una secuencia de prueba de vocales sin pasar por el chat'
-								>
-									<FiPlay className='size-3.5 text-emerald-400' /> Probar Lip Sync
 								</Button>
 							</>
 						) : (

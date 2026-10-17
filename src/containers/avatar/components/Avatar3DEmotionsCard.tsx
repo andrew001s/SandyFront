@@ -138,7 +138,7 @@ export function Avatar3DEmotionsCard({
 						</div>
 						<input
 							type='range'
-							min='0'
+							min='5'
 							max='500'
 							step='10'
 							value={duration}
