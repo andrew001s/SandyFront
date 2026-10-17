@@ -348,16 +348,6 @@ export function LipSyncTest({ connected, software = 'vseeface' }: Props) {
 								{vowel}
 							</Button>
 						))}
-
-						<Button
-							size='sm'
-							variant={activeManualVowel === 'Neutral' ? 'secondary' : 'ghost'}
-							onClick={() => handleManualVowel('Neutral')}
-							title='Cerrar boca (Neutral)'
-							className='h-9 px-1 text-[11px] text-muted-foreground hover:text-foreground'
-						>
-							Cerrar
-						</Button>
 					</div>
 				</div>
 
