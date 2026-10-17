@@ -15,24 +15,21 @@ import { KOFI_URL } from '@/lib/links';
 import { DEFAULT_EDGE_VOICE } from '@/lib/tts-provider';
 import {
 	ArrowRight,
+	Box,
 	CheckCircle2,
 	Coffee,
 	Cpu,
 	ExternalLink,
-	Gift,
 	Heart,
-	Loader2,
-	Play,
+	Layers,
 	Sparkles,
-	Square,
-	Volume2,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 export const SANDY_NEWS_STORAGE_KEY = 'sandy_news_last_seen_version';
-export const CURRENT_NEWS_VERSION = '0.2.1';
+export const CURRENT_NEWS_VERSION = '0.2.3';
 export const OPEN_NEWS_MODAL_EVENT = 'open-sandy-news-modal';
 
 export const openNewsModal = () => {
@@ -43,25 +40,26 @@ export const openNewsModal = () => {
 
 const NEWS_FEATURES = [
 	{
-		title: 'Voz Clonada Local (XTTS-v2 & Kokoro)',
-		category: 'Hardware & Privacidad',
-		badge: '100% Privado',
+		title: 'Elige entre 2D o 3D con 1 clic',
+		category: 'Tus Programas',
+		badge: 'VTube Studio & VSeeFace',
+		badgeColor: 'border-pink-500/30 bg-pink-500/10 text-pink-600 dark:text-pink-400',
+		icon: Layers,
+		iconColor: 'text-pink-500 dark:text-pink-400',
+		iconBg: 'bg-pink-500/10 border-pink-500/20',
+		description:
+			'¿Prefieres 2D en VTube Studio o modelos 3D en VSeeFace? Puedes cambiar de software cuando quieras y Sandy guardará tu configuración preferida.',
+	},
+	{
+		title: 'Voz más fluida y sin repeticiones',
+		category: 'Conversación',
+		badge: 'Mejor Experiencia',
 		badgeColor: 'border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400',
 		icon: Cpu,
 		iconColor: 'text-violet-500 dark:text-violet-400',
 		iconBg: 'bg-violet-500/10 border-violet-500/20',
 		description:
-			'Conecta tu servidor local compatible (/v1/audio/speech) para que tu Vtuber hable con voz clonada directamente en tu GPU o CPU, sin conexión externa ni costes.',
-	},
-	{
-		title: 'Recompensas de Canal & Conexiones',
-		category: 'Interacción',
-		badge: 'Twitch & Kick',
-		badgeColor: 'border-pink-500/30 bg-pink-500/10 text-pink-600 dark:text-pink-400',
-		icon: Gift,
-		iconColor: 'text-pink-500 dark:text-pink-400',
-		iconBg: 'bg-pink-500/10 border-pink-500/20',
-		description: 'Personaliza respuestas de IA para canjes de puntos en Twitch y Kick.',
+			'Optimizamos las respuestas de la IA para que hable de forma continua, evitando que se repitan frases o choquen los audios mientras interactúas.',
 	},
 ];
 
@@ -69,7 +67,7 @@ export function NewsModal() {
 	const router = useRouter();
 	const [isOpen, setIsOpen] = useState(false);
 	const [isPlayingDemo, setIsPlayingDemo] = useState(false);
-	const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+	const [_isLoadingAudio, setIsLoadingAudio] = useState(false);
 	const audioRef = useRef<HTMLAudioElement | null>(null);
 
 	const stopAudio = useCallback(() => {
@@ -94,12 +92,12 @@ export function NewsModal() {
 		}
 	}, [stopAudio]);
 
-	const handleGoToVoiceSettings = useCallback(() => {
+	const handleGoToAvatar = useCallback(() => {
 		handleClose();
-		router.push('/settings?tab=voice');
+		router.push('/avatar');
 	}, [handleClose, router]);
 
-	const handlePlayEdgeDemo = async () => {
+	const _handlePlayEdgeDemo = async () => {
 		if (isPlayingDemo) {
 			stopAudio();
 			return;
@@ -110,7 +108,7 @@ export function NewsModal() {
 
 		try {
 			const sampleText =
-				'¡Hola! Ahora puedo hablar contigo y tu chat de forma 100% gratuita con voces neurales ultra realistas. ¡Pruébame en tu próximo stream!';
+				'¡Hola! Ahora también puedes usarme con avatares 3D en VSeeFace. Muevo mi boca al hablar y expreso emociones en tiempo real. ¡Pruébame en tu próximo directo!';
 
 			const blob = await getVoiceEdge(sampleText, {
 				voice: DEFAULT_EDGE_VOICE,
@@ -190,7 +188,7 @@ export function NewsModal() {
 			<DialogContent className='max-h-[92vh] overflow-y-auto p-0 sm:max-w-3xl'>
 				<div className='relative overflow-hidden rounded-2xl'>
 					{/* Ambient background glows */}
-					<div className='-top-20 -right-20 pointer-events-none absolute size-64 rounded-full bg-emerald-500/15 blur-3xl' />
+					<div className='-top-20 -right-20 pointer-events-none absolute size-64 rounded-full bg-cyan-500/15 blur-3xl' />
 					<div className='-bottom-20 -left-20 pointer-events-none absolute size-64 rounded-full bg-violet-600/15 blur-3xl' />
 
 					{/* Modal Header */}
@@ -198,7 +196,7 @@ export function NewsModal() {
 						<div className='flex flex-wrap items-center gap-2'>
 							<Badge
 								variant='outline'
-								className='gap-1 border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 font-medium text-emerald-600 text-xs dark:text-emerald-400'
+								className='gap-1 border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 font-medium text-cyan-600 text-xs dark:text-cyan-400'
 							>
 								<Sparkles className='size-3' />
 								Novedades
@@ -210,89 +208,66 @@ export function NewsModal() {
 								variant='outline'
 								className='border-violet-500/30 bg-violet-500/10 px-2 py-0.5 text-[11px] text-violet-600 dark:text-violet-400'
 							>
-								Voz Gratuita & TTS Local
+								Avatares 3D & VSeeFace
 							</Badge>
 						</div>
 
 						<DialogTitle className='pt-2 font-bold text-2xl tracking-tight sm:text-3xl'>
-							¡Llegó la Voz Gratuita y Local para Sandy!
+							¡Llegó la Conexión con VSeeFace y Avatares 3D!
 						</DialogTitle>
 						<DialogDescription className='text-muted-foreground text-sm leading-relaxed sm:text-base'>
-							Ahora puedes darle voz a tu VTuber sin suscripciones ni límites de tokens. Descubre
-							las nuevas opciones de síntesis de voz y optimizaciones del sistema.
+							¡Tu VTuber ahora puede ser en 3D! Conecta fácilmente tu modelo con VSeeFace para que
+							hable, mueva su boca en tiempo real y exprese emociones en tus directos.
 						</DialogDescription>
 					</DialogHeader>
 
 					<div className='space-y-5 p-6'>
-						{/* Spotlight Card: Edge TTS 100% Gratuito */}
-						<div className='relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/15 via-emerald-500/5 to-transparent p-5 shadow-sm sm:p-6'>
+						{/* Spotlight Card: VSeeFace 3D Integration */}
+						<div className='relative overflow-hidden rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/15 via-cyan-500/5 to-transparent p-5 shadow-sm sm:p-6'>
 							<div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
 								<div className='space-y-2'>
 									<div className='flex flex-wrap items-center gap-2'>
-										<Badge className='border-emerald-500/40 bg-emerald-500/20 font-semibold text-emerald-700 text-xs dark:text-emerald-300'>
+										<Badge className='border-cyan-500/40 bg-cyan-500/20 font-semibold text-cyan-700 text-xs dark:text-cyan-300'>
 											🌟 Novedad Principal
 										</Badge>
 										<Badge
 											variant='outline'
-											className='border-emerald-500/30 text-emerald-600 text-xs dark:text-emerald-400'
+											className='border-cyan-500/30 text-cyan-600 text-xs dark:text-cyan-400'
 										>
-											100% Gratuito & Sin API Key
+											Avatares 3D
+										</Badge>
+										<Badge
+											variant='outline'
+											className='border-violet-500/30 text-violet-600 text-xs dark:text-violet-400'
+										>
+											Compatible con VRoid
 										</Badge>
 									</div>
 
 									<h3 className='font-bold text-foreground text-lg sm:text-xl'>
-										Edge TTS: Voces Neurales Ilimitadas
+										VSeeFace: Da vida a tu Avatar 3D
 									</h3>
 
 									<p className='max-w-xl text-muted-foreground text-xs leading-relaxed sm:text-sm'>
-										Voces naturales de Microsoft integradas directamente sin necesidad de tarjeta de
-										crédito ni cuenta externa. Incluye presets de acentos en español (España,
-										México, Colombia, Argentina y más) con control de velocidad y afinación.
+										Si tienes un modelo 3D (creado en VRoid o cualquier avatar .vrm), ahora puedes
+										darle vida con Sandy en segundos. Tu personaje hablará con voz natural, moverá
+										la boca al instante.
 									</p>
 
 									<div className='flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1 text-muted-foreground text-xs'>
 										<span className='flex items-center gap-1.5 font-medium text-foreground'>
-											<CheckCircle2 className='size-3.5 text-emerald-500' />
-											Cero consumo de GPU
+											<CheckCircle2 className='size-3.5 text-cyan-500' />
+											Boca sincronizada al hablar
 										</span>
 										<span className='flex items-center gap-1.5 font-medium text-foreground'>
-											<CheckCircle2 className='size-3.5 text-emerald-500' />
-											Activada por defecto
+											<CheckCircle2 className='size-3.5 text-cyan-500' />
+											Expresiones suaves y naturales
+										</span>
+										<span className='flex items-center gap-1.5 font-medium text-foreground'>
+											<CheckCircle2 className='size-3.5 text-cyan-500' />
+											Compatible con VRoid y modelos 3D
 										</span>
 									</div>
-								</div>
-
-								{/* Audio Demo Button */}
-								<div className='shrink-0 pt-2 sm:pt-0'>
-									<Button
-										type='button'
-										onClick={handlePlayEdgeDemo}
-										disabled={isLoadingAudio}
-										variant='outline'
-										className='group relative flex h-11 w-full items-center justify-center gap-2 rounded-xl border-emerald-500/40 bg-emerald-500/10 px-4 font-semibold text-emerald-700 text-sm shadow-xs transition-all hover:border-emerald-500/60 hover:bg-emerald-500/20 active:scale-95 sm:w-auto dark:text-emerald-300'
-									>
-										{isLoadingAudio ? (
-											<>
-												<Loader2 className='size-4 animate-spin text-emerald-600 dark:text-emerald-400' />
-												<span>Sintetizando...</span>
-											</>
-										) : isPlayingDemo ? (
-											<>
-												<Square className='size-4 fill-destructive text-destructive' />
-												<span className='text-destructive'>Detener demo</span>
-												<span className='ml-1 flex items-center gap-0.5'>
-													<span className='inline-block size-1 animate-pulse rounded-full bg-destructive' />
-													<span className='inline-block size-1 animate-pulse rounded-full bg-destructive delay-75' />
-													<span className='inline-block size-1 animate-pulse rounded-full bg-destructive delay-150' />
-												</span>
-											</>
-										) : (
-											<>
-												<Play className='size-4 fill-emerald-600 text-emerald-600 transition-transform group-hover:scale-110 dark:fill-emerald-400 dark:text-emerald-400' />
-												<span>Escuchar demo de voz</span>
-											</>
-										)}
-									</Button>
 								</div>
 							</div>
 						</div>
@@ -349,7 +324,7 @@ export function NewsModal() {
 											<Heart className='size-3 fill-[#FF5E5B] text-[#FF5E5B]' />
 										</div>
 										<h4 className='font-semibold text-foreground text-sm sm:text-base'>
-											¿Te gustan las nuevas voces gratuitas? Invítale un café
+											¿Te gustan las nuevas funciones de avatares 3D? Invítale un café
 										</h4>
 										<p className='text-muted-foreground text-xs leading-relaxed'>
 											Sandy Studio es un proyecto 100% abierto y gratuito. Cada café en Ko-fi ayuda
@@ -387,12 +362,12 @@ export function NewsModal() {
 						<div className='flex flex-col gap-2 sm:flex-row'>
 							<Button
 								type='button'
-								onClick={handleGoToVoiceSettings}
+								onClick={handleGoToAvatar}
 								variant='outline'
-								className='flex h-10 items-center justify-center gap-2 rounded-xl border-violet-500/40 font-medium text-sm text-violet-700 hover:bg-violet-500/10 dark:text-violet-300'
+								className='flex h-10 items-center justify-center gap-2 rounded-xl border-cyan-500/40 font-medium text-cyan-700 text-sm hover:bg-cyan-500/10 dark:text-cyan-300'
 							>
-								<Volume2 className='size-4' />
-								<span>Personalizar Voces</span>
+								<Box className='size-4' />
+								<span>Configurar Avatar 3D</span>
 								<ArrowRight className='size-3.5' />
 							</Button>
 
