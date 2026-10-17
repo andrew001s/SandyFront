@@ -13,10 +13,13 @@ export const metadata: Metadata = {
 		'Lleva tu VTuber con IA a Kick: Sandy Studio lee tu chat de Kick, responde con voz, reacciona a suscripciones y eventos y modera tu canal automáticamente.',
 	keywords: [
 		'vtuber kick',
-		'vtuber para kick con IA',
-		'bot kick con IA',
+		'vtuber con ia',
+		'vtuber para kick con ia',
+		'crear vtuber con ia gratis',
+		'bot kick con ia',
 		'chat bot kick',
 		'automatizar chat kick',
+		'avatar ia kick',
 	],
 	alternates: {
 		canonical: '/vtuber-kick',

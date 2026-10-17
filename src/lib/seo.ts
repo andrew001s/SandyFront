@@ -7,7 +7,28 @@ export const metadataBase = new URL(siteUrl);
 
 export const sharedSiteName = 'Sandy Studio';
 export const sharedDescription =
-	'Sandy Studio es una VTuber con IA para Twitch y Kick: conversa con tu chat, reacciona con voz, monitoriza servicios y se conecta con tu avatar.';
+	'Sandy Studio es la plataforma para crear tu VTuber con IA gratis para Twitch, Kick y YouTube: conversa con tu chat en tiempo real, responde con voz natural y sincroniza tu avatar en 2D (VTube Studio) o 3D (VSeeFace).';
+
+export const sharedKeywords = [
+	'vtuber con ia',
+	'vtuber inteligencia artificial',
+	'crear vtuber con ia gratis',
+	'vtuber con ia gratis',
+	'como crear un vtuber con ia',
+	'vtuber ia español',
+	'vtuber ai',
+	'vtuber 3d con ia',
+	'vseeface ia',
+	'vtube studio ia',
+	'avatar con ia',
+	'vtuber que habla con el chat',
+	'bot para twitch con ia',
+	'chat bot twitch ia',
+	'vtuber kick con ia',
+	'avatar streaming inteligencia artificial',
+	'lip sync vtuber ia',
+	'vrm avatar ia',
+];
 
 export const sharedOpenGraphImage = '/icons/og.png';
 

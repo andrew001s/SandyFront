@@ -315,8 +315,9 @@ const features: Feature[] = [
 		span: 'lg:col-span-4',
 	},
 	{
-		title: 'Lip sync en VTube Studio',
-		description: 'El avatar mueve la boca sincronizado con cada palabra que dice Sandy.',
+		title: 'Lip sync 2D y 3D (VTube Studio & VSeeFace)',
+		description:
+			'El avatar Live2D o 3D (VRM) mueve la boca y hace expresiones en tiempo real sincronizado con cada palabra.',
 		mockup: <AvatarMock />,
 		span: 'lg:col-span-2',
 	},
