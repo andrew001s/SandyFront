@@ -5,7 +5,7 @@ import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
 import { useAvatar } from '@/hooks/useAvatar';
 import { useVoiceErrorReporter } from '@/hooks/useVoiceErrorReporter';
-import { singleChunkStream, speakTextStream } from '@/lib/speechPipeline';
+import { singleChunkStream, speakTextStream, speechDeduplicator } from '@/lib/speechPipeline';
 import type { AvatarBackendPayload } from '@/lib/vtsAvatarPayload';
 import { useAuth } from '@clerk/nextjs';
 import { type MutableRefObject, useCallback, useEffect, useRef } from 'react';
@@ -175,11 +175,18 @@ const StreamChat = () => {
 
 					processedMessages.current.add(messageKey);
 					trimProcessedMessages(processedMessages);
-					addMessageRef.current({
-						type: 'chat',
-						content: speechText,
-						timestamp: parsedData.timestamp || new Date().toISOString(),
-					});
+
+					// Evitar síntesis duplicada y mensajes repetidos en chat si el streaming
+					// de Dictaphone o IA local ya está reproduciendo o reprodujo esta frase recientemente
+					const isDuplicateSpeech = speechDeduplicator.isDuplicateOrRecent(speechText);
+
+					if (!isDuplicateSpeech) {
+						addMessageRef.current({
+							type: 'chat',
+							content: speechText,
+							timestamp: parsedData.timestamp || new Date().toISOString(),
+						});
+					}
 
 					void forwardToAvatarRef.current({
 						...parsedData,
@@ -187,10 +194,12 @@ const StreamChat = () => {
 						text: speechText,
 					});
 
-					queueVoiceRef.current(speechText).catch((error) => {
-						processedMessages.current.delete(messageKey);
-						console.error('Error al procesar el audio:', error);
-					});
+					if (!isDuplicateSpeech) {
+						queueVoiceRef.current(speechText).catch((error) => {
+							processedMessages.current.delete(messageKey);
+							console.error('Error al procesar el audio:', error);
+						});
+					}
 					return;
 				}
 

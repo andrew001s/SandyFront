@@ -1,8 +1,9 @@
-import { type FishAudioConfig, getVoiceSandy } from '@/api/fetchFishAudio';
 import { getVoiceEdge } from '@/api/fetchEdgeTts';
+import { type FishAudioConfig, getVoiceSandy } from '@/api/fetchFishAudio';
 import { getVoiceLocal } from '@/api/fetchLocalTts';
 import { AudioQueueManager } from '@/lib/audioQueueSingleton';
 import { createSentenceChunker } from '@/lib/sentenceChunker';
+import { speechDeduplicator } from '@/lib/speechDeduplicator';
 import {
 	type EdgeTtsConfig,
 	type LocalTtsConfig,
@@ -129,6 +130,10 @@ export async function speakTextStream(
 	};
 
 	const enqueueSegment = (segment: string) => {
+		if (speechDeduplicator.checkAndRecord(segment)) {
+			return;
+		}
+
 		onSegment?.(segment);
 
 		const synthesis = limit(() => synthesizeAudio(segment)).catch((error) => {
@@ -159,6 +164,9 @@ export async function speakTextStream(
 	}
 
 	await chain;
+	if (fullText) {
+		speechDeduplicator.record(fullText);
+	}
 	return fullText;
 }
 
@@ -166,3 +174,5 @@ export async function speakTextStream(
 export async function* singleChunkStream(text: string): AsyncGenerator<string> {
 	yield text;
 }
+
+export { speechDeduplicator, normalizeSpeechText } from '@/lib/speechDeduplicator';
