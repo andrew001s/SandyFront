@@ -18,7 +18,7 @@ import type {
 	SoftwareConfig,
 	SoftwareMeta,
 } from '@/types/avatar';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export function useAvatar() {
 	const vts = useVTubeStudio();
@@ -26,6 +26,9 @@ export function useAvatar() {
 	const [activeSoftware, setActiveSoftware] = useState<AvatarSoftware>('vtubestudio');
 	const [configs, setConfigs] = useState<AvatarSoftwareConfigs>(DEFAULT_SOFTWARE_CONFIGS);
 	const [vseefaceState, setVseefaceState] = useState(vseefaceClient.getState());
+
+	const hasAutoConnectedRef = useRef(false);
+	const manualDisconnectedRef = useRef(false);
 
 	// Cargar configuración guardada al montar
 	useEffect(() => {
@@ -63,6 +66,7 @@ export function useAvatar() {
 	// Cambiar software activo
 	const setSoftware = useCallback(
 		(software: AvatarSoftware) => {
+			manualDisconnectedRef.current = false;
 			setActiveSoftware(software);
 			if (typeof window !== 'undefined') {
 				window.localStorage.setItem(AVATAR_SOFTWARE_STORAGE_KEY, software);
@@ -112,6 +116,7 @@ export function useAvatar() {
 	// Conectar
 	const connect = useCallback(
 		async (portOrOptions?: number | { port?: number; host?: string }) => {
+			manualDisconnectedRef.current = false;
 			const targetPort =
 				typeof portOrOptions === 'number'
 					? portOrOptions
@@ -135,6 +140,7 @@ export function useAvatar() {
 
 	// Desconectar
 	const disconnect = useCallback(async () => {
+		manualDisconnectedRef.current = true;
 		if (activeSoftware === 'vtubestudio') {
 			await vts.disconnect();
 		} else {
@@ -212,9 +218,16 @@ export function useAvatar() {
 		[activeSoftware, vts],
 	);
 
-	// Auto-conectar a VSeeFace si está activo y aún no se ha conectado
+	// Auto-conectar a VSeeFace solo una vez al inicio si no se desconectó manualmente
 	useEffect(() => {
-		if (activeSoftware === 'vseeface' && !vseefaceState.connected && !vseefaceState.connecting) {
+		if (
+			!hasAutoConnectedRef.current &&
+			!manualDisconnectedRef.current &&
+			activeSoftware === 'vseeface' &&
+			!vseefaceState.connected &&
+			!vseefaceState.connecting
+		) {
+			hasAutoConnectedRef.current = true;
 			void vseefaceClient.connect(configs.vseeface).catch(() => {
 				// Silencioso en auto-conexión inicial
 			});

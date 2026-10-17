@@ -17,7 +17,7 @@ interface Props {
 }
 
 const TRANSITION_PRESETS = [
-	{ label: 'Instantáneo', ms: 0, badge: '0 ms' },
+	{ label: 'Instantáneo', ms: 20, badge: '20 ms' },
 	{ label: 'Rápido', ms: 80, badge: '80 ms' },
 	{ label: 'Fluido', ms: 130, badge: '130 ms' },
 	{ label: 'Suave', ms: 250, badge: '250 ms' },
