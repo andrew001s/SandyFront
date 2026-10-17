@@ -235,13 +235,15 @@ export function useAvatar() {
 	}, [activeSoftware, vseefaceState.connected, vseefaceState.connecting, configs.vseeface]);
 
 	// Coordinación de Lip Sync en tiempo real con AudioQueueManager
+	const { connected: vtsConnected, injectParameters: vtsInjectParameters } = vts;
+
 	useEffect(() => {
 		const vrmHandler = createVrmLipSyncHandler(async (vowels) => {
 			await vseefaceClient.injectVrmVowels(vowels);
 		});
 
 		const vtsHandler = createVtsLipSyncHandler(async (params) => {
-			await vts.injectParameters(params);
+			await vtsInjectParameters(params);
 		});
 
 		AudioQueueManager.getInstance().setLipSyncHandler({
@@ -253,7 +255,7 @@ export function useAvatar() {
 			start: async (blob, clock) => {
 				if (activeSoftware === 'vseeface' && vseefaceState.connected) {
 					await vrmHandler.start(blob, clock);
-				} else if (activeSoftware === 'vtubestudio' && vts.connected) {
+				} else if (activeSoftware === 'vtubestudio' && vtsConnected) {
 					await vtsHandler(blob, clock);
 				}
 			},
@@ -270,7 +272,7 @@ export function useAvatar() {
 			vrmHandler.stop();
 			stopVtsLipSync();
 		};
-	}, [activeSoftware, vseefaceState.connected, vts.connected, vts.injectParameters]);
+	}, [activeSoftware, vseefaceState.connected, vtsConnected, vtsInjectParameters]);
 
 	return {
 		activeSoftware,

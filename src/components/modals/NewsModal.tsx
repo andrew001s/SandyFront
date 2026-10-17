@@ -1,6 +1,5 @@
 'use client';
 
-import { getVoiceEdge } from '@/api/fetchEdgeTts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,7 +11,6 @@ import {
 	DialogTitle,
 } from '@/components/ui/dialog';
 import { KOFI_URL } from '@/lib/links';
-import { DEFAULT_EDGE_VOICE } from '@/lib/tts-provider';
 import {
 	ArrowRight,
 	Box,
@@ -25,8 +23,7 @@ import {
 	Sparkles,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { useCallback, useEffect, useState } from 'react';
 
 export const SANDY_NEWS_STORAGE_KEY = 'sandy_news_last_seen_version';
 export const CURRENT_NEWS_VERSION = '0.2.3';
@@ -66,22 +63,8 @@ const NEWS_FEATURES = [
 export function NewsModal() {
 	const router = useRouter();
 	const [isOpen, setIsOpen] = useState(false);
-	const [isPlayingDemo, setIsPlayingDemo] = useState(false);
-	const [_isLoadingAudio, setIsLoadingAudio] = useState(false);
-	const audioRef = useRef<HTMLAudioElement | null>(null);
-
-	const stopAudio = useCallback(() => {
-		if (audioRef.current) {
-			audioRef.current.pause();
-			audioRef.current.currentTime = 0;
-			audioRef.current = null;
-		}
-		setIsPlayingDemo(false);
-		setIsLoadingAudio(false);
-	}, []);
 
 	const handleClose = useCallback(() => {
-		stopAudio();
 		setIsOpen(false);
 		if (typeof window !== 'undefined') {
 			try {
@@ -90,67 +73,12 @@ export function NewsModal() {
 				console.error('No se pudo guardar la versión de novedades en localStorage:', e);
 			}
 		}
-	}, [stopAudio]);
+	}, []);
 
 	const handleGoToAvatar = useCallback(() => {
 		handleClose();
 		router.push('/avatar');
 	}, [handleClose, router]);
-
-	const _handlePlayEdgeDemo = async () => {
-		if (isPlayingDemo) {
-			stopAudio();
-			return;
-		}
-
-		stopAudio();
-		setIsLoadingAudio(true);
-
-		try {
-			const sampleText =
-				'¡Hola! Ahora también puedes usarme con avatares 3D en VSeeFace. Muevo mi boca al hablar y expreso emociones en tiempo real. ¡Pruébame en tu próximo directo!';
-
-			const blob = await getVoiceEdge(sampleText, {
-				voice: DEFAULT_EDGE_VOICE,
-				rate: '+0%',
-				pitch: '+0Hz',
-			});
-
-			if (!blob || blob.size === 0) {
-				throw new Error('No se pudo generar el audio de muestra');
-			}
-
-			const audioUrl = URL.createObjectURL(blob);
-			const audio = new Audio(audioUrl);
-			audioRef.current = audio;
-
-			audio.onplay = () => {
-				setIsLoadingAudio(false);
-				setIsPlayingDemo(true);
-			};
-
-			audio.onended = () => {
-				setIsPlayingDemo(false);
-				URL.revokeObjectURL(audioUrl);
-				audioRef.current = null;
-			};
-
-			audio.onerror = () => {
-				setIsLoadingAudio(false);
-				setIsPlayingDemo(false);
-				URL.revokeObjectURL(audioUrl);
-				audioRef.current = null;
-				toast.error('No se pudo reproducir el audio de prueba.');
-			};
-
-			await audio.play();
-		} catch (error) {
-			console.error('Error al generar audio de prueba Edge TTS:', error);
-			setIsLoadingAudio(false);
-			setIsPlayingDemo(false);
-			toast.error('No se pudo conectar con el servicio de voz de prueba.');
-		}
-	};
 
 	useEffect(() => {
 		const handleOpenEvent = () => setIsOpen(true);
@@ -173,9 +101,8 @@ export function NewsModal() {
 
 		return () => {
 			window.removeEventListener(OPEN_NEWS_MODAL_EVENT, handleOpenEvent);
-			stopAudio();
 		};
-	}, [stopAudio]);
+	}, []);
 
 	return (
 		<Dialog
