@@ -6,12 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import type { VTSStats } from '@/hooks/useVTubeStudio';
 import { AVATAR_SOFTWARE_LIST } from '@/lib/avatar/constants';
-import { generateVowelTestWav, playLipSyncTest } from '@/lib/avatar/testAudioGenerator';
 import type { AvatarConnectionStats, AvatarSoftware, SoftwareConfig } from '@/types/avatar';
 import { Box, HelpCircle, RefreshCw, Tv, WifiOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
-import { toast } from 'sonner';
 
 type AvatarConnectionCardProps = {
 	connecting: boolean;
@@ -43,16 +41,12 @@ export function AvatarConnectionCard({
 
 	const [port, setPort] = useState(String(config?.port ?? currentMeta.defaultPort));
 	const [host, setHost] = useState(config?.host ?? '127.0.0.1');
-	const [_transitionDuration, setTransitionDuration] = useState(
-		String(config?.transitionDurationMs ?? 120),
-	);
 	const [showTips, setShowTips] = useState(false);
 
 	useEffect(() => {
 		const targetPort = config?.port ?? currentMeta.defaultPort;
 		setPort(String(targetPort));
 		setHost(config?.host ?? '127.0.0.1');
-		setTransitionDuration(String(config?.transitionDurationMs ?? 120));
 	}, [config, currentMeta]);
 
 	const handlePortChange = (val: string) => {
@@ -66,25 +60,6 @@ export function AvatarConnectionCard({
 	const handleHostChange = (val: string) => {
 		setHost(val);
 		onUpdateConfig?.({ host: val });
-	};
-
-	const _handleDurationChange = (val: string) => {
-		setTransitionDuration(val);
-		const num = Number(val);
-		if (!Number.isNaN(num) && num >= 0) {
-			onUpdateConfig?.({ transitionDurationMs: Math.min(1000, num) });
-		}
-	};
-
-	const _handleQuickLipSyncTest = async () => {
-		try {
-			const wav = generateVowelTestWav();
-			await playLipSyncTest(wav);
-			toast.success('Reproduciendo prueba de lip sync (A - E - I - O - U)');
-		} catch (err) {
-			console.error('Error al probar lip sync:', err);
-			toast.error('No se pudo reproducir la prueba de lip sync');
-		}
 	};
 
 	const isVSeeFace = software === 'vseeface';

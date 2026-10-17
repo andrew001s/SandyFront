@@ -15,18 +15,20 @@ interface BridgeServer {
 	close(callback?: () => void): void;
 }
 
-declare global {
-	var __sandy_vmc_bridge: BridgeServer | undefined;
-	var __sandy_udp_client: dgram.Socket | undefined;
-}
+type SandyGlobal = typeof globalThis & {
+	__sandy_vmc_bridge?: BridgeServer;
+	__sandy_udp_client?: dgram.Socket;
+};
 
 export function startVmcBridgeServer(): void {
+	const sandyGlobal = globalThis as SandyGlobal;
+
 	if (typeof window !== 'undefined') return;
-	if (globalThis.__sandy_vmc_bridge) return;
+	if (sandyGlobal.__sandy_vmc_bridge) return;
 
 	try {
 		const udp = dgram.createSocket('udp4');
-		globalThis.__sandy_udp_client = udp;
+		sandyGlobal.__sandy_udp_client = udp;
 
 		const wsAny = WebSocket as unknown as {
 			WebSocketServer?: new (opts: { port: number; host: string }) => BridgeServer;
@@ -51,7 +53,7 @@ export function startVmcBridgeServer(): void {
 			host: '127.0.0.1',
 		});
 
-		globalThis.__sandy_vmc_bridge = wss;
+		sandyGlobal.__sandy_vmc_bridge = wss;
 
 		wss.on('connection', (ws: ClientSocket) => {
 			ws.on('message', (rawData: { toString(): string }) => {
