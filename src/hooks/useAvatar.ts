@@ -144,9 +144,9 @@ export function useAvatar() {
 
 	// Establecer emoción
 	const setEmotion = useCallback(
-		async (emotion: string, intensity = 1.0, durationMs?: number): Promise<void> => {
+		async (emotion: string, intensity = 1.0): Promise<void> => {
 			if (is3D) {
-				await vseefaceClient.setEmotion(emotion, intensity, durationMs);
+				await vseefaceClient.setEmotion(emotion, intensity);
 			} else {
 				await vts.activateExpression(emotion);
 			}
@@ -155,24 +155,11 @@ export function useAvatar() {
 	);
 
 	// Resetear emociones
-	const resetEmotions = useCallback(
-		async (durationMs?: number): Promise<void> => {
-			if (is3D) {
-				await vseefaceClient.resetEmotions(durationMs);
-			}
-		},
-		[is3D],
-	);
-
-	// Inyectar blendshape personalizado en 3D
-	const setCustomBlendshape = useCallback(
-		async (name: string, value: number): Promise<void> => {
-			if (is3D) {
-				await vseefaceClient.setCustomBlendshape(name, value);
-			}
-		},
-		[is3D],
-	);
+	const resetEmotions = useCallback(async (): Promise<void> => {
+		if (is3D) {
+			await vseefaceClient.resetEmotions();
+		}
+	}, [is3D]);
 
 	// Inyectar boca de forma unificada (2D y 3D)
 	const injectMouth = useCallback(
@@ -292,7 +279,6 @@ export function useAvatar() {
 		setExpressionActive,
 		setEmotion,
 		resetEmotions,
-		setCustomBlendshape,
 		injectMouth,
 
 		stats: is3D ? vseefaceState.stats : vts.stats,

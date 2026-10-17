@@ -125,37 +125,13 @@ export class VSeeFaceClient {
 
 	private initBridgeWebSocket(): Promise<void> {
 		return new Promise((resolve, reject) => {
-			const preferredHost =
-				typeof window !== 'undefined' && window.location.hostname
-					? window.location.hostname
-					: '127.0.0.1';
-
-			const tryConnect = (host: string, isRetry = false) => {
-				const wsUrl = `ws://${host}:${VMC_BRIDGE_PORT}`;
-				let ws: WebSocket;
-				try {
-					ws = new WebSocket(wsUrl);
-				} catch (err) {
-					if (!isRetry && host !== '127.0.0.1') {
-						tryConnect('127.0.0.1', true);
-						return;
-					}
-					reject(err);
-					return;
-				}
-
+			const wsUrl = `ws://127.0.0.1:${VMC_BRIDGE_PORT}`;
+			try {
+				const ws = new WebSocket(wsUrl);
 				let timeout: ReturnType<typeof setTimeout> | null = setTimeout(() => {
-					try {
-						ws.close();
-					} catch {
-						// Ignorar
-					}
-					if (!isRetry && host !== '127.0.0.1') {
-						tryConnect('127.0.0.1', true);
-					} else {
-						reject(new Error('Timeout de puente local'));
-					}
-				}, 1200);
+					ws.close();
+					reject(new Error('Timeout de puente local'));
+				}, 1500);
 
 				ws.onopen = () => {
 					if (timeout) {
@@ -171,16 +147,7 @@ export class VSeeFaceClient {
 						clearTimeout(timeout);
 						timeout = null;
 					}
-					try {
-						ws.close();
-					} catch {
-						// Ignorar
-					}
-					if (!isRetry && host !== '127.0.0.1') {
-						tryConnect('127.0.0.1', true);
-					} else {
-						reject(new Error('Puente local WS no disponible'));
-					}
+					reject(new Error('Puente local WS no disponible'));
 				};
 
 				ws.onclose = () => {
@@ -195,9 +162,9 @@ export class VSeeFaceClient {
 						}, 2000);
 					}
 				};
-			};
-
-			tryConnect(preferredHost);
+			} catch (err) {
+				reject(err);
+			}
 		});
 	}
 
@@ -227,31 +194,10 @@ export class VSeeFaceClient {
 	/**
 	 * Activa una emoción VRM (VRM 0.x y VRM 1.0) con transición suave personalizable.
 	 */
-	public async setEmotion(emotionId: string, intensity = 1.0, durationMs?: number): Promise<void> {
-		if (typeof durationMs === 'number') {
-			this.transitionDurationMs = Math.max(0, Math.min(1000, durationMs));
-		}
+	public async setEmotion(emotionId: string, intensity = 1.0): Promise<void> {
 		const preset = VRM_EMOTIONS.find((e) => e.id === emotionId);
 		const blendshapes: Record<string, number> = {};
 
-		// 1. Primero poner a 0 todas las emociones anteriores para evitar que se solapen o queden trabadas
-		for (const p of VRM_EMOTIONS) {
-			if (p.id === 'neutral') continue;
-			for (const key of Object.keys(p.vrm0Blendshapes)) {
-				blendshapes[key] = 0;
-			}
-			for (const key of Object.keys(p.vrm1Blendshapes)) {
-				blendshapes[key] = 0;
-			}
-		}
-
-		// 2. Si es neutral, aplicar reseteo
-		if (emotionId === 'neutral') {
-			this.interpolateBlendshapes(blendshapes);
-			return;
-		}
-
-		// 3. Aplicar la nueva emoción deseada
 		if (preset) {
 			for (const [key, val] of Object.entries(preset.vrm0Blendshapes)) {
 				blendshapes[key] = val * intensity;
@@ -269,10 +215,7 @@ export class VSeeFaceClient {
 	/**
 	 * Restablece todas las emociones a 0 (rostro neutro).
 	 */
-	public async resetEmotions(durationMs?: number): Promise<void> {
-		if (typeof durationMs === 'number') {
-			this.transitionDurationMs = Math.max(0, Math.min(1000, durationMs));
-		}
+	public async resetEmotions(): Promise<void> {
 		const resetMap: Record<string, number> = {};
 		for (const preset of VRM_EMOTIONS) {
 			for (const key of Object.keys(preset.vrm0Blendshapes)) {
@@ -441,20 +384,11 @@ export class VSeeFaceClient {
 			sad: 'sorrow',
 			sorrow: 'sorrow',
 			crying: 'sorrow',
-			excited: 'excited',
+			excited: 'fun',
 			fun: 'fun',
 			surprised: 'surprised',
 			shocked: 'surprised',
-			thinking: 'thinking',
-			confused: 'confused',
-			sleepy: 'sleepy',
-			tired: 'sleepy',
-			shy: 'shy',
-			smug: 'smug',
 			wink: 'blink',
-			wink_l: 'wink_l',
-			wink_r: 'wink_r',
-			blink: 'blink',
 			neutral: 'neutral',
 		};
 
@@ -473,20 +407,12 @@ export class VSeeFaceClient {
 
 	/**
 	 * Interpolador a 60 FPS con curva Ease-Out y duración configurable (ms).
-	 * Incluye vía rápida inmediata (<1ms) para tiempos de transición <= 40ms.
 	 */
 	private interpolateBlendshapes(targets: Record<string, number>): void {
 		const duration = this.transitionDurationMs;
 		const now = performance.now();
 
-		// Si el tiempo de transición es instantáneo o muy bajo (<= 40 ms),
-		// aplicar de inmediato en un único lote sin sobrecarga de bucle requestAnimationFrame.
-		if (duration <= 40) {
-			if (this.animFrameId !== null) {
-				cancelAnimationFrame(this.animFrameId);
-				this.animFrameId = null;
-			}
-			this.startBlendshapes.clear();
+		if (duration <= 0) {
 			const batch: Array<{ name: string; value: number }> = [];
 			for (const [name, val] of Object.entries(targets)) {
 				this.currentBlendshapes.set(name, val);
@@ -499,11 +425,6 @@ export class VSeeFaceClient {
 
 		for (const [name, targetVal] of Object.entries(targets)) {
 			const currentVal = this.currentBlendshapes.get(name) ?? 0;
-			if (Math.abs(currentVal - targetVal) < 0.005) {
-				this.currentBlendshapes.set(name, targetVal);
-				this.targetBlendshapes.set(name, targetVal);
-				continue;
-			}
 			this.targetBlendshapes.set(name, targetVal);
 			this.startBlendshapes.set(name, {
 				startVal: currentVal,
@@ -523,7 +444,7 @@ export class VSeeFaceClient {
 			let isAnyActive = false;
 			const batch: Array<{ name: string; value: number }> = [];
 
-			for (const [name, targetVal] of Array.from(this.targetBlendshapes.entries())) {
+			for (const [name, targetVal] of this.targetBlendshapes.entries()) {
 				const startInfo = this.startBlendshapes.get(name);
 				if (!startInfo) continue;
 
@@ -534,8 +455,8 @@ export class VSeeFaceClient {
 					batch.push({ name, value: targetVal });
 				} else {
 					isAnyActive = true;
-					const t = Math.min(1.0, elapsed / duration);
 					// Curva Ease-Out: 1 - (1 - t)^2
+					const t = elapsed / duration;
 					const ease = 1 - (1 - t) * (1 - t);
 					const currentVal = startInfo.startVal + (targetVal - startInfo.startVal) * ease;
 					this.currentBlendshapes.set(name, currentVal);
@@ -555,24 +476,6 @@ export class VSeeFaceClient {
 		};
 
 		this.animFrameId = requestAnimationFrame(loop);
-	}
-
-	/**
-	 * Consulta los blendshapes descubiertos pasivamente desde VSeeFace VMC Out.
-	 */
-	public async fetchDiscoveredBlendshapes(): Promise<string[]> {
-		try {
-			const res = await fetch('/api/avatar/vmc');
-			if (res.ok) {
-				const data = await res.json();
-				if (Array.isArray(data.blendshapes)) {
-					return data.blendshapes;
-				}
-			}
-		} catch {
-			// Fallback silencioso
-		}
-		return [];
 	}
 
 	/**

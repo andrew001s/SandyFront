@@ -56,37 +56,3 @@ export function encodeOscBundle(messages: Buffer[]): Buffer {
 
 	return Buffer.concat([header, timetag, ...elements]);
 }
-
-/**
- * Decodifica mensajes OSC individuales o contenidos en paquetes #bundle
- * con dirección /VMC/Ext/Blend/Val para extraer el nombre del blendshape y su valor.
- */
-export function parseOscBlendshape(buf: Buffer): { name: string; value: number } | null {
-	try {
-		if (buf.length < 24) return null;
-		const str = buf.toString('utf-8');
-		const idx = str.indexOf('/VMC/Ext/Blend/Val');
-		if (idx === -1) return null;
-
-		let p = idx;
-		while (p < buf.length && buf[p] !== 0) p += 1;
-		while (p < buf.length && buf[p] === 0) p += 1;
-
-		if (p >= buf.length || buf[p] !== 44) return null; // 44 = ','
-		while (p < buf.length && buf[p] !== 0) p += 1;
-		while (p < buf.length && buf[p] === 0) p += 1;
-
-		const nameStart = p;
-		while (p < buf.length && buf[p] !== 0) p += 1;
-		const name = buf.toString('utf-8', nameStart, p);
-		while (p < buf.length && buf[p] === 0) p += 1;
-
-		if (p + 4 <= buf.length) {
-			const value = buf.readFloatBE(p);
-			return { name, value };
-		}
-		return { name, value: 0 };
-	} catch {
-		return null;
-	}
-}
