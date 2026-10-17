@@ -226,7 +226,8 @@ const integrations = [
 	{ name: 'Twitch', icon: <SiTwitch size={13} className='text-[#9146FF]' /> },
 	{ name: 'Kick', icon: <SiKick size={13} className='text-[#53FC18]' /> },
 	{ name: 'YouTube', icon: <SiYoutube size={13} className='text-[#FF0000]' /> },
-	{ name: 'VTube Studio', icon: null },
+	{ name: 'VTube Studio (2D)', icon: null },
+	{ name: 'VSeeFace (3D)', icon: null },
 ];
 
 export function Hero() {
@@ -293,7 +294,8 @@ export function Hero() {
 						className='mt-6 max-w-xl text-lg text-zinc-600 leading-relaxed dark:text-zinc-400'
 					>
 						Una VTuber con inteligencia artificial que lee el chat de Twitch, Kick y YouTube,
-						responde con su voz, se mueve en VTube Studio y entiende lo que dices por micrófono.
+						responde con su voz en vivo, se mueve en VTube Studio (2D) y VSeeFace (3D VRM) y
+						entiende lo que dices por micrófono.
 					</motion.p>
 
 					<motion.div

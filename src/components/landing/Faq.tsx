@@ -55,11 +55,11 @@ const faqs: Array<Faq> = [
 		icon: <Sparkles size={14} />,
 		question: '¿Cómo se mueve el avatar y hace lip sync?',
 		answer:
-			'Sandy Studio se conecta con VTube Studio, que es como el motor del avatar. Cada palabra que dice se convierte en movimiento de boca y expresiones en tiempo real, sincronizadas con su voz.',
+			'Sandy Studio se conecta tanto con VTube Studio (modelos Live2D) como con VSeeFace (avatares 3D VRM vía VMC/OSC). Cada palabra que dice se convierte en movimiento de boca inmediato a 60 FPS y expresiones en tiempo real sincronizadas con su voz.',
 		details: [
-			'Lip sync automático con la voz de Sandy Studio',
-			'Expresiones y reacciones en vivo',
-			'Funciona con tu propio modelo de VTube Studio',
+			'Lip sync automático 2D y 3D con 0 ms de retraso acústico',
+			'Expresiones y emociones en vivo configurables',
+			'Compatible con modelos Live2D (VTube Studio) y VRM 3D (VSeeFace)',
 		],
 	},
 	{
@@ -67,10 +67,10 @@ const faqs: Array<Faq> = [
 		icon: <User size={14} />,
 		question: '¿Qué necesito para empezar?',
 		answer:
-			'Mínimo, una cuenta de Twitch, Kick o YouTube. Creas tu cuenta en Sandy Studio, conectas tu canal y Sandy Studio empieza a leer el chat. Si quieres que el avatar se vea animado, instala VTube Studio en tu PC.',
+			'Mínimo, una cuenta de Twitch, Kick o YouTube. Creas tu cuenta en Sandy Studio, conectas tu canal y Sandy Studio empieza a leer el chat. Si quieres que el avatar se vea animado, puedes usar VTube Studio (2D) o VSeeFace (3D) en tu PC.',
 		details: [
 			'Una cuenta de Twitch, Kick o YouTube (gratis)',
-			'VTube Studio en tu PC para el avatar animado',
+			'VTube Studio (Live2D) o VSeeFace (VRM 3D) en tu PC',
 			'Micrófono si quieres que Sandy te escuche',
 		],
 	},

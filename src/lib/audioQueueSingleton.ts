@@ -1,3 +1,15 @@
+export type LipSyncClock = () => number;
+
+export interface LipSyncHandlerObject {
+	prepare?: (audioBlob: Blob) => Promise<void>;
+	start: (audioBlob: Blob, clock?: LipSyncClock) => Promise<void> | void;
+	stop?: () => void;
+}
+
+export type LipSyncHandler =
+	| LipSyncHandlerObject
+	| ((audioBlob: Blob, clock?: LipSyncClock) => Promise<void> | void);
+
 export class AudioQueueManager {
 	private static instance: AudioQueueManager;
 	private queue: { blob: Blob; url: string }[] = [];
@@ -11,9 +23,8 @@ export class AudioQueueManager {
 	private recentAudio = new Map<string, number>();
 	private static readonly DEDUPE_WINDOW_MS = 30_000;
 	private callbacks: Set<(isPlaying: boolean) => void> = new Set();
-	/** El segundo argumento es el reloj del audio que suena, en segundos. */
-	private lipSyncHandler: ((audioBlob: Blob, clock?: () => number) => Promise<void> | void) | null =
-		null;
+	/** Manejador de Lip Sync con soporte de preparación sin retraso y reloj de alta resolución. */
+	private lipSyncHandler: LipSyncHandler | null = null;
 
 	private constructor() {}
 
@@ -31,6 +42,13 @@ export class AudioQueueManager {
 				if (element.src) {
 					URL.revokeObjectURL(element.src);
 				}
+				if (
+					this.lipSyncHandler &&
+					typeof this.lipSyncHandler === 'object' &&
+					this.lipSyncHandler.stop
+				) {
+					this.lipSyncHandler.stop();
+				}
 				this.isPlaying = false;
 				this.notifyStateChange();
 				void this.playNext();
@@ -43,9 +61,7 @@ export class AudioQueueManager {
 		}
 	}
 
-	setLipSyncHandler(
-		handler: ((audioBlob: Blob, clock?: () => number) => Promise<void> | void) | null,
-	) {
+	setLipSyncHandler(handler: LipSyncHandler | null) {
 		this.lipSyncHandler = handler;
 	}
 
@@ -113,16 +129,49 @@ export class AudioQueueManager {
 			const nextAudio = this.queue.shift();
 			if (nextAudio) {
 				this.audioElement.src = nextAudio.url;
-				this.audioElement.onplay = () => {
-					// El reloj sale del propio audio: así la boca sigue a lo que de
-					// verdad se está oyendo, en vez de a un cronómetro aparte que se
-					// desfasa si la reproducción arranca tarde o se ralentiza.
+
+				// 1. Predecodificar / precalcular frames de lip-sync ANTES de iniciar reproducción
+				// para garantizar 0 ms de retraso en la apertura de la boca
+				if (
+					this.lipSyncHandler &&
+					typeof this.lipSyncHandler === 'object' &&
+					this.lipSyncHandler.prepare
+				) {
+					try {
+						await this.lipSyncHandler.prepare(nextAudio.blob);
+					} catch {
+						// Continuar con reproducción si la preparación falla
+					}
+				}
+
+				// 2. Reloj continuo de alta resolución a 60 FPS
+				// (evita desfases y micro-congelamientos por los saltos de ~200ms de currentTime)
+				let lastMediaTime = 0;
+				let lastSyncTime = performance.now();
+				const getHighResClock = (): number => {
 					const element = this.audioElement;
-					void this.lipSyncHandler?.(
-						nextAudio.blob,
-						element ? () => element.currentTime : undefined,
-					);
+					if (!element) return 0;
+					const now = performance.now();
+					const mediaTime = element.currentTime;
+					if (mediaTime !== lastMediaTime) {
+						lastMediaTime = mediaTime;
+						lastSyncTime = now;
+						return mediaTime;
+					}
+					return Math.max(0, lastMediaTime + (now - lastSyncTime) / 1000);
 				};
+
+				this.audioElement.onplay = () => {
+					lastMediaTime = this.audioElement?.currentTime ?? 0;
+					lastSyncTime = performance.now();
+					const handler = this.lipSyncHandler;
+					if (typeof handler === 'object' && handler?.start) {
+						void handler.start(nextAudio.blob, getHighResClock);
+					} else if (typeof handler === 'function') {
+						void handler(nextAudio.blob, getHighResClock);
+					}
+				};
+
 				try {
 					await this.audioElement.play();
 				} catch (error) {
@@ -142,6 +191,13 @@ export class AudioQueueManager {
 		}
 		this.queue = [];
 		this.recentAudio.clear();
+		if (
+			this.lipSyncHandler &&
+			typeof this.lipSyncHandler === 'object' &&
+			this.lipSyncHandler.stop
+		) {
+			this.lipSyncHandler.stop();
+		}
 		if (this.audioElement) {
 			this.audioElement.pause();
 			this.audioElement.onplay = null;

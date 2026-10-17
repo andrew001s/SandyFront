@@ -167,6 +167,10 @@ const injectSharedParameters = async (params: { id: string; value: number }[]) =
 };
 
 const attachLipSync = () => {
+	if (typeof window !== 'undefined') {
+		const sw = window.localStorage.getItem('sandy_avatar_software');
+		if (sw === 'vseeface') return;
+	}
 	AudioQueueManager.getInstance().setLipSyncHandler(
 		createVtsLipSyncHandler(injectSharedParameters),
 	);

@@ -8,23 +8,31 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
 	metadataBase,
-	title: 'VTuber con IA: qué es y cómo crear el tuyo',
+	title: 'VTuber con IA: Qué es y Cómo Crear el Tuyo Gratis (2D y 3D)',
 	description:
-		'Descubre qué es un VTuber con IA, cómo funciona y cómo crear el tuyo gratis con Sandy Studio: lee tu chat de Twitch, responde con voz y se mueve en VTube Studio.',
+		'Aprende qué es un VTuber con IA y cómo crear el tuyo gratis en español: lee tu chat de Twitch y Kick, responde con voz y se mueve en VTube Studio (2D) y VSeeFace (3D VRM).',
 	keywords: [
-		'vtuber con IA',
+		'vtuber con ia',
 		'vtuber inteligencia artificial',
-		'como crear un vtuber',
+		'como crear un vtuber con ia',
+		'crear vtuber con ia gratis',
+		'vtuber ia español',
 		'vtuber twitch',
+		'vtuber kick',
 		'vtuber que habla con chat',
+		'vtuber 3d ia',
+		'vseeface ia',
+		'vtube studio ia',
+		'neuro sama español',
+		'avatar ia streaming',
 	],
 	alternates: {
 		canonical: '/vtuber-ia',
 	},
 	openGraph: {
-		title: 'VTuber con IA: qué es y cómo crear el tuyo',
+		title: 'VTuber con IA: Qué es y Cómo Crear el Tuyo Gratis (2D y 3D)',
 		description:
-			'Crea tu VTuber con IA gratis: lee tu chat de Twitch, responde con su voz y se mueve en VTube Studio.',
+			'Crea tu VTuber con IA gratis: lee tu chat, responde con voz natural y sincroniza su boca y emociones en VTube Studio (2D) o VSeeFace (3D).',
 		type: 'website',
 		siteName: sharedSiteName,
 		url: '/vtuber-ia',
@@ -34,7 +42,7 @@ export const metadata: Metadata = {
 				url: sharedOpenGraphImage,
 				width: 1200,
 				height: 630,
-				alt: 'Sandy Studio',
+				alt: 'Sandy Studio - VTuber con IA',
 			},
 		],
 	},
@@ -42,8 +50,9 @@ export const metadata: Metadata = {
 		card: 'summary_large_image',
 		site: '@ElShandrew',
 		creator: '@ElShandrew',
-		title: 'VTuber con IA: qué es y cómo crear el tuyo',
-		description: 'Crea tu VTuber con IA gratis: chat de Twitch, voz y VTube Studio.',
+		title: 'VTuber con IA: Qué es y Cómo Crear el Tuyo Gratis (2D y 3D)',
+		description:
+			'Crea tu VTuber con IA gratis: chat de Twitch y Kick, voz natural, VTube Studio y VSeeFace.',
 	},
 };
 
@@ -52,61 +61,67 @@ const sections: ContentSection[] = [
 		id: 'que-es-un-vtuber-con-ia',
 		title: 'Qué es un VTuber con IA',
 		body: [
-			'Un VTuber es un streamer que aparece en pantalla como un personaje o avatar animado en lugar de mostrar su cara real. Un VTuber con IA va un paso más allá: no es solo un avatar, sino que una inteligencia artificial lo controla para leer el chat, responder preguntas, reaccionar a donaciones y mantener la conversación en tu canal mientras tú te centras en jugar o crear contenido.',
-			'La diferencia con un VTuber tradicional es que no necesitas estar constantemente hablando ni pensar en qué decir: la IA interpreta los mensajes de tu audiencia y responde con la personalidad que tú configures.',
+			'Un VTuber es un streamer que aparece en pantalla como un personaje o avatar animado en lugar de mostrar su cara real. Un VTuber con IA (Inteligencia Artificial) va un paso más allá: la IA controla el avatar para leer el chat en vivo, responder preguntas, reaccionar a donaciones y mantener la conversación en tu canal de forma autónoma mientras tú juegas o te enfocas en el contenido.',
+			'A diferencia de un VTuber tradicional, no necesitas estar constantemente hablando ni improvisando qué decir: el modelo de IA interpreta los mensajes de tu audiencia y contesta con la personalidad, tono y expresiones que tú definas.',
 		],
 	},
 	{
 		id: 'como-funciona',
 		title: 'Cómo funciona Sandy Studio',
-		body: ['Sandy Studio conecta en un solo panel las piezas que necesita tu VTuber con IA:'],
+		body: ['Sandy Studio conecta en un solo panel todas las piezas que necesita tu VTuber con IA:'],
 		list: [
-			'Chat: lee los mensajes de Twitch y Kick en tiempo real.',
-			'Cerebro: tú eliges el modelo de IA, desde Gemini hasta cientos de modelos en OpenRouter.',
-			'Voz: responde con una voz de Fish Audio que tú configuras, con el tono y la personalidad que quieras.',
-			'Avatar: cada palabra se convierte en movimiento de boca y expresiones en VTube Studio.',
-			'Micrófono: entiende lo que dices en voz alta para dar órdenes o mantener el flujo del stream.',
-			'El resultado es un co-animador que saluda a tu chat, agradece donaciones, responde comandos y modera tu canal de forma automática.',
+			'Chat multicanal: lee mensajes de Twitch, Kick y YouTube en tiempo real.',
+			'Cerebro de IA: tú eliges el modelo (Gemini, OpenRouter con Claude/Llama/DeepSeek, o modelos locales en Ollama).',
+			'Voz natural con TTS: síntesis de voz en español y otros idiomas con Edge TTS (gratuito) o Fish Audio.',
+			'Avatar 2D y 3D: sincronización labial inmediata (lip-sync a 60 FPS) y emociones en VTube Studio (Live2D) y VSeeFace (VRM/VRoid 3D vía VMC/OSC).',
+			'Micrófono inteligente: escucha tu voz para ejecutar órdenes en stream o mantener un diálogo interactivo en vivo.',
+			'Moderación automática: filtra spam, modera lenguaje inapropiado y protege tu chat.',
 		],
 	},
 	{
 		id: 'ventajas',
-		title: 'Ventajas frente a un VTuber tradicional',
+		title: 'Ventajas de un VTuber con IA frente a uno tradicional',
 		list: [
-			'No dependes de apps externas de conversación: la IA responde sola con tu personalidad.',
-			'Reacciona a cada mensaje, incluso en canales pequeños con pocos viewers.',
-			'Modera tu chat automáticamente mientras transmites.',
-			'Funciona sin una PC potente: la IA corre en la nube.',
-			'Compatible con Twitch y Kick desde una misma plataforma.',
+			'Interactividad 24/7: la IA responde sola manteniendo el chat activo y dinámico.',
+			'Atención a cada espectador: saluda y conversa incluso en canales pequeños con pocos viewers.',
+			'Soporte completo para 2D (Live2D) y 3D (VRM): utiliza tu modelo favorito sin limitaciones.',
+			'Voz ultrarrealista con lip-sync en tiempo real con 0 ms de retraso acústico.',
+			'Compatible con Twitch, Kick y YouTube simultáneamente.',
+			'Sin costo de infraestructura: funciona en la nube o en tu PC sin requerir hardware extremo.',
 		],
 	},
 	{
 		id: 'requisitos',
-		title: 'Qué necesitas para empezar',
+		title: 'Qué necesitas para empezar gratis',
 		list: [
-			'Una cuenta de Twitch o Kick (gratis).',
+			'Una cuenta de Twitch, Kick o YouTube.',
 			'Una cuenta en Sandy Studio y conectar tu canal con OAuth en un clic.',
-			'Opcional: VTube Studio en tu PC para que el avatar se vea animado.',
-			'Opcional: un micrófono si quieres que Sandy te escuche.',
+			'Tu avatar: un modelo Live2D en VTube Studio o un modelo 3D VRM en VSeeFace (ambos gratuitos).',
+			'Opcional: un micrófono para que la IA también te escuche a ti.',
 		],
 	},
 ];
 
 const faqs: ContentFaq[] = [
 	{
-		question: '¿Necesito saber programar para tener un VTuber con IA?',
+		question: '¿Necesito saber programar para crear un VTuber con IA?',
 		answer:
-			'No. Toda la configuración se hace desde el panel visual de Sandy Studio con clics: conectas tu canal, eliges el modelo de IA, la voz y el avatar. No hay código ni terminal.',
+			'No. Toda la configuración se realiza desde el panel visual de Sandy Studio con clics: conectas tu canal, seleccionas el modelo de IA, la voz y el avatar (VTube Studio o VSeeFace). No requieres código ni conocimientos técnicos.',
 	},
 	{
-		question: '¿Qué modelo de IA puedo usar?',
+		question: '¿Puedo usar mi propio modelo 3D VRM o Live2D?',
 		answer:
-			'El que quieras. Sandy Studio no depende de un único cerebro: puedes usar Gemini o cualquier modelo de OpenRouter y cambiar cuando quieras.',
+			'Sí, absolutamente. Sandy Studio es compatible con VTube Studio para modelos Live2D 2D y con VSeeFace para avatares 3D en formato VRM (VRoid Studio, Blender, etc.) a través del protocolo estándar VMC.',
 	},
 	{
-		question: '¿El avatar hace lip sync con la voz?',
+		question: '¿Qué modelos de IA puedo usar?',
 		answer:
-			'Sí. Sandy Studio se conecta con VTube Studio y cada palabra que dice se convierte en movimiento de boca y expresiones en tiempo real.',
+			'Puedes usar Gemini de Google, modelos en OpenRouter (Claude, GPT, Llama, Mistral) o modelos locales en tu propia máquina mediante Ollama o LM Studio.',
+	},
+	{
+		question: '¿El avatar mueve la boca con sincronización labial (lip sync)?',
+		answer:
+			'Sí. Sandy Studio analiza los formantes de audio en tiempo real y mueve la boca del avatar con precisión fonética a 60 FPS tanto en modelos 2D como en blendshapes 3D.',
 	},
 ];
 

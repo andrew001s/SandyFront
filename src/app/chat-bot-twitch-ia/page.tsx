@@ -8,23 +8,27 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
 	metadataBase,
-	title: 'Bot de chat con IA para Twitch',
+	title: 'Bot de Chat con IA y VTuber para Twitch | Sandy Studio',
 	description:
-		'Un bot de chat con IA para Twitch que responde a tu chat con su propia voz, modera tu canal y reacciona a donaciones y eventos. Conéctalo con OAuth en 1 clic con Sandy Studio.',
+		'Un bot de chat con IA y VTuber para Twitch que responde a tu chat con voz natural, modera tu canal y sincroniza tu avatar en 2D y 3D. Conéctalo en 1 clic con Sandy Studio.',
 	keywords: [
-		'bot para twitch con IA',
-		'chat bot twitch',
+		'bot para twitch con ia',
+		'vtuber con ia',
+		'vtuber twitch',
+		'chat bot twitch ia',
 		'bot twitch inteligencia artificial',
+		'vtuber que responde chat',
 		'bot que responde en twitch',
 		'automatizar chat twitch',
+		'avatar bot twitch',
 	],
 	alternates: {
 		canonical: '/chat-bot-twitch-ia',
 	},
 	openGraph: {
-		title: 'Bot de chat con IA para Twitch',
+		title: 'Bot de Chat con IA y VTuber para Twitch | Sandy Studio',
 		description:
-			'Automatiza tu chat de Twitch con un bot con IA que responde con voz, modera y reacciona a tu audiencia.',
+			'Automatiza tu chat de Twitch con un bot y VTuber con IA que responde con voz, modera y reacciona a tu audiencia.',
 		type: 'website',
 		siteName: sharedSiteName,
 		url: '/chat-bot-twitch-ia',

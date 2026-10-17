@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.2](https://github.com/andrew001s/SandyFront/compare/v0.2.1...v0.2.2) (2026-10-17)
+
+
+### Features
+
+* ✨ add 3D VSeeFace avatar integration with VMC protocol support and OSC bridge ([24edc74](https://github.com/andrew001s/SandyFront/commit/24edc74b342ac7600f2f2d9a5894856cfb26ec7b))
+* ✨ add avatar integration support for VSeeFace and VTubeStudio with OSC and lip-sync ([494d665](https://github.com/andrew001s/SandyFront/commit/494d665f667a3523f11922fe6354c54b061af00b))
+* ✨ add Avatar3DEmotionsCard and AvatarConnectionCard components for avatar management ([27baf53](https://github.com/andrew001s/SandyFront/commit/27baf539530cf7f30379163276f9bf43bba23c46))
+* ✨ add Edge TTS integration, news modal, feature flags, and 404 page ([906b240](https://github.com/andrew001s/SandyFront/commit/906b240608027776def6d0fccb16d161fb600df6))
+* ✨ add Edge TTS module for speech synthesis ([ba3c5a0](https://github.com/andrew001s/SandyFront/commit/ba3c5a0555ea6f328b4c95459dd3813bb4d31a02))
+* ✨ add Edge TTS WebSocket client for server-side speech synthesis ([80573ff](https://github.com/andrew001s/SandyFront/commit/80573ffadfa8aaeb7af9a05ddb37b41cb3cad2f9))
+* add API route for Edge TTS speech synthesis ([513f05e](https://github.com/andrew001s/SandyFront/commit/513f05ebcf8ffd9e6106656263aa1fc75423cbd8))
+* add Avatar3DEmotionsCard component and useAvatar hook for VSeeFace and VTubeStudio integration ([c4012a3](https://github.com/andrew001s/SandyFront/commit/c4012a3f235f1d532a487a25d9a53d7fd1602cda))
+* add LipSyncTest component for real-time Edge TTS and facial animation testing ([f3ef912](https://github.com/andrew001s/SandyFront/commit/f3ef912dfb938a41349ca97e4925961189c8ca59))
+* **avatar:** add lip-sync controllers, Web Audio analyzers, and VSeeFace connection tools ([f76aecc](https://github.com/andrew001s/SandyFront/commit/f76aecc6558f36d9b5e7a822bda6f9b979ed911d))
+* **seo:** optimize keywords, metadata, and landing copy for 'vtuber con ia' ([f5409de](https://github.com/andrew001s/SandyFront/commit/f5409dec7828cdbe9c00c6169c383ea1b1e9f4f1))
+
+
+### Bug Fixes
+
+* **speech:** add speech deduplication between streaming and SSE ([7362f63](https://github.com/andrew001s/SandyFront/commit/7362f638ec063d8ce0c538f9144de70aef9af9ee))
+
 ### [0.2.1](https://github.com/andrew001s/SandyFront/compare/v0.1.9...v0.2.1) (2026-09-27)
 
 
