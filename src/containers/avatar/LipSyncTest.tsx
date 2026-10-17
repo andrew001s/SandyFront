@@ -24,7 +24,6 @@ import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import {
 	FiActivity,
-	FiCheck,
 	FiMessageSquare,
 	FiMic,
 	FiMusic,
@@ -183,29 +182,31 @@ export function LipSyncTest({ connected, software = 'vseeface' }: Props) {
 
 	return (
 		<Card className='border-border/50 bg-card/50 backdrop-blur-sm'>
-			<CardHeader className='pb-3'>
+			<CardHeader>
 				<div className='flex items-center justify-between'>
 					<div className='flex items-center gap-2'>
 						<div className='rounded-lg bg-primary/10 p-2 text-primary'>
 							<FiMusic className='size-5' />
 						</div>
 						<div>
-							<CardTitle className='text-base'>Prueba de Lip Sync</CardTitle>
+							<div className='flex items-center gap-2'>
+								<CardTitle className='text-base'>Prueba de Lip Sync</CardTitle>
+								<Badge
+									variant='outline'
+									className={
+										connected
+											? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+											: 'border-border/70 text-muted-foreground'
+									}
+								>
+									{connected ? 'Avatar Conectado' : 'Desconectado'}
+								</Badge>
+							</div>
 							<CardDescription className='text-xs'>
 								Voz en tiempo real con Microsoft Edge TTS y FFT a 60 FPS
 							</CardDescription>
 						</div>
 					</div>
-					<Badge
-						variant='outline'
-						className={
-							connected
-								? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
-								: 'border-border/70 text-muted-foreground'
-						}
-					>
-						{connected ? 'Avatar Conectado' : 'Desconectado'}
-					</Badge>
 				</div>
 			</CardHeader>
 
@@ -349,19 +350,6 @@ export function LipSyncTest({ connected, software = 'vseeface' }: Props) {
 							</Button>
 						))}
 					</div>
-				</div>
-
-				{/* Pie de estado y tips */}
-				<div className='flex items-center justify-between border-border/40 border-t pt-2 text-[11px] text-muted-foreground'>
-					<span className='flex items-center gap-1.5'>
-						<FiCheck className='size-3.5 text-emerald-400' />
-						Sincronización FFT a 60 FPS activa con Edge TTS
-					</span>
-					{isPlaying && (
-						<button type='button' onClick={handleStop} className='text-destructive hover:underline'>
-							Detener audio
-						</button>
-					)}
 				</div>
 			</CardContent>
 		</Card>
