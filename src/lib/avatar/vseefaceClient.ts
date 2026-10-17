@@ -27,6 +27,7 @@ export class VSeeFaceClient {
 	// Tiempos de inicio para la interpolación (nombre -> timestamp inicio)
 	private startBlendshapes = new Map<string, { startVal: number; startTime: number }>();
 	private animFrameId: number | null = null;
+	private vowelAnimId: number | null = null;
 
 	// In-flight coalescing para el fallback HTTP
 	private isHttpSending = false;
@@ -182,6 +183,10 @@ export class VSeeFaceClient {
 			cancelAnimationFrame(this.animFrameId);
 			this.animFrameId = null;
 		}
+		if (this.vowelAnimId !== null) {
+			cancelAnimationFrame(this.vowelAnimId);
+			this.vowelAnimId = null;
+		}
 		void this.injectVrmVowels({ A: 0, I: 0, U: 0, E: 0, O: 0 });
 		this.notify();
 	}
@@ -263,20 +268,100 @@ export class VSeeFaceClient {
 		O: number;
 	}): Promise<void> {
 		const batch: Array<{ name: string; value: number }> = [
-			// VRM 0.x
+			// VRM 0.x (Clips estándar universales)
 			{ name: 'A', value: vowels.A },
 			{ name: 'I', value: vowels.I },
 			{ name: 'U', value: vowels.U },
 			{ name: 'E', value: vowels.E },
 			{ name: 'O', value: vowels.O },
-			// VRM 1.0
+			// VRM 1.0 (Presets estándar UniVRM 1.0)
 			{ name: 'aa', value: vowels.A },
 			{ name: 'ih', value: vowels.I },
 			{ name: 'ou', value: vowels.U },
 			{ name: 'ee', value: vowels.E },
 			{ name: 'oh', value: vowels.O },
+			// VRoid Studio Face Mesh Shape Keys (Face.baked / Face)
+			{ name: 'Fcl_MTH_A', value: vowels.A },
+			{ name: 'Fcl_MTH_I', value: vowels.I },
+			{ name: 'Fcl_MTH_U', value: vowels.U },
+			{ name: 'Fcl_MTH_E', value: vowels.E },
+			{ name: 'Fcl_MTH_O', value: vowels.O },
+			// Minúsculas estándar
+			{ name: 'a', value: vowels.A },
+			{ name: 'i', value: vowels.I },
+			{ name: 'u', value: vowels.U },
+			{ name: 'e', value: vowels.E },
+			{ name: 'o', value: vowels.O },
 		];
 		await this.sendBlendshapesBatch(batch);
+	}
+
+	/**
+	 * Reproduce un gesto fluido y continuo de vocal a 60 FPS (apertura, sostén y cierre natural).
+	 * Al transmitir continuamente a 60 Hz durante toda la duración, evita que VSeeFace
+	 * decaiga bruscamente o dispare animaciones lentas secundarias por timeout de VMC.
+	 */
+	public playVowelGesture(vowel: 'A' | 'E' | 'I' | 'O' | 'U', durationMs = 600): () => void {
+		if (this.vowelAnimId !== null) {
+			cancelAnimationFrame(this.vowelAnimId);
+			this.vowelAnimId = null;
+		}
+
+		const startTime = performance.now();
+		let isCancelled = false;
+
+		const loop = () => {
+			if (isCancelled) return;
+
+			const now = performance.now();
+			const elapsed = now - startTime;
+			const t = Math.min(1.0, elapsed / durationMs);
+
+			// Curva natural de articulación fonética:
+			// 0% a 25%: Ataque suave (Ease-Out)
+			// 25% a 65%: Sostén nítido en 1.0
+			// 65% a 100%: Cierre fluido (Ease-In)
+			let weight = 0;
+			if (t < 0.25) {
+				const p = t / 0.25;
+				weight = Math.sin((p * Math.PI) / 2);
+			} else if (t <= 0.65) {
+				weight = 1.0;
+			} else {
+				const p = (t - 0.65) / 0.35;
+				weight = 1.0 - Math.sin((p * Math.PI) / 2);
+			}
+
+			weight = Math.max(0, Math.min(1.0, weight));
+
+			const targetVowels = {
+				A: vowel === 'A' ? weight : 0,
+				E: vowel === 'E' ? weight : 0,
+				I: vowel === 'I' ? weight : 0,
+				O: vowel === 'O' ? weight : 0,
+				U: vowel === 'U' ? weight : 0,
+			};
+
+			void this.injectVrmVowels(targetVowels);
+
+			if (t < 1.0) {
+				this.vowelAnimId = requestAnimationFrame(loop);
+			} else {
+				this.vowelAnimId = null;
+				void this.injectVrmVowels({ A: 0, I: 0, U: 0, E: 0, O: 0 });
+			}
+		};
+
+		this.vowelAnimId = requestAnimationFrame(loop);
+
+		return () => {
+			isCancelled = true;
+			if (this.vowelAnimId !== null) {
+				cancelAnimationFrame(this.vowelAnimId);
+				this.vowelAnimId = null;
+			}
+			void this.injectVrmVowels({ A: 0, I: 0, U: 0, E: 0, O: 0 });
+		};
 	}
 
 	/**

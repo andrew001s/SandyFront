@@ -125,7 +125,7 @@ export const AvatarContainer = () => {
 					)}
 
 					{!is3D && <AvatarPerformanceCard stats={vts.stats} connected={connected} />}
-					{connected && <LipSyncTest connected={connected} />}
+					<LipSyncTest connected={connected} software={activeSoftware} />
 				</motion.div>
 			</div>
 

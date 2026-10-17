@@ -21,7 +21,7 @@ let activeSession = 0;
 
 const TICK_MS = 16; // ~60 Hz
 const FFT_SIZE = 512;
-const LOOKAHEAD_SECONDS = 0.035; // 35 ms de anticipación articulatoria natural
+const LOOKAHEAD_SECONDS = 0.075; // 75 ms de anticipación articulatoria natural (compensa latencia de hardware de audio)
 
 // Tabla Hann para evitar fugas espectrales en la FFT
 const HANN_WINDOW = new Float32Array(FFT_SIZE);
@@ -101,7 +101,8 @@ function getBandEnergy(
 
 /**
  * Pre-calcula la secuencia completa de formas de boca a 60 FPS
- * mediante análisis formántico espectral FFT y selección Winner-Take-Most.
+ * mediante pre-énfasis acústico, análisis formántico espectral FFT y
+ * selección Winner-Take-Most sin retraso perceptual.
  */
 export function precomputeVrmVowels(audioBuffer: AudioBuffer): VRMVowelValues[] {
 	const sampleRate = audioBuffer.sampleRate;
@@ -121,8 +122,13 @@ export function precomputeVrmVowels(audioBuffer: AudioBuffer): VRMVowelValues[] 
 	let prevE = 0;
 	let prevO = 0;
 
+	const smoothTarget = (prev: number, target: number): number => {
+		const factor = target > prev ? 0.85 : 0.5;
+		return prev + (target - prev) * factor;
+	};
+
 	for (let f = 0; f < totalFrames; f += 1) {
-		// Timestamp en segundos con anticipación articulatoria (35 ms hacia adelante)
+		// Timestamp en segundos con anticipación articulatoria (75 ms hacia adelante)
 		const t = f / 60 + LOOKAHEAD_SECONDS;
 		const centerSample = Math.floor(t * sampleRate);
 		const startSample = centerSample - (FFT_SIZE >> 1);
@@ -131,20 +137,23 @@ export function precomputeVrmVowels(audioBuffer: AudioBuffer): VRMVowelValues[] 
 		for (let i = 0; i < FFT_SIZE; i += 1) {
 			const idx = startSample + i;
 			const sample = idx >= 0 && idx < channel.length ? channel[idx] : 0;
+			const prevSample = idx - 1 >= 0 && idx - 1 < channel.length ? channel[idx - 1] : 0;
+			// Filtro Pre-Énfasis: y[n] = x[n] - 0.95 * x[n-1] para ecualizar la pendiente glotal (-6dB/oct)
+			const emphasized = sample - 0.95 * prevSample;
 			sumSq += sample * sample;
-			real[i] = sample * HANN_WINDOW[i];
+			real[i] = emphasized * HANN_WINDOW[i];
 			imag[i] = 0;
 		}
 
-		// Energía RMS del bloque
+		// Energía RMS del bloque sobre señal real
 		const rms = Math.sqrt(sumSq / FFT_SIZE);
 		const rawVol = Math.min(1.0, Math.max(0, (rms - 0.012) * 9.5));
 
-		// Ataque rápido (0.75) para abrir al instante y decaimiento medio (0.45) para cerrar entre palabras
+		// Ataque rápido (0.90) para sincronía instantánea y decaimiento medio (0.40) para cierre orgánico
 		if (rawVol > smoothedVol) {
-			smoothedVol += (rawVol - smoothedVol) * 0.75;
+			smoothedVol += (rawVol - smoothedVol) * 0.9;
 		} else {
-			smoothedVol += (rawVol - smoothedVol) * 0.45;
+			smoothedVol += (rawVol - smoothedVol) * 0.4;
 		}
 
 		if (smoothedVol <= 0.015) {
@@ -166,33 +175,60 @@ export function precomputeVrmVowels(audioBuffer: AudioBuffer): VRMVowelValues[] 
 			magnitudes[i] = Math.sqrt(real[i] * real[i] + imag[i] * imag[i]);
 		}
 
-		// Bandas formánticas acústicas de la voz humana (español y universal):
-		// F1_LOW: 250 - 450 Hz (mandíbula casi cerrada: U, I)
-		// F1_MID: 450 - 750 Hz (mandíbula media: E, O)
-		// F1_HIGH: 750 - 1300 Hz (mandíbula bien abierta: A)
-		// F2_LOW: 800 - 1400 Hz (lengua retraída / labios redondeados: U, O)
-		// F2_HIGH: 1800 - 3200 Hz (lengua adelantada / labios extendidos: I, E)
-		// SIBILANTS: 3500 - 7500 Hz (consonantes sibilantes / brillo: S, T, CH)
-		const f1Low = getBandEnergy(magnitudes, sampleRate, FFT_SIZE, 250, 450);
-		const f1Mid = getBandEnergy(magnitudes, sampleRate, FFT_SIZE, 450, 750);
-		const f1High = getBandEnergy(magnitudes, sampleRate, FFT_SIZE, 750, 1300);
-		const f2High = getBandEnergy(magnitudes, sampleRate, FFT_SIZE, 1800, 3200);
-		const sibilants = getBandEnergy(magnitudes, sampleRate, FFT_SIZE, 3500, 7500);
+		// Bandas formánticas acústicas de la voz humana (con pre-énfasis):
+		// bLow: 200 - 450 Hz (F1 mandíbula cerrada: U, I)
+		// bMid: 450 - 750 Hz (F1 mandíbula media: O, E)
+		// bOpen: 750 - 1400 Hz (F1 mandíbula abierta: A, O)
+		// bFront: 1700 - 2800 Hz (F2 lengua anterior / labios extendidos: E, A)
+		// bSibil: 3000 - 6500 Hz (F3 resonancia palatal / aire sibilante: I)
+		const bLow = getBandEnergy(magnitudes, sampleRate, FFT_SIZE, 200, 450);
+		const bMid = getBandEnergy(magnitudes, sampleRate, FFT_SIZE, 450, 750);
+		const bOpen = getBandEnergy(magnitudes, sampleRate, FFT_SIZE, 750, 1400);
+		const bFront = getBandEnergy(magnitudes, sampleRate, FFT_SIZE, 1700, 2800);
+		const bSibil = getBandEnergy(magnitudes, sampleRate, FFT_SIZE, 3000, 6500);
 
-		// Puntuaciones fonéticas para cada una de las 5 vocales
-		let scoreA = f1High * 2.4 + f1Mid * 0.3;
-		let scoreI = (f2High * 2.2 + sibilants * 0.9) * (1.0 + f1Low / (f1High + 0.001)) * 0.6;
-		let scoreU = f1Low * 2.4 * Math.max(0, 1.0 - f2High / (f1Low + 0.001));
-		let scoreE = (f1Mid * 1.3 + f2High * 1.1) * 0.8;
-		let scoreO = f1Mid * 2.3 * Math.max(0, 1.0 - f2High / (f1Mid + 0.001));
+		const totalHigh = bFront + bSibil;
+		const totalLow = bLow + bMid;
+		const highLowRatio = totalHigh / (totalLow + 0.02);
 
-		// Winner-Take-Most: Exponente de agudización (2.4)
-		// Impide que varias formas de boca contradictorias compitan entre sí en la malla 3D VRM
-		scoreA = Math.max(0, scoreA) ** 2.4;
-		scoreI = Math.max(0, scoreI) ** 2.4;
-		scoreU = Math.max(0, scoreU) ** 2.4;
-		scoreE = Math.max(0, scoreE) ** 2.4;
-		scoreO = Math.max(0, scoreO) ** 2.4;
+		const eps = 0.03;
+		// A: Apertura mandibular máxima (750-1400 Hz) y F2 abierto
+		let scoreA =
+			(bOpen * 2.0 + bFront * 1.5) *
+			Math.min(3.5, bOpen / (bLow + eps)) *
+			Math.min(3.5, bFront / (bMid + eps));
+
+		// O: F1 media (450-750 Hz) con apertura redonda, sin altas frecuencias frontales
+		let scoreO =
+			(bMid * 2.2 + bOpen * 2.0) *
+			Math.min(3.5, bOpen / (bLow + eps)) *
+			(1.0 / (highLowRatio * 4.0 + 1.0));
+
+		// U: Mandíbula cerrada (200-450 Hz) dominante sobre apertura, labios fruncidos sin F2 frontal
+		let scoreU =
+			(bLow * 3.0 + bMid * 1.0) *
+			Math.min(3.5, bLow / (bOpen + eps)) *
+			(1.0 / (highLowRatio * 6.0 + 1.0));
+
+		// E: F2 anterior nítido (1800-2800 Hz) dominante sobre sibilantes, apertura media
+		let scoreE =
+			(bFront * 3.5 + bMid * 1.0) *
+			Math.min(3.5, bFront / (bOpen + eps)) *
+			Math.min(3.5, bFront / (bSibil + eps));
+
+		// I: Resonancia superior F3 (3000-6500 Hz) dominante sobre F2, mandíbula cerrada
+		let scoreI =
+			(bSibil * 3.0 + bLow * 0.6) *
+			Math.min(3.5, bSibil / (bOpen + eps)) *
+			Math.min(3.5, bSibil / (bFront + eps));
+
+		// Winner-Take-Most: Exponente de agudización (2.2)
+		// Impide que formas opuestas compitan entre sí en la malla 3D VRM
+		scoreA = Math.max(0, scoreA) ** 2.2;
+		scoreI = Math.max(0, scoreI) ** 2.2;
+		scoreU = Math.max(0, scoreU) ** 2.2;
+		scoreE = Math.max(0, scoreE) ** 2.2;
+		scoreO = Math.max(0, scoreO) ** 2.2;
 
 		const totalScore = scoreA + scoreI + scoreU + scoreE + scoreO;
 		if (totalScore <= 0) {
@@ -207,12 +243,12 @@ export function precomputeVrmVowels(audioBuffer: AudioBuffer): VRMVowelValues[] 
 		const targetE = (scoreE / totalScore) * smoothedVol;
 		const targetO = (scoreO / totalScore) * smoothedVol;
 
-		// Suavizado temporal continuo para evitar micro-saltos
-		prevA += (targetA - prevA) * 0.65;
-		prevI += (targetI - prevI) * 0.65;
-		prevU += (targetU - prevU) * 0.65;
-		prevE += (targetE - prevE) * 0.65;
-		prevO += (targetO - prevO) * 0.65;
+		// Suavizado temporal asimétrico: apertura inmediata (0.85), cierre orgánico (0.50)
+		prevA = smoothTarget(prevA, targetA);
+		prevI = smoothTarget(prevI, targetI);
+		prevU = smoothTarget(prevU, targetU);
+		prevE = smoothTarget(prevE, targetE);
+		prevO = smoothTarget(prevO, targetO);
 
 		frames[f] = {
 			A: Number(Math.max(0, Math.min(1, prevA)).toFixed(3)),

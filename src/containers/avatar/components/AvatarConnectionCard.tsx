@@ -6,10 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import type { VTSStats } from '@/hooks/useVTubeStudio';
 import { AVATAR_SOFTWARE_LIST } from '@/lib/avatar/constants';
+import { generateVowelTestWav, playLipSyncTest } from '@/lib/avatar/testAudioGenerator';
 import type { AvatarConnectionStats, AvatarSoftware, SoftwareConfig } from '@/types/avatar';
 import { Box, HelpCircle, RefreshCw, Tv, WifiOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
+import { FiAlertCircle, FiCheckCircle, FiPlay } from 'react-icons/fi';
+import { toast } from 'sonner';
 
 type AvatarConnectionCardProps = {
 	connecting: boolean;
@@ -71,6 +73,17 @@ export function AvatarConnectionCard({
 		const num = Number(val);
 		if (!Number.isNaN(num) && num >= 0) {
 			onUpdateConfig?.({ transitionDurationMs: Math.min(1000, num) });
+		}
+	};
+
+	const handleQuickLipSyncTest = async () => {
+		try {
+			const wav = generateVowelTestWav();
+			await playLipSyncTest(wav);
+			toast.success('Reproduciendo prueba de lip sync (A - E - I - O - U)');
+		} catch (err) {
+			console.error('Error al probar lip sync:', err);
+			toast.error('No se pudo reproducir la prueba de lip sync');
 		}
 	};
 
@@ -182,15 +195,25 @@ export function AvatarConnectionCard({
 
 					<div className='flex items-center gap-2'>
 						{connected ? (
-							<Button
-								onClick={() => {
-									void onDisconnect();
-								}}
-								variant='outline'
-								className='h-9 border-destructive/40 text-destructive text-xs hover:bg-destructive/10'
-							>
-								Desconectar
-							</Button>
+							<>
+								<Button
+									onClick={() => {
+										void onDisconnect();
+									}}
+									variant='outline'
+									className='h-9 border-destructive/40 text-destructive text-xs hover:bg-destructive/10'
+								>
+									Desconectar
+								</Button>
+								<Button
+									onClick={handleQuickLipSyncTest}
+									variant='outline'
+									className='h-9 gap-1.5 border-primary/30 text-primary text-xs hover:bg-primary/10'
+									title='Reproduce una secuencia de prueba de vocales sin pasar por el chat'
+								>
+									<FiPlay className='size-3.5 text-emerald-400' /> Probar Lip Sync
+								</Button>
+							</>
 						) : (
 							<Button
 								onClick={() => {
