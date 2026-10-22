@@ -2,11 +2,14 @@ import { isValidLocalAiUrl } from '@/api/localAi';
 import { stop } from '@/api/sandycore';
 import { type SettingsUpdate, saveSettings } from '@/api/settings';
 import {
+	CHAT_COMMAND_MAX_LENGTH,
+	DEFAULT_CHAT_COMMAND,
 	initialSettingsFormState,
 	normalizeSettings,
 	sortOpenRouterModels,
 } from '@/components/Settings/settings.constants';
 import type {
+	ChatTriggerMode,
 	OpenRouterModel,
 	OpenRouterSort,
 	SettingsFormState,
@@ -220,6 +223,22 @@ export function useSettingsPanel() {
 		}));
 	}, []);
 
+	const updateChatTriggerMode = useCallback((value: ChatTriggerMode) => {
+		setForm((current) => ({
+			...current,
+			chat_trigger_mode: value,
+		}));
+	}, []);
+
+	// Una sola palabra sin espacios: el backend toma lo que haya antes del
+	// primer espacio, así que se recorta aquí para que la vista previa no mienta.
+	const updateChatCommand = useCallback((value: string) => {
+		setForm((current) => ({
+			...current,
+			chat_command: value.replace(/\s+/g, '').slice(0, CHAT_COMMAND_MAX_LENGTH),
+		}));
+	}, []);
+
 	const handleStopService = useCallback(async () => {
 		try {
 			setIsStopping(true);
@@ -306,6 +325,8 @@ export function useSettingsPanel() {
 				persona_profile: sandyConfig.persona_profile,
 				...toBannedContentPayload(sandyConfig.banned_content),
 				chunk_size: form.chunk_size,
+				chat_trigger_mode: form.chat_trigger_mode,
+				chat_command: form.chat_command.trim() || DEFAULT_CHAT_COMMAND,
 			};
 
 			// El backend no devuelve estos campos, así que se conservan en el navegador.
@@ -369,6 +390,8 @@ export function useSettingsPanel() {
 		updateSttProvider,
 		updateTtsProvider,
 		updateChunkSize,
+		updateChatTriggerMode,
+		updateChatCommand,
 		handleStopService,
 		handleProviderChange,
 		handlePickOpenRouterModel,
