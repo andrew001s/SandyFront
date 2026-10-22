@@ -16,7 +16,16 @@ export type SettingsFormState = {
 	fish_audio_key: string;
 	voice_id: string;
 	chunk_size: number;
+	chat_trigger_mode: ChatTriggerMode;
+	chat_command: string;
 };
+
+/**
+ * Cómo se activa la respuesta del bot en el chat (Twitch, YouTube y Kick):
+ * - 'batch': agrupa `chunk_size` mensajes y responde al lote.
+ * - 'command': solo responde a los mensajes que empiezan por `chat_command`.
+ */
+export type ChatTriggerMode = 'batch' | 'command';
 
 export type OpenRouterModel = {
 	id: string;

@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.4](https://github.com/andrew001s/SandyFront/compare/v0.1.9...v0.2.4) (2026-10-22)
+
+
+### Features
+
+* ✨ add 3D VSeeFace avatar integration with VMC protocol support and OSC bridge ([24edc74](https://github.com/andrew001s/SandyFront/commit/24edc74b342ac7600f2f2d9a5894856cfb26ec7b))
+* ✨ add avatar integration support for VSeeFace and VTubeStudio with OSC and lip-sync ([494d665](https://github.com/andrew001s/SandyFront/commit/494d665f667a3523f11922fe6354c54b061af00b))
+* ✨ add Avatar3DEmotionsCard and AvatarConnectionCard components for avatar management ([27baf53](https://github.com/andrew001s/SandyFront/commit/27baf539530cf7f30379163276f9bf43bba23c46))
+* ✨ add custom Railway feature flags client and maintenance mode middleware ([132449c](https://github.com/andrew001s/SandyFront/commit/132449c707d74b95e89f9feea421402b7d05c94b))
+* ✨ add Edge TTS integration, news modal, feature flags, and 404 page ([906b240](https://github.com/andrew001s/SandyFront/commit/906b240608027776def6d0fccb16d161fb600df6))
+* ✨ add Edge TTS module for speech synthesis ([ba3c5a0](https://github.com/andrew001s/SandyFront/commit/ba3c5a0555ea6f328b4c95459dd3813bb4d31a02))
+* ✨ add Edge TTS WebSocket client for server-side speech synthesis ([80573ff](https://github.com/andrew001s/SandyFront/commit/80573ffadfa8aaeb7af9a05ddb37b41cb3cad2f9))
+* ✨ add NewsModal component and useAvatar hook for version updates and 3D avatar integration ([68abe23](https://github.com/andrew001s/SandyFront/commit/68abe23573e5333767616090c6bb214987180666))
+* ✨ add NewsModal component to showcase 3D avatar and VSeeFace integration updates ([9cb2381](https://github.com/andrew001s/SandyFront/commit/9cb2381a1e761fd31b17c7ea7b308f5806c67a8c))
+* ✨ add version 0.2.0 news modal component ([a47ce06](https://github.com/andrew001s/SandyFront/commit/a47ce06752d95fee0e36a5446720dc2d035a9b35))
+* ✨ implement comprehensive settings management system with TTS and STT configuration support ([dd708f5](https://github.com/andrew001s/SandyFront/commit/dd708f57d0a99b9a5d6c2f5e6dc2aac337239644))
+* add API route for Edge TTS speech synthesis ([513f05e](https://github.com/andrew001s/SandyFront/commit/513f05ebcf8ffd9e6106656263aa1fc75423cbd8))
+* add Avatar3DEmotionsCard component and useAvatar hook for VSeeFace and VTubeStudio integration ([c4012a3](https://github.com/andrew001s/SandyFront/commit/c4012a3f235f1d532a487a25d9a53d7fd1602cda))
+* add LipSyncTest component for real-time Edge TTS and facial animation testing ([f3ef912](https://github.com/andrew001s/SandyFront/commit/f3ef912dfb938a41349ca97e4925961189c8ca59))
+* **avatar:** add lip-sync controllers, Web Audio analyzers, and VSeeFace connection tools ([f76aecc](https://github.com/andrew001s/SandyFront/commit/f76aecc6558f36d9b5e7a822bda6f9b979ed911d))
+* **deploy:** add Dockerfile, compose and CI/CD workflow for DigitalOcean deployment ([ea0a3e5](https://github.com/andrew001s/SandyFront/commit/ea0a3e56c7d525a840624eb7c8dd81330b5b6974))
+* **NewsModal:** ✨ add NewsModal component to showcase release updates and community support links ([2a31250](https://github.com/andrew001s/SandyFront/commit/2a312503c28e8be6824107a36d4626d39734ee9e))
+* **NewsModal:** ✨ update news modal for version 0.2.4 with custom command trigger banners ([fc5d485](https://github.com/andrew001s/SandyFront/commit/fc5d485157ad5a6ecc99b6e9a9727fbece3075da))
+* **seo:** optimize keywords, metadata, and landing copy for 'vtuber con ia' ([f5409de](https://github.com/andrew001s/SandyFront/commit/f5409dec7828cdbe9c00c6169c383ea1b1e9f4f1))
+
+
+### Bug Fixes
+
+* **middleware:** provide Clerk publishableKey fallback and fix Docker env loading ([c93a7f3](https://github.com/andrew001s/SandyFront/commit/c93a7f3e2e53218ee72e9c8295df05a4d039c01c))
+* resolve lint errors breaking docker image build ([5b8f06f](https://github.com/andrew001s/SandyFront/commit/5b8f06f3506a9067be1d625aa19762c53c1aa441))
+* **speech:** add speech deduplication between streaming and SSE ([7362f63](https://github.com/andrew001s/SandyFront/commit/7362f638ec063d8ce0c538f9144de70aef9af9ee))
+
 ### [0.2.2](https://github.com/andrew001s/SandyFront/compare/v0.2.1...v0.2.2) (2026-10-17)
 
 

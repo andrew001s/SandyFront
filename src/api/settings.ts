@@ -34,6 +34,8 @@ export type SettingsPayload = {
 	custom_banned_symbols?: string[];
 	custom_banned_links?: string[];
 	chunk_size?: number;
+	chat_trigger_mode?: 'batch' | 'command';
+	chat_command?: string;
 	onboarding_completed?: boolean;
 };
 
