@@ -61,8 +61,6 @@ export function SettingsPanel({ defaultTab }: { defaultTab?: string } = {}) {
 		updateSttProvider,
 		updateTtsProvider,
 		updateChunkSize,
-		updateChatTriggerMode,
-		updateChatCommand,
 		handleSandyConfigChange,
 		handleStopService,
 		handleProviderChange,
@@ -176,8 +174,6 @@ export function SettingsPanel({ defaultTab }: { defaultTab?: string } = {}) {
 								updateField={updateField}
 								onProviderChange={handleProviderChange}
 								updateChunkSize={updateChunkSize}
-								updateChatTriggerMode={updateChatTriggerMode}
-								updateChatCommand={updateChatCommand}
 							/>
 						</TabsContent>
 

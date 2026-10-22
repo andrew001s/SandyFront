@@ -6,9 +6,6 @@ import type {
 } from '@/components/Settings/settings.types';
 import { getStoredTtsProvider } from '@/lib/tts-provider';
 
-export const DEFAULT_CHAT_COMMAND = '!bot';
-export const CHAT_COMMAND_MAX_LENGTH = 32;
-
 export const initialSettingsFormState: SettingsFormState = {
 	ai_provider: 'gemini',
 	gemini_api_key: '',
@@ -24,8 +21,6 @@ export const initialSettingsFormState: SettingsFormState = {
 	fish_audio_key: '',
 	voice_id: '',
 	chunk_size: 3,
-	chat_trigger_mode: 'batch',
-	chat_command: DEFAULT_CHAT_COMMAND,
 };
 
 export const azureRegions = [
@@ -93,8 +88,6 @@ export const normalizeSettings = (settings?: SettingsPayload | null): SettingsFo
 	fish_audio_key: settings?.fish_audio_key ?? '',
 	voice_id: settings?.voice_id ?? '',
 	chunk_size: settings?.chunk_size ?? 3,
-	chat_trigger_mode: settings?.chat_trigger_mode === 'command' ? 'command' : 'batch',
-	chat_command: settings?.chat_command || DEFAULT_CHAT_COMMAND,
 });
 
 export const getOpenRouterTokenCost = (model: OpenRouterModel) => {

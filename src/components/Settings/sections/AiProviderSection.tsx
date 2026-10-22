@@ -1,13 +1,12 @@
 import { SettingsSectionCard } from '@/components/Settings/SettingsSectionCard';
-import { DEFAULT_CHAT_COMMAND } from '@/components/Settings/settings.constants';
-import type { ChatTriggerMode, SettingsFormState } from '@/components/Settings/settings.types';
+import type { SettingsFormState } from '@/components/Settings/settings.types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { AiProvider } from '@/lib/ai-provider';
-import { Bot, Layers, Terminal } from 'lucide-react';
+import { Bot } from 'lucide-react';
 
 type AiProviderSectionProps = {
 	form: SettingsFormState;
@@ -18,8 +17,6 @@ type AiProviderSectionProps = {
 	updateField: (field: keyof SettingsFormState, value: string) => void;
 	onProviderChange: (value: AiProvider) => void;
 	updateChunkSize: (value: string) => void;
-	updateChatTriggerMode: (value: ChatTriggerMode) => void;
-	updateChatCommand: (value: string) => void;
 };
 
 const PROVIDER_LABELS: Record<AiProvider, string> = {
@@ -37,10 +34,7 @@ export function AiProviderSection({
 	updateField,
 	onProviderChange,
 	updateChunkSize,
-	updateChatTriggerMode,
-	updateChatCommand,
 }: AiProviderSectionProps) {
-	const previewCommand = form.chat_command || DEFAULT_CHAT_COMMAND;
 	const isConfigured =
 		geminiState === 'Configurado' ||
 		openRouterState === 'Configurado' ||
@@ -169,78 +163,22 @@ export function AiProviderSection({
 				</TabsContent>
 			</Tabs>
 
-			<div className='space-y-3 pt-4'>
-				<div className='space-y-1'>
-					<Label>Activación en el chat</Label>
-					<p className='text-muted-foreground text-xs'>
-						Decide cuándo responde el bot en Twitch, YouTube y Kick. La moderación se aplica siempre
-						a todos los mensajes.
-					</p>
-				</div>
-
-				<Tabs
-					value={form.chat_trigger_mode}
-					onValueChange={(value) => updateChatTriggerMode(value as ChatTriggerMode)}
-					className='w-full'
-				>
-					<TabsList className='w-full'>
-						<TabsTrigger id='chat_trigger_batch' value='batch' className='flex-1 gap-1.5'>
-							<Layers className='size-3.5' />
-							Por mensajes
-						</TabsTrigger>
-						<TabsTrigger id='chat_trigger_command' value='command' className='flex-1 gap-1.5'>
-							<Terminal className='size-3.5' />
-							Por comando
-						</TabsTrigger>
-					</TabsList>
-
-					<TabsContent value='batch'>
-						<div className='space-y-2 pt-3'>
-							<Label htmlFor='chunk_size'>Mensajes de chat por respuesta</Label>
-							<Input
-								id='chunk_size'
-								type='number'
-								min={1}
-								max={10}
-								placeholder='3'
-								value={form.chunk_size}
-								onChange={(event) => updateChunkSize(event.target.value)}
-							/>
-							<p className='text-muted-foreground text-xs'>
-								Cuántos mensajes del chat se agrupan antes de pedirle una respuesta a la IA. Con 1
-								responde a cada mensaje; subirlo reduce el gasto de tokens y el spam en directos con
-								mucho movimiento. Entre 1 y 10.
-							</p>
-						</div>
-					</TabsContent>
-
-					<TabsContent value='command'>
-						<div className='space-y-2 pt-3'>
-							<Label htmlFor='chat_command'>Comando de activación</Label>
-							<Input
-								id='chat_command'
-								type='text'
-								placeholder={DEFAULT_CHAT_COMMAND}
-								maxLength={32}
-								autoComplete='off'
-								spellCheck={false}
-								className='font-mono'
-								value={form.chat_command}
-								onChange={(event) => updateChatCommand(event.target.value)}
-							/>
-							<div className='rounded-xl border border-border/70 bg-background/60 p-3 text-xs'>
-								<p className='text-muted-foreground'>Ejemplo en el chat:</p>
-								<p className='mt-1 font-mono'>
-									<span className='text-primary'>{previewCommand}</span> hola, ¿cómo estás?
-								</p>
-								<p className='mt-2 text-muted-foreground'>
-									La IA recibe solo «hola, ¿cómo estás?». Responde a cada mensaje que empiece por el
-									comando e ignora el resto; la agrupación por mensajes queda desactivada.
-								</p>
-							</div>
-						</div>
-					</TabsContent>
-				</Tabs>
+			<div className='space-y-2 pt-4'>
+				<Label htmlFor='chunk_size'>Mensajes de chat por respuesta</Label>
+				<Input
+					id='chunk_size'
+					type='number'
+					min={1}
+					max={10}
+					placeholder='3'
+					value={form.chunk_size}
+					onChange={(event) => updateChunkSize(event.target.value)}
+				/>
+				<p className='text-muted-foreground text-xs'>
+					Cuántos mensajes del chat se agrupan antes de pedirle una respuesta a la IA. Con 1
+					responde a cada mensaje; subirlo reduce el gasto de tokens y el spam en directos con mucho
+					movimiento. Entre 1 y 10.
+				</p>
 			</div>
 
 			<div className='flex flex-wrap gap-2 pt-1'>
