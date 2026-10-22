@@ -8,38 +8,35 @@ import Image from 'next/image';
 
 export function Support() {
 	return (
-		<section id='apoya' className='relative py-24 md:py-32'>
+		<section id='apoya' className='relative py-16 md:py-24'>
 			<div className='-z-10 pointer-events-none absolute inset-0'>
-				<StarField count={30} seed={7} className='absolute inset-0 opacity-50' />
-				<div className='-translate-x-1/2 absolute top-1/2 left-1/2 h-[420px] w-[720px] rounded-full bg-[#FF5E5B]/10 blur-[70px] md:blur-[140px]' />
+				<StarField count={20} seed={7} className='absolute inset-0 opacity-25' />
 			</div>
 
-			<div className='mx-auto max-w-4xl px-5 md:px-8'>
+			<div className='mx-auto max-w-4xl px-4 md:px-6'>
 				<Reveal>
-					<div className='relative overflow-hidden rounded-3xl border border-[#1B1536]/10 bg-white/80 p-8 shadow-[0_20px_80px_rgba(109,91,208,0.12)] backdrop-blur-xl sm:p-12 dark:border-white/10 dark:bg-[#100F1B]/80'>
-						<div className='-top-16 -right-16 absolute h-48 w-48 rounded-full bg-[#FF5E5B]/15 blur-3xl' />
-						<div className='-bottom-16 -left-16 absolute h-48 w-48 rounded-full bg-[#8B5CF6]/15 blur-3xl' />
-
-						<div className='relative flex flex-col items-center gap-8 text-center sm:flex-row sm:text-left'>
-							<div className='flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-[#FF5E5B]/30 bg-[#FF5E5B]/10 text-[#FF5E5B]'>
-								<Coffee size={28} />
+					<div className='relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm backdrop-blur-sm sm:p-8'>
+						<div className='relative flex flex-col items-center gap-6 text-center sm:flex-row sm:text-left'>
+							<div className='flex size-14 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-primary shadow-sm'>
+								<Coffee size={24} />
 							</div>
 
 							<div className='flex-1'>
-								<span className='mb-2 inline-flex items-center gap-2 font-semibold text-[#FF5E5B] text-xs uppercase tracking-[0.25em]'>
-									<Heart size={12} className='fill-[#FF5E5B]' />
-									Apoya el proyecto
+								<span className='mb-2 inline-flex items-center gap-1.5 font-mono text-primary text-xs uppercase tracking-wider'>
+									<Heart size={12} className='fill-primary' />
+									Proyecto independiente
 								</span>
-								<h2 className='font-bold text-2xl text-zinc-900 [font-family:var(--font-unbounded)] sm:text-3xl dark:text-zinc-50'>
-									Si Sandy te hizo reír, invítale un café
+								<h2 className='font-bold font-display text-2xl text-foreground sm:text-3xl'>
+									Si Sandy sumó a tu stream, apoya su desarrollo
 								</h2>
-								<p className='mt-3 text-zinc-600 dark:text-zinc-400'>
-									Sandy Studio es gratis y se mantiene gracias a personas como tú. Un café en Ko-fi
-									ayuda a pagar servidores, APIs y nuevas funciones para que siga creciendo.
+								<p className='mt-2 font-sans text-muted-foreground text-xs leading-relaxed sm:text-sm'>
+									Sandy Studio se mantiene como herramienta abierta y gratuita. Tu apoyo en Ko-fi
+									ayuda a cubrir servidores, infraestructura de pruebas y el desarrollo continuo de
+									nuevas integraciones.
 								</p>
 							</div>
 
-							<div className='flex flex-col items-center gap-4'>
+							<div className='flex flex-col items-center gap-3 sm:items-end'>
 								<KoFiButton />
 								<a
 									href='https://www.producthunt.com/products/sandy-studio?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-sandy-studio'
@@ -48,17 +45,17 @@ export function Support() {
 									className='transition-opacity hover:opacity-90'
 								>
 									<Image
-										alt='Sandy Studio - VTuber con IA que habla con tu chat de Twitch | Product Hunt'
-										width={250}
-										height={54}
+										alt='Sandy Studio en Product Hunt'
+										width={220}
+										height={48}
 										unoptimized
 										className='block dark:hidden'
 										src='https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1214052&theme=light&t=1785779991881'
 									/>
 									<Image
-										alt='Sandy Studio - VTuber con IA que habla con tu chat de Twitch | Product Hunt'
-										width={250}
-										height={54}
+										alt='Sandy Studio en Product Hunt'
+										width={220}
+										height={48}
 										unoptimized
 										className='hidden dark:block'
 										src='https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1214052&theme=dark&t=1785779991881'

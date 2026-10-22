@@ -1,16 +1,38 @@
 import { esES } from '@clerk/localizations';
 import { ClerkProvider } from '@clerk/nextjs';
 import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono, Unbounded } from 'next/font/google';
+import {
+	Atkinson_Hyperlegible,
+	Bricolage_Grotesque,
+	Geist,
+	Geist_Mono,
+	Unbounded,
+} from 'next/font/google';
 import Script from 'next/script';
 import './globals.css';
-import { AppClarityProvider } from '@/components/providers/ClarityProvider';
 import { AppProviders } from '@/components/providers/AppProviders';
+import { AppClarityProvider } from '@/components/providers/ClarityProvider';
 import { AppRollbarProvider } from '@/components/providers/RollbarProvider';
 import { Footer } from '@/components/ui/footer';
 import { metadataBase, sharedDescription, sharedOpenGraphImage, sharedSiteName } from '@/lib/seo';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from 'sonner';
+
+const fontDisplay = Bricolage_Grotesque({
+	variable: '--font-display',
+	subsets: ['latin'],
+});
+
+const fontSans = Atkinson_Hyperlegible({
+	weight: ['400', '700'],
+	variable: '--font-sans',
+	subsets: ['latin'],
+});
+
+const fontMono = Geist_Mono({
+	variable: '--font-mono',
+	subsets: ['latin'],
+});
 
 const geistSans = Geist({
 	variable: '--font-geist-sans',
@@ -94,7 +116,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 				</Script>
 			</head>
 			<body
-				className={`${geistSans.variable} ${geistMono.variable} ${unbounded.variable} flex min-h-screen flex-col antialiased`}
+				className={`${fontDisplay.variable} ${fontSans.variable} ${fontMono.variable} ${geistSans.variable} ${geistMono.variable} ${unbounded.variable} flex min-h-screen flex-col font-sans antialiased`}
 			>
 				<noscript>
 					<iframe

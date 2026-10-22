@@ -19,62 +19,65 @@ import { SiGooglegemini, SiKick, SiOpenrouter, SiTwitch, SiYoutube } from 'react
 
 function ChatMock() {
 	const messages = [
-		{ user: 'maria_celeste', color: '#FF75A0', text: 'hola Sandy! 👋' },
-		{ user: 'ElTioPancho', color: '#7AC943', badge: 'MOD', text: 'Buenas! 🎉' },
-		{ user: 'kitsunefan', color: '#1E90FF', badge: 'VIP', text: 'dile algo al chat' },
+		{ user: 'maria_celeste', color: '#FF75A0', text: '¡hola Sandy! 👋' },
+		{ user: 'ElTioPancho', color: '#7AC943', badge: 'MOD', text: '¡Buenas a todos en el stream!' },
+		{ user: 'kitsunefan', color: '#38BDF8', badge: 'VIP', text: '¿cuál es el plan para hoy?' },
 	];
 
 	return (
-		<div className='relative overflow-hidden rounded-2xl border border-[#26262C] bg-[#18181B] shadow-[0_16px_60px_rgba(0,0,0,0.45)]'>
-			<div className='flex items-center justify-between border-[#26262C] border-b px-3 py-2'>
-				<div className='flex items-center gap-1.5 font-semibold text-[#EFEFF1] text-xs'>
-					<SiTwitch size={13} className='text-[#9146FF]' />
-					<SiKick size={13} className='text-[#53FC18]' />
-					<SiYoutube size={13} className='text-[#FF0000]' />
-					<span className='ml-1'>Chat en vivo</span>
+		<div className='relative overflow-hidden rounded-lg border border-border bg-background/80 shadow-inner'>
+			<div className='flex items-center justify-between border-border border-b bg-card/90 px-3 py-2'>
+				<div className='flex items-center gap-2 font-mono text-foreground text-xs'>
+					<SiTwitch size={12} className='text-[#9146FF]' />
+					<SiKick size={12} className='text-[#53FC18]' />
+					<SiYoutube size={12} className='text-[#FF0000]' />
+					<span className='font-semibold'>Flujo unificado</span>
 				</div>
-				<span className='flex items-center gap-1.5 rounded bg-[#9146FF]/15 px-2 py-0.5 font-bold text-[#BF94FF] text-[10px]'>
-					<span className='h-1.5 w-1.5 animate-pulse rounded-full bg-[#9146FF]' />
+				<span className='flex items-center gap-1 rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[9px] text-emerald-400'>
+					<span className='size-1.5 animate-pulse rounded-full bg-emerald-400' />
 					LIVE
 				</span>
 			</div>
 
-			<div className='space-y-1.5 px-3 py-3 text-left'>
-				<div className='flex items-center gap-1 rounded bg-[#9146FF]/10 px-2 py-1 font-medium text-[#BF94FF] text-[12px]'>
+			<div className='space-y-1.5 p-3 text-left font-sans text-xs'>
+				<div className='flex items-center gap-1.5 rounded border border-primary/20 bg-primary/10 px-2 py-1 font-medium text-primary'>
 					<Sparkles size={12} />
-					¡Bienvenidos a la transmisión!
+					<span>Transmisión conectada a 3 plataformas</span>
 				</div>
 				{messages.map((m) => (
-					<p key={m.user} className='px-1 py-0.5 text-[12px] leading-snug'>
+					<p key={m.user} className='text-foreground/90 leading-relaxed'>
 						{m.badge && (
-							<span className='mr-1 inline-flex h-[13px] items-center rounded-[3px] bg-[#E005B9] px-1 font-bold text-[7px] text-white'>
+							<span className='mr-1.5 inline-flex items-center rounded bg-primary/20 px-1 py-0.2 font-bold font-mono text-[8px] text-primary uppercase'>
 								{m.badge}
 							</span>
 						)}
-						<span className='mr-1 font-semibold' style={{ color: m.color }}>
+						<span className='mr-1.5 font-semibold' style={{ color: m.color }}>
 							{m.user}
 						</span>
-						<span className='text-[#EFEFF1]'>{m.text}</span>
+						<span>{m.text}</span>
 					</p>
 				))}
-				<div className='flex items-center gap-1 px-1 py-1'>
-					<span className='mr-1 font-semibold text-[#9146FF] text-[12px]'>Sandy</span>
-					{['', '', ''].map((_, i) => (
-						<span
-							key={i}
-							style={{ animationDelay: `${i * 0.2}s` }}
-							className='h-1.5 w-1.5 animate-[mouth_1s_ease-in-out_infinite] rounded-full bg-[#9146FF]'
-						/>
-					))}
+				<div className='flex items-center gap-1.5 rounded-md border-primary border-l-2 bg-primary/5 px-2 py-1'>
+					<span className='font-bold font-mono text-[11px] text-primary'>Sandy</span>
+					<div className='flex items-center gap-1'>
+						{[0, 1, 2].map((i) => (
+							<span
+								key={i}
+								style={{ animationDelay: `${i * 0.15}s` }}
+								className='size-1 animate-pulse rounded-full bg-primary'
+							/>
+						))}
+					</div>
+					<span className='text-[11px] text-muted-foreground'>generando respuesta con voz...</span>
 				</div>
 			</div>
 
-			<div className='flex items-center gap-2 border-[#26262C] border-t px-3 py-2'>
-				<div className='flex flex-1 items-center gap-2 rounded-md bg-[#1F1F23] px-2.5 py-1.5 text-[#ADADB8] text-[12px]'>
+			<div className='flex items-center gap-2 border-border border-t bg-card/60 px-3 py-1.5'>
+				<div className='flex flex-1 items-center gap-1.5 rounded border border-border/60 bg-background/60 px-2 py-1 font-sans text-muted-foreground text-xs'>
 					<MessageSquare size={12} />
-					Enviar un mensaje...
+					<span>Escribe en el chat...</span>
 				</div>
-				<Send size={13} className='text-[#9146FF]' />
+				<Send size={12} className='text-primary' />
 			</div>
 		</div>
 	);
@@ -82,44 +85,40 @@ function ChatMock() {
 
 function AvatarMock() {
 	return (
-		<div className='relative overflow-hidden rounded-2xl border border-[#26262C] bg-gradient-to-b from-[#221C33] to-[#18181B] shadow-[0_16px_60px_rgba(0,0,0,0.45)]'>
-			<div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(139,92,246,0.35),transparent_60%)]' />
-			<div className='relative flex items-center justify-between px-3 py-2'>
-				<div className='flex items-center gap-1.5 font-semibold text-[#EFEFF1] text-xs'>
-					<Sparkles size={13} className='text-[#BF94FF]' />
-					Lip sync
+		<div className='relative overflow-hidden rounded-lg border border-border bg-background/80 shadow-inner'>
+			<div className='flex items-center justify-between border-border border-b bg-card/90 px-3 py-2'>
+				<div className='flex items-center gap-1.5 font-mono text-foreground text-xs'>
+					<Sparkles size={12} className='text-primary' />
+					<span className='font-semibold'>VMC / OSC Protocol</span>
 				</div>
-				<span className='flex items-center gap-1.5 rounded bg-emerald-500/15 px-2 py-0.5 font-bold text-[10px] text-emerald-400'>
-					<span className='h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400' />
+				<span className='flex items-center gap-1 rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[9px] text-emerald-400'>
+					<span className='size-1.5 animate-pulse rounded-full bg-emerald-400' />
 					SYNC
 				</span>
 			</div>
 
-			<div className='relative flex flex-col items-center py-6'>
-				<div className='relative'>
-					<div className='-inset-4 absolute rounded-full bg-[#8B5CF6]/30 blur-2xl' />
-					<div className='relative flex size-20 flex-col items-center justify-center rounded-full border border-white/10 bg-gradient-to-b from-[#C4B5FD]/40 to-[#8B5CF6]/20'>
-						<div className='mb-1 flex gap-1.5'>
-							<span className='size-2 rounded-full bg-[#1A1630]' />
-							<span className='size-2 rounded-full bg-[#1A1630]' />
+			<div className='flex flex-col items-center py-5'>
+				<div className='relative flex size-16 items-center justify-center rounded-xl border border-primary/30 bg-card shadow-sm'>
+					<div className='flex flex-col items-center gap-1.5'>
+						<div className='flex gap-2'>
+							<span className='size-1.5 rounded-full bg-primary' />
+							<span className='size-1.5 rounded-full bg-primary' />
 						</div>
-						<div className='flex h-3 w-8 items-center justify-center gap-[3px]'>
-							{['', '', '', '', ''].map((_, i) => (
+						<div className='flex h-3 w-8 items-center justify-center gap-1'>
+							{[20, 80, 100, 70, 30].map((h, i) => (
 								<span
 									key={i}
-									style={{ animationDelay: `${i * 0.09}s` }}
-									className='h-full w-[3px] origin-center animate-[mouth_0.9s_ease-in-out_infinite] rounded-full bg-[#EFEFF1]'
+									style={{ height: `${h}%`, animationDelay: `${i * 0.1}s` }}
+									className='w-1 animate-pulse rounded-full bg-primary'
 								/>
 							))}
 						</div>
 					</div>
 				</div>
-				<p className='mt-4 font-medium text-[#ADADB8] text-[11px]'>
-					Cada palabra se convierte en movimiento
-				</p>
-				<div className='mt-2 flex items-center gap-1.5 rounded-full bg-[#9146FF]/15 px-2.5 py-1 font-semibold text-[#BF94FF] text-[10px]'>
-					<Zap size={11} />
-					VTube Studio
+				<p className='mt-3 font-mono text-[11px] text-muted-foreground'>Live2D & 3D VRM a 60 FPS</p>
+				<div className='mt-2 inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2 py-0.5 font-mono text-[10px] text-foreground'>
+					<Zap size={10} className='text-primary' />
+					<span>VTube Studio & VSeeFace</span>
 				</div>
 			</div>
 		</div>
@@ -128,33 +127,31 @@ function AvatarMock() {
 
 function VoiceMock() {
 	return (
-		<div className='relative overflow-hidden rounded-2xl border border-[#26262C] bg-[#18181B] shadow-[0_16px_60px_rgba(0,0,0,0.45)]'>
-			<div className='flex items-center justify-between border-[#26262C] border-b px-3 py-2'>
-				<div className='flex items-center gap-1.5 font-semibold text-[#EFEFF1] text-xs'>
-					<Mic size={13} className='text-[#8B5CF6]' />
-					Entiende tu voz
+		<div className='relative overflow-hidden rounded-lg border border-border bg-background/80 shadow-inner'>
+			<div className='flex items-center justify-between border-border border-b bg-card/90 px-3 py-2'>
+				<div className='flex items-center gap-1.5 font-mono text-foreground text-xs'>
+					<Mic size={12} className='text-primary' />
+					<span className='font-semibold'>Azure Speech</span>
 				</div>
-				<span className='flex items-center gap-1 rounded bg-[#8B5CF6]/15 px-2 py-0.5 font-bold text-[#BF94FF] text-[10px]'>
-					<span className='h-1.5 w-1.5 animate-pulse rounded-full bg-[#8B5CF6]' />
-					LIVE
+				<span className='rounded border border-primary/30 bg-primary/10 px-1.5 py-0.5 font-mono text-[9px] text-primary'>
+					STREAM MIC
 				</span>
 			</div>
 
-			<div className='flex flex-col items-center gap-4 py-7'>
-				<div className='relative flex size-14 items-center justify-center rounded-full border border-[#8B5CF6]/40 bg-[#8B5CF6]/15 text-[#A78BFA]'>
-					<span className='absolute inset-0 animate-ping rounded-full bg-[#8B5CF6]/20' />
-					<Mic size={22} />
+			<div className='flex flex-col items-center gap-3 py-5'>
+				<div className='flex size-12 items-center justify-center rounded-xl border border-primary/30 bg-card text-primary shadow-sm'>
+					<Mic size={20} />
 				</div>
-				<div className='flex h-10 items-end gap-1'>
-					{[28, 44, 20, 60, 36, 72, 48, 30, 56, 24, 64, 40].map((h, i) => (
+				<div className='flex h-7 items-end gap-1'>
+					{[25, 45, 20, 75, 40, 90, 60, 35, 70, 30, 80, 50].map((h, i) => (
 						<span
 							key={i}
-							style={{ height: `${h}%`, animationDelay: `${i * 0.11}s` }}
-							className='w-1 origin-bottom animate-[eq_1.4s_ease-in-out_infinite] rounded-full bg-gradient-to-t from-[#8B5CF6] to-[#22D3EE]'
+							style={{ height: `${h}%`, animationDelay: `${i * 0.08}s` }}
+							className='w-1 animate-pulse rounded-full bg-gradient-to-t from-primary to-[#F28BD8]'
 						/>
 					))}
 				</div>
-				<p className='font-medium text-[#ADADB8] text-[11px]'>“Saluda al chat” → Sandy actúa</p>
+				<p className='font-mono text-[11px] text-muted-foreground'>Comandos de voz del streamer</p>
 			</div>
 		</div>
 	);
@@ -162,38 +159,35 @@ function VoiceMock() {
 
 function AudioMock() {
 	return (
-		<div className='relative overflow-hidden rounded-2xl border border-[#26262C] bg-[#18181B] shadow-[0_16px_60px_rgba(0,0,0,0.45)]'>
-			<div className='flex items-center justify-between border-[#26262C] border-b px-3 py-2'>
-				<div className='flex items-center gap-1.5 font-semibold text-[#EFEFF1] text-xs'>
-					<AudioLines size={13} className='text-[#22D3EE]' />
-					Voz natural
+		<div className='relative overflow-hidden rounded-lg border border-border bg-background/80 shadow-inner'>
+			<div className='flex items-center justify-between border-border border-b bg-card/90 px-3 py-2'>
+				<div className='flex items-center gap-1.5 font-mono text-foreground text-xs'>
+					<AudioLines size={12} className='text-primary' />
+					<span className='font-semibold'>Fish Audio TTS</span>
 				</div>
-				<span className='rounded bg-[#22D3EE]/15 px-2 py-0.5 font-bold text-[#67E8F9] text-[10px]'>
-					Fish Audio
+				<span className='rounded border border-border bg-card px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground'>
+					BYOK
 				</span>
 			</div>
 
-			<div className='px-3 py-5'>
-				<div className='mb-3 flex items-center gap-2'>
-					<span className='flex size-8 items-center justify-center rounded-full bg-[#22D3EE] text-[#0B0A12]'>
-						<Play size={13} className='ml-0.5 fill-[#0B0A12]' />
+			<div className='p-4'>
+				<div className='mb-3 flex items-center gap-2.5'>
+					<span className='flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm'>
+						<Play size={13} className='ml-0.5 fill-current' />
 					</span>
-					<div className='flex-1'>
-						<p className='font-semibold text-[#EFEFF1] text-[12px]'>Sandy Studio</p>
-						<p className='text-[#ADADB8] text-[10px]'>Con voz propia · 0:24</p>
+					<div>
+						<p className='font-mono font-semibold text-foreground text-xs'>Sandy Custom Voice</p>
+						<p className='font-mono text-[10px] text-muted-foreground'>0:24 · Síntesis neuronal</p>
 					</div>
 				</div>
-				<div className='flex h-9 items-center gap-[2px]'>
+				<div className='flex h-7 items-center gap-1'>
 					{[
-						14, 30, 48, 70, 52, 84, 40, 62, 30, 18, 44, 70, 56, 90, 38, 24, 58, 34, 12, 46, 72, 28,
-						20, 50, 66, 30,
+						18, 35, 55, 80, 60, 95, 45, 70, 35, 22, 50, 80, 65, 100, 42, 28, 65, 40, 15, 50, 80, 32,
 					].map((h, i) => (
 						<span
 							key={i}
 							style={{ height: `${h}%` }}
-							className={`flex-1 origin-bottom rounded-full ${
-								i < 14 ? 'bg-[#22D3EE]' : 'bg-gradient-to-t from-[#22D3EE]/50 to-[#22D3EE]/10'
-							}`}
+							className={`flex-1 rounded-full ${i < 12 ? 'bg-primary' : 'bg-primary/20'}`}
 						/>
 					))}
 				</div>
@@ -204,36 +198,36 @@ function AudioMock() {
 
 function PlatformMock() {
 	const platforms = [
-		{ icon: <SiTwitch size={16} />, name: 'Twitch', color: '#9146FF' },
-		{ icon: <SiKick size={16} />, name: 'Kick', color: '#53FC18' },
-		{ icon: <SiYoutube size={16} />, name: 'YouTube', color: '#FF0000' },
+		{ icon: <SiTwitch size={14} />, name: 'Twitch IRC', color: '#9146FF' },
+		{ icon: <SiKick size={14} />, name: 'Kick Pusher', color: '#53FC18' },
+		{ icon: <SiYoutube size={14} />, name: 'YouTube Live', color: '#FF0000' },
 	];
 
 	return (
-		<div className='relative overflow-hidden rounded-2xl border border-[#26262C] bg-[#18181B] shadow-[0_16px_60px_rgba(0,0,0,0.45)]'>
-			<div className='flex items-center justify-between border-[#26262C] border-b px-3 py-2'>
-				<div className='flex items-center gap-1.5 font-semibold text-[#EFEFF1] text-xs'>
-					<Zap size={13} className='text-[#53FC18]' />
-					Tus plataformas
+		<div className='relative overflow-hidden rounded-lg border border-border bg-background/80 shadow-inner'>
+			<div className='flex items-center justify-between border-border border-b bg-card/90 px-3 py-2'>
+				<div className='flex items-center gap-1.5 font-mono text-foreground text-xs'>
+					<Zap size={12} className='text-emerald-400' />
+					<span className='font-semibold'>Canales vinculados</span>
 				</div>
-				<span className='rounded bg-emerald-500/15 px-2 py-0.5 font-bold text-[10px] text-emerald-400'>
-					Conectado
+				<span className='rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[9px] text-emerald-400'>
+					READY
 				</span>
 			</div>
 
-			<div className='space-y-2 px-3 py-4'>
+			<div className='space-y-1.5 p-3'>
 				{platforms.map((p) => (
 					<div
 						key={p.name}
-						className='flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.04] px-2.5 py-2'
+						className='flex items-center justify-between rounded border border-border bg-card px-2.5 py-1.5'
 					>
 						<div className='flex items-center gap-2'>
 							<span style={{ color: p.color }}>{p.icon}</span>
-							<span className='font-semibold text-[#EFEFF1] text-[12px]'>{p.name}</span>
+							<span className='font-medium font-mono text-foreground text-xs'>{p.name}</span>
 						</div>
-						<span className='flex items-center gap-1 font-semibold text-[10px] text-emerald-400'>
+						<span className='flex items-center gap-1 font-mono text-[10px] text-emerald-400'>
 							<Check size={11} />
-							En línea
+							<span>OAuth</span>
 						</span>
 					</div>
 				))}
@@ -246,54 +240,57 @@ function ModelMock() {
 	const models = [
 		{
 			icon: <SiGooglegemini size={13} />,
-			name: 'Gemini',
-			desc: 'Rápido y sin costo',
+			name: 'Google Gemini 2.5 Flash',
+			desc: 'Rápido, baja latencia y sin costo inicial con tu API key',
 			active: true,
 		},
 		{
 			icon: <SiOpenrouter size={13} />,
-			name: 'OpenRouter',
-			desc: 'Cientos de modelos',
+			name: 'OpenRouter (Claude, Llama, Mistral)',
+			desc: 'Elige entre cientos de modelos según la personalidad de tu canal',
 			active: false,
 		},
 	];
 
 	return (
-		<div className='relative overflow-hidden rounded-2xl border border-[#26262C] bg-[#18181B] shadow-[0_16px_60px_rgba(0,0,0,0.45)]'>
-			<div className='flex items-center justify-between border-[#26262C] border-b px-3 py-2'>
-				<div className='flex items-center gap-1.5 font-semibold text-[#EFEFF1] text-xs'>
-					<Zap size={13} className='text-[#8B5CF6]' />
-					El cerebro que elijas
+		<div className='relative overflow-hidden rounded-lg border border-border bg-background/80 shadow-inner'>
+			<div className='flex items-center justify-between border-border border-b bg-card/90 px-3 py-2'>
+				<div className='flex items-center gap-1.5 font-mono text-foreground text-xs'>
+					<Zap size={12} className='text-primary' />
+					<span className='font-semibold'>Motor de Inteligencia Artificial (BYOK)</span>
 				</div>
+				<span className='rounded border border-primary/30 bg-primary/10 px-1.5 py-0.5 font-mono text-[9px] text-primary'>
+					TÚ CONTROLAS EL GASTO
+				</span>
 			</div>
 
-			<div className='px-3 py-3'>
-				<div className='flex items-center justify-between rounded-lg border border-[#8B5CF6]/40 bg-[#8B5CF6]/10 px-3 py-2'>
-					<div className='flex items-center gap-2'>
-						<span className='text-[#BF94FF]'>{models[0].icon}</span>
-						<div>
-							<p className='font-semibold text-[#EFEFF1] text-[12px]'>{models[0].name}</p>
-							<p className='text-[#ADADB8] text-[10px]'>{models[0].desc}</p>
+			<div className='grid gap-2 p-3 sm:grid-cols-2'>
+				{models.map((m) => (
+					<div
+						key={m.name}
+						className={`flex items-start justify-between rounded-md border p-3 transition-colors ${
+							m.active ? 'border-primary/50 bg-primary/[0.08]' : 'border-border bg-card'
+						}`}
+					>
+						<div className='flex items-start gap-2.5'>
+							<span className='mt-0.5 text-primary'>{m.icon}</span>
+							<div>
+								<div className='flex items-center gap-1.5'>
+									<p className='font-mono font-semibold text-foreground text-xs'>{m.name}</p>
+									{m.active && (
+										<span className='rounded bg-primary/20 px-1 font-bold font-mono text-[9px] text-primary'>
+											ACTIVO
+										</span>
+									)}
+								</div>
+								<p className='mt-0.5 font-sans text-[11px] text-muted-foreground leading-snug'>
+									{m.desc}
+								</p>
+							</div>
 						</div>
+						<ChevronDown size={14} className='shrink-0 text-muted-foreground' />
 					</div>
-					<div className='flex items-center gap-1.5'>
-						<span className='flex size-3 items-center justify-center rounded-full bg-[#9146FF]'>
-							<Check size={9} className='text-white' />
-						</span>
-						<ChevronDown size={13} className='text-[#ADADB8]' />
-					</div>
-				</div>
-
-				<div className='mt-2 flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.04] px-3 py-2 opacity-90'>
-					<div className='flex items-center gap-2'>
-						<span className='text-[#ADADB8]'>{models[1].icon}</span>
-						<div>
-							<p className='font-semibold text-[#EFEFF1] text-[12px]'>{models[1].name}</p>
-							<p className='text-[#ADADB8] text-[10px]'>{models[1].desc}</p>
-						</div>
-					</div>
-					<ChevronDown size={13} className='text-[#ADADB8]' />
-				</div>
+				))}
 			</div>
 		</div>
 	);
@@ -310,42 +307,42 @@ const features: Feature[] = [
 	{
 		title: 'Chat en vivo con IA',
 		description:
-			'Sandy lee el chat de Twitch, Kick y YouTube en tiempo real y responde con contexto: saluda, sigue comandos y mantiene la conversación encendida mientras tú juegas.',
+			'Sandy lee los chats de Twitch, Kick y YouTube simultáneamente y responde con contexto de tu stream, moderando y conversando con los viewers.',
 		mockup: <ChatMock />,
 		span: 'lg:col-span-4',
 	},
 	{
-		title: 'Lip sync 2D y 3D (VTube Studio & VSeeFace)',
+		title: 'Lip sync 2D y 3D en tiempo real',
 		description:
-			'El avatar Live2D o 3D (VRM) mueve la boca y hace expresiones en tiempo real sincronizado con cada palabra.',
+			'Sincroniza labios y expresiones faciales en VTube Studio (Live2D) o VSeeFace (VRM 3D) mediante VMC/OSC con latencia imperceptible.',
 		mockup: <AvatarMock />,
 		span: 'lg:col-span-2',
 	},
 	{
-		title: 'Entiende tu voz',
+		title: 'Entiende tu voz por micrófono',
 		description:
-			'Reconocimiento de voz con Azure Speech: habla por el micrófono y Sandy lo convierte en acción.',
+			'Reconocimiento de voz con Azure Speech: háblale en vivo durante el juego y Sandy entenderá y te responderá en el stream.',
 		mockup: <VoiceMock />,
 		span: 'lg:col-span-2',
 	},
 	{
-		title: 'Voz natural',
+		title: 'Voz natural con Fish Audio',
 		description:
-			'Síntesis de voz con Fish Audio para que Sandy suene real, con personalidad y tono propio.',
+			'Síntesis de voz ultra-realista con Fish Audio: configura el timbre exacto de tu co-animadora con tu propia API key.',
 		mockup: <AudioMock />,
 		span: 'lg:col-span-2',
 	},
 	{
-		title: 'Twitch, Kick y YouTube',
+		title: 'Plataformas de streaming',
 		description:
-			'Conecta tu canal con OAuth, escucha los mensajes y reacciona al instante sin tocar tu setup.',
+			'Conecta tu canal mediante OAuth seguro y sin instalaciones complicadas. Lee eventos de donaciones, subs y chat en directo.',
 		mockup: <PlatformMock />,
 		span: 'lg:col-span-2',
 	},
 	{
-		title: 'El modelo que tú elijas',
+		title: 'El cerebro que tú elijas',
 		description:
-			'Usa Gemini u OpenRouter para decidir cómo piensa tu Vtuber: desde respuestas rápidas hasta el modelo de IA más capaz del mercado.',
+			'Modelo BYOK (Bring Your Own Key): tú decides qué modelo de lenguaje usar (Google Gemini o cualquier modelo de OpenRouter) sin sobreprecios.',
 		mockup: <ModelMock />,
 		span: 'lg:col-span-6',
 	},
@@ -354,21 +351,20 @@ const features: Feature[] = [
 function FeatureCard({ feature }: { feature: Feature }) {
 	return (
 		<Reveal className={`${feature.span} col-span-6`}>
-			<div className='group hover:-translate-y-1 relative h-full overflow-hidden rounded-3xl border border-[#1B1536]/10 bg-white p-6 transition-all duration-300 hover:border-[#8B5CF6]/40 hover:shadow-[0_0_40px_rgba(139,92,246,0.15)] dark:border-white/10 dark:bg-[#100F1B]'>
-				<div className='-top-16 -right-16 pointer-events-none absolute h-40 w-40 rounded-full bg-[#8B5CF6]/10 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100' />
-				<div className='relative'>
+			<div className='group flex h-full flex-col justify-between rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:border-primary/40 hover:shadow-sm'>
+				<div>
 					{feature.mockup}
-					<div className='mt-5 flex items-start justify-between gap-4'>
+					<div className='mt-4 flex items-start justify-between gap-3'>
 						<div>
-							<h3 className='mb-1.5 font-semibold text-lg text-zinc-900 [font-family:var(--font-unbounded)] dark:text-zinc-50'>
+							<h3 className='font-display font-semibold text-base text-foreground'>
 								{feature.title}
 							</h3>
-							<p className='max-w-xl text-sm text-zinc-600 leading-relaxed dark:text-zinc-400'>
+							<p className='mt-1.5 font-sans text-muted-foreground text-xs leading-relaxed sm:text-sm'>
 								{feature.description}
 							</p>
 						</div>
-						<span className='hidden shrink-0 animate-[twinkle_3s_ease-in-out_infinite] text-amber-400/80 md:block dark:text-[#FDE68A]/80'>
-							<Star size={16} className='fill-amber-400/50 dark:fill-[#FDE68A]/50' />
+						<span className='hidden shrink-0 animate-[twinkle_3s_ease-in-out_infinite] text-amber-400/80 md:block'>
+							<Star size={14} className='fill-amber-400/50' />
 						</span>
 					</div>
 				</div>
@@ -379,25 +375,25 @@ function FeatureCard({ feature }: { feature: Feature }) {
 
 export function Features() {
 	return (
-		<section id='features' className='relative py-24 md:py-32'>
+		<section id='features' className='relative py-20 md:py-28'>
 			<div className='-z-10 pointer-events-none absolute inset-0'>
-				<StarField count={30} seed={5} className='absolute inset-0 opacity-40' />
+				<StarField count={25} seed={5} className='absolute inset-0 opacity-30' />
 			</div>
-			<div className='mx-auto max-w-7xl px-5 md:px-8'>
-				<Reveal className='mb-14 max-w-2xl'>
-					<span className='mb-4 flex items-center gap-2 font-semibold text-violet-600 text-xs uppercase tracking-[0.25em] dark:text-[#A78BFA]'>
-						Funciones
+			<div className='mx-auto max-w-6xl px-4 md:px-6'>
+				<Reveal className='mb-12 max-w-2xl'>
+					<span className='mb-3 inline-flex items-center gap-2 font-mono text-primary text-xs uppercase tracking-wider'>
+						Arquitectura y capacidades
 					</span>
-					<h2 className='font-bold text-3xl text-zinc-900 [font-family:var(--font-unbounded)] sm:text-4xl md:text-5xl dark:text-zinc-50'>
-						No es un bot más.
+					<h2 className='font-bold font-display text-3xl text-foreground tracking-tight sm:text-4xl md:text-5xl'>
+						No es un bot repetitivo.
 						<br />
-						<span className='bg-gradient-to-r from-violet-600 to-cyan-600 bg-clip-text text-transparent dark:from-[#A78BFA] dark:to-[#22D3EE]'>
-							Es tu co-animadora.
+						<span className='bg-gradient-to-r from-primary via-[#B8AAFF] to-[#F28BD8] bg-clip-text text-transparent'>
+							Es tu co-animadora en vivo.
 						</span>
 					</h2>
 				</Reveal>
 
-				<div className='grid grid-cols-6 gap-5'>
+				<div className='grid grid-cols-6 gap-4'>
 					{features.map((feature) => (
 						<FeatureCard key={feature.title} feature={feature} />
 					))}

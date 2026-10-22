@@ -160,7 +160,7 @@ export default function LandingPage() {
 					],
 				})}
 			</script>
-			<div className='min-h-screen bg-[#F6F3FC] dark:bg-[#0B0A12]'>
+			<div className='min-h-screen bg-background text-foreground'>
 				<Landing />
 			</div>
 		</>

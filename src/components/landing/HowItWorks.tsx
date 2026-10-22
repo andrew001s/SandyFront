@@ -2,40 +2,45 @@
 
 import { Reveal } from '@/components/landing/Reveal';
 import { MoonGlow, StarField } from '@/components/landing/StarField';
-import { ArrowDown, Plug, Sparkles, Star } from 'lucide-react';
+import { Bot, Mic, MonitorPlay, Radio, Star } from 'lucide-react';
 import { motion } from 'motion/react';
-import { BsMoonStarsFill } from 'react-icons/bs';
 
 const steps = [
 	{
 		number: '01',
-		icon: <Plug size={20} />,
+		icon: <Radio size={18} />,
 		title: 'Conecta tu canal',
 		description:
-			'Inicia sesión y conecta tu Twitch, Kick o YouTube con OAuth. Sandy empieza a escuchar el chat al instante.',
+			'Inicia sesión con OAuth y vincula tu canal de Twitch, Kick o YouTube con un solo clic para escuchar el chat.',
 	},
 	{
 		number: '02',
-		icon: <Sparkles size={20} />,
-		title: 'Elige su voz y cerebro',
+		icon: <Bot size={18} />,
+		title: 'Elige modelo y voz',
 		description:
-			'Configura el modelo de IA (Gemini u OpenRouter), la voz de Fish Audio y el personaje de VTube Studio.',
+			'Configura tu clave de Gemini u OpenRouter (BYOK) y asigna tu voz personalizada en Fish Audio.',
 	},
 	{
 		number: '03',
-		icon: <BsMoonStarsFill size={22} />,
-		title: 'Transmite y conversa',
+		icon: <Mic size={18} />,
+		title: 'Vincula tu avatar',
 		description:
-			'Sandy responde por voz, mueve el avatar y reacciona a tu micrófono mientras haces stream.',
+			'Conecta tu modelo Live2D en VTube Studio o tu avatar VRM 3D en VSeeFace a través de VMC/OSC.',
+	},
+	{
+		number: '04',
+		icon: <MonitorPlay size={18} />,
+		title: 'Transmite en directo',
+		description:
+			'Sandy responde en tiempo real con lip sync, reacciona a tu micrófono y entretiene al chat mientras juegas.',
 	},
 ];
 
 export function HowItWorks() {
 	return (
-		<section id='como-funciona' className='relative py-24 md:py-32'>
+		<section id='como-funciona' className='relative py-20 md:py-28'>
 			<div className='-z-10 pointer-events-none absolute inset-0'>
-				<StarField count={24} seed={9} className='absolute inset-0 opacity-40' />
-				<div className='absolute top-1/3 left-[-10%] h-[400px] w-[500px] rounded-full bg-[#8B5CF6]/10 blur-[60px] md:blur-[130px]' />
+				<StarField count={20} seed={9} className='absolute inset-0 opacity-25' />
 				<motion.div
 					animate={{ y: [0, -12, 0] }}
 					transition={{ duration: 6, repeat: Number.POSITIVE_INFINITY }}
@@ -45,69 +50,51 @@ export function HowItWorks() {
 				</motion.div>
 			</div>
 
-			<div className='mx-auto max-w-7xl px-5 md:px-8'>
-				<Reveal className='mb-16 max-w-2xl'>
-					<span className='mb-4 flex items-center gap-2 font-semibold text-violet-600 text-xs uppercase tracking-[0.25em] dark:text-[#A78BFA]'>
-						Cómo funciona
+			<div className='mx-auto max-w-6xl px-4 md:px-6'>
+				<Reveal className='mb-12 max-w-2xl'>
+					<span className='mb-3 inline-flex items-center gap-2 font-mono text-primary text-xs uppercase tracking-wider'>
+						Flujo de puesta en marcha
 					</span>
-					<h2 className='font-bold text-3xl text-zinc-900 [font-family:var(--font-unbounded)] sm:text-4xl md:text-5xl dark:text-zinc-50'>
-						En 3 pasos está{' '}
-						<span className='bg-gradient-to-r from-violet-600 to-cyan-600 bg-clip-text text-transparent dark:from-[#A78BFA] dark:to-[#22D3EE]'>
-							on air
+					<h2 className='font-bold font-display text-3xl text-foreground tracking-tight sm:text-4xl md:text-5xl'>
+						En 4 pasos tu VTuber está{' '}
+						<span className='bg-gradient-to-r from-primary via-[#B8AAFF] to-[#F28BD8] bg-clip-text text-transparent'>
+							en el aire
 						</span>
 						.
 					</h2>
+					<p className='mt-3 font-sans text-muted-foreground text-sm sm:text-base'>
+						Sin scripts complicados en Python ni instalaciones en local: la plataforma opera desde
+						tu navegador y se conecta a tus aplicaciones de streaming habituales.
+					</p>
 				</Reveal>
 
-				<div className='relative grid gap-10 md:grid-cols-3 md:gap-8'>
-					<motion.div
-						initial={{ scaleX: 0 }}
-						whileInView={{ scaleX: 1 }}
-						viewport={{ once: true, amount: 0.6 }}
-						transition={{ duration: 1.1, ease: [0.21, 0.47, 0.32, 0.98] }}
-						className='absolute top-7 right-[16%] left-[16%] hidden h-px origin-left bg-gradient-to-r from-[#8B5CF6]/60 via-[#22D3EE]/60 to-[#8B5CF6]/20 md:block'
-					>
-						{[{ left: '0%' }, { left: '50%' }, { left: '100%' }].map((dot, i) => (
-							<span
-								key={i}
-								className='-top-[3px] absolute h-1.5 w-1.5 rounded-full bg-violet-500 dark:bg-[#A78BFA]'
-								style={dot}
-							/>
-						))}
-					</motion.div>
-
+				<div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
 					{steps.map((step, i) => (
-						<Reveal key={step.number} delay={i * 0.18} className='relative'>
-							<div className='group hover:-translate-y-1 relative rounded-3xl border border-[#1B1536]/10 bg-white/80 p-7 transition-all duration-300 hover:border-[#8B5CF6]/40 dark:border-white/10 dark:bg-[#100F1B]/80'>
-								<div className='mb-6 flex items-center justify-between'>
-									<div className='relative flex h-14 w-14 items-center justify-center rounded-2xl border border-[#8B5CF6]/30 bg-[#8B5CF6]/10 text-violet-600 transition-colors group-hover:bg-[#8B5CF6]/20 dark:text-[#A78BFA]'>
-										{step.icon}
-										<span
-											style={{ animationDelay: `${i * 0.7}s` }}
-											className='-top-1.5 -right-1.5 absolute animate-[twinkle_3s_ease-in-out_infinite] text-amber-500 dark:text-[#FDE68A]/90'
-										>
-											<Star size={10} className='fill-amber-400 dark:fill-[#FDE68A]' />
+						<Reveal key={step.number} delay={i * 0.1}>
+							<div className='group flex h-full flex-col justify-between rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:border-primary/40 hover:shadow-sm'>
+								<div>
+									<div className='mb-4 flex items-center justify-between'>
+										<div className='relative flex size-10 items-center justify-center rounded-lg border border-border bg-background text-primary'>
+											{step.icon}
+											<span
+												style={{ animationDelay: `${i * 0.7}s` }}
+												className='-top-1 -right-1 absolute animate-[twinkle_3s_ease-in-out_infinite] text-amber-400'
+											>
+												<Star size={10} className='fill-amber-400' />
+											</span>
+										</div>
+										<span className='font-bold font-mono text-primary/70 text-xs'>
+											{step.number}
 										</span>
 									</div>
-									<span className='font-extrabold text-4xl text-[#8B5CF6]/15 [font-family:var(--font-unbounded)] dark:text-white/10'>
-										{step.number}
-									</span>
+									<h3 className='font-display font-semibold text-base text-foreground'>
+										{step.title}
+									</h3>
+									<p className='mt-2 font-sans text-muted-foreground text-xs leading-relaxed sm:text-sm'>
+										{step.description}
+									</p>
 								</div>
-								<h3 className='mb-2 font-semibold text-xl text-zinc-900 [font-family:var(--font-unbounded)] dark:text-zinc-50'>
-									{step.title}
-								</h3>
-								<p className='text-sm text-zinc-600 leading-relaxed dark:text-zinc-400'>
-									{step.description}
-								</p>
 							</div>
-
-							{i < steps.length - 1 && (
-								<div className='mt-6 flex justify-center md:hidden'>
-									<span className='flex h-9 w-9 items-center justify-center rounded-full border border-[#8B5CF6]/30 bg-[#8B5CF6]/10 text-violet-600 dark:text-[#A78BFA]'>
-										<ArrowDown size={16} />
-									</span>
-								</div>
-							)}
 						</Reveal>
 					))}
 				</div>
