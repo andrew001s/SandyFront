@@ -105,12 +105,12 @@ export function Avatar3DEmotionsCard({
 				{/* Controles de Configuración: Intensidad y Tiempo de Transición */}
 				<div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
 					{/* Slider de Intensidad */}
-					<div className='space-y-2 rounded-xl border border-border/40 bg-background/40 p-3'>
+					<div className='space-y-2 rounded-xl border border-border/60 bg-background/50 p-3.5'>
 						<div className='flex items-center justify-between text-xs'>
 							<span className='flex items-center gap-1.5 font-medium text-foreground'>
-								<Sparkles className='size-3.5 text-pink-400' /> Intensidad
+								<Sparkles className='size-3.5 text-primary' /> Intensidad
 							</span>
-							<span className='font-mono text-muted-foreground'>
+							<span className='font-medium font-mono text-foreground text-xs'>
 								{Math.round(intensity * 100)}%
 							</span>
 						</div>
@@ -122,16 +122,16 @@ export function Avatar3DEmotionsCard({
 							value={intensity}
 							onChange={(e) => setIntensity(Number(e.target.value))}
 							disabled={!connected}
-							className='h-2 w-full cursor-pointer rounded-lg bg-muted accent-pink-500 disabled:opacity-50'
+							className='h-2 w-full cursor-pointer rounded-lg bg-muted accent-primary disabled:opacity-50'
 						/>
-						<div className='flex justify-between text-[11px] text-muted-foreground/70'>
+						<div className='flex justify-between font-mono text-[10px] text-muted-foreground'>
 							<span>Suave (10%)</span>
 							<span>Máxima (100%)</span>
 						</div>
 					</div>
 
 					{/* Slider de Tiempo de Transición */}
-					<div className='space-y-2 rounded-xl border border-border/40 bg-background/40 p-3'>
+					<div className='space-y-2 rounded-xl border border-border/60 bg-background/50 p-3.5'>
 						<div className='flex items-center justify-between text-xs'>
 							<span className='flex items-center gap-1.5 font-medium text-foreground'>
 								<Gauge className='size-3.5 text-cyan-400' /> Tiempo de Transición
@@ -149,9 +149,7 @@ export function Avatar3DEmotionsCard({
 							className='h-2 w-full cursor-pointer rounded-lg bg-muted accent-cyan-400 disabled:opacity-50'
 						/>
 						<div className='flex items-center justify-between text-[11px]'>
-							<span className='truncate text-muted-foreground/70'>
-								{getDurationLabel(duration)}
-							</span>
+							<span className='truncate text-muted-foreground'>{getDurationLabel(duration)}</span>
 						</div>
 					</div>
 				</div>

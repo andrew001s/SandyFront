@@ -60,29 +60,53 @@ export const AvatarContainer = () => {
 				/>
 			</motion.div>
 
-			<div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
-				{/* Columna Izquierda (Principal) */}
-				<motion.div
-					initial={{ opacity: 0, y: 20 }}
-					animate={{ opacity: 1, y: 0 }}
-					transition={{ duration: 0.4, delay: 0.1 }}
-					className='space-y-6 lg:col-span-2'
-				>
-					<AvatarConnectionCard
-						connecting={connecting}
-						connected={connected}
-						error={error}
-						stats={stats}
-						software={activeSoftware}
-						config={activeConfig}
-						onConnect={connect}
-						onDisconnect={disconnect}
-						onRefreshModels={vts.refreshModels}
-						onUpdateConfig={(updates) => updateConfig(activeSoftware, updates)}
-					/>
+			{is3D ? (
+				<div className='space-y-6'>
+					<div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+						<AvatarConnectionCard
+							connecting={connecting}
+							connected={connected}
+							error={error}
+							stats={stats}
+							software={activeSoftware}
+							config={activeConfig}
+							onConnect={connect}
+							onDisconnect={disconnect}
+							onRefreshModels={vts.refreshModels}
+							onUpdateConfig={(updates) => updateConfig(activeSoftware, updates)}
+						/>
+						<LipSyncTest connected={connected} software={activeSoftware} />
+					</div>
 
-					{/* 2D VTube Studio: Lista de modelos Live2D */}
-					{!is3D && (
+					<Avatar3DEmotionsCard
+						connected={connected}
+						transitionDurationMs={activeConfig.transitionDurationMs ?? 120}
+						onUpdateTransitionDuration={(ms) =>
+							updateConfig('vseeface', { transitionDurationMs: ms })
+						}
+						onSetEmotion={setEmotion}
+						onResetEmotions={resetEmotions}
+					/>
+				</div>
+			) : (
+				<div className='space-y-6'>
+					<div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+						<AvatarConnectionCard
+							connecting={connecting}
+							connected={connected}
+							error={error}
+							stats={stats}
+							software={activeSoftware}
+							config={activeConfig}
+							onConnect={connect}
+							onDisconnect={disconnect}
+							onRefreshModels={vts.refreshModels}
+							onUpdateConfig={(updates) => updateConfig(activeSoftware, updates)}
+						/>
+						<LipSyncTest connected={connected} software={activeSoftware} />
+					</div>
+
+					<div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
 						<AvatarModelListCard
 							connected={connected}
 							models={vts.models}
@@ -90,64 +114,31 @@ export const AvatarContainer = () => {
 							modelsFolderPath={vts.folderInfo?.models}
 							onLoadModel={vts.loadModel}
 						/>
-					)}
+						<AvatarModelInfoCard currentModel={vts.currentModel} />
+					</div>
 
-					{/* 3D VSeeFace: Emociones VRM con slider y presets de transición */}
-					{is3D && (
-						<Avatar3DEmotionsCard
+					<div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+						<AvatarExpressionsCard
 							connected={connected}
-							transitionDurationMs={activeConfig.transitionDurationMs ?? 120}
-							onUpdateTransitionDuration={(ms) =>
-								updateConfig('vseeface', { transitionDurationMs: ms })
-							}
-							onSetEmotion={setEmotion}
-							onResetEmotions={resetEmotions}
+							expressions={vts.expressions}
+							onSetExpression={vts.setExpressionActive}
 						/>
-					)}
-				</motion.div>
+						<AvatarHotkeysCard
+							connected={connected}
+							hotkeys={vts.hotkeys}
+							onTriggerHotkey={vts.triggerHotkey}
+						/>
+					</div>
 
-				{/* Columna Derecha (Información y rendimiento) */}
-				<motion.div
-					initial={{ opacity: 0, y: 20 }}
-					animate={{ opacity: 1, y: 0 }}
-					transition={{ duration: 0.4, delay: 0.2 }}
-					className='space-y-6'
-				>
-					{!is3D && (
-						<>
-							<AvatarModelInfoCard currentModel={vts.currentModel} />
-							<AvatarModelPositionCard
-								connected={connected}
-								currentModel={vts.currentModel}
-								onMoveModel={vts.moveModel}
-							/>
-						</>
-					)}
-
-					{!is3D && <AvatarPerformanceCard stats={vts.stats} connected={connected} />}
-					<LipSyncTest connected={connected} software={activeSoftware} />
-				</motion.div>
-			</div>
-
-			{/* Expresiones y Hotkeys exclusivas de 2D VTS */}
-			{!is3D && (
-				<motion.div
-					initial={{ opacity: 0, y: 20 }}
-					animate={{ opacity: 1, y: 0 }}
-					transition={{ duration: 0.4, delay: 0.3 }}
-					className='grid grid-cols-1 gap-6 md:grid-cols-2'
-				>
-					<AvatarExpressionsCard
-						connected={connected}
-						expressions={vts.expressions}
-						onSetExpression={vts.setExpressionActive}
-					/>
-					<AvatarHotkeysCard
-						connected={connected}
-						hotkeys={vts.hotkeys}
-						onTriggerHotkey={vts.triggerHotkey}
-					/>
-				</motion.div>
+					<div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+						<AvatarModelPositionCard
+							connected={connected}
+							currentModel={vts.currentModel}
+							onMoveModel={vts.moveModel}
+						/>
+						<AvatarPerformanceCard stats={vts.stats} connected={connected} />
+					</div>
+				</div>
 			)}
 		</div>
 	);

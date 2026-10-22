@@ -89,8 +89,8 @@ export default function RecompensasPage() {
 				key={reward.reward_id}
 				className={`flex flex-col justify-between rounded-xl border p-5 transition-all duration-150 ${
 					reward.enabled
-						? 'border-primary/40 bg-card shadow-xs'
-						: 'border-border bg-card/60 hover:border-primary/30'
+						? 'border-primary/50 bg-card shadow-xs'
+						: 'border-border/80 bg-card hover:border-border'
 				}`}
 			>
 				<div>
@@ -102,20 +102,28 @@ export default function RecompensasPage() {
 									alt={reward.title}
 									width={32}
 									height={32}
-									className='size-8 rounded-lg border border-border bg-background object-contain p-0.5'
+									className='size-8 rounded-lg border border-border/80 bg-muted/40 object-contain p-0.5'
 								/>
 							) : (
-								<div className='flex size-8 items-center justify-center rounded-lg border border-border bg-background'>
-									<Gift className={`size-4 ${isTwitch ? 'text-[#9146FF]' : 'text-[#53FC18]'}`} />
+								<div className='flex size-8 items-center justify-center rounded-lg border border-border/80 bg-muted/50'>
+									<Gift
+										className={`size-4 ${isTwitch ? 'text-[#9146FF]' : 'text-emerald-600 dark:text-[#53FC18]'}`}
+									/>
 								</div>
 							)}
-							<span className='rounded border border-border bg-background px-2 py-0.5 font-mono text-[10px] text-muted-foreground'>
+							<span className='rounded-md border border-border/90 bg-muted/60 px-2 py-0.5 font-medium font-mono text-[11px] text-foreground'>
 								{reward.cost.toLocaleString()} pts
 							</span>
 						</div>
 
 						<div className='flex items-center gap-2'>
-							<span className='font-mono text-[10px] text-muted-foreground uppercase tracking-wider'>
+							<span
+								className={
+									reward.enabled
+										? 'font-mono font-semibold text-[10px] text-emerald-600 uppercase tracking-wider dark:text-emerald-400'
+										: 'font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-wider'
+								}
+							>
 								{reward.enabled ? 'Activo' : 'Inactivo'}
 							</span>
 							<Switch
@@ -144,11 +152,11 @@ export default function RecompensasPage() {
 								onChange={(e) => handlePromptChange(platform, reward.reward_id, e.target.value)}
 								placeholder='Ej: Reacciona con sorpresa y agradece efusivamente el apoyo...'
 								rows={3}
-								className='w-full resize-none rounded-lg border border-border/80 bg-background/80 p-2.5 font-sans text-foreground text-xs placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
+								className='w-full resize-none rounded-lg border border-border/90 bg-background p-2.5 font-sans text-foreground text-xs placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
 							/>
 						</div>
 					) : (
-						<div className='flex items-center justify-center rounded-lg border border-border/60 border-dashed bg-background/30 py-5 text-center font-sans text-muted-foreground/70 text-xs'>
+						<div className='flex items-center justify-center rounded-lg border border-border/80 border-dashed bg-muted/30 px-3 py-4 text-center font-medium font-sans text-muted-foreground text-xs'>
 							Activa este canje para asignarle una reacción
 						</div>
 					)}

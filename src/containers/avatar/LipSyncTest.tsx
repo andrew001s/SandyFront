@@ -181,28 +181,30 @@ export function LipSyncTest({ connected, software = 'vseeface' }: Props) {
 	const currentVoiceObj = EDGE_VOICE_PRESETS.find((v) => v.id === selectedVoice);
 
 	return (
-		<Card className='border-border/50 bg-card/50 backdrop-blur-sm'>
+		<Card className='rounded-xl border-border/60 bg-card'>
 			<CardHeader>
 				<div className='flex items-center justify-between'>
-					<div className='flex items-center gap-2'>
-						<div className='rounded-lg bg-primary/10 p-2 text-primary'>
+					<div className='flex items-center gap-3'>
+						<div className='rounded-lg bg-primary/10 p-2.5 text-primary'>
 							<FiMusic className='size-5' />
 						</div>
 						<div>
 							<div className='flex items-center gap-2'>
-								<CardTitle className='text-base'>Prueba de Lip Sync</CardTitle>
+								<CardTitle className='font-display font-semibold text-base text-foreground'>
+									Prueba de Lip Sync
+								</CardTitle>
 								<Badge
 									variant='outline'
 									className={
 										connected
-											? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
-											: 'border-border/70 text-muted-foreground'
+											? 'rounded-md border-emerald-500/30 bg-emerald-500/10 font-mono text-[10px] text-emerald-400'
+											: 'rounded-md border-border/70 font-mono text-[10px] text-muted-foreground'
 									}
 								>
-									{connected ? 'Avatar Conectado' : 'Desconectado'}
+									{connected ? 'Conectado' : 'Desconectado'}
 								</Badge>
 							</div>
-							<CardDescription className='text-xs'>
+							<CardDescription className='font-sans text-muted-foreground text-xs'>
 								Voz en tiempo real con Microsoft Edge TTS y FFT a 60 FPS
 							</CardDescription>
 						</div>
@@ -212,7 +214,7 @@ export function LipSyncTest({ connected, software = 'vseeface' }: Props) {
 
 			<CardContent className='space-y-4'>
 				{/* Selector de Voz Edge TTS */}
-				<div className='space-y-1.5 rounded-xl border border-border/60 bg-muted/30 p-2.5'>
+				<div className='space-y-1.5 rounded-xl border border-border/60 bg-background/50 p-2.5'>
 					<div className='flex items-center justify-between text-xs'>
 						<label
 							htmlFor='edge-voice-selector'
@@ -230,7 +232,7 @@ export function LipSyncTest({ connected, software = 'vseeface' }: Props) {
 						value={selectedVoice}
 						onChange={(e) => handleVoiceChange(e.target.value)}
 						disabled={isProcessing || isPlaying}
-						className='h-8 w-full rounded-lg border border-border/70 bg-background/80 px-2.5 font-medium text-foreground text-xs outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50'
+						className='h-9 w-full rounded-lg border border-border/70 bg-card px-2.5 font-medium text-foreground text-xs outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50'
 					>
 						{EDGE_VOICE_PRESETS.map((voice) => (
 							<option key={voice.id} value={voice.id} className='bg-background text-foreground'>
@@ -260,7 +262,7 @@ export function LipSyncTest({ connected, software = 'vseeface' }: Props) {
 							variant='destructive'
 							size='sm'
 							onClick={handleStop}
-							className='h-7 gap-1 px-2.5 text-xs'
+							className='h-7 gap-1 rounded-md px-2.5 text-xs'
 						>
 							<FiSquare className='size-3' /> Detener
 						</Button>
@@ -268,24 +270,24 @@ export function LipSyncTest({ connected, software = 'vseeface' }: Props) {
 				)}
 
 				{/* Botones principales de prueba */}
-				<div className='grid grid-cols-1 gap-2.5 sm:grid-cols-2'>
+				<div className='flex flex-col gap-2 sm:flex-row'>
 					<Button
 						onClick={handleTestVowels}
 						disabled={isProcessing}
-						className='h-10 gap-2 font-medium text-xs shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]'
+						className='h-9 flex-1 gap-2 rounded-lg font-sans font-semibold text-xs shadow-xs'
 					>
-						<FiPlay className='size-4 text-emerald-300' />
-						Probar Vocales (Edge TTS)
+						<FiPlay className='size-3.5 text-emerald-300' />
+						<span className='truncate'>Vocales continuas</span>
 					</Button>
 
 					<Button
 						onClick={handleTestSentence}
 						disabled={isProcessing}
-						variant='secondary'
-						className='h-10 gap-2 font-medium text-xs shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]'
+						variant='outline'
+						className='h-9 flex-1 gap-2 rounded-lg border-border font-sans font-semibold text-xs'
 					>
-						<FiVolume2 className='size-4 text-primary' />
-						Probar Frase (Edge TTS)
+						<FiVolume2 className='size-3.5 text-primary' />
+						<span className='truncate'>Frase de prueba</span>
 					</Button>
 				</div>
 
@@ -298,7 +300,7 @@ export function LipSyncTest({ connected, software = 'vseeface' }: Props) {
 						<FiMessageSquare className='size-3.5' /> Texto personalizado para hablar
 					</label>
 
-					<div className='flex gap-2'>
+					<div className='flex items-center gap-2'>
 						<Input
 							id='test-phrase-input'
 							type='text'
@@ -310,16 +312,17 @@ export function LipSyncTest({ connected, software = 'vseeface' }: Props) {
 								}
 							}}
 							placeholder='Escribe cualquier texto...'
-							className='h-9 text-xs'
+							className='h-9 min-w-0 flex-1 rounded-lg border-border/80 font-sans text-xs'
 						/>
 						<Button
 							size='sm'
 							variant='outline'
 							onClick={handleTestSentence}
 							disabled={isProcessing || !customText.trim()}
-							className='h-9 shrink-0 gap-1.5 text-xs'
+							className='h-9 shrink-0 gap-1.5 rounded-lg border-border font-sans text-xs'
 						>
-							<FiActivity className='size-3.5 text-primary' /> Hablar
+							<FiActivity className='size-3.5 text-primary' />
+							<span>Hablar</span>
 						</Button>
 					</div>
 				</div>
@@ -330,19 +333,21 @@ export function LipSyncTest({ connected, software = 'vseeface' }: Props) {
 						<span className='flex items-center gap-1 font-medium text-foreground'>
 							<FiZap className='size-3.5 text-amber-400' /> Disparar Vocal Directa
 						</span>
-						<span className='text-[10px]'>Gesto en modelo (sin audio)</span>
+						<span className='font-mono text-[10px] text-muted-foreground'>
+							Gesto en modelo (sin audio)
+						</span>
 					</div>
 
-					<div className='grid grid-cols-6 gap-1.5'>
+					<div className='grid grid-cols-5 gap-1.5'>
 						{(['A', 'E', 'I', 'O', 'U'] as const).map((vowel) => (
 							<Button
 								key={vowel}
 								size='sm'
 								variant={activeManualVowel === vowel ? 'default' : 'outline'}
 								onClick={() => handleManualVowel(vowel)}
-								className={`h-9 font-bold text-xs transition-colors ${
+								className={`h-9 rounded-lg font-bold font-mono text-xs transition-colors ${
 									activeManualVowel === vowel
-										? 'border-primary bg-primary text-primary-foreground shadow-sm'
+										? 'border-primary bg-primary text-primary-foreground shadow-xs'
 										: 'border-border/60 hover:border-primary/50'
 								}`}
 							>

@@ -5,7 +5,6 @@ import { FeatureFlagsPanel } from '@/components/FeatureFlags/FeatureFlagsPanel';
 import { MicrophoneTile } from '@/components/ServiceControl/MicrophoneTile';
 import { ServiceStartCard } from '@/components/ServiceControl/ServiceStartCard';
 import { TerminalSandy } from '@/components/TerminalSandy/TerminalSandy';
-import { PipelineConstellation } from '@/components/home/PipelineConstellation';
 import { SupportCard } from '@/components/home/SupportCard';
 import { RequireOnboarding } from '@/components/onboarding/RequireOnboarding';
 import { PageHeader } from '@/components/ui/page-header';
@@ -19,12 +18,9 @@ export const HomeContainer = () => {
 				<PageHeader
 					tag='Bitácora de Emisión · Consola en Vivo'
 					title='Consola de Streaming'
-					description='Controla la emisión de tu VTuber, verifica la constelación de servicios y vigila el chat en directo.'
+					description='Controla la emisión de tu VTuber, activa el micrófono y vigila la actividad del chat en tiempo real.'
 				/>
 			</div>
-
-			{/* Pipeline Constellation: estado del flujo en 200ms */}
-			<PipelineConstellation />
 
 			{/* Controles Principales: Servicio de Emisión + Micrófono */}
 			<section className='mb-6'>

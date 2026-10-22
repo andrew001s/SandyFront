@@ -16,7 +16,7 @@ import { useServiceStatus } from '@/hooks/useServiceStatus';
 import { getAiErrorCode, getAiErrorMessage } from '@/lib/ai-errors';
 import { markServiceStarted, stopServiceRuntime } from '@/lib/serviceRuntime';
 import { cn } from '@/lib/utils';
-import { Pause, Play, Power } from 'lucide-react';
+import { AlertTriangle, Pause, Play, Power } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import posthog from 'posthog-js';
 import { useState } from 'react';
@@ -218,21 +218,26 @@ export function ServiceStartCard() {
 			</div>
 
 			<Dialog open={isStopConfirmOpen} onOpenChange={setIsStopConfirmOpen}>
-				<DialogContent className='w-[min(92vw,26rem)] border-border bg-card'>
-					<DialogHeader>
-						<DialogTitle className='font-display'>¿Pausar servicios?</DialogTitle>
-						<DialogDescription className='font-sans text-muted-foreground text-xs'>
+				<DialogContent className='w-[min(92vw,26rem)] border-border/80 bg-card p-6 shadow-2xl'>
+					<DialogHeader className='gap-2 p-0 text-left'>
+						<div className='flex size-10 items-center justify-center rounded-xl border border-destructive/30 bg-destructive/10 text-destructive'>
+							<AlertTriangle className='size-5' />
+						</div>
+						<DialogTitle className='font-display font-semibold text-foreground text-lg'>
+							¿Pausar servicios?
+						</DialogTitle>
+						<DialogDescription className='font-sans text-muted-foreground text-xs leading-relaxed'>
 							Se detendrán el chat, EventSub y el monitor en vivo, pero tu sesión y configuración
 							permanecerán guardadas.
 						</DialogDescription>
 					</DialogHeader>
-					<DialogFooter className='gap-2 sm:gap-0'>
+					<DialogFooter className='mt-4 flex flex-row items-center justify-end gap-2.5 p-0'>
 						<Button
 							type='button'
 							variant='outline'
 							onClick={() => setIsStopConfirmOpen(false)}
 							disabled={isBusy}
-							className='border-border font-sans text-xs'
+							className='h-9 rounded-lg px-4 font-sans text-xs'
 						>
 							Cancelar
 						</Button>
@@ -241,7 +246,7 @@ export function ServiceStartCard() {
 							variant='destructive'
 							onClick={() => void handleStop()}
 							disabled={isBusy}
-							className='font-sans text-xs'
+							className='h-9 rounded-lg px-4 font-sans font-semibold text-xs shadow-xs'
 						>
 							{isBusy ? 'Pausando...' : 'Confirmar pausa'}
 						</Button>
