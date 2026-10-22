@@ -65,7 +65,7 @@ export function AvatarConnectionCard({
 	const isVSeeFace = software === 'vseeface';
 
 	return (
-		<Card className='rounded-xl border-border/60 bg-card'>
+		<Card className='h-fit rounded-xl border-border/60 bg-card'>
 			<CardHeader className='pb-4'>
 				<div className='flex items-center justify-between'>
 					<div className='flex items-center gap-3'>
@@ -212,6 +212,7 @@ export function AvatarConnectionCard({
 						{stats && connected && 'framerate' in stats && (
 							<span className='font-mono text-muted-foreground'>
 								{stats.framerate.toFixed(0)} FPS
+								{'uptime' in stats && ` · ${Math.floor(stats.uptime / 60)}m`}
 							</span>
 						)}
 
@@ -222,9 +223,16 @@ export function AvatarConnectionCard({
 						)}
 					</div>
 
-					<Badge variant='outline' className='font-mono text-[10px] text-muted-foreground'>
-						{isVSeeFace ? `UDP OSC :${port}` : `ws://${host}:${port}`}
-					</Badge>
+					<div className='flex items-center gap-1.5'>
+						{stats && connected && 'vTubeStudioVersion' in stats && stats.vTubeStudioVersion && (
+							<span className='hidden font-mono text-[10px] text-muted-foreground sm:inline'>
+								v{stats.vTubeStudioVersion}
+							</span>
+						)}
+						<Badge variant='outline' className='font-mono text-[10px] text-muted-foreground'>
+							{isVSeeFace ? `UDP OSC :${port}` : `ws://${host}:${port}`}
+						</Badge>
+					</div>
 				</div>
 
 				{error && (

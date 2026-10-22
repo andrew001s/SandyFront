@@ -10,6 +10,7 @@ import { ClipLoader } from 'react-spinners';
 
 type SocialConnectionCardProps = {
 	name: string;
+	fallbackTitle?: string;
 	statusLabel: string;
 	connected: boolean;
 	isLoading?: boolean;
@@ -18,6 +19,7 @@ type SocialConnectionCardProps = {
 	avatarSrc?: string | null;
 	avatarAlt: string;
 	fallbackSrc?: string;
+	platformIcon?: ReactNode;
 	connectLabel: string;
 	disconnectLabel: string;
 	onConnect: () => void;
@@ -33,6 +35,7 @@ type SocialConnectionCardProps = {
 
 export const SocialConnectionCard = ({
 	name,
+	fallbackTitle,
 	statusLabel,
 	connected,
 	isLoading = false,
@@ -41,6 +44,7 @@ export const SocialConnectionCard = ({
 	avatarSrc,
 	avatarAlt,
 	fallbackSrc = '/icons/default.png',
+	platformIcon,
 	connectLabel,
 	disconnectLabel,
 	onConnect,
@@ -53,62 +57,81 @@ export const SocialConnectionCard = ({
 	return (
 		<div
 			className={cn(
-				'relative flex flex-col justify-between overflow-hidden rounded-xl border p-5 shadow-xs transition-all duration-200',
+				'relative flex h-full flex-col justify-between overflow-hidden rounded-xl border p-4 shadow-xs transition-all duration-200 sm:p-4.5',
 				connected ? 'border-primary/40 bg-card' : 'border-border bg-card hover:border-primary/30',
 			)}
 		>
 			{/* Marca de agua celestial */}
-			<div className='-right-3 -top-3 pointer-events-none absolute opacity-15'>
-				<BsMoonStarsFill size={64} className='text-primary' />
+			<div className='-right-3 -top-3 pointer-events-none absolute opacity-10'>
+				<BsMoonStarsFill size={56} className='text-primary' />
 			</div>
 
 			<div>
-				<div className='flex items-start justify-between gap-4'>
-					<div className='flex items-center gap-3.5'>
+				<div className='flex items-start justify-between gap-3'>
+					<div className='flex items-center gap-3'>
 						<Avatar
 							className={cn(
-								'size-14 shrink-0 rounded-xl border border-border shadow-xs',
+								'size-12 shrink-0 rounded-xl border border-border shadow-xs',
 								avatarClassName,
 							)}
 						>
 							{avatarSrc ? (
 								<>
-									<AvatarImage src={avatarSrc} alt={avatarAlt} className='object-cover' />
+									<AvatarImage
+										src={avatarSrc}
+										alt={avatarAlt}
+										referrerPolicy='no-referrer'
+										className='size-full object-cover'
+									/>
 									<AvatarFallback className='rounded-xl bg-background'>
 										<Image
 											src={fallbackSrc}
 											alt='Default Icon'
-											width={56}
-											height={56}
+											width={48}
+											height={48}
 											className='size-full object-cover p-1'
 										/>
 									</AvatarFallback>
 								</>
-							) : (
+							) : connected ? (
 								<AvatarFallback className='rounded-xl bg-background'>
 									<Image
 										src={fallbackSrc}
 										alt='Default Icon'
-										width={56}
-										height={56}
+										width={48}
+										height={48}
 										className='size-full object-cover p-1'
 									/>
+								</AvatarFallback>
+							) : (
+								<AvatarFallback className='rounded-xl bg-background'>
+									{platformIcon ?? (
+										<Image
+											src={fallbackSrc}
+											alt='Default Icon'
+											width={48}
+											height={48}
+											className='size-full object-cover p-1'
+										/>
+									)}
 								</AvatarFallback>
 							)}
 						</Avatar>
 
 						<div className='min-w-0 flex-1'>
-							<h3 className='truncate font-display font-semibold text-base text-foreground'>
-								{connected ? name : isPrincipal ? 'Cuenta de Emisión' : 'Cuenta de Bot'}
+							<h3 className='truncate font-display font-semibold text-foreground text-sm sm:text-base'>
+								{connected
+									? name
+									: (fallbackTitle ?? (isPrincipal ? 'Cuenta de Emisión' : 'Cuenta de Bot'))}
 							</h3>
-							<div className='mt-1 flex items-center gap-1.5'>
+							<div className='mt-0.5 flex items-center gap-1.5'>
 								<span
 									className={cn(
 										'size-1.5 rounded-full',
 										connected ? 'animate-pulse bg-emerald-400' : 'bg-muted-foreground/60',
 									)}
 								/>
-								<span className='font-mono text-muted-foreground text-xs'>
+								<span className='font-mono text-[11px] text-muted-foreground'>
 									{statusPrefix ? `${statusPrefix}: ` : ''}
 									<span
 										className={cn(
@@ -124,7 +147,7 @@ export const SocialConnectionCard = ({
 
 					<span
 						className={cn(
-							'shrink-0 rounded-full border px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider',
+							'shrink-0 rounded-full border px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider',
 							connected
 								? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
 								: 'border-border bg-background text-muted-foreground',
@@ -135,7 +158,7 @@ export const SocialConnectionCard = ({
 				</div>
 			</div>
 
-			<div className='mt-6 space-y-3'>
+			<div className='mt-4 space-y-2.5'>
 				{!connected ? (
 					<Button
 						onClick={() => void onConnect()}

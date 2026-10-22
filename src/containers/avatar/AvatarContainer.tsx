@@ -3,14 +3,10 @@
 import { LipSyncTest } from '@/containers/avatar/LipSyncTest';
 import { Avatar3DEmotionsCard } from '@/containers/avatar/components/Avatar3DEmotionsCard';
 import { AvatarConnectionCard } from '@/containers/avatar/components/AvatarConnectionCard';
-import { AvatarExpressionsCard } from '@/containers/avatar/components/AvatarExpressionsCard';
 import { AvatarHeader } from '@/containers/avatar/components/AvatarHeader';
-import { AvatarHotkeysCard } from '@/containers/avatar/components/AvatarHotkeysCard';
-import { AvatarModelInfoCard } from '@/containers/avatar/components/AvatarModelInfoCard';
-import { AvatarModelListCard } from '@/containers/avatar/components/AvatarModelListCard';
-import { AvatarModelPositionCard } from '@/containers/avatar/components/AvatarModelPositionCard';
-import { AvatarPerformanceCard } from '@/containers/avatar/components/AvatarPerformanceCard';
+import { AvatarModelDeck } from '@/containers/avatar/components/AvatarModelDeck';
 import { AvatarSoftwareSelector } from '@/containers/avatar/components/AvatarSoftwareSelector';
+import { AvatarStudioDeck } from '@/containers/avatar/components/AvatarStudioDeck';
 import { useAvatar } from '@/hooks/useAvatar';
 import { motion } from 'framer-motion';
 
@@ -62,7 +58,7 @@ export const AvatarContainer = () => {
 
 			{is3D ? (
 				<div className='space-y-6'>
-					<div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+					<div className='grid grid-cols-1 items-start gap-6 lg:grid-cols-2'>
 						<AvatarConnectionCard
 							connecting={connecting}
 							connected={connected}
@@ -89,8 +85,9 @@ export const AvatarContainer = () => {
 					/>
 				</div>
 			) : (
-				<div className='space-y-6'>
-					<div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+				<div className='grid grid-cols-1 items-start gap-6 lg:grid-cols-2'>
+					{/* Columna Izquierda: Conexión y Biblioteca de Modelos */}
+					<div className='space-y-6'>
 						<AvatarConnectionCard
 							connecting={connecting}
 							connected={connected}
@@ -103,40 +100,30 @@ export const AvatarContainer = () => {
 							onRefreshModels={vts.refreshModels}
 							onUpdateConfig={(updates) => updateConfig(activeSoftware, updates)}
 						/>
-						<LipSyncTest connected={connected} software={activeSoftware} />
-					</div>
 
-					<div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-						<AvatarModelListCard
+						<AvatarModelDeck
 							connected={connected}
 							models={vts.models}
+							currentModel={vts.currentModel}
 							currentModelId={vts.currentModel?.modelID ?? null}
 							modelsFolderPath={vts.folderInfo?.models}
 							onLoadModel={vts.loadModel}
 						/>
-						<AvatarModelInfoCard currentModel={vts.currentModel} />
 					</div>
 
-					<div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-						<AvatarExpressionsCard
-							connected={connected}
-							expressions={vts.expressions}
-							onSetExpression={vts.setExpressionActive}
-						/>
-						<AvatarHotkeysCard
-							connected={connected}
-							hotkeys={vts.hotkeys}
-							onTriggerHotkey={vts.triggerHotkey}
-						/>
-					</div>
+					{/* Columna Derecha: Control de Lip Sync y Deck de Control en Vivo */}
+					<div className='space-y-6'>
+						<LipSyncTest connected={connected} software={activeSoftware} />
 
-					<div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-						<AvatarModelPositionCard
+						<AvatarStudioDeck
 							connected={connected}
 							currentModel={vts.currentModel}
+							expressions={vts.expressions}
+							hotkeys={vts.hotkeys}
+							onSetExpression={vts.setExpressionActive}
+							onTriggerHotkey={vts.triggerHotkey}
 							onMoveModel={vts.moveModel}
 						/>
-						<AvatarPerformanceCard stats={vts.stats} connected={connected} />
 					</div>
 				</div>
 			)}

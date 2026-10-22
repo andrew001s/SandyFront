@@ -10,6 +10,7 @@ import { TwitchAuthBotProvider, TwitchAuthProvider } from '@/context/TwitchAuthC
 import { YoutubeAuthProvider } from '@/context/YoutubeAuthContext';
 import { noIndexMetadata } from '@/lib/seo';
 import type { Metadata } from 'next';
+import { Children, type ReactNode } from 'react';
 import { SiKick, SiTwitch, SiYoutube } from 'react-icons/si';
 
 export const metadata: Metadata = noIndexMetadata;
@@ -20,11 +21,13 @@ function SocialSection({
 	description,
 	children,
 }: {
-	icon: React.ReactNode;
+	icon: ReactNode;
 	title: string;
 	description: string;
-	children: React.ReactNode;
+	children: ReactNode;
 }) {
+	const count = Children.count(children);
+
 	return (
 		<section className='overflow-hidden rounded-xl border border-border bg-card p-4 shadow-xs sm:p-5'>
 			<div className='mb-4 flex items-center gap-3'>
@@ -36,7 +39,9 @@ function SocialSection({
 					<p className='font-sans text-muted-foreground text-xs'>{description}</p>
 				</div>
 			</div>
-			<div className='grid grid-cols-1 gap-3 xl:grid-cols-2'>{children}</div>
+			<div className={count > 1 ? 'grid grid-cols-1 gap-3.5 md:grid-cols-2' : 'w-full flex-1'}>
+				{children}
+			</div>
 		</section>
 	);
 }
@@ -71,29 +76,31 @@ export default function ConexionesPage() {
 						</div>
 					</SocialSection>
 
-					<SocialSection
-						icon={<SiKick className='size-4 text-[#53FC18]' />}
-						title='Kick'
-						description='Conecta tu canal de Kick mediante Pusher para leer eventos y chat en directo.'
-					>
-						<div className='w-full'>
-							<KickAuthProvider>
-								<CardConnectionKick />
-							</KickAuthProvider>
-						</div>
-					</SocialSection>
+					<div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+						<SocialSection
+							icon={<SiKick className='size-4 text-[#53FC18]' />}
+							title='Kick'
+							description='Conecta tu canal de Kick mediante Pusher para leer eventos y chat en directo.'
+						>
+							<div className='h-full w-full'>
+								<KickAuthProvider>
+									<CardConnectionKick />
+								</KickAuthProvider>
+							</div>
+						</SocialSection>
 
-					<SocialSection
-						icon={<SiYoutube className='size-4 text-[#FF0000]' />}
-						title='YouTube Live'
-						description='Vincula tu cuenta de Google para monitorizar el chat de transmisiones en vivo.'
-					>
-						<div className='w-full'>
-							<YoutubeAuthProvider>
-								<CardConnectionYoutube />
-							</YoutubeAuthProvider>
-						</div>
-					</SocialSection>
+						<SocialSection
+							icon={<SiYoutube className='size-4 text-[#FF0000]' />}
+							title='YouTube Live'
+							description='Vincula tu cuenta de Google para monitorizar el chat de transmisiones en vivo.'
+						>
+							<div className='h-full w-full'>
+								<YoutubeAuthProvider>
+									<CardConnectionYoutube />
+								</YoutubeAuthProvider>
+							</div>
+						</SocialSection>
+					</div>
 				</div>
 			</div>
 		</DashboardShell>

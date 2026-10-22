@@ -69,13 +69,21 @@ export default function RecompensasPage() {
 	const renderSkeleton = () => (
 		<div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
 			{[1, 2, 3].map((n) => (
-				<div key={n} className='space-y-3 rounded-xl border border-border bg-card p-5'>
-					<div className='flex items-center justify-between'>
-						<Skeleton className='h-5 w-20 rounded-md' />
-						<Skeleton className='h-5 w-10 rounded-full' />
+				<div
+					key={n}
+					className='flex flex-col justify-between rounded-xl border border-border/80 bg-card p-5'
+				>
+					<div>
+						<div className='flex items-center justify-between'>
+							<div className='flex items-center gap-2.5'>
+								<Skeleton className='size-9 rounded-lg' />
+								<Skeleton className='h-5 w-16 rounded-md' />
+							</div>
+							<Skeleton className='h-5 w-12 rounded-full' />
+						</div>
+						<Skeleton className='mt-4 h-5 w-3/4 rounded-md' />
 					</div>
-					<Skeleton className='h-6 w-3/4' />
-					<Skeleton className='h-20 w-full rounded-lg' />
+					<Skeleton className='mt-4 h-16 w-full rounded-lg' />
 				</div>
 			))}
 		</div>
@@ -97,21 +105,23 @@ export default function RecompensasPage() {
 					<div className='flex items-center justify-between gap-3'>
 						<div className='flex items-center gap-2.5'>
 							{reward.image_url ? (
-								<Image
-									src={reward.image_url}
-									alt={reward.title}
-									width={32}
-									height={32}
-									className='size-8 rounded-lg border border-border/80 bg-muted/40 object-contain p-0.5'
-								/>
+								<div className='flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-700/70 bg-slate-900 p-1 shadow-xs'>
+									<Image
+										src={reward.image_url}
+										alt={reward.title}
+										width={28}
+										height={28}
+										className='size-7 object-contain'
+									/>
+								</div>
 							) : (
-								<div className='flex size-8 items-center justify-center rounded-lg border border-border/80 bg-muted/50'>
+								<div className='flex size-9 shrink-0 items-center justify-center rounded-lg border border-slate-700/70 bg-slate-900 shadow-xs'>
 									<Gift
-										className={`size-4 ${isTwitch ? 'text-[#9146FF]' : 'text-emerald-600 dark:text-[#53FC18]'}`}
+										className={`size-4.5 ${isTwitch ? 'text-[#A78BFA]' : 'text-emerald-400'}`}
 									/>
 								</div>
 							)}
-							<span className='rounded-md border border-border/90 bg-muted/60 px-2 py-0.5 font-medium font-mono text-[11px] text-foreground'>
+							<span className='rounded-md border border-border/90 bg-muted/80 px-2 py-0.5 font-mono font-semibold text-[11px] text-foreground shadow-2xs'>
 								{reward.cost.toLocaleString()} pts
 							</span>
 						</div>
@@ -156,7 +166,7 @@ export default function RecompensasPage() {
 							/>
 						</div>
 					) : (
-						<div className='flex items-center justify-center rounded-lg border border-border/80 border-dashed bg-muted/30 px-3 py-4 text-center font-medium font-sans text-muted-foreground text-xs'>
+						<div className='flex items-center justify-center rounded-lg border border-border/90 border-dashed bg-muted/40 px-3 py-4 text-center font-medium font-sans text-foreground/80 text-xs'>
 							Activa este canje para asignarle una reacción
 						</div>
 					)}
