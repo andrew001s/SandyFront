@@ -1,6 +1,18 @@
 {
 	"version": 1,
 	"skills": {
+		"animate": {
+			"source": "emilkowalski/skills",
+			"sourceType": "github",
+			"skillPath": "skills/animate/SKILL.md",
+			"computedHash": "fb0a18403891238d4ce4fc80f891689678766c29092de1e3aadc0c917133ee5d"
+		},
+		"animation-performance": {
+			"source": "emilkowalski/skills",
+			"sourceType": "github",
+			"skillPath": "skills/animation-performance/SKILL.md",
+			"computedHash": "01effa412b72097494cd89613ce15c166e9dae04e2a578eb015a45f4a89b7e29"
+		},
 		"clerk": {
 			"source": "clerk/skills",
 			"sourceType": "github",
@@ -54,6 +66,12 @@
 			"sourceType": "github",
 			"skillPath": "skills/frameworks/clerk-tanstack-patterns/SKILL.md",
 			"computedHash": "70566866acbf48b4a982c2ee700c2b94d7c6aa4b47a4f6870fccc3b2e80cfd59"
+		},
+		"design-taste-frontend": {
+			"source": "Leonxlnx/taste-skill",
+			"sourceType": "github",
+			"skillPath": "skills/taste-skill/SKILL.md",
+			"computedHash": "65049e1890f5fedf8f8e1144848f07bcda788e51c22bac78afbd073aeb486725"
 		},
 		"flags-sdk": {
 			"source": "vercel/flags",
