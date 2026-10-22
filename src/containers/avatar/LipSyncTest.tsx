@@ -327,35 +327,37 @@ export function LipSyncTest({ connected, software = 'vseeface' }: Props) {
 					</div>
 				</div>
 
-				{/* Prueba de formas de vocales manuales directas */}
-				<div className='space-y-1.5 border-border/40 border-t pt-3'>
-					<div className='flex items-center justify-between text-muted-foreground text-xs'>
-						<span className='flex items-center gap-1 font-medium text-foreground'>
-							<FiZap className='size-3.5 text-amber-400' /> Disparar Vocal Directa
-						</span>
-						<span className='font-mono text-[10px] text-muted-foreground'>
-							Gesto en modelo (sin audio)
-						</span>
-					</div>
+				{/* Prueba de formas de vocales manuales directas (solo 3D VRM / VSeeFace) */}
+				{is3D && (
+					<div className='space-y-1.5 border-border/40 border-t pt-3'>
+						<div className='flex items-center justify-between text-muted-foreground text-xs'>
+							<span className='flex items-center gap-1 font-medium text-foreground'>
+								<FiZap className='size-3.5 text-amber-400' /> Disparar Vocal Directa
+							</span>
+							<span className='font-mono text-[10px] text-muted-foreground'>
+								Gesto en modelo (sin audio)
+							</span>
+						</div>
 
-					<div className='grid grid-cols-5 gap-1.5'>
-						{(['A', 'E', 'I', 'O', 'U'] as const).map((vowel) => (
-							<Button
-								key={vowel}
-								size='sm'
-								variant={activeManualVowel === vowel ? 'default' : 'outline'}
-								onClick={() => handleManualVowel(vowel)}
-								className={`h-9 rounded-lg font-bold font-mono text-xs transition-colors ${
-									activeManualVowel === vowel
-										? 'border-primary bg-primary text-primary-foreground shadow-xs'
-										: 'border-border/60 hover:border-primary/50'
-								}`}
-							>
-								{vowel}
-							</Button>
-						))}
+						<div className='grid grid-cols-5 gap-1.5'>
+							{(['A', 'E', 'I', 'O', 'U'] as const).map((vowel) => (
+								<Button
+									key={vowel}
+									size='sm'
+									variant={activeManualVowel === vowel ? 'default' : 'outline'}
+									onClick={() => handleManualVowel(vowel)}
+									className={`h-9 rounded-lg font-bold font-mono text-xs transition-colors ${
+										activeManualVowel === vowel
+											? 'border-primary bg-primary text-primary-foreground shadow-xs'
+											: 'border-border/60 hover:border-primary/50'
+									}`}
+								>
+									{vowel}
+								</Button>
+							))}
+						</div>
 					</div>
-				</div>
+				)}
 			</CardContent>
 		</Card>
 	);
