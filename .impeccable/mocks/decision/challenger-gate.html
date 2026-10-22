@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Panel de salidas</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=Archivo+Narrow:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:1440px;height:900px;overflow:hidden;background:#111214;color:#F4F4F2;font:15px/1.4 Archivo,sans-serif;display:grid;grid-template-rows:60px 1fr}
+.n{font-variant-numeric:tabular-nums}
+header{display:flex;align-items:center;gap:28px;padding:0 28px;border-bottom:1px solid #2A2C30}
+header b{font-weight:800;font-size:18px}
+header a{color:#A4A6AB;text-decoration:none}header a.on{color:#fff;border-bottom:2px solid #8C7CFF;padding-bottom:18px;margin-bottom:-20px}
+.wrap{display:grid;grid-template-columns:1fr 400px;gap:0}
+.board{padding:22px 28px}
+.board h2{font:700 13px 'Archivo Narrow';letter-spacing:.1em;color:#A4A6AB;margin-bottom:12px}
+table{width:100%;border-collapse:collapse}
+th{font:700 12px 'Archivo Narrow';letter-spacing:.08em;color:#8A8C91;text-align:left;padding:8px 10px;border-bottom:1px solid #2A2C30}
+td{padding:13px 10px;border-bottom:1px solid #1E2023;font-size:15px}
+tr.chg td{background:rgba(255,176,32,.1)}tr.chg td:first-child{box-shadow:inset 3px 0 0 #FFB020}
+.s{font:700 12px 'Archivo Narrow';letter-spacing:.06em;padding:3px 8px;border-radius:4px;background:#24262A}
+.s.on{background:#8C7CFF;color:#111214}.s.w{background:#FFB020;color:#111214}
+.pass{border-left:1px solid #2A2C30;padding:22px}
+.tk{background:#F4F4F2;color:#111214;border-radius:14px;overflow:hidden}
+.tk .seg{padding:16px 18px;border-bottom:2px dashed #C9C9C4}
+.tk small{display:block;font:700 11px 'Archivo Narrow';letter-spacing:.1em;color:#6B6D72}
+.tk big{font-weight:800;font-size:26px}
+.bar{height:56px;margin:14px 18px 18px;background:repeating-linear-gradient(90deg,#111 0 2px,transparent 2px 5px,#111 5px 6px,transparent 6px 9px)}
+.btn{display:block;margin-top:16px;height:44px;border-radius:8px;background:#8C7CFF;color:#111214;font-weight:800;display:grid;place-items:center}
+</style></head><body>
+<header><b>Sandy Studio</b><a class="on">Directo</a><a>Conexiones</a><a>Recompensas</a><a>Moderación</a><a>Avatar</a><a>Configuración</a></header>
+<div class="wrap">
+ <section class="board">
+  <h2>COLA DE RESPUESTAS</h2>
+  <table>
+   <tr><th>HORA</th><th>USUARIO</th><th>MENSAJE</th><th>ESTADO</th></tr>
+   <tr><td class="n">23:41:07</td><td>lunaria_vt</td><td>¿qué juegas hoy, Sandy?</td><td><span class="s on">HABLANDO</span></td></tr>
+   <tr class="chg"><td class="n">23:41:03</td><td>kai_draws</td><td>¿puedes saludar a mi hermana?</td><td><span class="s w">REINTENTO VOZ</span></td></tr>
+   <tr><td class="n">23:40:58</td><td>pixelpanda</td><td>¡hola chat!</td><td><span class="s">EN COLA</span></td></tr>
+   <tr><td class="n">23:40:52</td><td>usuario_123</td><td>[enlace ocultado]</td><td><span class="s">MODERADO</span></td></tr>
+   <tr><td class="n">23:40:44</td><td>mora.exe</td><td>Sandy canta algo</td><td><span class="s">EN COLA</span></td></tr>
+   <tr><td class="n">23:40:31</td><td>tito_gg</td><td>primera vez por aquí</td><td><span class="s">RESPONDIDO</span></td></tr>
+  </table>
+ </section>
+ <aside class="pass">
+  <div class="tk">
+   <div class="seg"><small>SESIÓN</small><big>Directo · Twitch</big></div>
+   <div class="seg" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div><small>IA</small><b>Gemini 2.5</b></div><div><small>VOZ</small><b>Fish · reintento</b></div>
+    <div><small>ESCUCHA</small><b>Azure es-MX</b></div><div><small>AVATAR</small><b>Apagado</b></div>
+   </div>
+   <div class="bar"></div>
+  </div>
+  <span class="btn">Conectar avatar</span>
+ </aside>
+</div>
+</body></html>
