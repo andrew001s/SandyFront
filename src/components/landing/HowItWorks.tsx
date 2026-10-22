@@ -25,7 +25,7 @@ const steps = [
 		icon: <Mic size={18} />,
 		title: 'Vincula tu avatar',
 		description:
-			'Conecta tu modelo Live2D en VTube Studio o tu avatar VRM 3D en VSeeFace a través de VMC/OSC.',
+			'Conecta tu modelo Live2D en VTube Studio o tu avatar VRM 3D en VNyan a través de WebSocket.',
 	},
 	{
 		number: '04',

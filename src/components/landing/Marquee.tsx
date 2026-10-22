@@ -6,7 +6,7 @@ const items = [
 	'Chat de YouTube',
 	'Reconocimiento de voz Azure',
 	'VTube Studio (Live2D)',
-	'VSeeFace (VRM 3D)',
+	'VNyan (VRM 3D)',
 	'Gemini & OpenRouter',
 	'Fish Audio TTS',
 	'Lip sync en tiempo real',

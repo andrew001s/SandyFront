@@ -226,7 +226,7 @@ const integrations = [
 	{ name: 'Kick', icon: <SiKick size={13} className='text-[#53FC18]' /> },
 	{ name: 'YouTube', icon: <SiYoutube size={13} className='text-[#FF0000]' /> },
 	{ name: 'VTube Studio (Live2D)', icon: null },
-	{ name: 'VSeeFace (VRM 3D)', icon: null },
+	{ name: 'VNyan (VRM 3D)', icon: null },
 ];
 
 export function Hero() {
@@ -291,7 +291,7 @@ export function Hero() {
 						className='mt-6 max-w-xl font-sans text-base text-muted-foreground leading-relaxed sm:text-lg'
 					>
 						Una co-animadora inteligente que lee el chat de Twitch, Kick y YouTube, responde con su
-						propia voz sintetizada, sincroniza labios en VTube Studio y VSeeFace, y comprende lo que
+						propia voz sintetizada, sincroniza labios en VTube Studio y VNyan, y comprende lo que
 						dices por tu micrófono.
 					</motion.p>
 

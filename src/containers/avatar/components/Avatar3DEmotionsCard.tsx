@@ -1,50 +1,21 @@
 'use client';
-
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { VRM_EMOTIONS } from '@/lib/avatar/constants';
 import type { VRMEmotionPreset } from '@/types/avatar';
-import { Gauge, Smile, Sparkles, Zap } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { RotateCcw, Smile, Sparkles } from 'lucide-react';
+import { useState } from 'react';
 
 interface Props {
 	connected: boolean;
-	transitionDurationMs?: number;
-	onUpdateTransitionDuration?: (ms: number) => void;
 	onSetEmotion: (emotion: string, intensity: number) => Promise<void> | void;
 	onResetEmotions: () => Promise<void> | void;
 }
 
-const TRANSITION_PRESETS = [
-	{ label: 'Instantáneo', ms: 20, badge: '20 ms' },
-	{ label: 'Rápido', ms: 80, badge: '80 ms' },
-	{ label: 'Fluido', ms: 130, badge: '130 ms' },
-	{ label: 'Suave', ms: 250, badge: '250 ms' },
-	{ label: 'Cinemático', ms: 400, badge: '400 ms' },
-];
-
-export function Avatar3DEmotionsCard({
-	connected,
-	transitionDurationMs = 120,
-	onUpdateTransitionDuration,
-	onSetEmotion,
-	onResetEmotions,
-}: Props) {
+export function Avatar3DEmotionsCard({ connected, onSetEmotion, onResetEmotions }: Props) {
 	const [activeEmotion, setActiveEmotion] = useState<string>('neutral');
 	const [intensity, setIntensity] = useState<number>(1.0);
-	const [duration, setDuration] = useState<number>(transitionDurationMs);
 	const [isTriggering, setIsTriggering] = useState<string | null>(null);
-
-	useEffect(() => {
-		setDuration(transitionDurationMs);
-	}, [transitionDurationMs]);
-
-	const handleDurationChange = (ms: number) => {
-		const val = Math.max(0, Math.min(600, Math.round(ms)));
-		setDuration(val);
-		onUpdateTransitionDuration?.(val);
-	};
 
 	const handleEmotionClick = async (preset: VRMEmotionPreset) => {
 		if (!connected || isTriggering) return;
@@ -62,17 +33,14 @@ export function Avatar3DEmotionsCard({
 		}
 	};
 
-	const getDurationLabel = (ms: number) => {
-		if (ms === 0) return 'Sin transición (cambio inmediato)';
-		if (ms <= 90) return 'Transición muy rápida y reactiva';
-		if (ms <= 180) return 'Transición fluida y natural (recomendado)';
-		if (ms <= 300) return 'Transición suave y relajada';
-		return 'Transición cinematográfica lenta';
+	const handleReset = async () => {
+		setActiveEmotion('neutral');
+		await onResetEmotions();
 	};
 
 	return (
-		<Card className='rounded-xl border-border/60 bg-card'>
-			<CardHeader className='pb-4'>
+		<Card className='rounded-xl border-border/60 bg-card shadow-sm'>
+			<CardHeader className='pb-3'>
 				<div className='flex items-center justify-between'>
 					<div className='flex items-center gap-3'>
 						<div className='rounded-lg bg-primary/10 p-2.5 text-primary'>
@@ -80,108 +48,86 @@ export function Avatar3DEmotionsCard({
 						</div>
 						<div>
 							<CardTitle className='font-display font-semibold text-base text-foreground'>
-								Emociones VRM 3D (VSeeFace)
+								Expresiones y Emociones
 							</CardTitle>
 							<CardDescription className='text-xs'>
-								Transmite expresiones estándar VRM (0.x y 1.0) con tiempo de transición configurable
+								Activa gestos y expresiones faciales en tiempo real sobre el modelo 3D
 							</CardDescription>
 						</div>
 					</div>
 
-					<Badge
-						variant='outline'
-						className={
-							connected
-								? 'border-emerald-500/30 bg-emerald-500/10 font-mono text-emerald-400 text-xs'
-								: 'text-muted-foreground text-xs'
-						}
+					<Button
+						variant='ghost'
+						size='sm'
+						onClick={handleReset}
+						disabled={!connected || activeEmotion === 'neutral'}
+						className='h-7 gap-1 text-muted-foreground text-xs hover:text-foreground'
+						title='Restablecer a expresión neutral'
 					>
-						{connected ? `${duration} ms transición` : 'Desconectado'}
-					</Badge>
+						<RotateCcw className='size-3' />
+						<span>Neutral</span>
+					</Button>
 				</div>
 			</CardHeader>
 
 			<CardContent className='space-y-4'>
-				{/* Controles de Configuración: Intensidad y Tiempo de Transición */}
-				<div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
-					{/* Slider de Intensidad */}
-					<div className='space-y-2 rounded-xl border border-border/60 bg-background/50 p-3.5'>
-						<div className='flex items-center justify-between text-xs'>
-							<span className='flex items-center gap-1.5 font-medium text-foreground'>
-								<Sparkles className='size-3.5 text-primary' /> Intensidad
-							</span>
-							<span className='font-medium font-mono text-foreground text-xs'>
-								{Math.round(intensity * 100)}%
-							</span>
-						</div>
+				{/* Control de Intensidad limpio con accesos rápidos */}
+				<div className='space-y-2 rounded-xl border border-border/60 bg-background/50 p-3'>
+					<div className='flex items-center justify-between text-xs'>
+						<span className='flex items-center gap-1.5 font-medium text-foreground'>
+							<Sparkles className='size-3.5 text-primary' /> Intensidad de la expresión
+						</span>
+						<span className='font-mono font-semibold text-primary text-xs'>
+							{Math.round(intensity * 100)}%
+						</span>
+					</div>
+
+					<div className='flex items-center gap-3'>
 						<input
 							type='range'
 							min='0.1'
 							max='1'
 							step='0.05'
 							value={intensity}
-							onChange={(e) => setIntensity(Number(e.target.value))}
+							onChange={(e) => {
+								const val = Number(e.target.value);
+								setIntensity(val);
+								if (activeEmotion !== 'neutral') {
+									void onSetEmotion(activeEmotion, val);
+								}
+							}}
 							disabled={!connected}
-							className='h-2 w-full cursor-pointer rounded-lg bg-muted accent-primary disabled:opacity-50'
+							className='h-2 flex-1 cursor-pointer rounded-lg bg-muted accent-primary disabled:opacity-50'
 						/>
-						<div className='flex justify-between font-mono text-[10px] text-muted-foreground'>
-							<span>Suave (10%)</span>
-							<span>Máxima (100%)</span>
-						</div>
-					</div>
 
-					{/* Slider de Tiempo de Transición */}
-					<div className='space-y-2 rounded-xl border border-border/60 bg-background/50 p-3.5'>
-						<div className='flex items-center justify-between text-xs'>
-							<span className='flex items-center gap-1.5 font-medium text-foreground'>
-								<Gauge className='size-3.5 text-cyan-400' /> Tiempo de Transición
-							</span>
-							<span className='font-mono font-semibold text-cyan-400'>{duration} ms</span>
-						</div>
-						<input
-							type='range'
-							min='5'
-							max='500'
-							step='10'
-							value={duration}
-							onChange={(e) => handleDurationChange(Number(e.target.value))}
-							disabled={!connected}
-							className='h-2 w-full cursor-pointer rounded-lg bg-muted accent-cyan-400 disabled:opacity-50'
-						/>
-						<div className='flex items-center justify-between text-[11px]'>
-							<span className='truncate text-muted-foreground'>{getDurationLabel(duration)}</span>
+						{/* Presets rápidos */}
+						<div className='flex shrink-0 items-center gap-1'>
+							{[0.5, 0.8, 1.0].map((presetVal) => (
+								<button
+									key={presetVal}
+									type='button'
+									disabled={!connected}
+									onClick={() => {
+										setIntensity(presetVal);
+										if (activeEmotion !== 'neutral') {
+											void onSetEmotion(activeEmotion, presetVal);
+										}
+									}}
+									className={`rounded px-1.5 py-0.5 font-mono text-[10px] transition-colors ${
+										Math.abs(intensity - presetVal) < 0.04
+											? 'bg-primary/20 font-bold text-primary'
+											: 'text-muted-foreground hover:bg-muted hover:text-foreground'
+									}`}
+								>
+									{Math.round(presetVal * 100)}%
+								</button>
+							))}
 						</div>
 					</div>
 				</div>
 
-				{/* Presets Rápidos de Transición */}
-				<div className='flex flex-wrap items-center gap-1.5 pt-0.5'>
-					<span className='mr-1 flex items-center gap-1 font-medium text-muted-foreground text-xs'>
-						<Zap className='size-3 text-amber-400' /> Velocidad:
-					</span>
-					{TRANSITION_PRESETS.map((p) => {
-						const isActive = duration === p.ms;
-						return (
-							<Button
-								key={p.ms}
-								size='sm'
-								variant={isActive ? 'secondary' : 'outline'}
-								disabled={!connected}
-								onClick={() => handleDurationChange(p.ms)}
-								className={`h-6 rounded-lg px-2 text-[11px] ${
-									isActive
-										? 'border-cyan-500/40 bg-cyan-500/10 font-semibold text-cyan-400'
-										: 'border-border/50 text-muted-foreground hover:border-cyan-500/30 hover:text-foreground'
-								}`}
-							>
-								{p.label} ({p.badge})
-							</Button>
-						);
-					})}
-				</div>
-
-				{/* Botones de Emociones */}
-				<div className='grid grid-cols-2 gap-2.5 pt-1 sm:grid-cols-3 md:grid-cols-4'>
+				{/* Cuadrícula de Botones de Emociones */}
+				<div className='grid grid-cols-2 gap-2 sm:grid-cols-4'>
 					{VRM_EMOTIONS.map((preset) => {
 						const isCurrent = activeEmotion === preset.id;
 						const isNeutral = preset.id === 'neutral';
@@ -195,7 +141,7 @@ export function Avatar3DEmotionsCard({
 								onClick={() => handleEmotionClick(preset)}
 								className={`flex h-auto flex-col items-center gap-1 rounded-xl border px-3 py-2.5 text-center transition-all ${
 									isCurrent
-										? 'border-primary/50 bg-primary/15 text-primary shadow-sm ring-1 ring-primary/30'
+										? 'border-primary/50 bg-primary/15 text-primary shadow-xs ring-1 ring-primary/30'
 										: isNeutral
 											? 'border-border/50 bg-background/50 text-foreground hover:border-border'
 											: 'border-border/40 bg-card/30 text-foreground hover:border-primary/30 hover:bg-card/60'
@@ -213,3 +159,5 @@ export function Avatar3DEmotionsCard({
 		</Card>
 	);
 }
+
+export default Avatar3DEmotionsCard;

@@ -62,7 +62,7 @@ export function AvatarConnectionCard({
 		onUpdateConfig?.({ host: val });
 	};
 
-	const isVSeeFace = software === 'vseeface';
+	const is3D = software === 'vnyan' || software === 'vseeface';
 
 	return (
 		<Card className='h-fit rounded-xl border-border/60 bg-card'>
@@ -71,18 +71,18 @@ export function AvatarConnectionCard({
 					<div className='flex items-center gap-3'>
 						<div
 							className={`rounded-lg p-2.5 ${
-								isVSeeFace ? 'bg-cyan-500/10 text-cyan-400' : 'bg-primary/10 text-primary'
+								is3D ? 'bg-cyan-500/10 text-cyan-400' : 'bg-primary/10 text-primary'
 							}`}
 						>
-							{isVSeeFace ? <Box className='size-5' /> : <Tv className='size-5' />}
+							{is3D ? <Box className='size-5' /> : <Tv className='size-5' />}
 						</div>
 						<div>
 							<CardTitle className='flex items-center gap-2 font-display font-semibold text-base text-foreground'>
 								Conexión: {currentMeta.name}
 							</CardTitle>
 							<CardDescription className='text-xs'>
-								{isVSeeFace
-									? 'VMC Protocol (OSC sobre UDP, puerto por defecto: 39539)'
+								{is3D
+									? 'Conexión WebSocket nativa para VRM (puerto por defecto: 8000)'
 									: 'Conexión WebSocket API para Live2D (puerto por defecto: 8001)'}
 							</CardDescription>
 						</div>
@@ -103,20 +103,20 @@ export function AvatarConnectionCard({
 				{showTips && (
 					<div className='fade-in animate-in space-y-1.5 rounded-xl border border-primary/20 bg-primary/5 p-3.5 text-xs duration-200'>
 						<div className='flex items-center gap-1.5 font-semibold text-primary'>
-							{isVSeeFace
-								? 'Configuración de VSeeFace (3D VRM)'
+							{is3D
+								? 'Configuración de VNyan (3D VRM)'
 								: 'Configuración de VTube Studio (2D Live2D)'}
 						</div>
 						<p className='text-muted-foreground leading-relaxed'>
-							{isVSeeFace
-								? 'En VSeeFace: Abre General Settings ➔ busca "OSC/VMC receiver" ➔ actívalo con puerto UDP 39539. Sandy transmitirá fonemas de boca (A, Joy) y expresiones VRM automáticamente.'
+							{is3D
+								? "En VNyan: Abre Settings ➔ pestaña Misc ➔ WebSockets ➔ activa 'Start Receiver' (puerto 8000, o usa 8008 si tu backend Python ya ocupa el 8000). Sandy transmitirá fonemas de boca (A, Joy) y expresiones VRM automáticamente vía WebSocket."
 								: 'En VTS: Abre Configuración ⚙️ ➔ baja a "Plugin API" ➔ activa "Start API" y acepta la solicitud de SandyIA.'}
 						</p>
 					</div>
 				)}
 
 				<div className='flex flex-wrap items-end gap-3'>
-					{isVSeeFace && (
+					{is3D && (
 						<div className='w-28 space-y-1.5'>
 							<label htmlFor='avatar-host' className='font-medium text-muted-foreground text-xs'>
 								Host
@@ -134,7 +134,7 @@ export function AvatarConnectionCard({
 
 					<div className='w-24 space-y-1.5'>
 						<label htmlFor='avatar-port' className='font-medium text-muted-foreground text-xs'>
-							Puerto {isVSeeFace ? 'UDP' : 'WS'}
+							Puerto WS
 						</label>
 						<Input
 							id='avatar-port'
@@ -174,7 +174,7 @@ export function AvatarConnectionCard({
 							</Button>
 						)}
 
-						{connected && onRefreshModels && !isVSeeFace && (
+						{connected && onRefreshModels && !is3D && (
 							<Button
 								onClick={() => {
 									void onRefreshModels();
@@ -218,7 +218,7 @@ export function AvatarConnectionCard({
 
 						{stats && connected && 'packetsSent' in stats && (
 							<span className='font-mono text-muted-foreground'>
-								{stats.packetsSent} paquetes VMC
+								{stats.packetsSent} mensajes WS
 							</span>
 						)}
 					</div>
@@ -230,7 +230,7 @@ export function AvatarConnectionCard({
 							</span>
 						)}
 						<Badge variant='outline' className='font-mono text-[10px] text-muted-foreground'>
-							{isVSeeFace ? `UDP OSC :${port}` : `ws://${host}:${port}`}
+							{is3D ? `ws://${host}:${port}/vnyan` : `ws://${host}:${port}`}
 						</Badge>
 					</div>
 				</div>

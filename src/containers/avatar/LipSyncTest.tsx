@@ -12,7 +12,8 @@ import {
 	playLipSyncTest,
 	stopLipSyncTest,
 } from '@/lib/avatar/testAudioGenerator';
-import { vseefaceClient } from '@/lib/avatar/vseefaceClient';
+import { vnyanClient } from '@/lib/avatar/vnyanClient';
+import { vrmManager } from '@/lib/avatar/vrmManager';
 import {
 	DEFAULT_EDGE_VOICE,
 	EDGE_VOICE_PRESETS,
@@ -39,7 +40,7 @@ interface Props {
 	software?: AvatarSoftware;
 }
 
-export function LipSyncTest({ connected, software = 'vseeface' }: Props) {
+export function LipSyncTest({ connected, software = 'vnyan' }: Props) {
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [activeManualVowel, setActiveManualVowel] = useState<string | null>(null);
 	const [customText, setCustomText] = useState(
@@ -160,16 +161,35 @@ export function LipSyncTest({ connected, software = 'vseeface' }: Props) {
 			manualTimerRef.current = null;
 		}
 
+		if (software === 'vrm') {
+			if (vowel === 'Neutral') {
+				setActiveManualVowel(null);
+				vrmManager.setVowels({ A: 0, I: 0, U: 0, E: 0, O: 0 });
+				return;
+			}
+			setActiveManualVowel(vowel);
+			const target = vowel === 'MouthOpen' ? 'A' : vowel;
+			const vMap: Record<string, number> = { A: 0, I: 0, U: 0, E: 0, O: 0 };
+			vMap[target] = 1.0;
+			vrmManager.setVowels(vMap);
+
+			manualTimerRef.current = setTimeout(() => {
+				setActiveManualVowel(null);
+				vrmManager.setVowels({ A: 0, I: 0, U: 0, E: 0, O: 0 });
+			}, 620);
+			return;
+		}
+
 		if (vowel === 'Neutral') {
 			setActiveManualVowel(null);
-			void vseefaceClient.injectVrmVowels({ A: 0, I: 0, U: 0, E: 0, O: 0 });
+			void vnyanClient.injectVrmVowels({ A: 0, I: 0, U: 0, E: 0, O: 0 });
 			return;
 		}
 
 		setActiveManualVowel(vowel);
 
 		const targetVowel = vowel === 'MouthOpen' ? 'A' : vowel;
-		cancelGestureRef.current = vseefaceClient.playVowelGesture(targetVowel, 600);
+		cancelGestureRef.current = vnyanClient.playVowelGesture(targetVowel, 600);
 
 		manualTimerRef.current = setTimeout(() => {
 			setActiveManualVowel(null);
@@ -177,7 +197,7 @@ export function LipSyncTest({ connected, software = 'vseeface' }: Props) {
 		}, 620);
 	};
 
-	const is3D = software === 'vseeface';
+	const is3D = software === 'vrm' || software === 'vnyan' || software === 'vseeface';
 	const currentVoiceObj = EDGE_VOICE_PRESETS.find((v) => v.id === selectedVoice);
 
 	return (
@@ -256,7 +276,8 @@ export function LipSyncTest({ connected, software = 'vseeface' }: Props) {
 								<span className='size-1.5 animate-bounce rounded-full bg-primary [animation-delay:0.15s]' />
 								<span className='size-1.5 animate-bounce rounded-full bg-primary [animation-delay:0.3s]' />
 							</span>
-							Transmitiendo Lip Sync a {is3D ? 'VSeeFace (OSC)' : 'VTube Studio'}...
+							Transmitiendo Lip Sync a{' '}
+							{software === 'vrm' ? 'Avatar 3D (WebGL)' : is3D ? 'VNyan (WS)' : 'VTube Studio'}...
 						</div>
 						<Button
 							variant='destructive'
@@ -327,7 +348,7 @@ export function LipSyncTest({ connected, software = 'vseeface' }: Props) {
 					</div>
 				</div>
 
-				{/* Prueba de formas de vocales manuales directas (solo 3D VRM / VSeeFace) */}
+				{/* Prueba de formas de vocales manuales directas (solo 3D VRM / VNyan) */}
 				{is3D && (
 					<div className='space-y-1.5 border-border/40 border-t pt-3'>
 						<div className='flex items-center justify-between text-muted-foreground text-xs'>

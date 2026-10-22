@@ -7,6 +7,7 @@ import { AvatarHeader } from '@/containers/avatar/components/AvatarHeader';
 import { AvatarModelDeck } from '@/containers/avatar/components/AvatarModelDeck';
 import { AvatarSoftwareSelector } from '@/containers/avatar/components/AvatarSoftwareSelector';
 import { AvatarStudioDeck } from '@/containers/avatar/components/AvatarStudioDeck';
+import { VrmCanvas } from '@/containers/avatar/components/VrmCanvas';
 import { useAvatar } from '@/hooks/useAvatar';
 import { motion } from 'framer-motion';
 
@@ -32,7 +33,7 @@ export const AvatarContainer = () => {
 	} = useAvatar();
 
 	return (
-		<div className='mx-auto flex w-full max-w-5xl flex-1 flex-col space-y-6 px-4 py-8 md:px-6'>
+		<div className='mx-auto flex w-full max-w-6xl flex-1 flex-col space-y-6 px-4 py-8 md:px-6'>
 			{/* Encabezado */}
 			<motion.div
 				initial={{ opacity: 0, y: 20 }}
@@ -42,7 +43,7 @@ export const AvatarContainer = () => {
 				<AvatarHeader />
 			</motion.div>
 
-			{/* Selector de Software: VTube Studio (2D) vs VSeeFace (3D) */}
+			{/* Selector de Software: VTube Studio (2D) vs Avatar 3D VRM */}
 			<motion.div
 				initial={{ opacity: 0, y: 20 }}
 				animate={{ opacity: 1, y: 0 }}
@@ -56,7 +57,25 @@ export const AvatarContainer = () => {
 				/>
 			</motion.div>
 
-			{is3D ? (
+			{activeSoftware === 'vrm' ? (
+				<div className='w-full space-y-6'>
+					{/* Escenario 3D interactivo WebGL a pantalla completa (Full Width) */}
+					<VrmCanvas className='w-full' />
+
+					{/* Consolas de Control de Estudio (Estilo VTS / VNyan) */}
+					<div className='grid grid-cols-1 items-start gap-6 lg:grid-cols-2'>
+						{/* Deck de Expresiones y Emociones VRM */}
+						<Avatar3DEmotionsCard
+							connected={true}
+							onSetEmotion={setEmotion}
+							onResetEmotions={resetEmotions}
+						/>
+
+						{/* Deck de Lip Sync y Voz Edge TTS */}
+						<LipSyncTest connected={true} software='vrm' />
+					</div>
+				</div>
+			) : is3D ? (
 				<div className='space-y-6'>
 					<div className='grid grid-cols-1 items-start gap-6 lg:grid-cols-2'>
 						<AvatarConnectionCard
@@ -76,10 +95,6 @@ export const AvatarContainer = () => {
 
 					<Avatar3DEmotionsCard
 						connected={connected}
-						transitionDurationMs={activeConfig.transitionDurationMs ?? 120}
-						onUpdateTransitionDuration={(ms) =>
-							updateConfig('vseeface', { transitionDurationMs: ms })
-						}
 						onSetEmotion={setEmotion}
 						onResetEmotions={resetEmotions}
 					/>

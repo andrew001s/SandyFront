@@ -118,7 +118,7 @@ function AvatarMock() {
 				<p className='mt-3 font-mono text-[11px] text-muted-foreground'>Live2D & 3D VRM a 60 FPS</p>
 				<div className='mt-2 inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2 py-0.5 font-mono text-[10px] text-foreground'>
 					<Zap size={10} className='text-primary' />
-					<span>VTube Studio & VSeeFace</span>
+					<span>VTube Studio & VNyan</span>
 				</div>
 			</div>
 		</div>
@@ -314,7 +314,7 @@ const features: Feature[] = [
 	{
 		title: 'Lip sync 2D y 3D en tiempo real',
 		description:
-			'Sincroniza labios y expresiones faciales en VTube Studio (Live2D) o VSeeFace (VRM 3D) mediante VMC/OSC con latencia imperceptible.',
+			'Sincroniza labios y expresiones faciales en VTube Studio (Live2D) o VNyan (VRM 3D) mediante WebSocket con latencia imperceptible.',
 		mockup: <AvatarMock />,
 		span: 'lg:col-span-2',
 	},

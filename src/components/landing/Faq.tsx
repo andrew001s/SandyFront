@@ -64,7 +64,7 @@ const faqs: Array<Faq> = [
 		icon: <Sparkles size={14} />,
 		question: '¿Cómo funciona la sincronización de labios y movimiento?',
 		answer:
-			'Sandy Studio se conecta con VTube Studio (modelos Live2D) mediante WebSocket y con VSeeFace (avatares 3D VRM) vía protocolo VMC/OSC. La síntesis de voz genera fonemas en tiempo real que se traducen en apertura de boca y expresiones a 60 FPS.',
+			'Sandy Studio se conecta con VTube Studio (modelos Live2D) y con VNyan (avatares 3D VRM) vía WebSocket local. La síntesis de voz genera fonemas en tiempo real que se traducen en apertura de boca y expresiones a 60 FPS.',
 		details: [
 			'Sincronización labial en tiempo real',
 			'Expresiones reactivas a comandos del chat o emociones del texto',
@@ -76,10 +76,10 @@ const faqs: Array<Faq> = [
 		icon: <User size={14} />,
 		question: '¿Qué necesito tener listo para empezar?',
 		answer:
-			'Una cuenta de Twitch, Kick o YouTube, una clave de API de Gemini o OpenRouter, y una clave de Fish Audio para la síntesis de voz. Si deseas proyectar un avatar en pantalla, necesitas tener abierto VTube Studio o VSeeFace en tu equipo.',
+			'Una cuenta de Twitch, Kick o YouTube, una clave de API de Gemini o OpenRouter, y una clave de Fish Audio para la síntesis de voz. Si deseas proyectar un avatar en pantalla, necesitas tener abierto VTube Studio o VNyan en tu equipo.',
 		details: [
 			'Canal en Twitch, Kick o YouTube activo',
-			'VTube Studio o VSeeFace abierto en tu PC para el renderizado del modelo',
+			'VTube Studio o VNyan abierto en tu PC para el renderizado del modelo',
 			'Micrófono si deseas que Sandy escuche lo que dices en vivo',
 		],
 	},
@@ -102,7 +102,7 @@ const faqs: Array<Faq> = [
 		icon: <MessageSquare size={14} />,
 		question: '¿Consume recursos de CPU o GPU en mi ordenador?',
 		answer:
-			'El procesamiento de IA, transcripción y síntesis de voz se ejecutan en la nube. En tu PC solo se ejecutan la pestaña del navegador y tu programa de avatar habitual (VTube Studio o VSeeFace), sin sobrecargar tus componentes durante el juego.',
+			'El procesamiento de IA, transcripción y síntesis de voz se ejecutan en la nube. En tu PC solo se ejecutan la pestaña del navegador y tu programa de avatar habitual (VTube Studio o VNyan), sin sobrecargar tus componentes durante el juego.',
 	},
 ];
 

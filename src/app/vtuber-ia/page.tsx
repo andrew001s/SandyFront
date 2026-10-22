@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 	metadataBase,
 	title: 'VTuber con IA: Qué es y Cómo Crear el Tuyo Gratis (2D y 3D)',
 	description:
-		'Aprende qué es un VTuber con IA y cómo crear el tuyo gratis en español: lee tu chat de Twitch y Kick, responde con voz y se mueve en VTube Studio (2D) y VSeeFace (3D VRM).',
+		'Aprende qué es un VTuber con IA y cómo crear el tuyo gratis en español: lee tu chat de Twitch y Kick, responde con voz y se mueve en VTube Studio (2D) y VNyan (3D VRM).',
 	keywords: [
 		'vtuber con ia',
 		'vtuber inteligencia artificial',
@@ -21,6 +21,7 @@ export const metadata: Metadata = {
 		'vtuber kick',
 		'vtuber que habla con chat',
 		'vtuber 3d ia',
+		'vnyan ia',
 		'vseeface ia',
 		'vtube studio ia',
 		'neuro sama español',
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
 	openGraph: {
 		title: 'VTuber con IA: Qué es y Cómo Crear el Tuyo Gratis (2D y 3D)',
 		description:
-			'Crea tu VTuber con IA gratis: lee tu chat, responde con voz natural y sincroniza su boca y emociones en VTube Studio (2D) o VSeeFace (3D).',
+			'Crea tu VTuber con IA gratis: lee tu chat, responde con voz natural y sincroniza su boca y emociones en VTube Studio (2D) o VNyan (3D).',
 		type: 'website',
 		siteName: sharedSiteName,
 		url: '/vtuber-ia',
@@ -52,7 +53,7 @@ export const metadata: Metadata = {
 		creator: '@ElShandrew',
 		title: 'VTuber con IA: Qué es y Cómo Crear el Tuyo Gratis (2D y 3D)',
 		description:
-			'Crea tu VTuber con IA gratis: chat de Twitch y Kick, voz natural, VTube Studio y VSeeFace.',
+			'Crea tu VTuber con IA gratis: chat de Twitch y Kick, voz natural, VTube Studio y VNyan.',
 	},
 };
 
@@ -73,7 +74,7 @@ const sections: ContentSection[] = [
 			'Chat multicanal: lee mensajes de Twitch, Kick y YouTube en tiempo real.',
 			'Cerebro de IA: tú eliges el modelo (Gemini, OpenRouter con Claude/Llama/DeepSeek, o modelos locales en Ollama).',
 			'Voz natural con TTS: síntesis de voz en español y otros idiomas con Edge TTS (gratuito) o Fish Audio.',
-			'Avatar 2D y 3D: sincronización labial inmediata (lip-sync a 60 FPS) y emociones en VTube Studio (Live2D) y VSeeFace (VRM/VRoid 3D vía VMC/OSC).',
+			'Avatar 2D y 3D: sincronización labial inmediata (lip-sync a 60 FPS) y emociones en VTube Studio (Live2D) y VNyan (VRM/VRoid 3D vía WebSocket).',
 			'Micrófono inteligente: escucha tu voz para ejecutar órdenes en stream o mantener un diálogo interactivo en vivo.',
 			'Moderación automática: filtra spam, modera lenguaje inapropiado y protege tu chat.',
 		],
@@ -96,7 +97,7 @@ const sections: ContentSection[] = [
 		list: [
 			'Una cuenta de Twitch, Kick o YouTube.',
 			'Una cuenta en Sandy Studio y conectar tu canal con OAuth en un clic.',
-			'Tu avatar: un modelo Live2D en VTube Studio o un modelo 3D VRM en VSeeFace (ambos gratuitos).',
+			'Tu avatar: un modelo Live2D en VTube Studio o un modelo 3D VRM en VNyan (ambos gratuitos).',
 			'Opcional: un micrófono para que la IA también te escuche a ti.',
 		],
 	},
@@ -106,12 +107,12 @@ const faqs: ContentFaq[] = [
 	{
 		question: '¿Necesito saber programar para crear un VTuber con IA?',
 		answer:
-			'No. Toda la configuración se realiza desde el panel visual de Sandy Studio con clics: conectas tu canal, seleccionas el modelo de IA, la voz y el avatar (VTube Studio o VSeeFace). No requieres código ni conocimientos técnicos.',
+			'No. Toda la configuración se realiza desde el panel visual de Sandy Studio con clics: conectas tu canal, seleccionas el modelo de IA, la voz y el avatar (VTube Studio o VNyan). No requieres código ni conocimientos técnicos.',
 	},
 	{
 		question: '¿Puedo usar mi propio modelo 3D VRM o Live2D?',
 		answer:
-			'Sí, absolutamente. Sandy Studio es compatible con VTube Studio para modelos Live2D 2D y con VSeeFace para avatares 3D en formato VRM (VRoid Studio, Blender, etc.) a través del protocolo estándar VMC.',
+			'Sí, absolutamente. Sandy Studio es compatible con VTube Studio para modelos Live2D 2D y con VNyan para avatares 3D en formato VRM (VRoid Studio, Blender, etc.) a través de WebSocket nativo.',
 	},
 	{
 		question: '¿Qué modelos de IA puedo usar?',

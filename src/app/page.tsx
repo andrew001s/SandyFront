@@ -6,7 +6,7 @@ export const metadata: Metadata = {
 	metadataBase,
 	title: 'VTuber con IA gratis para Twitch, Kick y YouTube | Sandy Studio',
 	description:
-		'Crea tu VTuber con IA gratis: avatar inteligente que habla con tu chat, responde con voz natural, lip sync en tiempo real para 2D (VTube Studio) y 3D (VSeeFace, VRM) y modera tu stream en vivo.',
+		'Crea tu VTuber con IA gratis: avatar inteligente que habla con tu chat, responde con voz natural, lip sync en tiempo real para 2D (VTube Studio) y 3D (VNyan, VRM) y modera tu stream en vivo.',
 	keywords: [
 		'vtuber con ia',
 		'vtuber inteligencia artificial',
@@ -15,6 +15,7 @@ export const metadata: Metadata = {
 		'vtuber ia español',
 		'vtuber ai',
 		'vtuber 3d con ia',
+		'vnyan ia',
 		'vseeface ia',
 		'vtube studio ia',
 		'avatar con ia',
@@ -52,7 +53,7 @@ export const metadata: Metadata = {
 		creator: '@ElShandrew',
 		title: 'VTuber con IA gratis para Twitch, Kick y YouTube | Sandy Studio',
 		description:
-			'Crea tu propio VTuber con IA: lee tu chat, responde con voz y se mueve en 2D (VTube Studio) o 3D (VSeeFace).',
+			'Crea tu propio VTuber con IA: lee tu chat, responde con voz y se mueve en 2D (VTube Studio) o 3D (VNyan).',
 		images: [sharedOpenGraphImage],
 	},
 };
@@ -100,7 +101,7 @@ export default function LandingPage() {
 							featureList: [
 								'VTuber con IA para Twitch, Kick y YouTube',
 								'Sincronización labial en tiempo real (Lip Sync 60 FPS)',
-								'Soporte para avatares 2D en VTube Studio y 3D en VSeeFace (VRM)',
+								'Soporte para avatares 2D en VTube Studio y 3D en VNyan (VRM)',
 								'Síntesis de voz natural y texto a voz (TTS)',
 								'Moderación automática de chat con Inteligencia Artificial',
 								'Interacción por micrófono en vivo',
@@ -128,7 +129,7 @@ export default function LandingPage() {
 									name: '¿Necesito experiencia técnica para usarlo?',
 									acceptedAnswer: {
 										'@type': 'Answer',
-										text: 'No. Conectas tu canal de Twitch, Kick o YouTube con OAuth, eliges el modelo de IA, la voz y el avatar (VTube Studio o VSeeFace) desde el panel visual de Sandy Studio con clics, sin necesidad de programar.',
+										text: 'No. Conectas tu canal de Twitch, Kick o YouTube con OAuth, eliges el modelo de IA, la voz y el avatar (VTube Studio o VNyan) desde el panel visual de Sandy Studio con clics, sin necesidad de programar.',
 									},
 								},
 								{
@@ -136,7 +137,7 @@ export default function LandingPage() {
 									name: '¿Es compatible con avatares 2D y 3D?',
 									acceptedAnswer: {
 										'@type': 'Answer',
-										text: 'Sí. Sandy Studio es compatible con avatares 2D (Live2D a través de VTube Studio) y avatares 3D (formatos VRM y VRoid a través de VSeeFace usando el protocolo VMC / OSC).',
+										text: 'Sí. Sandy Studio es compatible con avatares 2D (Live2D a través de VTube Studio) y avatares 3D (formatos VRM y VRoid a través de VNyan usando WebSocket nativo).',
 									},
 								},
 								{
@@ -144,7 +145,7 @@ export default function LandingPage() {
 									name: '¿Cómo se mueve el avatar y hace lip sync?',
 									acceptedAnswer: {
 										'@type': 'Answer',
-										text: 'Sandy Studio analiza la voz y los fonemas vocálicos en tiempo real a 60 FPS, convirtiendo cada sonido en movimiento de boca inmediato y expresiones faciales tanto en VTube Studio como en VSeeFace sin desfase.',
+										text: 'Sandy Studio analiza la voz y los fonemas vocálicos en tiempo real a 60 FPS, convirtiendo cada sonido en movimiento de boca inmediato y expresiones faciales tanto en VTube Studio como en VNyan sin desfase.',
 									},
 								},
 								{

@@ -15,6 +15,9 @@ export class AudioQueueManager {
 	private queue: { blob: Blob; url: string }[] = [];
 	private isPlaying = false;
 	private audioElement: HTMLAudioElement | null = null;
+	private mirrorAudioElement: HTMLAudioElement | null = null;
+	private primarySinkId = '';
+	private mirrorSinkId = '';
 	// Huella del contenido -> instante en que se encoló. `URL.createObjectURL`
 	// devuelve una URL distinta en cada llamada, incluso para el mismo blob, así
 	// que deduplicar por URL no filtraba nada: el mismo audio podía sonar dos
@@ -26,7 +29,16 @@ export class AudioQueueManager {
 	/** Manejador de Lip Sync con soporte de preparación sin retraso y reloj de alta resolución. */
 	private lipSyncHandler: LipSyncHandler | null = null;
 
-	private constructor() {}
+	private constructor() {
+		if (typeof window !== 'undefined') {
+			try {
+				this.primarySinkId = window.localStorage.getItem('sandy_audio_primary_sink_id') || '';
+				this.mirrorSinkId = window.localStorage.getItem('sandy_audio_mirror_sink_id') || '';
+			} catch {
+				// Ignorar fallback de almacenamiento
+			}
+		}
+	}
 
 	static getInstance(): AudioQueueManager {
 		if (!AudioQueueManager.instance) {
@@ -35,12 +47,32 @@ export class AudioQueueManager {
 		return AudioQueueManager.instance;
 	}
 
-	setAudioElement(element: HTMLAudioElement | null) {
+	setAudioElement(element: HTMLAudioElement | null, mirrorElement?: HTMLAudioElement | null) {
 		this.audioElement = element;
+		if (mirrorElement !== undefined) {
+			this.mirrorAudioElement = mirrorElement;
+		}
+
 		if (element) {
+			if (this.primarySinkId && 'setSinkId' in element) {
+				void (element as unknown as { setSinkId: (id: string) => Promise<void> })
+					.setSinkId(this.primarySinkId)
+					.catch(() => {
+						// Ignorar fallo inicial de sinkId
+					});
+			}
+
 			element.onended = () => {
 				if (element.src) {
 					URL.revokeObjectURL(element.src);
+				}
+				if (this.mirrorAudioElement) {
+					try {
+						this.mirrorAudioElement.pause();
+						this.mirrorAudioElement.src = '';
+					} catch {
+						// Ignorar fallo al pausar elemento espejo
+					}
 				}
 				if (
 					this.lipSyncHandler &&
@@ -59,6 +91,68 @@ export class AudioQueueManager {
 				void this.playNext();
 			}
 		}
+
+		if (this.mirrorAudioElement && this.mirrorSinkId && 'setSinkId' in this.mirrorAudioElement) {
+			void (this.mirrorAudioElement as unknown as { setSinkId: (id: string) => Promise<void> })
+				.setSinkId(this.mirrorSinkId)
+				.catch(() => {
+					// Ignorar fallo inicial de mirror sinkId
+				});
+		}
+	}
+
+	async setPrimarySinkId(sinkId: string): Promise<boolean> {
+		this.primarySinkId = sinkId;
+		if (typeof window !== 'undefined') {
+			try {
+				window.localStorage.setItem('sandy_audio_primary_sink_id', sinkId);
+			} catch {
+				// Ignorar fallo de almacenamiento
+			}
+		}
+
+		if (this.audioElement && 'setSinkId' in this.audioElement) {
+			try {
+				await (
+					this.audioElement as unknown as { setSinkId: (id: string) => Promise<void> }
+				).setSinkId(sinkId);
+				return true;
+			} catch {
+				return false;
+			}
+		}
+		return false;
+	}
+
+	async setMirrorSinkId(sinkId: string): Promise<boolean> {
+		this.mirrorSinkId = sinkId;
+		if (typeof window !== 'undefined') {
+			try {
+				window.localStorage.setItem('sandy_audio_mirror_sink_id', sinkId);
+			} catch {
+				// Ignorar fallo de almacenamiento
+			}
+		}
+
+		if (this.mirrorAudioElement && 'setSinkId' in this.mirrorAudioElement) {
+			try {
+				await (
+					this.mirrorAudioElement as unknown as { setSinkId: (id: string) => Promise<void> }
+				).setSinkId(sinkId);
+				return true;
+			} catch {
+				return false;
+			}
+		}
+		return false;
+	}
+
+	getPrimarySinkId(): string {
+		return this.primarySinkId;
+	}
+
+	getMirrorSinkId(): string {
+		return this.mirrorSinkId;
 	}
 
 	setLipSyncHandler(handler: LipSyncHandler | null) {
@@ -174,6 +268,13 @@ export class AudioQueueManager {
 
 				try {
 					await this.audioElement.play();
+					if (this.mirrorAudioElement && this.mirrorSinkId) {
+						this.mirrorAudioElement.src = nextAudio.url;
+						this.mirrorAudioElement.currentTime = 0;
+						this.mirrorAudioElement.play().catch(() => {
+							// Ignorar fallo en elemento espejo
+						});
+					}
 				} catch (error) {
 					console.error('Error reproduciendo audio:', error);
 					this.isPlaying = false;
@@ -197,6 +298,11 @@ export class AudioQueueManager {
 			this.lipSyncHandler.stop
 		) {
 			this.lipSyncHandler.stop();
+		}
+		if (this.mirrorAudioElement) {
+			this.mirrorAudioElement.pause();
+			this.mirrorAudioElement.onplay = null;
+			this.mirrorAudioElement.src = '';
 		}
 		if (this.audioElement) {
 			this.audioElement.pause();

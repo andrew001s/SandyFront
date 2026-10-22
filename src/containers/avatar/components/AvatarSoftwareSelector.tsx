@@ -36,12 +36,12 @@ export function AvatarSoftwareSelector({
 						)}
 					</TabsTrigger>
 					<TabsTrigger
-						value='vseeface'
+						value='vrm'
 						className='flex h-8 items-center justify-center gap-2 rounded-md px-3 font-medium font-sans text-xs transition-colors data-[state=active]:bg-secondary/10 data-[state=active]:font-semibold data-[state=active]:text-secondary'
 					>
 						<Box className='size-3.5 text-secondary' />
-						<span>VSeeFace (3D)</span>
-						{connectedSoftware === 'vseeface' && (
+						<span>Avatar 3D (VRM)</span>
+						{(connectedSoftware === 'vrm' || connectedSoftware === 'vnyan') && (
 							<span className='size-1.5 rounded-full bg-emerald-400' />
 						)}
 					</TabsTrigger>
@@ -52,7 +52,7 @@ export function AvatarSoftwareSelector({
 				<span className='font-mono text-[11px] text-muted-foreground'>
 					{selectedSoftware === 'vtubestudio'
 						? 'Entorno Live2D · WebSocket local'
-						: 'Entorno VRM 3D · Protocolo VMC OSC'}
+						: 'Entorno 3D VRM · WebGL en navegador'}
 				</span>
 				{connectedSoftware === selectedSoftware ? (
 					<span className='flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] text-emerald-400'>

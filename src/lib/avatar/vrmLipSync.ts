@@ -328,8 +328,8 @@ async function decodeAudioBlob(audioBlob: Blob): Promise<AudioBuffer> {
 }
 
 /**
- * Crea un manejador de Lip Sync de alta precisión para avatares 3D VRM (VSeeFace).
- * Soporta pre-cálculo sin retardo, anticipación articulatoria de 35ms y
+ * Crea un manejador de Lip Sync de alta precisión para avatares 3D VRM (VNyan / VSeeFace).
+ * Soporta pre-cálculo sin retardo, anticipación articulatoria de 75ms y
  * agudización Winner-Take-Most para vocalización 3D impecable.
  */
 export const createVrmLipSyncHandler = (injectVowels: VRMInjectVowels): VrmLipSyncController => {
