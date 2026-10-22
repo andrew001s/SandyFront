@@ -1,7 +1,8 @@
-import type { Metadata } from 'next';
 import { SettingsPanel } from '@/components/Settings/SettingsPanel';
+import { PageHeader } from '@/components/ui/page-header';
 import { DashboardShell } from '@/containers/dashboard/DashboardShell';
 import { noIndexMetadata } from '@/lib/seo';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = noIndexMetadata;
 
@@ -14,10 +15,13 @@ export default async function SettingsPage({
 
 	return (
 		<DashboardShell>
-			<div className='px-4 py-6'>
-				<div className='mx-auto max-w-7xl space-y-6'>
-					<SettingsPanel defaultTab={tab} />
-				</div>
+			<div className='mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-8 md:px-6'>
+				<PageHeader
+					tag='Parámetros del Sistema · Proveedores de IA'
+					title='Configuración General'
+					description='Ajusta tus claves de API (BYOK), modelos de IA (Gemini / OpenRouter), motor de voz Fish Audio y transcripción de micrófono.'
+				/>
+				<SettingsPanel defaultTab={tab} />
 			</div>
 		</DashboardShell>
 	);

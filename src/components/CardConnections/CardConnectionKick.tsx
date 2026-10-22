@@ -1,7 +1,7 @@
 'use client';
 
-import { useKickAuthContext } from '@/context/KickAuthContext';
 import { ConnectionCardSkeleton } from '@/components/loading/dashboard-skeletons';
+import { useKickAuthContext } from '@/context/KickAuthContext';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { SocialConnectionCard } from './SocialConnectionCard';

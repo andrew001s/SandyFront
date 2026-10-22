@@ -114,19 +114,19 @@ export function SettingsPanel({ defaultTab }: { defaultTab?: string } = {}) {
 						onValueChange={(value) => setActiveTab(resolveTab(value))}
 						className='space-y-4'
 					>
-						<TabsList className=' h-auto w-full grid-cols-5 rounded-2xl bg-muted p-1'>
+						<TabsList className='h-auto w-full grid-cols-5 rounded-xl border border-border/60 bg-card p-1.5'>
 							<TabsTrigger
 								value='sandy'
-								className='rounded-xl py-2 text-xs data-[state=active]:bg-background sm:text-sm'
+								className='rounded-lg py-2 font-sans text-xs transition-colors data-[state=active]:bg-primary/10 data-[state=active]:font-semibold data-[state=active]:text-primary sm:text-sm'
 							>
 								<span className='flex items-center gap-2'>
 									<Cpu className='size-4' />
-									<span className='hidden sm:inline'>Personalida Vtuber</span>
+									<span className='hidden sm:inline'>Personalidad VTuber</span>
 								</span>
 							</TabsTrigger>
 							<TabsTrigger
 								value='ai'
-								className='rounded-xl py-2 text-xs data-[state=active]:bg-background sm:text-sm'
+								className='rounded-lg py-2 font-sans text-xs transition-colors data-[state=active]:bg-primary/10 data-[state=active]:font-semibold data-[state=active]:text-primary sm:text-sm'
 							>
 								<span className='flex items-center gap-2'>
 									<Bot className='size-4' />
@@ -135,7 +135,7 @@ export function SettingsPanel({ defaultTab }: { defaultTab?: string } = {}) {
 							</TabsTrigger>
 							<TabsTrigger
 								value='voice'
-								className='rounded-xl py-2 text-xs data-[state=active]:bg-background sm:text-sm'
+								className='rounded-lg py-2 font-sans text-xs transition-colors data-[state=active]:bg-primary/10 data-[state=active]:font-semibold data-[state=active]:text-primary sm:text-sm'
 							>
 								<span className='flex items-center gap-2'>
 									<Volume2 className='size-4' />
@@ -144,7 +144,7 @@ export function SettingsPanel({ defaultTab }: { defaultTab?: string } = {}) {
 							</TabsTrigger>
 							<TabsTrigger
 								value='speech'
-								className='rounded-xl py-2 text-xs data-[state=active]:bg-background sm:text-sm'
+								className='rounded-lg py-2 font-sans text-xs transition-colors data-[state=active]:bg-primary/10 data-[state=active]:font-semibold data-[state=active]:text-primary sm:text-sm'
 							>
 								<span className='flex items-center gap-2'>
 									<Mic className='size-4' />
@@ -153,7 +153,7 @@ export function SettingsPanel({ defaultTab }: { defaultTab?: string } = {}) {
 							</TabsTrigger>
 							<TabsTrigger
 								value='services'
-								className='rounded-xl py-2 text-xs data-[state=active]:bg-background sm:text-sm'
+								className='rounded-lg py-2 font-sans text-xs transition-colors data-[state=active]:bg-primary/10 data-[state=active]:font-semibold data-[state=active]:text-primary sm:text-sm'
 							>
 								<span className='flex items-center gap-2'>
 									<Power className='size-4' />

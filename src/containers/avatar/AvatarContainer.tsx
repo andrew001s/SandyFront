@@ -36,7 +36,7 @@ export const AvatarContainer = () => {
 	} = useAvatar();
 
 	return (
-		<div className='container mx-auto space-y-8 px-4 py-8'>
+		<div className='mx-auto flex w-full max-w-5xl flex-1 flex-col space-y-6 px-4 py-8 md:px-6'>
 			{/* Encabezado */}
 			<motion.div
 				initial={{ opacity: 0, y: 20 }}

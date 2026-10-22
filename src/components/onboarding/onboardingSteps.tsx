@@ -1,5 +1,15 @@
 'use client';
 
+import { AiStep } from '@/components/onboarding/AiStep';
+import { CompletedStep } from '@/components/onboarding/CompletedStep';
+import { ConnectionsStep } from '@/components/onboarding/ConnectionsStep';
+import { SandyCoreStep } from '@/components/onboarding/SandyCoreStep';
+import { SpeechRecognitionStep } from '@/components/onboarding/SpeechRecognitionStep';
+import { ThemeStep } from '@/components/onboarding/ThemeStep';
+import { VTubeStudioStep } from '@/components/onboarding/VTubeStudioStep';
+import { VoiceStep } from '@/components/onboarding/VoiceStep';
+import { WelcomeStep } from '@/components/onboarding/WelcomeStep';
+import type { SandyOnboardingContext } from '@/components/onboarding/onboarding.types';
 import type { OnboardingStep } from '@onboardjs/react';
 import {
 	Bot,
@@ -12,17 +22,7 @@ import {
 	Sparkles,
 	Volume2,
 } from 'lucide-react';
-import { ConnectionsStep } from '@/components/onboarding/ConnectionsStep';
-import { AiStep } from '@/components/onboarding/AiStep';
-import { CompletedStep } from '@/components/onboarding/CompletedStep';
-import { SandyCoreStep } from '@/components/onboarding/SandyCoreStep';
-import { ThemeStep } from '@/components/onboarding/ThemeStep';
-import { VTubeStudioStep } from '@/components/onboarding/VTubeStudioStep';
-import { VoiceStep } from '@/components/onboarding/VoiceStep';
-import { SpeechRecognitionStep } from '@/components/onboarding/SpeechRecognitionStep';
-import { WelcomeStep } from '@/components/onboarding/WelcomeStep';
 import type { ReactNode } from 'react';
-import type { SandyOnboardingContext } from '@/components/onboarding/onboarding.types';
 
 export type {
 	OnboardingFlowData,

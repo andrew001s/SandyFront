@@ -13,10 +13,6 @@ import { useEffect, useState } from 'react';
 
 /**
  * Atiende las peticiones de inferencia del backend cuando el proveedor es local.
- *
- * Va dentro de AppSettingsProvider —lee la configuración— y a nivel del shell,
- * para que el chat y los eventos sigan respondiendo aunque el panel de
- * conversación no esté abierto.
  */
 function LocalAiRelay() {
 	useLocalAiRelay();
@@ -44,27 +40,29 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 			<LocalAiRelay />
 			<SidebarProvider defaultOpen={true}>
 				<AppSidebar />
-				<SidebarInset>
-					<header className='sticky top-0 z-20 flex h-14 items-center justify-between border-b bg-background/70 px-4 backdrop-blur-sm'>
-						<SidebarTrigger />
+				<SidebarInset className='bg-background'>
+					<header className='sticky top-0 z-20 flex h-14 items-center justify-between border-border border-b bg-card/80 px-4 backdrop-blur-md'>
+						<div className='flex items-center gap-2'>
+							<SidebarTrigger className='text-muted-foreground hover:text-foreground' />
+						</div>
 						{mounted && (
 							<div className='flex items-center gap-2'>
 								<button
 									type='button'
 									onClick={() => openNewsModal()}
-									className='flex h-9 items-center gap-1.5 rounded-full border border-border/70 bg-background/60 px-3 font-medium text-muted-foreground text-xs transition-colors hover:bg-accent hover:text-accent-foreground'
+									className='flex h-8 items-center gap-1.5 rounded-lg border border-border bg-background/80 px-3 font-medium font-sans text-muted-foreground text-xs transition-colors hover:bg-muted/50 hover:text-foreground'
 									aria-label='Ver novedades'
 								>
-									<Sparkles className='size-3.5 text-violet-500' />
+									<Sparkles className='size-3.5 text-primary' />
 									<span>Novedades</span>
 								</button>
 								<button
 									type='button'
 									onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-									className='flex size-9 items-center justify-center rounded-full border border-border/70 bg-background/60 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
+									className='flex size-8 items-center justify-center rounded-lg border border-border bg-background/80 text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground'
 									aria-label='Cambiar tema'
 								>
-									{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+									{theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
 								</button>
 							</div>
 						)}
@@ -72,11 +70,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 					<NewsModal />
 					<div className='relative flex-1'>
 						<StarField
-							count={40}
+							count={30}
 							seed={9}
-							className='pointer-events-none fixed inset-0 opacity-55'
+							className='pointer-events-none fixed inset-0 opacity-25 dark:opacity-35'
 						/>
-						<div className='pointer-events-none fixed inset-x-0 top-0 h-80 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.16),transparent_60%)]' />
+						<div className='pointer-events-none fixed inset-x-0 top-0 h-64 bg-[radial-gradient(ellipse_at_top,rgba(140,124,255,0.06),transparent_70%)]' />
 						<div className='relative z-10 flex h-full flex-col'>{children}</div>
 					</div>
 				</SidebarInset>

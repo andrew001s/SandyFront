@@ -1,6 +1,6 @@
 'use client';
 
-import { getSettings, type SettingsPayload } from '@/api/settings';
+import { type SettingsPayload, getSettings } from '@/api/settings';
 import { useAuth } from '@clerk/nextjs';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 

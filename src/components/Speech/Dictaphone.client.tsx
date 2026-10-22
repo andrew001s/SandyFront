@@ -3,6 +3,7 @@
 
 import { streamAiResponse } from '@/api/aiResponse';
 import { VoiceSetupDialog } from '@/components/Speech/VoiceSetupDialog';
+import { Button } from '@/components/ui/button';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
 import { useServiceStatus } from '@/hooks/useServiceStatus';
@@ -304,75 +305,92 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 	};
 
 	if (variant === 'tile') {
+		const isListening = micEnabled && listening;
+		const pillTone = !micEnabled
+			? 'border-border bg-background text-muted-foreground'
+			: isListening
+				? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+				: 'border-amber-500/30 bg-amber-500/10 text-amber-500';
+
 		return (
 			<>
-				<button
-					type='button'
-					onClick={() => handleSpeechToggle(!micEnabled)}
+				<div
 					className={cn(
-						'group relative flex h-full flex-col items-center gap-3 overflow-hidden rounded-2xl border p-5 text-center outline-none transition-all focus-visible:ring-2 focus-visible:ring-violet-500/50',
+						'group relative flex h-full min-h-[200px] flex-col justify-between rounded-xl border p-5 transition-all duration-200',
 						micEnabled
-							? 'border-violet-500/30 bg-violet-500/5 hover:border-violet-500/50 hover:bg-violet-500/10'
-							: 'border-border/60 bg-background/60 hover:border-border hover:bg-accent/50',
+							? 'border-primary/40 bg-card shadow-xs'
+							: 'border-border bg-card hover:border-primary/30',
 					)}
 				>
-					<div
-						className='pointer-events-none absolute inset-0 opacity-60'
-						style={{
-							backgroundImage:
-								'linear-gradient(to right, rgba(139,92,246,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(139,92,246,0.08) 1px, transparent 1px)',
-							backgroundSize: '18px 18px',
-						}}
-					/>
-					<span
-						className={cn(
-							'absolute top-3 right-3 flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-medium text-[10px] uppercase tracking-wide',
-							!micEnabled
-								? 'border-border/70 bg-background/80 text-muted-foreground'
-								: listening
-									? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-									: 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400',
-						)}
-					>
-						<span
+					<div>
+						<div className='flex items-center justify-between'>
+							<div
+								className={cn(
+									'flex size-10 items-center justify-center rounded-lg border transition-colors',
+									micEnabled
+										? 'border-primary/40 bg-primary/10 text-primary'
+										: 'border-border bg-background text-muted-foreground',
+								)}
+							>
+								{micEnabled ? (
+									<ThinkingOrb state='listening' size={64} speed={0.55} />
+								) : (
+									<Mic className='size-5' />
+								)}
+							</div>
+							<span
+								className={cn(
+									'flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider',
+									pillTone,
+								)}
+							>
+								<span
+									className={cn(
+										'size-1.5 rounded-full',
+										!micEnabled
+											? 'bg-muted-foreground/60'
+											: isListening
+												? 'animate-pulse bg-emerald-400'
+												: 'bg-amber-500',
+									)}
+								/>
+								{!micEnabled ? 'Inactivo' : isListening ? 'Escuchando' : 'Reconectando'}
+							</span>
+						</div>
+
+						<div className='mt-4'>
+							<h3 className='font-display font-semibold text-base text-foreground'>
+								Micrófono de Entrada
+							</h3>
+							<p className='mt-1 font-sans text-muted-foreground text-xs leading-relaxed'>
+								{micEnabled
+									? isListening
+										? 'Escuchando tu voz... di algo en directo para hablar con Sandy.'
+										: 'Reanudando el reconocimiento de audio...'
+									: browserSupportsSpeechRecognition
+										? 'Activa el micrófono para hablar con Sandy por voz en tu stream.'
+										: 'Tu navegador no tiene soporte para reconocimiento de voz.'}
+							</p>
+						</div>
+					</div>
+
+					<div className='mt-5'>
+						<Button
+							type='button'
+							onClick={() => handleSpeechToggle(!micEnabled)}
+							disabled={!browserSupportsSpeechRecognition}
 							className={cn(
-								'size-1.5 rounded-full',
-								!micEnabled
-									? 'bg-muted-foreground'
-									: listening
-										? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.9)]'
-										: 'bg-amber-500',
+								'h-9 w-full rounded-lg font-sans font-semibold text-xs transition-all',
+								micEnabled
+									? 'border border-border bg-card text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+									: 'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90',
 							)}
-						/>
-						{!micEnabled ? 'Inactivo' : listening ? 'Escuchando' : 'Reconectando'}
-					</span>
-					<div
-						className={cn(
-							'mt-5 flex size-12 items-center justify-center rounded-2xl border shadow-sm transition-colors',
-							micEnabled
-								? 'border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-[#A78BFA]'
-								: 'border-border/70 bg-background/80 text-muted-foreground',
-						)}
-					>
-						{micEnabled ? (
-							<ThinkingOrb state='listening' size={64} speed={0.55} />
-						) : (
-							<Mic className='size-6' />
-						)}
+						>
+							<Mic size={14} />
+							<span>{micEnabled ? 'Desactivar micrófono' : 'Activar micrófono'}</span>
+						</Button>
 					</div>
-					<div className='relative z-10'>
-						<p className='font-medium text-sm'>Micrófono</p>
-						<p className='text-muted-foreground text-xs'>
-							{micEnabled
-								? listening
-									? 'Escuchando... di algo para hablar con Sandy.'
-									: 'Reanudando el reconocimiento...'
-								: browserSupportsSpeechRecognition
-									? 'Activa el micrófono para hablar con Sandy.'
-									: 'Tu navegador no soporta reconocimiento de voz.'}
-						</p>
-					</div>
-				</button>
+				</div>
 				<VoiceSetupDialog
 					open={isSetupDialogOpen}
 					onOpenChange={setIsSetupDialogOpen}

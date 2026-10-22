@@ -19,10 +19,10 @@ export function AvatarExpressionsCard({
 	}
 
 	return (
-		<Card className='border-border/50 bg-card/50 backdrop-blur-sm'>
+		<Card className='rounded-xl border-border/60 bg-card'>
 			<CardHeader>
-				<CardTitle className='flex items-center gap-2 text-lg'>
-					<FiSmile size={18} className='text-chart-1' />
+				<CardTitle className='flex items-center gap-2 font-display font-semibold text-base text-foreground'>
+					<FiSmile size={18} className='text-primary' />
 					Expresiones
 				</CardTitle>
 				<CardDescription>Dispará las expresiones del modelo activo</CardDescription>

@@ -65,19 +65,19 @@ export function AvatarConnectionCard({
 	const isVSeeFace = software === 'vseeface';
 
 	return (
-		<Card className='border-border/50 bg-card/50 backdrop-blur-sm'>
+		<Card className='rounded-xl border-border/60 bg-card'>
 			<CardHeader className='pb-4'>
 				<div className='flex items-center justify-between'>
-					<div className='flex items-center gap-2'>
+					<div className='flex items-center gap-3'>
 						<div
-							className={`rounded-lg p-2 ${
-								isVSeeFace ? 'bg-cyan-500/10 text-cyan-400' : 'bg-pink-500/10 text-pink-500'
+							className={`rounded-lg p-2.5 ${
+								isVSeeFace ? 'bg-cyan-500/10 text-cyan-400' : 'bg-primary/10 text-primary'
 							}`}
 						>
 							{isVSeeFace ? <Box className='size-5' /> : <Tv className='size-5' />}
 						</div>
 						<div>
-							<CardTitle className='flex items-center gap-2 text-lg'>
+							<CardTitle className='flex items-center gap-2 font-display font-semibold text-base text-foreground'>
 								Conexión: {currentMeta.name}
 							</CardTitle>
 							<CardDescription className='text-xs'>

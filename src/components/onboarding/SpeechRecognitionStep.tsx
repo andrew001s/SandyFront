@@ -11,15 +11,15 @@ import type {
 	SandyOnboardingContext,
 	StepProps,
 } from '@/components/onboarding/onboarding.types';
-import { getStoredSttProvider, storeSttProvider, type SttProvider } from '@/lib/stt-provider';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { type SttProvider, getStoredSttProvider, storeSttProvider } from '@/lib/stt-provider';
 import { useAuth } from '@clerk/nextjs';
 import { useOnboarding } from '@onboardjs/react';
 import { motion } from 'framer-motion';
 import { Mic } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 
 const sttOptions: Array<{
 	id: SttProvider;

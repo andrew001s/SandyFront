@@ -16,7 +16,7 @@ import { useServiceStatus } from '@/hooks/useServiceStatus';
 import { getAiErrorCode, getAiErrorMessage } from '@/lib/ai-errors';
 import { markServiceStarted, stopServiceRuntime } from '@/lib/serviceRuntime';
 import { cn } from '@/lib/utils';
-import { Power } from 'lucide-react';
+import { Pause, Play, Power } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import posthog from 'posthog-js';
 import { useState } from 'react';
@@ -36,11 +36,8 @@ export function ServiceStartCard() {
 		refresh: refreshStatus,
 	} = useServiceStatus();
 
-	// Se mide "ya intentamos cargar", no "tenemos datos": si /service-status falla,
-	// el esqueleto tiene que irse igual en vez de quedarse para siempre.
 	const statusLoaded = hasLoadedStatus;
 
-	// Determinamos si hay al menos una plataforma conectada (para poder arrancar)
 	const isConfigured = serviceStatus?.platforms
 		? Boolean(
 				serviceStatus.platforms.twitch?.connected ||
@@ -61,9 +58,6 @@ export function ServiceStartCard() {
 			await refreshStatus();
 			toast.success('Servicios iniciados');
 		} catch (error) {
-			// El backend devuelve un código estable: se muestra el motivo real
-			// (sin vincular, hay que reautorizar, falta canal...) en vez de un
-			// "no se pudo" que no dice qué arreglar.
 			console.error('Error al iniciar servicios:', error);
 			toast.error(getAiErrorMessage(error));
 			posthog.capture('twitch_service_start_failed', { code: getAiErrorCode(error) });
@@ -77,11 +71,7 @@ export function ServiceStartCard() {
 			setIsBusy(true);
 			await stop(false);
 			posthog.capture('twitch_service_paused');
-			// Corta lo que siguiera en vuelo: respuesta generándose, voz
-			// sintetizándose, audio encolado y la boca del modelo.
 			stopServiceRuntime();
-			// Antes solo se marcaba al arrancar: el estado global se quedaba en
-			// activo tras pausar y todo lo que dependía de él seguía habilitado.
 			setStatus(false);
 			await refreshStatus();
 			toast.success('Servicios pausados');
@@ -117,13 +107,14 @@ export function ServiceStartCard() {
 				: active
 					? 'Activo'
 					: 'Inactivo';
+
 	const pillTone = !statusLoaded
-		? 'border-border/70 bg-background/80 text-muted-foreground'
+		? 'border-border bg-background text-muted-foreground'
 		: !isConfigured || isStatusUnknown
-			? 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+			? 'border-amber-500/30 bg-amber-500/10 text-amber-500'
 			: active
-				? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-				: 'border-border/70 bg-background/80 text-muted-foreground';
+				? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+				: 'border-border bg-background text-muted-foreground';
 
 	const description = !statusLoaded
 		? 'Consultando el estado del servicio...'
@@ -132,15 +123,8 @@ export function ServiceStartCard() {
 			: isStatusUnknown
 				? 'No se pudo consultar el estado. Reintentando...'
 				: active
-					? 'La VTuber está activa y responde a tu chat.'
-					: 'Inicia la VTuber para que responda a tu chat.';
-	const actionLabel = isBusy
-		? isRunning
-			? 'Pausando...'
-			: 'Iniciando...'
-		: active
-			? 'Pausar servicios'
-			: 'Iniciar servicios';
+					? 'La VTuber está activa y procesando eventos del stream.'
+					: 'Inicia la VTuber para que comience a interactuar con tu chat.';
 
 	if (!statusLoaded) {
 		return <ServiceStartSkeleton />;
@@ -148,80 +132,107 @@ export function ServiceStartCard() {
 
 	return (
 		<>
-			<button
-				type='button'
-				onClick={handleClick}
-				disabled={isBusy}
+			<div
 				className={cn(
-					'group relative flex h-full flex-col items-center gap-3 overflow-hidden rounded-2xl border p-5 text-center outline-none transition-all focus-visible:ring-2 focus-visible:ring-violet-500/50',
+					'group relative flex h-full min-h-[200px] flex-col justify-between rounded-xl border p-5 transition-all duration-200',
 					active
-						? 'border-violet-500/30 bg-violet-500/5 hover:border-violet-500/50 hover:bg-violet-500/10'
-						: 'border-border/60 bg-background/60 hover:border-border hover:bg-accent/50',
+						? 'border-primary/40 bg-card shadow-xs'
+						: 'border-border bg-card hover:border-primary/30',
 				)}
 			>
-				<div
-					className='pointer-events-none absolute inset-0 opacity-60'
-					style={{
-						backgroundImage:
-							'linear-gradient(to right, rgba(139,92,246,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(139,92,246,0.08) 1px, transparent 1px)',
-						backgroundSize: '18px 18px',
-					}}
-				/>
-				<span
-					className={cn(
-						'absolute top-3 right-3 flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-medium text-[10px] uppercase tracking-wide',
-						pillTone,
-					)}
-				>
-					<span
+				<div>
+					<div className='flex items-center justify-between'>
+						<div
+							className={cn(
+								'flex size-10 items-center justify-center rounded-lg border transition-colors',
+								active
+									? 'border-primary/40 bg-primary/10 text-primary'
+									: 'border-border bg-background text-muted-foreground',
+							)}
+						>
+							{isBusy ? (
+								<ThinkingOrb state='solving' size={64} speed={0.55} />
+							) : (
+								<Power className='size-5' />
+							)}
+						</div>
+						<span
+							className={cn(
+								'flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider',
+								pillTone,
+							)}
+						>
+							<span
+								className={cn(
+									'size-1.5 rounded-full',
+									!statusLoaded
+										? 'bg-muted-foreground'
+										: !isConfigured || isStatusUnknown
+											? 'bg-amber-500'
+											: active
+												? 'animate-pulse bg-emerald-400'
+												: 'bg-muted-foreground/60',
+								)}
+							/>
+							{pillLabel}
+						</span>
+					</div>
+
+					<div className='mt-4'>
+						<h3 className='font-display font-semibold text-base text-foreground'>
+							Servicio de Emisión
+						</h3>
+						<p className='mt-1 font-sans text-muted-foreground text-xs leading-relaxed'>
+							{description}
+						</p>
+					</div>
+				</div>
+
+				<div className='mt-5'>
+					<Button
+						type='button'
+						onClick={handleClick}
+						disabled={isBusy}
 						className={cn(
-							'size-1.5 rounded-full',
-							!statusLoaded
-								? 'bg-muted-foreground'
-								: !isConfigured || isStatusUnknown
-									? 'bg-amber-500'
-									: active
-										? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.9)]'
-										: 'bg-muted-foreground',
+							'h-9 w-full rounded-lg font-sans font-semibold text-xs transition-all',
+							active
+								? 'border border-border bg-card text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+								: 'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90',
 						)}
-					/>
-					{pillLabel}
-				</span>
-				<div
-					className={cn(
-						'mt-5 flex size-12 items-center justify-center rounded-2xl border shadow-sm transition-colors',
-						active
-							? 'border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-[#A78BFA]'
-							: 'border-border/70 bg-background/80 text-muted-foreground',
-					)}
-				>
-					{isBusy ? (
-						<ThinkingOrb state='solving' size={64} speed={0.55} />
-					) : (
-						<Power className='size-6' />
-					)}
+					>
+						{isBusy ? (
+							<span>{active ? 'Pausando...' : 'Iniciando...'}</span>
+						) : active ? (
+							<>
+								<Pause size={14} />
+								<span>Pausar servicios</span>
+							</>
+						) : (
+							<>
+								<Play size={14} className='fill-current' />
+								<span>{isConfigured === false ? 'Ir a Conexiones' : 'Iniciar servicios'}</span>
+							</>
+						)}
+					</Button>
 				</div>
-				<div className='relative z-10'>
-					<p className='font-medium text-sm'>Servicio de la VTuber</p>
-					<p className='text-muted-foreground text-xs'>{description}</p>
-					<p className='mt-4 font-medium text-foreground text-sm'>{actionLabel}</p>
-				</div>
-			</button>
+			</div>
 
 			<Dialog open={isStopConfirmOpen} onOpenChange={setIsStopConfirmOpen}>
-				<DialogContent className='w-[min(92vw,26rem)]'>
+				<DialogContent className='w-[min(92vw,26rem)] border-border bg-card'>
 					<DialogHeader>
-						<DialogTitle>¿Pausar servicios?</DialogTitle>
-						<DialogDescription>
-							Se detendrán chat, EventSub y monitor, pero la sesión de Twitch permanecerá activa.
+						<DialogTitle className='font-display'>¿Pausar servicios?</DialogTitle>
+						<DialogDescription className='font-sans text-muted-foreground text-xs'>
+							Se detendrán el chat, EventSub y el monitor en vivo, pero tu sesión y configuración
+							permanecerán guardadas.
 						</DialogDescription>
 					</DialogHeader>
-					<DialogFooter>
+					<DialogFooter className='gap-2 sm:gap-0'>
 						<Button
 							type='button'
 							variant='outline'
 							onClick={() => setIsStopConfirmOpen(false)}
 							disabled={isBusy}
+							className='border-border font-sans text-xs'
 						>
 							Cancelar
 						</Button>
@@ -230,8 +241,9 @@ export function ServiceStartCard() {
 							variant='destructive'
 							onClick={() => void handleStop()}
 							disabled={isBusy}
+							className='font-sans text-xs'
 						>
-							{isBusy ? 'Pausando...' : 'Pausar servicios'}
+							{isBusy ? 'Pausando...' : 'Confirmar pausa'}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

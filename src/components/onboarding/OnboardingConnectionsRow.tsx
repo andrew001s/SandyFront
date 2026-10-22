@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { KickAuthProvider, useKickAuthContext } from '@/context/KickAuthContext';
 import { TwitchAuthProvider, useTwitchAuthContext } from '@/context/TwitchAuthContext';
 import { YoutubeAuthProvider, useYoutubeAuthContext } from '@/context/YoutubeAuthContext';
-import type { ReactNode } from 'react';
-import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { useEffect } from 'react';
 import { SiKick, SiTwitch, SiYoutube } from 'react-icons/si';
 
 type ConnectionTileProps = {

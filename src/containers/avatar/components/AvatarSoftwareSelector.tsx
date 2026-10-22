@@ -1,7 +1,5 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
 import { AVATAR_SOFTWARE_LIST } from '@/lib/avatar/constants';
 import type { AvatarSoftware } from '@/types/avatar';
 import { Box, Tv } from 'lucide-react';
@@ -26,22 +24,23 @@ export function AvatarSoftwareSelector({
 				const isConnected = connectedSoftware === meta.id;
 
 				return (
-					<Card
+					<button
 						key={meta.id}
+						type='button'
 						onClick={() => onSelect(meta.id)}
-						className={`relative cursor-pointer border p-4 transition-all duration-200 hover:border-primary/50 ${
+						className={`flex select-none flex-col justify-between rounded-xl border p-4 text-left outline-none transition-all duration-150 ${
 							isSelected
-								? 'border-primary/60 bg-primary/10 shadow-lg shadow-primary/5 ring-1 ring-primary/40'
-								: 'border-border/50 bg-card/40 hover:bg-card/70'
+								? 'border-primary/50 bg-primary/[0.08] shadow-xs'
+								: 'border-border bg-card hover:border-primary/30'
 						}`}
 					>
 						<div className='flex items-start justify-between gap-3'>
 							<div className='flex items-center gap-3'>
 								<div
-									className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${
+									className={`flex size-10 shrink-0 items-center justify-center rounded-lg border ${
 										meta.id === 'vtubestudio'
-											? 'bg-pink-500/10 text-pink-500'
-											: 'bg-cyan-500/10 text-cyan-400'
+											? 'border-primary/30 bg-primary/10 text-primary'
+											: 'border-[#F28BD8]/30 bg-[#F28BD8]/10 text-[#F28BD8]'
 									}`}
 								>
 									{meta.id === 'vtubestudio' ? (
@@ -52,19 +51,20 @@ export function AvatarSoftwareSelector({
 								</div>
 								<div>
 									<div className='flex items-center gap-2'>
-										<h3 className='font-semibold text-foreground text-sm'>{meta.name}</h3>
-										<Badge
-											variant='outline'
-											className={`text-[10px] ${
+										<h3 className='font-display font-semibold text-foreground text-sm'>
+											{meta.name}
+										</h3>
+										<span
+											className={`rounded border px-1.5 py-0.2 font-bold font-mono text-[9px] uppercase ${
 												meta.dimension === '2d'
-													? 'border-pink-500/30 text-pink-400'
-													: 'border-cyan-500/30 text-cyan-400'
+													? 'border-primary/30 bg-primary/10 text-primary'
+													: 'border-[#F28BD8]/30 bg-[#F28BD8]/10 text-[#F28BD8]'
 											}`}
 										>
 											{meta.badge}
-										</Badge>
+										</span>
 									</div>
-									<p className='mt-1 line-clamp-2 text-muted-foreground text-xs leading-relaxed'>
+									<p className='mt-1 line-clamp-2 font-sans text-muted-foreground text-xs leading-relaxed'>
 										{meta.description}
 									</p>
 								</div>
@@ -72,19 +72,19 @@ export function AvatarSoftwareSelector({
 
 							<div className='shrink-0'>
 								{isConnected ? (
-									<span className='flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-medium text-[11px] text-emerald-400'>
+									<span className='flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] text-emerald-400'>
 										<span className='size-1.5 animate-pulse rounded-full bg-emerald-400' />
-										Conectado
+										ONLINE
 									</span>
 								) : isSelected && isConnecting ? (
-									<span className='flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-medium text-[11px] text-amber-400'>
+									<span className='flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] text-amber-400'>
 										<span className='size-1.5 animate-pulse rounded-full bg-amber-400' />
-										Conectando
+										CONECTANDO
 									</span>
 								) : null}
 							</div>
 						</div>
-					</Card>
+					</button>
 				);
 			})}
 		</div>

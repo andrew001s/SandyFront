@@ -1,4 +1,5 @@
 import { SettingsDropdownField } from '@/components/Settings/SettingsDropdownField';
+import { SettingsModelIcon } from '@/components/Settings/SettingsModelIcon';
 import {
 	formatOpenRouterContext,
 	formatOpenRouterPrice,
@@ -20,7 +21,6 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ExternalLink } from 'lucide-react';
 import type { UIEvent } from 'react';
-import { SettingsModelIcon } from '@/components/Settings/SettingsModelIcon';
 
 type OpenRouterModelDialogProps = {
 	open: boolean;

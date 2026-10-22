@@ -1,6 +1,6 @@
+import type { BannedItem, BannedItemType } from '@/components/Moderation/moderation.types';
 import { Badge } from '@/components/ui/badge';
 import { Pencil, Trash2 } from 'lucide-react';
-import type { BannedItem, BannedItemType } from '@/components/Moderation/moderation.types';
 
 const BANNED_TYPE_META: Record<BannedItemType, { label: string; className: string }> = {
 	word: {
@@ -25,26 +25,31 @@ type ModerationItemRowProps = {
 
 export function ModerationItemRow({ item, onEdit, onDelete }: ModerationItemRowProps) {
 	return (
-		<div className='flex items-center gap-3 rounded-2xl border border-border/60 bg-background/60 px-4 py-3'>
-			<Badge variant='outline' className={BANNED_TYPE_META[item.type].className}>
+		<div className='flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3 transition-colors hover:border-border'>
+			<Badge
+				variant='outline'
+				className={`rounded-md font-mono text-[11px] ${BANNED_TYPE_META[item.type].className}`}
+			>
 				{BANNED_TYPE_META[item.type].label}
 			</Badge>
-			<span className='min-w-0 flex-1 truncate font-medium text-sm'>{item.value}</span>
+			<span className='min-w-0 flex-1 truncate font-mono text-foreground text-xs'>
+				{item.value}
+			</span>
 			<button
 				type='button'
 				onClick={() => onEdit(item)}
 				aria-label={`Editar ${item.value}`}
-				className='flex size-8 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-background text-muted-foreground transition-colors hover:border-violet-500/40 hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-[#A78BFA]'
+				className='flex size-7 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-colors hover:border-primary/50 hover:bg-primary/10 hover:text-primary'
 			>
-				<Pencil className='size-4' />
+				<Pencil className='size-3.5' />
 			</button>
 			<button
 				type='button'
 				onClick={() => onDelete(item.id)}
 				aria-label={`Eliminar ${item.value}`}
-				className='flex size-8 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-background text-muted-foreground transition-colors hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-500'
+				className='flex size-7 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-colors hover:border-destructive/50 hover:bg-destructive/10 hover:text-destructive'
 			>
-				<Trash2 className='size-4' />
+				<Trash2 className='size-3.5' />
 			</button>
 		</div>
 	);

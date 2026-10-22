@@ -2,8 +2,8 @@
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { CardComponentProps } from 'nextstepjs';
 import { useTheme } from 'next-themes';
+import type { CardComponentProps } from 'nextstepjs';
 
 export function DashboardTourCard({
 	step,

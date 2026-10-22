@@ -1,5 +1,5 @@
 import { AudioQueueManager } from '@/lib/audioQueueSingleton';
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface AudioQueueHook {
 	isPlaying: boolean;

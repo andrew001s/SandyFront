@@ -100,7 +100,7 @@ export function AddBannedItemSheet({
 				</SheetHeader>
 				<div className='space-y-5 px-4'>
 					<div className='space-y-2'>
-						<Label>Tipo</Label>
+						<Label className='font-mono text-xs'>Tipo</Label>
 						<div className='grid grid-cols-3 gap-2'>
 							{TYPE_OPTIONS.map((option) => (
 								<button
@@ -108,10 +108,10 @@ export function AddBannedItemSheet({
 									type='button'
 									onClick={() => setType(option.value)}
 									className={cn(
-										'rounded-xl border px-3 py-2 font-medium text-sm transition-colors',
+										'rounded-lg border px-3 py-2 font-medium text-xs transition-colors',
 										type === option.value
-											? 'border-violet-500/40 bg-violet-500/10 text-violet-600 dark:text-[#A78BFA]'
-											: 'border-border/60 bg-background/60 text-muted-foreground hover:border-border hover:text-foreground',
+											? 'border-primary/50 bg-primary/10 text-primary'
+											: 'border-border/60 bg-card text-muted-foreground hover:border-border hover:text-foreground',
 									)}
 								>
 									{option.label}
@@ -122,16 +122,16 @@ export function AddBannedItemSheet({
 
 					{!editingItem ? (
 						<div className='space-y-2'>
-							<Label>Modo</Label>
+							<Label className='font-mono text-xs'>Modo</Label>
 							<div className='grid grid-cols-2 gap-2'>
 								<button
 									type='button'
 									onClick={() => setIsBulk(false)}
 									className={cn(
-										'rounded-xl border px-3 py-2 font-medium text-sm transition-colors',
+										'rounded-lg border px-3 py-2 font-medium text-xs transition-colors',
 										!isBulk
-											? 'border-violet-500/40 bg-violet-500/10 text-violet-600 dark:text-[#A78BFA]'
-											: 'border-border/60 bg-background/60 text-muted-foreground hover:border-border hover:text-foreground',
+											? 'border-primary/50 bg-primary/10 text-primary'
+											: 'border-border/60 bg-card text-muted-foreground hover:border-border hover:text-foreground',
 									)}
 								>
 									Una entrada
@@ -140,10 +140,10 @@ export function AddBannedItemSheet({
 									type='button'
 									onClick={() => setIsBulk(true)}
 									className={cn(
-										'rounded-xl border px-3 py-2 font-medium text-sm transition-colors',
+										'rounded-lg border px-3 py-2 font-medium text-xs transition-colors',
 										isBulk
-											? 'border-violet-500/40 bg-violet-500/10 text-violet-600 dark:text-[#A78BFA]'
-											: 'border-border/60 bg-background/60 text-muted-foreground hover:border-border hover:text-foreground',
+											? 'border-primary/50 bg-primary/10 text-primary'
+											: 'border-border/60 bg-card text-muted-foreground hover:border-border hover:text-foreground',
 									)}
 								>
 									Varias (bulk)
@@ -154,22 +154,26 @@ export function AddBannedItemSheet({
 
 					{isBulk && !editingItem ? (
 						<div className='space-y-2'>
-							<Label htmlFor='bulk_text'>Lista</Label>
+							<Label htmlFor='bulk_text' className='font-mono text-xs'>
+								Lista
+							</Label>
 							<textarea
 								id='bulk_text'
 								rows={6}
 								value={bulkText}
 								onChange={(event) => setBulkText(event.target.value)}
 								placeholder={'spam\npromo\nlink'}
-								className='w-full resize-y rounded-xl border border-border/60 bg-background/60 px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/30'
+								className='w-full resize-y rounded-lg border border-border/80 bg-background/80 p-3 font-mono text-xs outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:ring-1 focus:ring-primary'
 							/>
-							<p className='text-muted-foreground text-xs'>
+							<p className='font-sans text-muted-foreground text-xs'>
 								Una por línea, todas del tipo elegido.
 							</p>
 						</div>
 					) : (
 						<div className='space-y-2'>
-							<Label htmlFor='item_value'>Valor</Label>
+							<Label htmlFor='item_value' className='font-mono text-xs'>
+								Valor
+							</Label>
 							<Input
 								id='item_value'
 								value={value}
@@ -181,6 +185,7 @@ export function AddBannedItemSheet({
 									}
 								}}
 								placeholder={type === 'word' ? 'spam' : type === 'symbol' ? '🔞' : 'discord.gg/'}
+								className='font-mono text-xs'
 							/>
 						</div>
 					)}
@@ -196,9 +201,9 @@ export function AddBannedItemSheet({
 									? bulkText.trim().length === 0
 									: value.trim().length === 0
 						}
-						className='bg-[#8B5CF6] text-white hover:bg-[#7C3AED]'
+						className='rounded-lg bg-primary font-sans font-semibold text-primary-foreground text-xs shadow-xs hover:bg-primary/90'
 					>
-						{editingItem ? 'Guardar cambios' : 'Agregar'}
+						{editingItem ? 'Guardar cambios' : 'Agregar regla'}
 					</Button>
 				</SheetFooter>
 			</SheetContent>

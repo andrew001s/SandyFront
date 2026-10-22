@@ -156,11 +156,11 @@ export function AvatarModelPositionCard({
 	const disabled = !connected || !currentModel;
 
 	return (
-		<Card className='border-border/50 bg-card/50 backdrop-blur-sm'>
+		<Card className='rounded-xl border-border/60 bg-card'>
 			<CardHeader className='flex-row items-center justify-between space-y-0'>
 				<div>
-					<CardTitle className='flex items-center gap-2 text-lg'>
-						<FiMove size={18} className='text-chart-1' />
+					<CardTitle className='flex items-center gap-2 font-display font-semibold text-base text-foreground'>
+						<FiMove size={18} className='text-primary' />
 						Posición y escala
 					</CardTitle>
 					<CardDescription>Ajustá el modelo en tiempo real</CardDescription>

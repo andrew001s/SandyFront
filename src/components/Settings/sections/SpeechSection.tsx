@@ -1,6 +1,6 @@
 import { SettingsDropdownField } from '@/components/Settings/SettingsDropdownField';
 import { SettingsSectionCard } from '@/components/Settings/SettingsSectionCard';
-import type { SettingsFormState, DropdownOption } from '@/components/Settings/settings.types';
+import type { DropdownOption, SettingsFormState } from '@/components/Settings/settings.types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

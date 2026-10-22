@@ -1,7 +1,7 @@
-import type { Metadata } from 'next';
 import { AvatarContainer } from '@/containers/avatar/AvatarContainer';
 import { DashboardShell } from '@/containers/dashboard/DashboardShell';
 import { noIndexMetadata } from '@/lib/seo';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = noIndexMetadata;
 

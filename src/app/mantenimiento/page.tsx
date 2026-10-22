@@ -1,6 +1,6 @@
 import { noIndexMetadata } from '@/lib/seo';
-import type { Metadata } from 'next';
 import { Wrench } from 'lucide-react';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = noIndexMetadata;
 

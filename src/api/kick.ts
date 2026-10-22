@@ -1,7 +1,7 @@
 import { backendClient } from '@/api/backendClient';
-import type { TokensInterface } from '@/interfaces/tokensInterface';
 import type { ServiceStatus } from '@/api/sandycore';
 import type { ProfileModel } from '@/interfaces/profileInterface';
+import type { TokensInterface } from '@/interfaces/tokensInterface';
 
 type Auth = {
 	token: string;

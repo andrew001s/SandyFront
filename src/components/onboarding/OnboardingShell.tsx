@@ -1,20 +1,20 @@
 'use client';
 
-import { useOnboarding } from '@onboardjs/react';
-import { ArrowLeft, ArrowRight, LogOut, SkipForward } from 'lucide-react';
-import Image from 'next/image';
-import { useTheme } from 'next-themes';
 import { useAuth } from '@clerk/nextjs';
-import { useCallback, useState } from 'react';
+import { useOnboarding } from '@onboardjs/react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowLeft, ArrowRight, LogOut, SkipForward } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import Image from 'next/image';
+import { useCallback, useState } from 'react';
 
-import { submitOnboardingSettings } from '@/components/onboarding/onboardingSubmit';
 import { StarField } from '@/components/landing/StarField';
+import { submitOnboardingSettings } from '@/components/onboarding/onboardingSubmit';
 import { Button } from '@/components/ui/button';
 import { markOnboardingDismissed } from '@/lib/onboarding/keys';
 import { toast } from 'sonner';
 
-import { stepOrder, type SandyOnboardingContext } from './onboardingSteps';
+import { type SandyOnboardingContext, stepOrder } from './onboardingSteps';
 
 export function OnboardingShell() {
 	const { state, currentStep, loading, next, goToStep, skip, renderStep } =

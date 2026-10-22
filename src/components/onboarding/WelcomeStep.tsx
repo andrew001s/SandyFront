@@ -1,12 +1,12 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import type { StepProps } from '@/components/onboarding/onboarding.types';
+import { Button } from '@/components/ui/button';
 import { useOnboarding } from '@onboardjs/react';
 import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
-import Image from 'next/image';
 import { useTheme } from 'next-themes';
+import Image from 'next/image';
 
 export function WelcomeStep({ payload }: StepProps) {
 	const { next } = useOnboarding();

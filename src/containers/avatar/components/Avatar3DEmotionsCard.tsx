@@ -71,15 +71,17 @@ export function Avatar3DEmotionsCard({
 	};
 
 	return (
-		<Card className='border-border/50 bg-card/50 backdrop-blur-sm'>
+		<Card className='rounded-xl border-border/60 bg-card'>
 			<CardHeader className='pb-4'>
 				<div className='flex items-center justify-between'>
-					<div className='flex items-center gap-2'>
-						<div className='rounded-lg bg-pink-500/10 p-2 text-pink-400'>
+					<div className='flex items-center gap-3'>
+						<div className='rounded-lg bg-primary/10 p-2.5 text-primary'>
 							<Smile className='size-5' />
 						</div>
 						<div>
-							<CardTitle className='text-lg'>Emociones VRM 3D (VSeeFace)</CardTitle>
+							<CardTitle className='font-display font-semibold text-base text-foreground'>
+								Emociones VRM 3D (VSeeFace)
+							</CardTitle>
 							<CardDescription className='text-xs'>
 								Transmite expresiones estándar VRM (0.x y 1.0) con tiempo de transición configurable
 							</CardDescription>

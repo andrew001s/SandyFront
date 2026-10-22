@@ -9,10 +9,10 @@ type AvatarModelInfoCardProps = {
 
 export function AvatarModelInfoCard({ currentModel }: AvatarModelInfoCardProps) {
 	return (
-		<Card className='border-border/50 bg-card/50 backdrop-blur-sm'>
+		<Card className='rounded-xl border-border/60 bg-card'>
 			<CardHeader>
-				<CardTitle className='flex items-center gap-2 text-lg'>
-					<FiUser size={18} className='text-chart-1' />
+				<CardTitle className='flex items-center gap-2 font-display font-semibold text-base text-foreground'>
+					<FiUser size={18} className='text-primary' />
 					Modelo activo
 				</CardTitle>
 				<CardDescription>{currentModel ? currentModel.modelName : 'Ninguno'}</CardDescription>

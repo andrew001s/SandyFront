@@ -36,63 +36,58 @@ export function SupportCard() {
 	}
 
 	return (
-		<div className='relative mt-4 overflow-hidden rounded-2xl border border-[#FF5E5B]/30 bg-gradient-to-r from-[#FF5E5B]/10 via-background/80 to-violet-500/10 p-5 shadow-sm backdrop-blur-md transition-all sm:p-6'>
-			{/* Efectos de resplandor de fondo */}
-			<div className='-top-12 -right-12 pointer-events-none absolute size-36 rounded-full bg-[#FF5E5B]/15 blur-2xl' />
-			<div className='-bottom-10 -left-10 pointer-events-none absolute size-32 rounded-full bg-violet-600/15 blur-2xl' />
-
+		<div className='relative mt-4 overflow-hidden rounded-xl border border-border bg-card p-4 shadow-xs sm:p-5'>
 			{/* Botón para descartar */}
 			<button
 				type='button'
 				onClick={handleDismiss}
-				className='absolute top-3.5 right-3.5 flex size-7 items-center justify-center rounded-full text-muted-foreground/80 transition-colors hover:bg-muted hover:text-foreground'
+				className='absolute top-3 right-3 flex size-6 items-center justify-center rounded-md border border-border/60 bg-background text-muted-foreground hover:bg-muted/50 hover:text-foreground'
 				aria-label='Ocultar sugerencia'
 				title='Ocultar'
 			>
-				<X className='size-4' />
+				<X className='size-3.5' />
 			</button>
 
 			<div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-				<div className='flex items-start gap-4'>
-					<div className='flex size-12 shrink-0 items-center justify-center rounded-2xl border border-[#FF5E5B]/40 bg-[#FF5E5B]/15 text-[#FF5E5B] shadow-xs'>
-						<Coffee className='size-6' />
+				<div className='flex items-start gap-3.5 pr-6 sm:pr-0'>
+					<div className='flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-primary'>
+						<Coffee className='size-5' />
 					</div>
-					<div className='space-y-1 pr-6 sm:pr-0'>
+					<div>
 						<div className='flex items-center gap-2'>
-							<span className='font-semibold text-[#FF5E5B] text-xs uppercase tracking-wider'>
-								Apoya el proyecto
+							<span className='font-medium font-mono text-[11px] text-primary uppercase tracking-wider'>
+								Comunidad y novedades
 							</span>
-							<span className='flex size-2 animate-pulse rounded-full bg-[#FF5E5B]' />
-							<Heart className='size-3.5 fill-[#FF5E5B] text-[#FF5E5B]' />
+							<Heart className='size-3 fill-primary text-primary' />
 						</div>
-						<h3 className='font-bold text-base text-foreground sm:text-lg'>
-							Si Sandy alegra tus transmisiones, ¡invítale un café!
+						<h3 className='font-display font-semibold text-foreground text-sm sm:text-base'>
+							¿Sandy suma a tus transmisiones? Apoya su desarrollo
 						</h3>
-						<p className='max-w-2xl text-muted-foreground text-xs leading-relaxed sm:text-sm'>
-							Sandy Studio es gratuita y de código abierto. Un aporte voluntario en Ko-fi nos
-							permite costear servidores y mantener el proyecto en funcionamiento.
+						<p className='mt-0.5 max-w-xl font-sans text-muted-foreground text-xs leading-relaxed'>
+							Sandy Studio es gratuita e independiente. Tu aporte voluntario en Ko-fi ayuda a
+							costear servidores y acelerar nuevas integraciones.
 						</p>
 					</div>
 				</div>
 
-				<div className='flex flex-wrap items-center gap-2 pt-1 sm:shrink-0 sm:pt-0'>
+				<div className='flex flex-wrap items-center gap-2 sm:shrink-0'>
 					<Button
 						type='button'
 						variant='outline'
 						size='sm'
 						onClick={() => openNewsModal()}
-						className='h-9 gap-1.5 rounded-xl border-border/80 font-medium text-xs'
+						className='h-8 gap-1.5 rounded-lg border-border font-medium font-sans text-xs'
 					>
-						<Sparkles className='size-3.5 text-violet-500' />
+						<Sparkles className='size-3.5 text-primary' />
 						<span>Ver novedades</span>
 					</Button>
 					<a
 						href={KOFI_URL}
 						target='_blank'
 						rel='noopener noreferrer'
-						className='inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-[#FF5E5B] px-4 font-semibold text-white text-xs shadow-xs transition-all hover:scale-[1.02] hover:bg-[#e04e4b] hover:shadow-md active:scale-[0.98]'
+						className='inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-3 font-medium font-sans text-primary text-xs hover:bg-primary/20'
 					>
-						<Coffee className='size-4' />
+						<Coffee className='size-3.5' />
 						<span>Donar en Ko-fi</span>
 						<ExternalLink className='size-3 opacity-70' />
 					</a>
