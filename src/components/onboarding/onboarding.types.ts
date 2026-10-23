@@ -1,7 +1,7 @@
-import type { OnboardingContext, CustomComponentStepPayload } from '@onboardjs/core';
-import type { StepComponentProps } from '@onboardjs/react';
 import type { AiProvider } from '@/lib/ai-provider';
 import type { SandyCoreConfig } from '@/lib/sandycore-config';
+import type { CustomComponentStepPayload, OnboardingContext } from '@onboardjs/core';
+import type { StepComponentProps } from '@onboardjs/react';
 
 export type OnboardingFlowData = {
 	twitchConnected?: boolean;

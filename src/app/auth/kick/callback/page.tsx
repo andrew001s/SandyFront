@@ -1,6 +1,6 @@
 import KickCallback from '@/components/KickCallBack/KickCallBack';
-import type { Metadata } from 'next';
 import { noIndexMetadata } from '@/lib/seo';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = noIndexMetadata;
 

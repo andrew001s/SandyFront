@@ -1,17 +1,16 @@
 'use client';
 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import type { ReactNode } from 'react';
 import { BsMoonStarsFill } from 'react-icons/bs';
 import { ClipLoader } from 'react-spinners';
-import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { BackgroundGradient } from '../ui/background-gradient';
-import { Button } from '../ui/button';
-import { Card, CardContent } from '../ui/card';
 
 type SocialConnectionCardProps = {
 	name: string;
+	fallbackTitle?: string;
 	statusLabel: string;
 	connected: boolean;
 	isLoading?: boolean;
@@ -20,6 +19,7 @@ type SocialConnectionCardProps = {
 	avatarSrc?: string | null;
 	avatarAlt: string;
 	fallbackSrc?: string;
+	platformIcon?: ReactNode;
 	connectLabel: string;
 	disconnectLabel: string;
 	onConnect: () => void;
@@ -35,6 +35,7 @@ type SocialConnectionCardProps = {
 
 export const SocialConnectionCard = ({
 	name,
+	fallbackTitle,
 	statusLabel,
 	connected,
 	isLoading = false,
@@ -43,145 +44,157 @@ export const SocialConnectionCard = ({
 	avatarSrc,
 	avatarAlt,
 	fallbackSrc = '/icons/default.png',
+	platformIcon,
 	connectLabel,
 	disconnectLabel,
 	onConnect,
 	onDisconnect,
 	connectDisabled = false,
-	connectButtonClassName,
-	disconnectButtonClassName,
 	avatarClassName,
 	children,
 	statusPrefix,
 }: SocialConnectionCardProps) => {
-	const actionButtonClasses =
-		'h-12 w-full cursor-pointer font-normal text-base text-white duration-300 ease-in-out hover:scale-105';
-	const disconnectClasses = cn(
-		actionButtonClasses,
-		'bg-[#604ABB] hover:bg-[#4f3fa3]',
-		disconnectButtonClassName,
-	);
-	const connectClasses = cn(
-		actionButtonClasses,
-		connectButtonClassName ?? 'bg-[#604ABB] hover:bg-[#4f3fa3]',
-	);
-
 	return (
-		<BackgroundGradient className='rounded-[22px] bg-background p-2'>
-			<Card className='mt-3 w-full gap-0 border-none bg-transparent p-0.5 sm:p-0'>
-				<CardContent className='flex flex-col space-y-4 p-4'>
-					<div className='flex flex-row items-center space-x-4'>
+		<div
+			className={cn(
+				'relative flex h-full flex-col justify-between overflow-hidden rounded-xl border p-4 shadow-xs transition-all duration-200 sm:p-4.5',
+				connected ? 'border-primary/40 bg-card' : 'border-border bg-card hover:border-primary/30',
+			)}
+		>
+			{/* Marca de agua celestial */}
+			<div className='-right-3 -top-3 pointer-events-none absolute opacity-10'>
+				<BsMoonStarsFill size={56} className='text-primary' />
+			</div>
+
+			<div>
+				<div className='flex items-start justify-between gap-3'>
+					<div className='flex items-center gap-3'>
 						<Avatar
-							className={cn('relative ml-4 h-20 w-20 border-2 border-border', avatarClassName)}
+							className={cn(
+								'size-12 shrink-0 rounded-xl border border-border shadow-xs',
+								avatarClassName,
+							)}
 						>
 							{avatarSrc ? (
 								<>
-									<AvatarImage src={avatarSrc} alt={avatarAlt} className='object-cover' />
-									<AvatarFallback>
+									<AvatarImage
+										src={avatarSrc}
+										alt={avatarAlt}
+										referrerPolicy='no-referrer'
+										className='size-full object-cover'
+									/>
+									<AvatarFallback className='rounded-xl bg-background'>
 										<Image
 											src={fallbackSrc}
 											alt='Default Icon'
-											width={100}
-											height={100}
-											loading='lazy'
-											className='h-full w-full object-cover'
+											width={48}
+											height={48}
+											className='size-full object-cover p-1'
 										/>
 									</AvatarFallback>
 								</>
-							) : (
-								<AvatarFallback>
+							) : connected ? (
+								<AvatarFallback className='rounded-xl bg-background'>
 									<Image
 										src={fallbackSrc}
 										alt='Default Icon'
-										width={100}
-										height={100}
-										loading='lazy'
-										className='h-full w-full object-cover'
+										width={48}
+										height={48}
+										className='size-full object-cover p-1'
 									/>
+								</AvatarFallback>
+							) : (
+								<AvatarFallback className='rounded-xl bg-background'>
+									{platformIcon ?? (
+										<Image
+											src={fallbackSrc}
+											alt='Default Icon'
+											width={48}
+											height={48}
+											className='size-full object-cover p-1'
+										/>
+									)}
 								</AvatarFallback>
 							)}
 						</Avatar>
+
 						<div className='min-w-0 flex-1'>
-							{connected ? (
-								<span className='truncate font-bold text-2xl text-foreground'>{name}</span>
-							) : isPrincipal ? (
-								<span className='truncate font-bold text-2xl text-foreground'>
-									Cuenta Principal
+							<h3 className='truncate font-display font-semibold text-foreground text-sm sm:text-base'>
+								{connected
+									? name
+									: (fallbackTitle ?? (isPrincipal ? 'Cuenta de Emisión' : 'Cuenta de Bot'))}
+							</h3>
+							<div className='mt-0.5 flex items-center gap-1.5'>
+								<span
+									className={cn(
+										'size-1.5 rounded-full',
+										connected ? 'animate-pulse bg-emerald-400' : 'bg-muted-foreground/60',
+									)}
+								/>
+								<span className='font-mono text-[11px] text-muted-foreground'>
+									{statusPrefix ? `${statusPrefix}: ` : ''}
+									<span
+										className={cn(
+											connected ? 'font-medium text-emerald-400' : 'text-muted-foreground',
+										)}
+									>
+										{connected ? statusLabel : 'No autenticado'}
+									</span>
 								</span>
-							) : (
-								<span className='truncate font-bold text-2xl text-foreground'>Cuenta Bot</span>
-							)}
-							<span className='block pt-1 text-sm'>
-								{statusPrefix ?? 'Estado'}:{' '}
-								{connected ? (
-									<span className='text-emerald-500 dark:text-emerald-400'>{statusLabel}</span>
-								) : (
-									<span className='text-destructive'>No autenticado</span>
-								)}
-							</span>
+							</div>
 						</div>
 					</div>
 
-					{!connected ? (
-						<div className='flex flex-col items-center gap-3 rounded-2xl text-center'>
-							<Button
-								onClick={() => void onConnect()}
-								disabled={isLoading || connectDisabled}
-								className={connectClasses}
-							>
-								{isLoading ? (
-									<div className='flex flex-row items-center justify-center space-x-3'>
-										<span>Conectando</span>
-										<ClipLoader color='#ffffff' size={20} />
-									</div>
-								) : (
-									<span>{connectLabel}</span>
-								)}
-							</Button>
-						</div>
-					) : (
-						<div className='space-y-4'>
-							<div className='flex flex-col items-center gap-3'>
-								<Button
-									onClick={() => void onDisconnect()}
-									disabled={isBusy}
-									className={disconnectClasses}
-								>
-									{isBusy ? (
-										<div className='flex flex-row items-center justify-center space-x-3'>
-											<span>Procesando</span>
-											<ClipLoader color='#ffffff' size={20} />
-										</div>
-									) : (
-										<span>{disconnectLabel}</span>
-									)}
-								</Button>
-							</div>
-
-							{children}
-						</div>
-					)}
-				</CardContent>
-			</Card>
-			<div className='relative'>
-				<div className='-right-3 -top-10 -scale-x-100 absolute transform dark:hidden'>
-					<BsMoonStarsFill
-						className='absolute translate-x-1 translate-y-1 animate-pulse text-violet-300/55 blur-[0.4px] drop-shadow-[0_0_16px_rgba(168,85,247,0.18)]'
-						size={62}
-					/>
-					<BsMoonStarsFill
-						className='absolute animate-pulse text-violet-600/90 drop-shadow-[0_0_18px_rgba(124,58,237,0.28)]'
-						size={60}
-					/>
-				</div>
-				<div className='-right-3 -top-10 -scale-x-100 absolute hidden transform dark:block'>
-					<BsMoonStarsFill
-						className='absolute animate-pulse drop-shadow-[5px_0px_10px_rgba(255,255,255,0.5)]'
-						size={60}
-					/>
-					<BsMoonStarsFill className='absolute animate-pulse' size={60} />
+					<span
+						className={cn(
+							'shrink-0 rounded-full border px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider',
+							connected
+								? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+								: 'border-border bg-background text-muted-foreground',
+						)}
+					>
+						{connected ? 'ONLINE' : 'DESCONECTADO'}
+					</span>
 				</div>
 			</div>
-		</BackgroundGradient>
+
+			<div className='mt-4 space-y-2.5'>
+				{!connected ? (
+					<Button
+						onClick={() => void onConnect()}
+						disabled={isLoading || connectDisabled}
+						className='h-9 w-full rounded-lg bg-primary font-sans font-semibold text-primary-foreground text-xs shadow-xs transition-all hover:bg-primary/90'
+					>
+						{isLoading ? (
+							<div className='flex items-center justify-center gap-2'>
+								<span>Conectando</span>
+								<ClipLoader color='currentColor' size={14} />
+							</div>
+						) : (
+							<span>{connectLabel}</span>
+						)}
+					</Button>
+				) : (
+					<>
+						<Button
+							onClick={() => void onDisconnect()}
+							disabled={isBusy}
+							variant='outline'
+							className='h-9 w-full rounded-lg border-border font-medium font-sans text-muted-foreground text-xs hover:bg-muted/50 hover:text-foreground'
+						>
+							{isBusy ? (
+								<div className='flex items-center justify-center gap-2'>
+									<span>Procesando</span>
+									<ClipLoader color='currentColor' size={14} />
+								</div>
+							) : (
+								<span>{disconnectLabel}</span>
+							)}
+						</Button>
+						{children}
+					</>
+				)}
+			</div>
+		</div>
 	);
 };

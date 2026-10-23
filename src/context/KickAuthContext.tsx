@@ -1,8 +1,8 @@
 'use client';
 
+import type { ServiceStatus } from '@/api/sandycore';
 import { useKickAuth } from '@/hooks/useKickAuth';
 import type { ProfileModel } from '@/interfaces/profileInterface';
-import type { ServiceStatus } from '@/api/sandycore';
 import { type ReactNode, createContext, useContext } from 'react';
 
 interface KickAuthContextType {

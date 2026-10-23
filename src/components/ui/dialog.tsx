@@ -30,7 +30,7 @@ function DialogOverlay({
 		<DialogPrimitive.Overlay
 			data-slot='dialog-overlay'
 			className={cn(
-				'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50',
+				'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/70 backdrop-blur-xs',
 				className,
 			)}
 			{...props}
@@ -49,13 +49,13 @@ function DialogContent({
 			<DialogPrimitive.Content
 				data-slot='dialog-content'
 				className={cn(
-					'bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-[min(92vw,56rem)] translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/60 rounded-2xl shadow-lg duration-200',
+					'bg-card text-card-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-[min(92vw,32rem)] translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/80 rounded-xl shadow-2xl duration-200',
 					className,
 				)}
 				{...props}
 			>
 				{children}
-				<DialogPrimitive.Close className='ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none'>
+				<DialogPrimitive.Close className='ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-lg p-1 text-muted-foreground opacity-70 transition-all hover:opacity-100 hover:text-foreground focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none'>
 					<XIcon className='size-4' />
 					<span className='sr-only'>Close</span>
 				</DialogPrimitive.Close>

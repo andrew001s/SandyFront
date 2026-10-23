@@ -1,7 +1,7 @@
 'use client';
 
-import type { Tour } from 'nextstepjs';
 import { CircleUserRound, LayoutDashboard, Plug, Settings2, ShieldCheck, Tv } from 'lucide-react';
+import type { Tour } from 'nextstepjs';
 
 export const DASHBOARD_TOUR_STORAGE_KEY = 'sandy-dashboard-tour-seen';
 

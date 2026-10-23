@@ -1,8 +1,6 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { AVATAR_SOFTWARE_LIST } from '@/lib/avatar/constants';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { AvatarSoftware } from '@/types/avatar';
 import { Box, Tv } from 'lucide-react';
 
@@ -20,73 +18,54 @@ export function AvatarSoftwareSelector({
 	onSelect,
 }: Props) {
 	return (
-		<div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
-			{AVATAR_SOFTWARE_LIST.map((meta) => {
-				const isSelected = selectedSoftware === meta.id;
-				const isConnected = connectedSoftware === meta.id;
-
-				return (
-					<Card
-						key={meta.id}
-						onClick={() => onSelect(meta.id)}
-						className={`relative cursor-pointer border p-4 transition-all duration-200 hover:border-primary/50 ${
-							isSelected
-								? 'border-primary/60 bg-primary/10 shadow-lg shadow-primary/5 ring-1 ring-primary/40'
-								: 'border-border/50 bg-card/40 hover:bg-card/70'
-						}`}
+		<div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+			<Tabs
+				value={selectedSoftware}
+				onValueChange={(val) => onSelect(val as AvatarSoftware)}
+				className='w-full sm:w-auto'
+			>
+				<TabsList className='grid h-10 w-full grid-cols-2 gap-1 rounded-lg border border-border/80 bg-card p-1 sm:w-84'>
+					<TabsTrigger
+						value='vtubestudio'
+						className='flex h-8 items-center justify-center gap-2 rounded-md px-3 font-medium font-sans text-xs transition-colors data-[state=active]:bg-primary/10 data-[state=active]:font-semibold data-[state=active]:text-primary'
 					>
-						<div className='flex items-start justify-between gap-3'>
-							<div className='flex items-center gap-3'>
-								<div
-									className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${
-										meta.id === 'vtubestudio'
-											? 'bg-pink-500/10 text-pink-500'
-											: 'bg-cyan-500/10 text-cyan-400'
-									}`}
-								>
-									{meta.id === 'vtubestudio' ? (
-										<Tv className='size-5' />
-									) : (
-										<Box className='size-5' />
-									)}
-								</div>
-								<div>
-									<div className='flex items-center gap-2'>
-										<h3 className='font-semibold text-foreground text-sm'>{meta.name}</h3>
-										<Badge
-											variant='outline'
-											className={`text-[10px] ${
-												meta.dimension === '2d'
-													? 'border-pink-500/30 text-pink-400'
-													: 'border-cyan-500/30 text-cyan-400'
-											}`}
-										>
-											{meta.badge}
-										</Badge>
-									</div>
-									<p className='mt-1 line-clamp-2 text-muted-foreground text-xs leading-relaxed'>
-										{meta.description}
-									</p>
-								</div>
-							</div>
+						<Tv className='size-3.5 text-primary' />
+						<span>VTube Studio (2D)</span>
+						{connectedSoftware === 'vtubestudio' && (
+							<span className='size-1.5 rounded-full bg-emerald-400' />
+						)}
+					</TabsTrigger>
+					<TabsTrigger
+						value='vrm'
+						className='flex h-8 items-center justify-center gap-2 rounded-md px-3 font-medium font-sans text-xs transition-colors data-[state=active]:bg-secondary/10 data-[state=active]:font-semibold data-[state=active]:text-secondary'
+					>
+						<Box className='size-3.5 text-secondary' />
+						<span>Avatar 3D (VRM)</span>
+						{(connectedSoftware === 'vrm' || connectedSoftware === 'vnyan') && (
+							<span className='size-1.5 rounded-full bg-emerald-400' />
+						)}
+					</TabsTrigger>
+				</TabsList>
+			</Tabs>
 
-							<div className='shrink-0'>
-								{isConnected ? (
-									<span className='flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-medium text-[11px] text-emerald-400'>
-										<span className='size-1.5 animate-pulse rounded-full bg-emerald-400' />
-										Conectado
-									</span>
-								) : isSelected && isConnecting ? (
-									<span className='flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-medium text-[11px] text-amber-400'>
-										<span className='size-1.5 animate-pulse rounded-full bg-amber-400' />
-										Conectando
-									</span>
-								) : null}
-							</div>
-						</div>
-					</Card>
-				);
-			})}
+			<div className='flex items-center gap-2 text-xs'>
+				<span className='font-mono text-[11px] text-muted-foreground'>
+					{selectedSoftware === 'vtubestudio'
+						? 'Entorno Live2D · WebSocket local'
+						: 'Entorno 3D VRM · WebGL en navegador'}
+				</span>
+				{connectedSoftware === selectedSoftware ? (
+					<span className='flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] text-emerald-400'>
+						<span className='size-1.5 animate-pulse rounded-full bg-emerald-400' />
+						ONLINE
+					</span>
+				) : isConnecting ? (
+					<span className='flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] text-amber-400'>
+						<span className='size-1.5 animate-pulse rounded-full bg-amber-400' />
+						CONECTANDO
+					</span>
+				) : null}
+			</div>
 		</div>
 	);
 }

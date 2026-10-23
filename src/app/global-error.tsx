@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
-import posthog from 'posthog-js';
-import Rollbar from 'rollbar';
 import { clientRollbarConfig } from '@/lib/rollbar-client';
+import posthog from 'posthog-js';
+import { useEffect } from 'react';
+import Rollbar from 'rollbar';
 
 export default function GlobalError({
 	error,

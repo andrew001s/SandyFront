@@ -21,34 +21,43 @@ export function ModerationPanel() {
 	} = useModerationPanel();
 
 	return (
-		<Card className='border-border/60 bg-card/90 shadow-[0_24px_80px_-36px_rgba(15,23,42,0.18)] backdrop-blur-xl'>
+		<Card className='rounded-xl border-border/60 bg-card'>
 			<CardHeader className='space-y-4 border-border/50 border-b px-5 py-5 sm:px-6'>
-				<div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
-					<div className='flex min-w-0 items-start gap-4'>
-						<div className='flex size-11 items-center justify-center rounded-2xl border border-border/70 bg-background/80 text-violet-600 shadow-sm'>
+				<div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+					<div className='flex min-w-0 items-start gap-3.5'>
+						<div className='flex size-10 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-background/60 text-primary'>
 							<ShieldCheck className='size-5' />
 						</div>
 						<div className='space-y-1'>
-							<CardTitle className='text-xl'>Lista de bloqueos</CardTitle>
-							<CardDescription className='max-w-xl'>
-								Palabras, símbolos y enlaces que el backend bloqueará en los mensajes del chat. Los
-								cambios se guardan automáticamente.
+							<CardTitle className='font-display font-semibold text-foreground text-lg'>
+								Lista de bloqueos activos
+							</CardTitle>
+							<CardDescription className='max-w-xl font-sans text-muted-foreground text-xs leading-relaxed'>
+								Palabras, patrones y enlaces bloqueados en el chat en tiempo real. Los cambios se
+								sincronizan automáticamente con el backend.
 							</CardDescription>
 						</div>
 					</div>
-					<Button type='button' variant='outline' onClick={openAddSheet}>
-						<Plus className='size-4' />
-						Agregar entrada
+					<Button
+						type='button'
+						onClick={openAddSheet}
+						size='sm'
+						className='shrink-0 gap-2 rounded-lg bg-primary font-sans font-semibold text-primary-foreground text-xs shadow-xs hover:bg-primary/90'
+					>
+						<Plus className='size-3.5' />
+						<span>Agregar regla</span>
 					</Button>
 				</div>
 			</CardHeader>
 			<CardContent className='space-y-4 px-5 py-5 sm:px-6'>
 				{items.length === 0 ? (
-					<div className='flex min-h-40 flex-col items-center justify-center gap-2 rounded-2xl border border-border/60 border-dashed px-4 text-center'>
-						<ShieldCheck className='size-6 text-muted-foreground' />
-						<p className='font-medium'>No hay bloqueos configurados</p>
-						<p className='text-muted-foreground text-sm'>
-							Agrega la primera entrada con el botón &ldquo;Agregar entrada&rdquo;.
+					<div className='flex min-h-40 flex-col items-center justify-center gap-2 rounded-xl border border-border/60 border-dashed bg-background/30 px-4 py-8 text-center'>
+						<ShieldCheck className='size-6 text-muted-foreground/60' />
+						<p className='font-display font-medium text-foreground text-sm'>
+							No hay bloqueos configurados
+						</p>
+						<p className='font-sans text-muted-foreground text-xs'>
+							Agrega la primera regla con el botón &ldquo;Agregar regla&rdquo;.
 						</p>
 					</div>
 				) : (

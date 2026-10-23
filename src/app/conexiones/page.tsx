@@ -2,14 +2,15 @@ import { CardConnectionBot } from '@/components/CardConnections/CardConnectionBo
 import { CardConnectionKick } from '@/components/CardConnections/CardConnectionKick';
 import { CardConnectionProfile } from '@/components/CardConnections/CardConnectionProfile';
 import { CardConnectionYoutube } from '@/components/CardConnections/CardConnectionYoutube';
+import { PageHeader } from '@/components/ui/page-header';
 import { DashboardShell } from '@/containers/dashboard/DashboardShell';
 import { KickAuthProvider } from '@/context/KickAuthContext';
 import { StatusProviderBot } from '@/context/StatusContextBot';
 import { TwitchAuthBotProvider, TwitchAuthProvider } from '@/context/TwitchAuthContext';
 import { YoutubeAuthProvider } from '@/context/YoutubeAuthContext';
 import { noIndexMetadata } from '@/lib/seo';
-import { Star } from 'lucide-react';
 import type { Metadata } from 'next';
+import { Children, type ReactNode } from 'react';
 import { SiKick, SiTwitch, SiYoutube } from 'react-icons/si';
 
 export const metadata: Metadata = noIndexMetadata;
@@ -20,23 +21,27 @@ function SocialSection({
 	description,
 	children,
 }: {
-	icon: React.ReactNode;
+	icon: ReactNode;
 	title: string;
 	description: string;
-	children: React.ReactNode;
+	children: ReactNode;
 }) {
+	const count = Children.count(children);
+
 	return (
-		<section className='space-y-4'>
-			<div className='flex items-center gap-3'>
-				<div className='flex size-10 items-center justify-center rounded-2xl border border-border/70 bg-background/80 text-foreground shadow-sm'>
+		<section className='overflow-hidden rounded-xl border border-border bg-card p-4 shadow-xs sm:p-5'>
+			<div className='mb-4 flex items-center gap-3'>
+				<div className='flex size-9 items-center justify-center rounded-lg border border-border bg-background shadow-xs'>
 					{icon}
 				</div>
 				<div>
-					<h2 className='font-semibold text-xl'>{title}</h2>
-					<p className='text-muted-foreground text-sm'>{description}</p>
+					<h2 className='font-display font-semibold text-base text-foreground'>{title}</h2>
+					<p className='font-sans text-muted-foreground text-xs'>{description}</p>
 				</div>
 			</div>
-			<div className='grid grid-cols-1 gap-4 xl:grid-cols-2'>{children}</div>
+			<div className={count > 1 ? 'grid grid-cols-1 gap-3.5 md:grid-cols-2' : 'w-full flex-1'}>
+				{children}
+			</div>
 		</section>
 	);
 }
@@ -44,27 +49,18 @@ function SocialSection({
 export default function ConexionesPage() {
 	return (
 		<DashboardShell>
-			<div className='mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-8 md:px-6'>
-				<header className='mb-8'>
-					<h1 className='font-bold text-3xl [font-family:var(--font-unbounded)] sm:text-4xl'>
-						<span className='bg-gradient-to-r from-violet-600 to-cyan-600 bg-clip-text text-transparent dark:from-[#A78BFA] dark:to-[#22D3EE]'>
-							Conexiones
-						</span>
-						<span className='ml-3 inline-block animate-[twinkle_3s_ease-in-out_infinite] text-amber-400 dark:text-[#FDE68A]'>
-							<Star size={22} className='fill-amber-400 dark:fill-[#FDE68A]' />
-						</span>
-					</h1>
-					<p className='mt-2 max-w-xl text-muted-foreground'>
-						Conecta tus cuentas de Twitch, Kick y YouTube para que Sandy Studio reaccione a tu chat
-						en tiempo real.
-					</p>
-				</header>
+			<div className='mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-8 md:px-6'>
+				<PageHeader
+					tag='Plataformas de Emisión · Canales en Vivo'
+					title='Conexiones de Streaming'
+					description='Vincula tus cuentas de Twitch, Kick y YouTube con OAuth para que Sandy Studio escuche los mensajes y reaccione en tu transmisión.'
+				/>
 
-				<div className='space-y-8'>
+				<div className='space-y-4'>
 					<SocialSection
-						icon={<SiTwitch className='size-5 text-[#9146FF]' />}
+						icon={<SiTwitch className='size-4 text-[#9146FF]' />}
 						title='Twitch'
-						description='Gestiona la cuenta principal y el bot de Twitch.'
+						description='Gestiona tu canal principal de streamer y la cuenta secundaria del bot.'
 					>
 						<div className='w-full'>
 							<TwitchAuthProvider>
@@ -80,29 +76,31 @@ export default function ConexionesPage() {
 						</div>
 					</SocialSection>
 
-					<SocialSection
-						icon={<SiKick className='size-5 text-[#53FC18]' />}
-						title='Kick'
-						description='Gestiona tu conexión de Kick con la misma experiencia visual.'
-					>
-						<div className='w-full'>
-							<KickAuthProvider>
-								<CardConnectionKick />
-							</KickAuthProvider>
-						</div>
-					</SocialSection>
+					<div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+						<SocialSection
+							icon={<SiKick className='size-4 text-[#53FC18]' />}
+							title='Kick'
+							description='Conecta tu canal de Kick mediante Pusher para leer eventos y chat en directo.'
+						>
+							<div className='h-full w-full'>
+								<KickAuthProvider>
+									<CardConnectionKick />
+								</KickAuthProvider>
+							</div>
+						</SocialSection>
 
-					<SocialSection
-						icon={<SiYoutube className='size-5 text-[#FF0000]' />}
-						title='YouTube'
-						description='Conecta Google en tu cuenta para leer el live chat y actualizar tu broadcast.'
-					>
-						<div className='w-full'>
-							<YoutubeAuthProvider>
-								<CardConnectionYoutube />
-							</YoutubeAuthProvider>
-						</div>
-					</SocialSection>
+						<SocialSection
+							icon={<SiYoutube className='size-4 text-[#FF0000]' />}
+							title='YouTube Live'
+							description='Vincula tu cuenta de Google para monitorizar el chat de transmisiones en vivo.'
+						>
+							<div className='h-full w-full'>
+								<YoutubeAuthProvider>
+									<CardConnectionYoutube />
+								</YoutubeAuthProvider>
+							</div>
+						</SocialSection>
+					</div>
 				</div>
 			</div>
 		</DashboardShell>

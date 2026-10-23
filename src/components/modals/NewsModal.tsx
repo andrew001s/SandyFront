@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
 export const SANDY_NEWS_STORAGE_KEY = 'sandy_news_last_seen_version';
-export const CURRENT_NEWS_VERSION = '0.2.4';
+export const CURRENT_NEWS_VERSION = '0.2.5';
 export const OPEN_NEWS_MODAL_EVENT = 'open-sandy-news-modal';
 
 export const openNewsModal = () => {
@@ -92,8 +92,8 @@ export function NewsModal() {
 					{/* Top Artwork Area with Custom VTuber Flat Banner */}
 					<div className='relative h-60 w-full overflow-hidden sm:h-64'>
 						<Image
-							src='/news/command-trigger-banner.jpg'
-							alt='Novedad Sandy - Respuesta por comandos personalizada'
+							src='/news/vrm-studio-banner.jpg'
+							alt='Novedad Sandy v0.2.5 - Nuevo Estudio 3D y Sincronización OBS'
 							fill
 							priority
 							className='pointer-events-none select-none object-cover object-center'
@@ -119,26 +119,26 @@ export function NewsModal() {
 						<div className='flex items-center justify-between border-slate-100 border-b pb-3'>
 							<div>
 								<DialogTitle className='font-extrabold text-slate-900 text-xl tracking-tight sm:text-2xl'>
-									Actualización:
+									Actualización v{CURRENT_NEWS_VERSION}:
 								</DialogTitle>
 								<DialogDescription className='mt-0.5 font-medium text-slate-500 text-xs sm:text-sm'>
-									¡Llegó la respuesta por comando personalizado!
+									¡Nuevo Estudio Avatar 3D y Sincronización OBS!
 								</DialogDescription>
 							</div>
 
 							<Badge
 								variant='outline'
-								className='border-violet-200 bg-violet-50 font-bold font-mono text-[11px] text-violet-700'
+								className='border-cyan-200 bg-cyan-50 font-bold font-mono text-[11px] text-cyan-700'
 							>
-								!bot
+								VRM 3D
 							</Badge>
 						</div>
 
 						{/* Notice Body */}
 						<div className='mt-3.5 space-y-2.5 text-slate-600 text-xs sm:text-[13px] sm:leading-relaxed'>
 							<p className='font-semibold text-slate-800'>
-								¡Hola streamers! Ahora tu VTuber puede responder solo a cuando tu chat o tú la
-								llamen con un comando:
+								¡Hola streamers! Rediseñamos por completo el escenario 3D para brindarte una suite
+								profesional al estilo VTube Studio y VNyan:
 							</p>
 
 							{/* Numbered bullet list matching the reference layout */}
@@ -148,9 +148,9 @@ export function NewsModal() {
 										1
 									</span>
 									<p className='text-slate-700'>
-										<strong className='text-slate-900'>Por comando o por mensajes:</strong> Elige en{' '}
-										<span className='font-medium text-violet-700'>Configuración</span> si responde a
-										lotes de chat o solo con un prefijo.
+										<strong className='text-slate-900'>Dock modular y paneles flotantes:</strong>{' '}
+										Controla expresiones con slider de intensidad, prueba de voz Edge TTS y
+										selección rápida de gestos.
 									</p>
 								</div>
 
@@ -159,11 +159,9 @@ export function NewsModal() {
 										2
 									</span>
 									<p className='text-slate-700'>
-										<strong className='text-slate-900'>Totalmente personalizable:</strong> Usa{' '}
-										<code className='rounded bg-violet-100 px-1 py-0.5 font-mono font-semibold text-violet-900'>
-											!bot
-										</code>{' '}
-										o la palabra clave que prefieras en Twitch, YouTube y Kick.
+										<strong className='text-slate-900'>Fondos personalizados y Croma OBS:</strong>{' '}
+										Elige entre pantalla verde, azul, magenta o cuadrícula transparente para recorte
+										limpio en OBS, o sube tu propia imagen.
 									</p>
 								</div>
 
@@ -172,8 +170,11 @@ export function NewsModal() {
 										3
 									</span>
 									<p className='text-slate-700'>
-										<strong className='text-slate-900'>Cero spam y ahorro de tokens:</strong> Tu
-										VTuber ya no se saturará en directos con chats rápidos.
+										<strong className='text-slate-900'>
+											Sincronización en vivo con Overlay OBS:
+										</strong>{' '}
+										Tus cambios de cámara, rotación, zoom, expresiones y fondos se reflejan de
+										inmediato en tu enlace de navegador para OBS.
 									</p>
 								</div>
 							</div>
@@ -183,21 +184,21 @@ export function NewsModal() {
 								<div className='flex items-center gap-2'>
 									<Button
 										type='button'
-										onClick={handleGoToSettings}
+										onClick={handleGoToAvatar}
 										className='h-10 flex-1 gap-2 rounded-xl bg-violet-600 font-semibold text-white text-xs shadow-md transition-all hover:bg-violet-700 active:scale-[0.98]'
 									>
-										<Settings className='size-3.5' />
-										<span>Configurar comando</span>
+										<Box className='size-3.5' />
+										<span>Probar Estudio 3D</span>
 										<ArrowRight className='size-3.5' />
 									</Button>
 
 									<button
 										type='button'
-										onClick={handleGoToAvatar}
+										onClick={handleGoToSettings}
 										className='inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-200/90 bg-white px-3.5 font-semibold text-slate-700 text-xs shadow-xs transition-all hover:border-slate-300 hover:bg-slate-100 hover:text-slate-900 active:scale-[0.98]'
 									>
-										<Box className='size-3.5 text-cyan-600' />
-										<span>Avatares 3D</span>
+										<Settings className='size-3.5 text-slate-600' />
+										<span>Ajustes</span>
 									</button>
 								</div>
 							</div>

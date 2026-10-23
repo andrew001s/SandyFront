@@ -32,11 +32,49 @@ export async function deleteYoutubeAuth() {
 export async function getYoutubeProfile(
 	options: { token?: string | null } = {},
 ): Promise<YoutubeProfile | null> {
-	const response = await backendClient.get<{
-		profile: YoutubeProfile | null;
-		authenticated: boolean;
-	}>('/youtube/profile', { headers: buildAuthHeaders(options.token) });
-	return response.data.profile;
+	const response = await backendClient.get<
+		{ profile: YoutubeProfile | null; authenticated?: boolean } | Record<string, unknown>
+	>('/youtube/profile', { headers: buildAuthHeaders(options.token) });
+
+	const data = response.data as Record<string, unknown> | null;
+	if (!data) return null;
+
+	const raw = (data.profile as Record<string, unknown> | null) ?? data;
+	if (!raw || typeof raw !== 'object') return null;
+
+	const snippet = raw.snippet as Record<string, unknown> | undefined;
+	const thumbnails =
+		(raw.thumbnails as Record<string, Record<string, unknown>> | undefined) ??
+		(snippet?.thumbnails as Record<string, Record<string, unknown>> | undefined);
+
+	const picProfile = String(
+		raw.picProfile ??
+			raw.pic_profile ??
+			raw.picture ??
+			raw.avatar ??
+			raw.avatar_url ??
+			raw.thumbnail ??
+			thumbnails?.high?.url ??
+			thumbnails?.medium?.url ??
+			thumbnails?.default?.url ??
+			'',
+	);
+
+	return {
+		id: String(raw.id ?? ''),
+		username: String(raw.username ?? raw.channel_title ?? snippet?.title ?? ''),
+		email: String(raw.email ?? ''),
+		picProfile,
+		channel_title: String(raw.channel_title ?? snippet?.title ?? raw.username ?? ''),
+		custom_url: String(raw.custom_url ?? snippet?.customUrl ?? ''),
+		description: String(raw.description ?? snippet?.description ?? ''),
+		subscriber_count: String(raw.subscriber_count ?? ''),
+		view_count: String(raw.view_count ?? ''),
+		video_count: String(raw.video_count ?? ''),
+		uploads_playlist_id: String(raw.uploads_playlist_id ?? ''),
+		live_chat_id: String(raw.live_chat_id ?? ''),
+		broadcast_id: String(raw.broadcast_id ?? ''),
+	};
 }
 
 export async function getYoutubeTokens(): Promise<YoutubeTokensResponse> {

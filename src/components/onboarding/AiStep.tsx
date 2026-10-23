@@ -7,17 +7,17 @@ import type { OpenRouterModel, OpenRouterSort } from '@/components/Settings/sett
 import { OnboardingOfficialDocs } from '@/components/onboarding/OnboardingOfficialDocs';
 import { OnboardingSelectableCard } from '@/components/onboarding/OnboardingSelectableCard';
 import { OnboardingStepFrame } from '@/components/onboarding/OnboardingStepFrame';
+import type {
+	OnboardingFlowData,
+	SandyOnboardingContext,
+	StepProps,
+} from '@/components/onboarding/onboarding.types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@clerk/nextjs';
 import { type AiProvider, storeAiProvider } from '@/lib/ai-provider';
 import { getStoredLocalAiSettings, storeLocalAiSettings } from '@/lib/local-ai-config';
+import { useAuth } from '@clerk/nextjs';
 import { useOnboarding } from '@onboardjs/react';
-import type {
-	StepProps,
-	SandyOnboardingContext,
-	OnboardingFlowData,
-} from '@/components/onboarding/onboarding.types';
 import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 import { type UIEvent, useCallback, useEffect, useRef, useState } from 'react';

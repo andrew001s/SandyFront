@@ -6,14 +6,14 @@ import { FishVoicePreviewCard } from '@/components/Settings/sections/FishVoicePr
 import { OnboardingOfficialDocs } from '@/components/onboarding/OnboardingOfficialDocs';
 import { OnboardingSectionHeader } from '@/components/onboarding/OnboardingSectionHeader';
 import { OnboardingStepFrame } from '@/components/onboarding/OnboardingStepFrame';
+import type {
+	OnboardingFlowData,
+	SandyOnboardingContext,
+	StepProps,
+} from '@/components/onboarding/onboarding.types';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@clerk/nextjs';
-import type {
-	OnboardingFlowData,
-	StepProps,
-	SandyOnboardingContext,
-} from '@/components/onboarding/onboarding.types';
 import { useOnboarding } from '@onboardjs/react';
 import { motion } from 'framer-motion';
 import { Smile, Sparkles, Volume2 } from 'lucide-react';

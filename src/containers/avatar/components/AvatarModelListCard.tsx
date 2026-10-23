@@ -38,10 +38,10 @@ export function AvatarModelListCard({
 	const displayedModels = showOnlyActive ? (activeModel ? [activeModel] : []) : models;
 
 	return (
-		<Card className='border-border/50 bg-card/50 backdrop-blur-sm'>
+		<Card className='rounded-xl border-border/60 bg-card'>
 			<CardHeader>
-				<CardTitle className='flex items-center gap-2 text-lg'>
-					<FiGrid size={18} className='text-chart-1' />
+				<CardTitle className='flex items-center gap-2 font-display font-semibold text-base text-foreground'>
+					<FiGrid size={18} className='text-primary' />
 					{showOnlyActive ? 'Modelo activo' : 'Modelos disponibles'}
 				</CardTitle>
 				<CardDescription className='flex flex-wrap items-center justify-between gap-2'>

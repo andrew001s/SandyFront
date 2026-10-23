@@ -1,9 +1,9 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import type { Metadata } from 'next';
-import { Show, SignOutButton, UserButton } from '@clerk/nextjs';
-import Link from 'next/link';
 import { noIndexMetadata } from '@/lib/seo';
+import { Show, SignOutButton, UserButton } from '@clerk/nextjs';
+import type { Metadata } from 'next';
+import Link from 'next/link';
 import { FiLock, FiLogIn, FiUserPlus } from 'react-icons/fi';
 
 export const metadata: Metadata = noIndexMetadata;

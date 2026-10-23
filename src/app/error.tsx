@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRollbar } from '@rollbar/react';
+import { useEffect } from 'react';
 
 export default function ErrorPage({
 	error,

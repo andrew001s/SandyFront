@@ -1,9 +1,8 @@
 'use client';
 
-import { TTS_PROVIDER, type SettingsUpdate, saveSettings } from '@/api/settings';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { type SettingsUpdate, TTS_PROVIDER, saveSettings } from '@/api/settings';
 import { FeatureFlagsSkeleton } from '@/components/loading/dashboard-skeletons';
+import { Button } from '@/components/ui/button';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import {
 	DEFAULT_FEATURE_FLAGS,
@@ -21,7 +20,7 @@ import {
 	PartyPopper,
 	Save,
 	ShieldCheck,
-	ToggleRight,
+	Sliders,
 	Volume2,
 	Wand2,
 } from 'lucide-react';
@@ -74,18 +73,16 @@ export function FeatureFlagsPanel() {
 			const token = await getToken();
 			const payload: SettingsUpdate = {
 				...settings,
-				// El spread arrastra lo que devolvió el backend; se normaliza para no
-				// reescribir el 'fish' de los perfiles creados con el onboarding viejo.
 				tts_provider: TTS_PROVIDER,
 				feature_flags: flags,
 			};
 			await saveSettings(payload, { token });
 			await refreshSettings();
 			setHasLocalChanges(false);
-			toast.success('Funciones guardadas');
+			toast.success('Módulos de emisión guardados');
 		} catch (error) {
 			console.error('Error al guardar funciones:', error);
-			toast.error('No se pudieron guardar las funciones');
+			toast.error('No se pudieron guardar los módulos');
 		} finally {
 			setIsSaving(false);
 		}
@@ -96,32 +93,39 @@ export function FeatureFlagsPanel() {
 	}
 
 	return (
-		<Card className='border-border/60 bg-card/90 shadow-[0_24px_80px_-36px_rgba(15,23,42,0.18)] backdrop-blur-xl'>
-			<CardHeader className='space-y-4 border-border/50 border-b px-5 py-5 sm:px-6'>
-				<div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
-					<div className='flex min-w-0 items-start gap-4'>
-						<div className='flex size-11 items-center justify-center rounded-2xl border border-border/70 bg-background/80 text-violet-600 shadow-sm'>
-							<ToggleRight className='size-5' />
-						</div>
-						<div className='space-y-1'>
-							<CardTitle className='text-xl'>Funciones activables</CardTitle>
-							<CardDescription className='max-w-xl'>
-								Activa o desactiva los módulos de tu VTuber.
-							</CardDescription>
-						</div>
+		<div className='overflow-hidden rounded-xl border border-border bg-card shadow-xs transition-all'>
+			<div className='flex flex-col gap-3 border-border border-b bg-card/90 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5'>
+				<div className='flex items-center gap-2.5'>
+					<span className='flex size-8 items-center justify-center rounded-lg border border-border bg-background text-primary'>
+						<Sliders size={15} />
+					</span>
+					<div>
+						<h3 className='font-display font-semibold text-foreground text-sm'>
+							Módulos de Emisión
+						</h3>
+						<p className='font-sans text-[11px] text-muted-foreground'>
+							Habilita o deshabilita la reactividad de tu VTuber en directo.
+						</p>
 					</div>
+				</div>
+
+				<div className='flex items-center gap-2'>
+					{hasLocalChanges && (
+						<span className='font-mono text-[11px] text-amber-500'>Cambios sin guardar</span>
+					)}
 					<Button
 						type='button'
 						onClick={handleSave}
 						disabled={isSaving}
-						className='bg-[#8B5CF6] text-white hover:bg-[#7C3AED]'
+						className='h-8 gap-1.5 rounded-lg bg-primary px-3.5 font-sans font-semibold text-primary-foreground text-xs shadow-xs hover:bg-primary/90'
 					>
-						<Save className='size-4' />
-						{isSaving ? 'Guardando...' : 'Guardar'}
+						<Save size={13} />
+						<span>{isSaving ? 'Guardando...' : 'Guardar módulos'}</span>
 					</Button>
 				</div>
-			</CardHeader>
-			<CardContent className='grid grid-cols-2 gap-3 px-5 py-5 sm:grid-cols-3 sm:px-6'>
+			</div>
+
+			<div className='grid grid-cols-2 gap-2.5 p-3.5 sm:grid-cols-3 sm:gap-3 sm:p-5'>
 				{FEATURE_FLAG_KEYS.map((key) => {
 					const active = flags[key];
 					const Icon = FEATURE_FLAG_ICONS[key];
@@ -131,58 +135,53 @@ export function FeatureFlagsPanel() {
 							type='button'
 							onClick={() => handleToggle(key)}
 							className={cn(
-								'group relative flex flex-col items-center gap-3 overflow-hidden rounded-2xl border p-5 text-center outline-none transition-all focus-visible:ring-2 focus-visible:ring-violet-500/50',
+								'group relative flex select-none flex-col justify-between rounded-xl border p-3.5 text-left outline-none transition-all duration-150',
 								active
-									? 'border-violet-500/30 bg-violet-500/5 hover:border-violet-500/50 hover:bg-violet-500/10'
-									: 'border-border/60 bg-background/60 hover:border-border hover:bg-accent/50',
+									? 'border-primary/40 bg-card shadow-xs hover:border-primary/60'
+									: 'border-border/70 bg-background/50 hover:border-border hover:bg-card',
 							)}
 						>
-							<div
-								className='pointer-events-none absolute inset-0 opacity-60'
-								style={{
-									backgroundImage:
-										'linear-gradient(to right, rgba(139,92,246,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(139,92,246,0.08) 1px, transparent 1px)',
-									backgroundSize: '18px 18px',
-								}}
-							/>
-							<span
-								className={cn(
-									'absolute top-3 right-3 flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-medium text-[10px] uppercase tracking-wide',
-									active
-										? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-										: 'border-border/70 bg-background/80 text-muted-foreground',
-								)}
-							>
+							<div className='flex items-center justify-between'>
 								<span
 									className={cn(
-										'size-1.5 rounded-full',
+										'flex size-8 items-center justify-center rounded-lg border transition-colors',
 										active
-											? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.9)]'
-											: 'bg-muted-foreground',
+											? 'border-primary/30 bg-primary/10 text-primary'
+											: 'border-border bg-background text-muted-foreground',
 									)}
-								/>
-								{active ? 'Activo' : 'Inactivo'}
-							</span>
-							<div
-								className={cn(
-									'mt-5 flex size-12 items-center justify-center rounded-2xl border shadow-sm transition-colors',
-									active
-										? 'border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-[#A78BFA]'
-										: 'border-border/70 bg-background/80 text-muted-foreground',
-								)}
-							>
-								<Icon className='size-6' />
+								>
+									<Icon size={16} />
+								</span>
+								<span
+									className={cn(
+										'flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider',
+										active
+											? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+											: 'border-border bg-background text-muted-foreground/70',
+									)}
+								>
+									<span
+										className={cn(
+											'size-1.5 rounded-full',
+											active ? 'bg-emerald-400' : 'bg-muted-foreground/50',
+										)}
+									/>
+									{active ? 'ON' : 'OFF'}
+								</span>
 							</div>
-							<div className='relative z-10'>
-								<p className='font-medium text-sm'>{FEATURE_FLAG_LABELS[key].label}</p>
-								<p className='text-muted-foreground text-xs'>
+
+							<div className='mt-3'>
+								<p className='font-display font-semibold text-foreground text-xs'>
+									{FEATURE_FLAG_LABELS[key].label}
+								</p>
+								<p className='mt-0.5 line-clamp-2 font-sans text-[11px] text-muted-foreground leading-snug'>
 									{FEATURE_FLAG_LABELS[key].description}
 								</p>
 							</div>
 						</button>
 					);
 				})}
-			</CardContent>
-		</Card>
+			</div>
+		</div>
 	);
 }

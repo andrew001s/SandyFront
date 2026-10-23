@@ -1,5 +1,5 @@
-import axios from 'axios';
 import { generatePkcePair } from '@/lib/pkce';
+import axios from 'axios';
 
 interface KickTokenResponse {
 	access_token: string;

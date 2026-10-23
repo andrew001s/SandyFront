@@ -20,18 +20,18 @@ export const AVATAR_SOFTWARE_LIST: SoftwareMeta[] = [
 		},
 	},
 	{
-		id: 'vseeface',
-		name: 'VSeeFace',
-		shortName: 'VSeeFace',
+		id: 'vrm',
+		name: 'Avatar 3D VRM (Nativo WebGL)',
+		shortName: 'VRM 3D',
 		dimension: '3d',
 		description:
-			'Software de alto rendimiento para avatares 3D VRM controlado vía VMC Protocol (OSC / UDP).',
-		badge: '3D VRM',
-		defaultPort: 39539,
+			'Renderizado 3D directo en el navegador mediante WebGL. Carga tu avatar .vrm con lip sync inmediato a 60 FPS y overlay transparente para OBS.',
+		badge: '3D VRM Nativo',
+		defaultPort: 0,
 		features: {
 			live2dModels: false,
 			vrmBlendshapes: true,
-			hotkeys: false,
+			hotkeys: true,
 			expressions: true,
 			lipSync: true,
 			modelTransform: false,
@@ -43,6 +43,16 @@ export const DEFAULT_SOFTWARE_CONFIGS: AvatarSoftwareConfigs = {
 	vtubestudio: {
 		port: 8001,
 		host: '127.0.0.1',
+	},
+	vrm: {
+		port: 0,
+		host: 'localhost',
+		transitionDurationMs: 120,
+	},
+	vnyan: {
+		port: 8008,
+		host: '127.0.0.1',
+		transitionDurationMs: 120,
 	},
 	vseeface: {
 		port: 39539,

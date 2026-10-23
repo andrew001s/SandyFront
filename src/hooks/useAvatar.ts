@@ -8,8 +8,9 @@ import {
 	AVATAR_SOFTWARE_STORAGE_KEY,
 	DEFAULT_SOFTWARE_CONFIGS,
 } from '@/lib/avatar/constants';
+import { vnyanClient } from '@/lib/avatar/vnyanClient';
 import { createVrmLipSyncHandler } from '@/lib/avatar/vrmLipSync';
-import { vseefaceClient } from '@/lib/avatar/vseefaceClient';
+import { vrmManager } from '@/lib/avatar/vrmManager';
 import type { AvatarBackendPayload } from '@/lib/vtsAvatarPayload';
 import { createVtsLipSyncHandler, stopVtsLipSync } from '@/lib/vtsLipSync';
 import type {
@@ -25,7 +26,7 @@ export function useAvatar() {
 
 	const [activeSoftware, setActiveSoftware] = useState<AvatarSoftware>('vtubestudio');
 	const [configs, setConfigs] = useState<AvatarSoftwareConfigs>(DEFAULT_SOFTWARE_CONFIGS);
-	const [vseefaceState, setVseefaceState] = useState(vseefaceClient.getState());
+	const [vnyanState, setVnyanState] = useState(vnyanClient.getState());
 
 	const hasAutoConnectedRef = useRef(false);
 	const manualDisconnectedRef = useRef(false);
@@ -37,8 +38,13 @@ export function useAvatar() {
 		const storedSoftware = window.localStorage.getItem(
 			AVATAR_SOFTWARE_STORAGE_KEY,
 		) as AvatarSoftware | null;
-		if (storedSoftware && (storedSoftware === 'vtubestudio' || storedSoftware === 'vseeface')) {
-			setActiveSoftware(storedSoftware);
+		if (storedSoftware) {
+			if (storedSoftware === 'vseeface' || storedSoftware === 'vnyan') {
+				setActiveSoftware('vrm');
+				window.localStorage.setItem(AVATAR_SOFTWARE_STORAGE_KEY, 'vrm');
+			} else if (storedSoftware === 'vtubestudio' || storedSoftware === 'vrm') {
+				setActiveSoftware(storedSoftware);
+			}
 		}
 
 		try {
@@ -46,8 +52,8 @@ export function useAvatar() {
 			if (storedConfigs) {
 				const parsed = JSON.parse(storedConfigs);
 				setConfigs((prev) => ({ ...prev, ...parsed }));
-				if (parsed.vseeface?.transitionDurationMs !== undefined) {
-					vseefaceClient.setTransitionDuration(parsed.vseeface.transitionDurationMs);
+				if (parsed.vnyan?.transitionDurationMs !== undefined) {
+					vnyanClient.setTransitionDuration(parsed.vnyan.transitionDurationMs);
 				}
 			}
 		} catch {
@@ -55,10 +61,10 @@ export function useAvatar() {
 		}
 	}, []);
 
-	// Suscribirse a cambios de VSeeFace
+	// Suscribirse a cambios de VNyan
 	useEffect(() => {
-		const unsubscribe = vseefaceClient.subscribe(() => {
-			setVseefaceState(vseefaceClient.getState());
+		const unsubscribe = vnyanClient.subscribe(() => {
+			setVnyanState(vnyanClient.getState());
 		});
 		return unsubscribe;
 	}, []);
@@ -67,34 +73,36 @@ export function useAvatar() {
 	const setSoftware = useCallback(
 		(software: AvatarSoftware) => {
 			manualDisconnectedRef.current = false;
-			setActiveSoftware(software);
+			const targetSoftware = software === 'vseeface' ? 'vnyan' : software;
+			setActiveSoftware(targetSoftware);
 			if (typeof window !== 'undefined') {
-				window.localStorage.setItem(AVATAR_SOFTWARE_STORAGE_KEY, software);
+				window.localStorage.setItem(AVATAR_SOFTWARE_STORAGE_KEY, targetSoftware);
 			}
 
 			// Desconectar el otro software al alternar
-			if (activeSoftware === 'vtubestudio' && software === 'vseeface') {
+			if (activeSoftware === 'vtubestudio' && targetSoftware === 'vnyan') {
 				if (vts.connected) {
 					void vts.disconnect();
 				}
-			} else if (activeSoftware === 'vseeface' && software === 'vtubestudio') {
-				if (vseefaceState.connected) {
-					vseefaceClient.disconnect();
+			} else if (activeSoftware === 'vnyan' && targetSoftware === 'vtubestudio') {
+				if (vnyanState.connected) {
+					vnyanClient.disconnect();
 				}
 			}
 		},
-		[activeSoftware, vseefaceState.connected, vts],
+		[activeSoftware, vnyanState.connected, vts],
 	);
 
 	// Actualizar configuración
 	const updateConfig = useCallback((software: AvatarSoftware, updates: Partial<SoftwareConfig>) => {
-		if (software === 'vseeface' && updates.transitionDurationMs !== undefined) {
-			vseefaceClient.setTransitionDuration(updates.transitionDurationMs);
+		const targetSoftware = software === 'vseeface' ? 'vnyan' : software;
+		if (targetSoftware === 'vnyan' && updates.transitionDurationMs !== undefined) {
+			vnyanClient.setTransitionDuration(updates.transitionDurationMs);
 		}
 		setConfigs((prev) => {
 			const updated = {
 				...prev,
-				[software]: { ...prev[software], ...updates },
+				[targetSoftware]: { ...prev[targetSoftware], ...updates },
 			};
 			if (typeof window !== 'undefined') {
 				window.localStorage.setItem(AVATAR_CONFIGS_STORAGE_KEY, JSON.stringify(updated));
@@ -103,15 +111,20 @@ export function useAvatar() {
 		});
 	}, []);
 
-	const is3D = activeSoftware === 'vseeface';
-	const activeConfig = useMemo(() => configs[activeSoftware], [configs, activeSoftware]);
+	const is3D =
+		activeSoftware === 'vrm' || activeSoftware === 'vnyan' || activeSoftware === 'vseeface';
+	const activeConfig = useMemo(
+		() => configs[activeSoftware] ?? configs.vrm ?? configs.vnyan,
+		[configs, activeSoftware],
+	);
 	const softwareMeta = useMemo<SoftwareMeta>(() => {
 		return AVATAR_SOFTWARE_LIST.find((s) => s.id === activeSoftware) ?? AVATAR_SOFTWARE_LIST[0];
 	}, [activeSoftware]);
 
-	const connected = is3D ? vseefaceState.connected : vts.connected;
-	const connecting = is3D ? vseefaceState.connecting : vts.connecting;
-	const error = is3D ? vseefaceState.error : vts.error;
+	const connected = activeSoftware === 'vrm' ? true : is3D ? vnyanState.connected : vts.connected;
+	const connecting =
+		activeSoftware === 'vrm' ? false : is3D ? vnyanState.connecting : vts.connecting;
+	const error = activeSoftware === 'vrm' ? null : is3D ? vnyanState.error : vts.error;
 
 	// Conectar
 	const connect = useCallback(
@@ -125,7 +138,7 @@ export function useAvatar() {
 			if (activeSoftware === 'vtubestudio') {
 				await vts.connect(targetPort);
 			} else {
-				await vseefaceClient.connect({
+				await vnyanClient.connect({
 					port: targetPort,
 					host:
 						typeof portOrOptions === 'object' && portOrOptions.host
@@ -144,34 +157,40 @@ export function useAvatar() {
 		if (activeSoftware === 'vtubestudio') {
 			await vts.disconnect();
 		} else {
-			vseefaceClient.disconnect();
+			vnyanClient.disconnect();
 		}
 	}, [activeSoftware, vts]);
 
 	// Establecer emoción
 	const setEmotion = useCallback(
 		async (emotion: string, intensity = 1.0): Promise<void> => {
-			if (is3D) {
-				await vseefaceClient.setEmotion(emotion, intensity);
+			if (activeSoftware === 'vrm') {
+				vrmManager.setEmotion(emotion, intensity);
+			} else if (is3D) {
+				await vnyanClient.setEmotion(emotion, intensity);
 			} else {
 				await vts.activateExpression(emotion);
 			}
 		},
-		[is3D, vts],
+		[activeSoftware, is3D, vts],
 	);
 
 	// Resetear emociones
 	const resetEmotions = useCallback(async (): Promise<void> => {
-		if (is3D) {
-			await vseefaceClient.resetEmotions();
+		if (activeSoftware === 'vrm') {
+			vrmManager.resetEmotions();
+		} else if (is3D) {
+			await vnyanClient.resetEmotions();
 		}
-	}, [is3D]);
+	}, [activeSoftware, is3D]);
 
 	// Inyectar boca de forma unificada (2D y 3D)
 	const injectMouth = useCallback(
 		async (open: number, smile: number): Promise<void> => {
-			if (is3D) {
-				await vseefaceClient.injectMouth(open, smile);
+			if (activeSoftware === 'vrm') {
+				vrmManager.setVowels({ A: open, I: smile });
+			} else if (is3D) {
+				await vnyanClient.injectMouth(open, smile);
 			} else {
 				await vts.injectParameters([
 					{ id: 'SandyLipOpen', value: open },
@@ -179,16 +198,21 @@ export function useAvatar() {
 				]);
 			}
 		},
-		[is3D, vts],
+		[activeSoftware, is3D, vts],
 	);
 
 	// Despacho unificado de payload (speech, reaction, emotion)
 	const sendAvatarPayload = useCallback(
 		async (payload: AvatarBackendPayload): Promise<boolean> => {
+			if (activeSoftware === 'vrm') {
+				const emotion = String(payload.emotion ?? 'neutral').toLowerCase();
+				vrmManager.setEmotion(emotion, payload.intensity ?? 1.0);
+				return true;
+			}
 			if (activeSoftware === 'vtubestudio') {
 				return vts.sendAvatarPayload(payload);
 			}
-			return vseefaceClient.sendAvatarPayload(payload);
+			return vnyanClient.sendAvatarPayload(payload);
 		},
 		[activeSoftware, vts],
 	);
@@ -205,41 +229,53 @@ export function useAvatar() {
 
 	const setExpressionActive = useCallback(
 		async (nameOrFile: string, active: boolean): Promise<boolean> => {
+			if (activeSoftware === 'vrm') {
+				if (active) {
+					vrmManager.setEmotion(nameOrFile, 1.0);
+				} else {
+					vrmManager.resetEmotions();
+				}
+				return true;
+			}
 			if (activeSoftware === 'vtubestudio') {
 				return vts.setExpressionActive(nameOrFile, active);
 			}
 			if (active) {
-				await vseefaceClient.setEmotion(nameOrFile, 1.0);
+				await vnyanClient.setEmotion(nameOrFile, 1.0);
 			} else {
-				await vseefaceClient.resetEmotions();
+				await vnyanClient.resetEmotions();
 			}
 			return true;
 		},
 		[activeSoftware, vts],
 	);
 
-	// Auto-conectar a VSeeFace solo una vez al inicio si no se desconectó manualmente
+	// Auto-conectar a VNyan solo si está seleccionado ese modo
 	useEffect(() => {
 		if (
 			!hasAutoConnectedRef.current &&
 			!manualDisconnectedRef.current &&
-			activeSoftware === 'vseeface' &&
-			!vseefaceState.connected &&
-			!vseefaceState.connecting
+			activeSoftware === 'vnyan' &&
+			!vnyanState.connected &&
+			!vnyanState.connecting
 		) {
 			hasAutoConnectedRef.current = true;
-			void vseefaceClient.connect(configs.vseeface).catch(() => {
+			void vnyanClient.connect(configs.vnyan).catch(() => {
 				// Silencioso en auto-conexión inicial
 			});
 		}
-	}, [activeSoftware, vseefaceState.connected, vseefaceState.connecting, configs.vseeface]);
+	}, [activeSoftware, vnyanState.connected, vnyanState.connecting, configs.vnyan]);
 
 	// Coordinación de Lip Sync en tiempo real con AudioQueueManager
 	const { connected: vtsConnected, injectParameters: vtsInjectParameters } = vts;
 
 	useEffect(() => {
 		const vrmHandler = createVrmLipSyncHandler(async (vowels) => {
-			await vseefaceClient.injectVrmVowels(vowels);
+			if (activeSoftware === 'vrm') {
+				vrmManager.setVowels(vowels);
+			} else {
+				await vnyanClient.injectVrmVowels(vowels);
+			}
 		});
 
 		const vtsHandler = createVtsLipSyncHandler(async (params) => {
@@ -248,19 +284,32 @@ export function useAvatar() {
 
 		AudioQueueManager.getInstance().setLipSyncHandler({
 			prepare: async (blob) => {
-				if (activeSoftware === 'vseeface') {
+				if (
+					activeSoftware === 'vrm' ||
+					activeSoftware === 'vnyan' ||
+					activeSoftware === 'vseeface'
+				) {
 					await vrmHandler.prepare(blob);
 				}
 			},
 			start: async (blob, clock) => {
-				if (activeSoftware === 'vseeface' && vseefaceState.connected) {
+				if (activeSoftware === 'vrm') {
+					await vrmHandler.start(blob, clock);
+				} else if (
+					(activeSoftware === 'vnyan' || activeSoftware === 'vseeface') &&
+					vnyanState.connected
+				) {
 					await vrmHandler.start(blob, clock);
 				} else if (activeSoftware === 'vtubestudio' && vtsConnected) {
 					await vtsHandler(blob, clock);
 				}
 			},
 			stop: () => {
-				if (activeSoftware === 'vseeface') {
+				if (
+					activeSoftware === 'vrm' ||
+					activeSoftware === 'vnyan' ||
+					activeSoftware === 'vseeface'
+				) {
 					vrmHandler.stop();
 				} else {
 					stopVtsLipSync();
@@ -272,7 +321,7 @@ export function useAvatar() {
 			vrmHandler.stop();
 			stopVtsLipSync();
 		};
-	}, [activeSoftware, vseefaceState.connected, vtsConnected, vtsInjectParameters]);
+	}, [activeSoftware, vnyanState.connected, vtsConnected, vtsInjectParameters]);
 
 	return {
 		activeSoftware,
@@ -296,7 +345,7 @@ export function useAvatar() {
 		resetEmotions,
 		injectMouth,
 
-		stats: is3D ? vseefaceState.stats : vts.stats,
+		stats: is3D ? vnyanState.stats : vts.stats,
 
 		// Propiedades específicas de 2D VTube Studio
 		vts: {

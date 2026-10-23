@@ -1,6 +1,6 @@
+import { noIndexMetadata } from '@/lib/seo';
 import { SignUp } from '@clerk/nextjs';
 import type { Metadata } from 'next';
-import { noIndexMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = noIndexMetadata;
 

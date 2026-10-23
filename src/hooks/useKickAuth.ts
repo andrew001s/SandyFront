@@ -9,8 +9,8 @@ import {
 	stopKick,
 } from '@/api/kick';
 import { getKickAccessToken, getKickAuthUrl } from '@/api/kickAuth';
-import type { ProfileModel } from '@/interfaces/profileInterface';
 import type { ServiceStatus } from '@/api/sandycore';
+import type { ProfileModel } from '@/interfaces/profileInterface';
 import { useAuth } from '@clerk/nextjs';
 import posthog from 'posthog-js';
 import { useCallback, useEffect, useState } from 'react';

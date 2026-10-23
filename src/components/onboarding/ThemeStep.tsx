@@ -3,9 +3,9 @@
 import { OnboardingStepFrame } from '@/components/onboarding/OnboardingStepFrame';
 import type { SandyOnboardingContext, StepProps } from '@/components/onboarding/onboarding.types';
 import { useOnboarding } from '@onboardjs/react';
-import { useTheme } from 'next-themes';
 import { motion } from 'framer-motion';
 import { Moon, Sun } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 type ThemeOption = 'light' | 'dark';
 

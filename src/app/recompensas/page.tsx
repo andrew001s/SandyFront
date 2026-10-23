@@ -1,19 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
-import { Gift, Save, Star, Sparkles } from 'lucide-react';
-import { SiKick, SiTwitch } from 'react-icons/si';
-
-import { DashboardShell } from '@/containers/dashboard/DashboardShell';
+import { type RewardConfig, getRewards, saveRewards } from '@/api/sandycore';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { getRewards, saveRewards, type RewardConfig } from '@/api/sandycore';
+import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DashboardShell } from '@/containers/dashboard/DashboardShell';
+import { Gift, Save, Sparkles } from 'lucide-react';
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
+import { SiKick, SiTwitch } from 'react-icons/si';
+import { toast } from 'sonner';
 
 export default function RecompensasPage() {
 	const [rewards, setRewards] = useState<{ twitch: RewardConfig[]; kick: RewardConfig[] }>({
@@ -37,7 +35,7 @@ export default function RecompensasPage() {
 	};
 
 	useEffect(() => {
-		loadData();
+		void loadData();
 	}, []);
 
 	const handleToggle = (platform: 'twitch' | 'kick', rewardId: string, enabled: boolean) => {
@@ -59,7 +57,7 @@ export default function RecompensasPage() {
 		try {
 			const allRewards = [...rewards.twitch, ...rewards.kick];
 			await saveRewards(allRewards);
-			toast.success('Configuración de recompensas guardada correctamente');
+			toast.success('Configuración de recompensas guardada');
 		} catch (error) {
 			console.error(error);
 			toast.error('Error al guardar la configuración de recompensas');
@@ -69,187 +67,186 @@ export default function RecompensasPage() {
 	};
 
 	const renderSkeleton = () => (
-		<div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
+		<div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
 			{[1, 2, 3].map((n) => (
-				<Card key={n} className='overflow-hidden border-border/40 bg-background/50'>
-					<CardHeader className='space-y-2 p-6'>
+				<div
+					key={n}
+					className='flex flex-col justify-between rounded-xl border border-border/80 bg-card p-5'
+				>
+					<div>
 						<div className='flex items-center justify-between'>
-							<Skeleton className='h-6 w-24 rounded-full' />
-							<Skeleton className='h-6 w-12 rounded-full' />
+							<div className='flex items-center gap-2.5'>
+								<Skeleton className='size-9 rounded-lg' />
+								<Skeleton className='h-5 w-16 rounded-md' />
+							</div>
+							<Skeleton className='h-5 w-12 rounded-full' />
 						</div>
-						<Skeleton className='h-8 w-3/4' />
-					</CardHeader>
-					<CardContent className='space-y-4 p-6 pt-0'>
-						<Skeleton className='h-24 w-full rounded-xl' />
-					</CardContent>
-				</Card>
+						<Skeleton className='mt-4 h-5 w-3/4 rounded-md' />
+					</div>
+					<Skeleton className='mt-4 h-16 w-full rounded-lg' />
+				</div>
 			))}
 		</div>
 	);
 
 	const renderRewardCard = (reward: RewardConfig, platform: 'twitch' | 'kick') => {
 		const isTwitch = platform === 'twitch';
-		const themeColor = isTwitch ? 'border-[#9146FF]/30' : 'border-[#53FC18]/30';
-		const activeThemeColor = isTwitch
-			? 'ring-[#9146FF]/50 border-[#9146FF]'
-			: 'ring-[#53FC18]/50 border-[#53FC18]';
 
 		return (
-			<Card
+			<div
 				key={reward.reward_id}
-				className={`relative overflow-hidden border bg-background/50 backdrop-blur-md transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg ${
-					reward.enabled ? `shadow-sm ${activeThemeColor}` : `border-border/40 ${themeColor}`
+				className={`flex flex-col justify-between rounded-xl border p-5 transition-all duration-150 ${
+					reward.enabled
+						? 'border-primary/50 bg-card shadow-xs'
+						: 'border-border/80 bg-card hover:border-border'
 				}`}
 			>
-				<div
-					className='absolute top-0 left-0 h-[3px] w-full'
-					style={{ backgroundColor: reward.background_color || (isTwitch ? '#9146FF' : '#53FC18') }}
-				/>
-
-				<CardHeader className='space-y-4 p-5'>
+				<div>
 					<div className='flex items-center justify-between gap-3'>
-						<div className='flex items-center gap-2'>
+						<div className='flex items-center gap-2.5'>
 							{reward.image_url ? (
-								<Image
-									src={reward.image_url}
-									alt={reward.title}
-									className='size-8 rounded-lg border border-border/40 bg-background/80 object-contain p-0.5 shadow-sm'
-								/>
+								<div className='flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-700/70 bg-slate-900 p-1 shadow-xs'>
+									<Image
+										src={reward.image_url}
+										alt={reward.title}
+										width={28}
+										height={28}
+										className='size-7 object-contain'
+									/>
+								</div>
 							) : (
-								<div className='flex size-8 items-center justify-center rounded-lg border border-border/40 bg-background/80 shadow-sm'>
-									<Gift className={`size-4 ${isTwitch ? 'text-[#9146FF]' : 'text-[#53FC18]'}`} />
+								<div className='flex size-9 shrink-0 items-center justify-center rounded-lg border border-slate-700/70 bg-slate-900 shadow-xs'>
+									<Gift
+										className={`size-4.5 ${isTwitch ? 'text-[#A78BFA]' : 'text-emerald-400'}`}
+									/>
 								</div>
 							)}
-							<Badge variant='secondary' className='px-2.5 py-0.5 font-semibold text-xs'>
-								{reward.cost.toLocaleString()} Pts
-							</Badge>
+							<span className='rounded-md border border-border/90 bg-muted/80 px-2 py-0.5 font-mono font-semibold text-[11px] text-foreground shadow-2xs'>
+								{reward.cost.toLocaleString()} pts
+							</span>
 						</div>
 
 						<div className='flex items-center gap-2'>
-							<span className='font-medium text-muted-foreground text-xs'>
-								{reward.enabled ? 'Habilitado' : 'Apagado'}
+							<span
+								className={
+									reward.enabled
+										? 'font-mono font-semibold text-[10px] text-emerald-600 uppercase tracking-wider dark:text-emerald-400'
+										: 'font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-wider'
+								}
+							>
+								{reward.enabled ? 'Activo' : 'Inactivo'}
 							</span>
 							<Switch
 								checked={reward.enabled}
 								onCheckedChange={(checked) => handleToggle(platform, reward.reward_id, checked)}
-								className='data-[state=checked]:bg-violet-600 dark:data-[state=checked]:bg-[#9146FF]'
 							/>
 						</div>
 					</div>
 
-					<div>
-						<CardTitle className='line-clamp-1 font-semibold text-lg leading-tight tracking-tight'>
+					<div className='mt-3.5'>
+						<h3 className='line-clamp-1 font-display font-semibold text-foreground text-sm'>
 							{reward.title}
-						</CardTitle>
+						</h3>
 					</div>
-				</CardHeader>
+				</div>
 
-				<CardContent className='space-y-4 p-5 pt-0'>
+				<div className='mt-4'>
 					{reward.enabled ? (
-						<div className='fade-in slide-in-from-top-2 animate-in space-y-2 duration-300'>
-							<div className='flex items-center gap-1.5 font-medium text-muted-foreground text-xs'>
-								<Sparkles className='size-3.5 text-amber-500' />
-								<span>Prompt de reacción para Sandy:</span>
+						<div className='space-y-1.5'>
+							<div className='flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground uppercase tracking-wider'>
+								<Sparkles className='size-3 text-primary' />
+								<span>Instrucción de reacción para Sandy:</span>
 							</div>
 							<textarea
 								value={reward.prompt}
 								onChange={(e) => handlePromptChange(platform, reward.reward_id, e.target.value)}
-								placeholder='Ej. Reacciona muy emocionada y dile que es el mejor viewer...'
+								placeholder='Ej: Reacciona con sorpresa y agradece efusivamente el apoyo...'
 								rows={3}
-								className='w-full resize-none rounded-xl border border-border/60 bg-background/60 p-3 font-medium text-sm shadow-inner transition-all placeholder:text-muted-foreground/60 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500'
+								className='w-full resize-none rounded-lg border border-border/90 bg-background p-2.5 font-sans text-foreground text-xs placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
 							/>
 						</div>
 					) : (
-						<div className='flex items-center justify-center rounded-xl border border-border/40 border-dashed bg-background/30 py-6 font-medium text-muted-foreground/70 text-xs'>
-							Activa la recompensa para personalizar la reacción de Sandy
+						<div className='flex items-center justify-center rounded-lg border border-border/90 border-dashed bg-muted/40 px-3 py-4 text-center font-medium font-sans text-foreground/80 text-xs'>
+							Activa este canje para asignarle una reacción
 						</div>
 					)}
-				</CardContent>
-			</Card>
+				</div>
+			</div>
 		);
 	};
 
 	return (
 		<DashboardShell>
-			<div className='mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-8 md:px-6'>
-				<header className='mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center'>
-					<div>
-						<h1 className='font-bold text-3xl [font-family:var(--font-unbounded)] sm:text-4xl'>
-							<span className='bg-gradient-to-r from-violet-600 to-cyan-600 bg-clip-text text-transparent dark:from-[#A78BFA] dark:to-[#22D3EE]'>
-								Recompensas
-							</span>
-							<span className='ml-3 inline-block animate-[twinkle_3s_ease-in-out_infinite] text-amber-400 dark:text-[#FDE68A]'>
-								<Star size={22} className='fill-amber-400 dark:fill-[#FDE68A]' />
-							</span>
-						</h1>
-						<p className='mt-2 max-w-xl text-muted-foreground'>
-							Personaliza los prompts y activa a qué recompensas de puntos de canal reaccionará
-							Sandy en directo.
-						</p>
-					</div>
-
-					<div>
-						<Button
-							onClick={handleSave}
-							disabled={loading || saving}
-							className='flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 font-semibold text-white shadow-md duration-300 hover:bg-violet-700 active:scale-95 disabled:opacity-50'
-						>
-							<Save className='size-4' />
-							{saving ? 'Guardando...' : 'Guardar cambios'}
-						</Button>
-					</div>
-				</header>
+			<div className='mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-8 md:px-6'>
+				<PageHeader
+					tag='Puntos de Canal · Reacciones en Vivo'
+					title='Recompensas de Stream'
+					description='Personaliza los prompts y activa a qué canjes de puntos de canal reaccionará Sandy en directo.'
+				>
+					<Button
+						onClick={() => void handleSave()}
+						disabled={loading || saving}
+						className='flex h-9 items-center gap-2 rounded-lg bg-primary px-4 font-sans font-semibold text-primary-foreground text-xs shadow-xs hover:bg-primary/90 disabled:opacity-50'
+					>
+						<Save className='size-3.5' />
+						<span>{saving ? 'Guardando...' : 'Guardar cambios'}</span>
+					</Button>
+				</PageHeader>
 
 				{loading ? (
 					renderSkeleton()
 				) : (
-					<Tabs defaultValue='twitch' className='space-y-6'>
-						<TabsList className='grid w-full max-w-xs grid-cols-2 rounded-xl border border-border/40 bg-background/80 p-1'>
+					<Tabs defaultValue='twitch' className='space-y-5'>
+						<TabsList className='grid w-full max-w-xs grid-cols-2 rounded-lg border border-border bg-card p-1'>
 							<TabsTrigger
 								value='twitch'
-								className='flex items-center gap-2 rounded-lg font-semibold'
+								className='flex items-center gap-2 rounded-md font-sans font-semibold text-xs'
 							>
-								<SiTwitch className='size-4 text-[#9146FF]' />
+								<SiTwitch className='size-3.5 text-[#9146FF]' />
 								Twitch
 							</TabsTrigger>
 							<TabsTrigger
 								value='kick'
-								className='flex items-center gap-2 rounded-lg font-semibold'
+								className='flex items-center gap-2 rounded-md font-sans font-semibold text-xs'
 							>
-								<SiKick className='size-4 text-[#53FC18]' />
+								<SiKick className='size-3.5 text-[#53FC18]' />
 								Kick
 							</TabsTrigger>
 						</TabsList>
 
-						<TabsContent value='twitch' className='space-y-6'>
+						<TabsContent value='twitch' className='space-y-4'>
 							{rewards.twitch.length > 0 ? (
-								<div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
+								<div className='grid grid-cols-1 gap-3.5 md:grid-cols-2 lg:grid-cols-3'>
 									{rewards.twitch.map((reward) => renderRewardCard(reward, 'twitch'))}
 								</div>
 							) : (
-								<div className='flex flex-col items-center justify-center rounded-3xl border border-border/60 border-dashed bg-background/25 p-12 text-center'>
-									<Gift className='mb-4 size-12 animate-[bounce_2s_infinite] text-muted-foreground/60' />
-									<h3 className='font-semibold text-lg'>No se encontraron recompensas</h3>
-									<p className='mt-1.5 max-w-sm text-muted-foreground'>
-										Asegúrate de tener recompensas personalizadas creadas en tu canal de Twitch y de
-										tener la cuenta vinculada.
+								<div className='flex flex-col items-center justify-center rounded-xl border border-border/70 border-dashed bg-card/40 p-10 text-center'>
+									<Gift className='mb-3 size-10 text-muted-foreground/50' />
+									<h3 className='font-display font-semibold text-base text-foreground'>
+										No se encontraron recompensas de Twitch
+									</h3>
+									<p className='mt-1 max-w-sm font-sans text-muted-foreground text-xs'>
+										Crea recompensas de puntos de canal en tu panel de creador de Twitch y asegúrate
+										de tener la cuenta vinculada.
 									</p>
 								</div>
 							)}
 						</TabsContent>
 
-						<TabsContent value='kick' className='space-y-6'>
+						<TabsContent value='kick' className='space-y-4'>
 							{rewards.kick.length > 0 ? (
-								<div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
+								<div className='grid grid-cols-1 gap-3.5 md:grid-cols-2 lg:grid-cols-3'>
 									{rewards.kick.map((reward) => renderRewardCard(reward, 'kick'))}
 								</div>
 							) : (
-								<div className='flex flex-col items-center justify-center rounded-3xl border border-border/60 border-dashed bg-background/25 p-12 text-center'>
-									<Gift className='mb-4 size-12 animate-[bounce_2s_infinite] text-muted-foreground/60' />
-									<h3 className='font-semibold text-lg'>No se encontraron recompensas</h3>
-									<p className='mt-1.5 max-w-sm text-muted-foreground'>
-										Actualmente no hay recompensas detectadas de Kick. Recuerda que esta función
-										requiere nivel de afiliado en Kick.
+								<div className='flex flex-col items-center justify-center rounded-xl border border-border/70 border-dashed bg-card/40 p-10 text-center'>
+									<Gift className='mb-3 size-10 text-muted-foreground/50' />
+									<h3 className='font-display font-semibold text-base text-foreground'>
+										No se encontraron recompensas de Kick
+									</h3>
+									<p className='mt-1 max-w-sm font-sans text-muted-foreground text-xs'>
+										Las recompensas en Kick requieren estatus de afiliado y configuración previa en
+										tu canal.
 									</p>
 								</div>
 							)}

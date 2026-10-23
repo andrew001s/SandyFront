@@ -1,0 +1,226 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-22T19:42:00.000Z",
+  "title": "Design System: Sandy Studio",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Violeta Estelar",
+        "canonical": "#8C7CFF",
+        "tonalRamp": [
+          "#1B1838",
+          "#2E285F",
+          "#483F91",
+          "#665AC6",
+          "#8C7CFF",
+          "#A89BFF",
+          "#C9C1FF",
+          "#EFEBFF"
+        ]
+      },
+      "secondary": {
+        "role": "secondary",
+        "displayName": "Nebulosa Magenta",
+        "canonical": "#F28BD8",
+        "tonalRamp": [
+          "#33162C",
+          "#59234D",
+          "#8A3476",
+          "#C04FA6",
+          "#F28BD8",
+          "#F7A8E3",
+          "#FBCDF0",
+          "#FDF1FA"
+        ]
+      },
+      "accent-amber": {
+        "role": "accent",
+        "displayName": "Ámbar de Alerta",
+        "canonical": "#F2B45A",
+        "tonalRamp": [
+          "#33230C",
+          "#5C3E14",
+          "#8C5E1E",
+          "#C2842C",
+          "#F2B45A",
+          "#F6C882",
+          "#FBDFB0",
+          "#FEF6E8"
+        ]
+      },
+      "accent-rose": {
+        "role": "accent",
+        "displayName": "Rosa de Ruptura",
+        "canonical": "#FF8A96",
+        "tonalRamp": [
+          "#361418",
+          "#5E2028",
+          "#8F303E",
+          "#C74658",
+          "#FF8A96",
+          "#FFA9B3",
+          "#FFD1D7",
+          "#FFF2F4"
+        ]
+      },
+      "neutral-bg": {
+        "role": "neutral",
+        "displayName": "Cielo Nocturno Profundo",
+        "canonical": "#0E1022",
+        "tonalRamp": [
+          "#070811",
+          "#0E1022",
+          "#171A36",
+          "#262A4D",
+          "#3E4373",
+          "#6269A2",
+          "#9198D0",
+          "#D2D5F2"
+        ]
+      },
+      "text-primary": {
+        "role": "neutral",
+        "displayName": "Niebla Estelar",
+        "canonical": "#E9E6F5",
+        "tonalRamp": [
+          "#1B182B",
+          "#322E4E",
+          "#504A79",
+          "#766EA8",
+          "#A59DCF",
+          "#C9C3E6",
+          "#E9E6F5",
+          "#F8F7FD"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Bricolage Grotesque Display",
+        "purpose": "Titulares principales y pantallas de bienvenida con carácter expresivo."
+      },
+      "headline": {
+        "displayName": "Bricolage Grotesque Headline",
+        "purpose": "Encabezados de panel y títulos de tarjetas."
+      },
+      "body": {
+        "displayName": "Atkinson Hyperlegible Next",
+        "purpose": "Texto de lectura optimizado para pantallas secundarias y distancia de visualización."
+      },
+      "label": {
+        "displayName": "Atkinson Hyperlegible Mono",
+        "purpose": "Cifras tabulares, marcas de tiempo, latencias y códigos de estado técnico."
+      }
+    },
+    "shadows": [
+      {
+        "name": "focus-halo",
+        "value": "0 0 0 2px #8C7CFF",
+        "purpose": "Indicador de foco accesible para navegación por teclado."
+      },
+      {
+        "name": "modal-deep",
+        "value": "0 16px 48px -8px rgba(5, 7, 16, 0.75)",
+        "purpose": "Elevación de diálogos modales sobre el lienzo."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-responsive",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Transición rápida de estado para controles de streaming."
+      },
+      {
+        "name": "pulse-subtle",
+        "value": "twinkle 3s ease-in-out infinite",
+        "purpose": "Indicación de actividad de nodo estelar en proceso de conexión."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Action Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción principal para iniciar servicios o conectar plataformas.",
+      "html": "<button class=\"ds-btn-primary\">Iniciar servicios</button>",
+      "css": ".ds-btn-primary { background: #8C7CFF; color: #0E1022; font-family: 'Atkinson Hyperlegible Next', system-ui, sans-serif; font-size: 15px; font-weight: 700; height: 42px; padding: 0 18px; border: none; border-radius: 8px; cursor: pointer; transition: background 0.15s ease, transform 0.15s ease; } .ds-btn-primary:hover { background: #A594FF; transform: translateY(-1px); } .ds-btn-primary:focus-visible { outline: 2px solid #8C7CFF; outline-offset: 2px; }"
+    },
+    {
+      "name": "Destructive Action Button",
+      "kind": "button",
+      "refersTo": "button-destructive",
+      "description": "Acción destructiva aislada para detener servicios o desconectar.",
+      "html": "<button class=\"ds-btn-destructive\">Detener todo</button>",
+      "css": ".ds-btn-destructive { background: transparent; color: #FF8A96; font-family: 'Atkinson Hyperlegible Next', system-ui, sans-serif; font-size: 14px; font-weight: 600; height: 40px; padding: 0 16px; border: 1px solid #4A2A3E; border-radius: 8px; cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease; } .ds-btn-destructive:hover { background: rgba(255, 138, 150, 0.12); border-color: #FF8A96; } .ds-btn-destructive:focus-visible { outline: 2px solid #FF8A96; outline-offset: 2px; }"
+    },
+    {
+      "name": "Constellation Service Card",
+      "kind": "card",
+      "refersTo": "card-panel",
+      "description": "Panel contenedor de estado y control para subsistemas del bot.",
+      "html": "<div class=\"ds-service-card\"><div class=\"ds-card-head\"><h3>Bot de chat</h3><span class=\"ds-status-node on\">Activo</span></div><p class=\"ds-card-desc\">Conexión activa con Twitch y Kick en tiempo real.</p></div>",
+      "css": ".ds-service-card { background: #141733; border: 1px solid #262A4D; border-radius: 12px; padding: 18px; color: #E9E6F5; font-family: 'Atkinson Hyperlegible Next', system-ui, sans-serif; } .ds-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; } .ds-card-head h3 { font-family: 'Bricolage Grotesque', sans-serif; font-size: 17px; font-weight: 700; margin: 0; } .ds-card-desc { font-size: 13px; color: #9A98B8; margin: 0; } .ds-status-node { font-family: 'Atkinson Hyperlegible Mono', monospace; font-size: 12px; padding: 3px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 6px; } .ds-status-node.on { background: rgba(140, 124, 255, 0.15); color: #8C7CFF; border: 1px solid rgba(140, 124, 255, 0.3); } .ds-status-node.on::before { content: '●'; font-size: 10px; }"
+    },
+    {
+      "name": "Event Log Timestamp Row",
+      "kind": "custom",
+      "description": "Fila de registro de la bitácora con hora en mono y chip de categoría.",
+      "html": "<div class=\"ds-log-row\"><span class=\"ds-log-time\">23:41:07</span><span class=\"ds-log-tag\">chat</span><span class=\"ds-log-msg\">lunaria_vt: ¿qué juegas hoy, Sandy?</span></div>",
+      "css": ".ds-log-row { display: grid; grid-template-columns: 74px auto 1fr; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid #20244A; font-family: 'Atkinson Hyperlegible Next', system-ui, sans-serif; font-size: 14px; color: #E9E6F5; } .ds-log-time { font-family: 'Atkinson Hyperlegible Mono', monospace; font-size: 12px; color: #9A98B8; font-variant-numeric: tabular-nums; } .ds-log-tag { font-family: 'Atkinson Hyperlegible Mono', monospace; font-size: 11px; text-transform: uppercase; color: #8C7CFF; background: rgba(140, 124, 255, 0.12); border: 1px solid rgba(140, 124, 255, 0.25); border-radius: 4px; padding: 1px 6px; } .ds-log-msg { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "La Bitácora del Observatorio Nocturno",
+    "overview": "Sandy Studio organiza el control de un VTuber con IA como una bitácora técnica de observación bajo un cielo índigo nocturno. Diseñado para streamers en segunda pantalla que necesitan lectura de estado en menos de 200 ms.",
+    "keyCharacteristics": [
+      "Lectura periférica (Glanceable) de estado en monitor secundario.",
+      "Estrellas con propósito: nodos de estado de constelación en vez de adornos aleatorios.",
+      "Costuras limpias de 1px en lugar de sombras acumuladas.",
+      "Acciones destructivas aisladas físicamente."
+    ],
+    "rules": [
+      {
+        "name": "The Constellation State Rule",
+        "body": "El estado de un servicio o conexión nunca se comunica únicamente por color. Combina forma geométrica, texto y código de color.",
+        "section": "colors"
+      },
+      {
+        "name": "The 10% Accent Rule",
+        "body": "El violeta estelar y la nebulosa magenta ocupan como máximo el 10% del área visual de cualquier pantalla.",
+        "section": "colors"
+      },
+      {
+        "name": "The Glancing Read Rule",
+        "body": "Todo estado crítico debe leerse en un golpe de vista de 0.2s. Cifras vivas usan siempre glifos tabulares monospaced.",
+        "section": "typography"
+      },
+      {
+        "name": "The Hairline Seam Rule",
+        "body": "Paneles contiguos se separan con costuras de 1px en #262A4D. Sombras exteriores solo en modales emergentes.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Asegurar que cualquier cambio de estado se reconozca a distancia mediante forma y contraste.",
+      "Usar Atkinson Hyperlegible Mono para toda cifra, código de token, hora y métrica técnica.",
+      "Mantener las acciones de parada aisladas con espacio en blanco protector.",
+      "Soportar modo oscuro (índigo profundo) y modo claro (lienzo blanco y lila) con contraste WCAG AA.",
+      "Mantener la constelación como reflejo fiel de las conexiones de SandyCore."
+    ],
+    "donts": [
+      "Llenar el fondo de estrellas o partículas que parpadeen sin cesar y distraigan al streamer en directo.",
+      "Usar degradados de morado a azul genéricos de IA en botones o textos.",
+      "Aplicar sombras difusas grandes ni efecto glassmorphism en todos los paneles a la vez.",
+      "Inventar testimonios, números de usuarios falsos ni métricas ficticias.",
+      "Colocar enlaces o botones interactivos que no lleven a ninguna parte o queden muertos."
+    ]
+  }
+}

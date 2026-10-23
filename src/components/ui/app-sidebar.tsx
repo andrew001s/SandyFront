@@ -14,7 +14,6 @@ import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
-	SidebarSeparator,
 	useSidebar,
 } from '@/components/ui/sidebar';
 import { KOFI_URL } from '@/lib/links';
@@ -23,19 +22,19 @@ import { SignOutButton, useClerk, useUser } from '@clerk/nextjs';
 import {
 	CircleUserRound,
 	Coffee,
+	Gift,
 	LayoutDashboard,
 	LogIn,
 	LogOut,
-	Gift,
 	Plug,
 	Settings2,
 	ShieldCheck,
 	Tv,
 } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useTheme } from 'next-themes';
 
 const navItems = [
 	{ href: '/home', label: 'Dashboard', icon: LayoutDashboard, tourId: 'sidebar-tour-dashboard' },
@@ -47,7 +46,7 @@ const navItems = [
 		icon: ShieldCheck,
 		tourId: 'sidebar-tour-moderacion',
 	},
-	{ href: '/avatar', label: 'VTube Studio', icon: Tv, tourId: 'sidebar-tour-avatar' },
+	{ href: '/avatar', label: 'Avatar 2D/3D', icon: Tv, tourId: 'sidebar-tour-avatar' },
 	{ href: '/settings', label: 'Configuración', icon: Settings2, tourId: 'sidebar-tour-settings' },
 	{ href: '/account', label: 'Cuenta', icon: CircleUserRound, tourId: 'sidebar-tour-account' },
 ];
@@ -76,34 +75,34 @@ export function AppSidebar() {
 				: '/icons/sandyDark.png';
 
 	return (
-		<Sidebar collapsible='icon' variant='floating'>
-			<SidebarHeader className='p-3 pt-3'>
+		<Sidebar collapsible='icon' className='border-r border-sidebar-border bg-sidebar'>
+			<SidebarHeader className='p-3'>
 				<Link
 					href='/home'
 					aria-label='Sandy Studio'
 					title='Sandy Studio'
-					className='flex w-full items-center justify-center p-3 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-3'
+					className='flex w-full items-center justify-center rounded-lg p-2 transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary'
 				>
-					<div className='relative h-16 w-full shrink-0 overflow-hidden rounded-2xl shadow-sm ring-2 ring-transparent group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:w-10'>
+					<div className='relative h-11 w-full shrink-0 overflow-hidden group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:w-8'>
 						<Image
 							src={logoSrc}
 							alt='Sandy Studio'
 							fill
-							sizes={state === 'collapsed' ? '40px' : '240px'}
-							className='object-contain p-1.5'
+							sizes={state === 'collapsed' ? '32px' : '200px'}
+							className='object-contain'
 							priority
 						/>
 					</div>
 				</Link>
 			</SidebarHeader>
-			<SidebarSeparator className='mx-4 mb-2 group-data-[collapsible=icon]:mx-2' />
-			<SidebarContent className='px-3 pb-3 group-data-[collapsible=icon]:px-2'>
-				<SidebarGroup className='rounded-[28px] border border-sidebar-border bg-background/75 p-3 shadow-sm backdrop-blur-sm group-data-[collapsible=icon]:rounded-[24px] group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-2'>
-					<SidebarGroupLabel className='px-2 text-[0.7rem] font-semibold uppercase tracking-[0.18em] group-data-[collapsible=icon]:hidden'>
+
+			<SidebarContent className='px-2.5 pb-2'>
+				<SidebarGroup className='rounded-xl border border-sidebar-border bg-card/60 p-2 shadow-xs'>
+					<SidebarGroupLabel className='px-2 font-mono text-[10px] text-muted-foreground uppercase tracking-wider group-data-[collapsible=icon]:hidden'>
 						Navegación
 					</SidebarGroupLabel>
-					<SidebarGroupContent className='mt-2'>
-						<SidebarMenu className='gap-2'>
+					<SidebarGroupContent className='mt-1'>
+						<SidebarMenu className='gap-1'>
 							{navItems.map((item) => {
 								const isActive = pathname === item.href;
 								return (
@@ -113,11 +112,13 @@ export function AppSidebar() {
 												href={item.href}
 												id={item.tourId}
 												className={cn(
-													'flex items-center gap-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0',
-													isActive && 'font-medium',
+													'flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 font-sans text-xs transition-colors group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0',
+													isActive
+														? 'border border-primary/30 bg-primary/10 font-semibold text-primary'
+														: 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
 												)}
 											>
-												<item.icon className='h-4 w-4 shrink-0' />
+												<item.icon className='size-4 shrink-0' />
 												<span className='group-data-[collapsible=icon]:hidden'>{item.label}</span>
 											</Link>
 										</SidebarMenuButton>
@@ -129,47 +130,49 @@ export function AppSidebar() {
 				</SidebarGroup>
 			</SidebarContent>
 
-			<SidebarFooter className='mt-auto p-3 group-data-[collapsible=icon]:p-2'>
+			<SidebarFooter className='mt-auto p-2.5'>
 				{state === 'collapsed' ? (
 					<a
 						href={KOFI_URL}
 						target='_blank'
 						rel='noopener noreferrer'
 						aria-label='Apóyame en Ko-fi'
-						className='mx-auto mb-2 flex size-10 items-center justify-center rounded-2xl border border-border/70 bg-background text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
+						className='mx-auto mb-2 flex size-9 items-center justify-center rounded-lg border border-border/70 bg-card text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
 					>
-						<Coffee className='h-4 w-4 shrink-0 text-[#FF5E5B]' />
+						<Coffee className='size-4 text-primary' />
 					</a>
 				) : (
 					<div className='mb-2 flex w-full justify-center'>
 						<KoFiButton />
 					</div>
 				)}
-				<div className='rounded-[28px] border border-sidebar-border bg-background/80 p-3 shadow-sm backdrop-blur-sm group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-2'>
-					<div className='flex items-center gap-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0'>
-						<Avatar className='size-10 shrink-0 ring-2 ring-background shadow-sm'>
+				<div className='rounded-xl border border-sidebar-border bg-card/80 p-2.5 shadow-xs'>
+					<div className='flex items-center gap-2.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0'>
+						<Avatar className='size-8 shrink-0 border border-border shadow-xs'>
 							{isSignedIn && user?.imageUrl ? (
 								<AvatarImage src={user.imageUrl} alt={displayName} />
 							) : null}
-							<AvatarFallback className='bg-primary/10 text-primary text-sm font-semibold'>
+							<AvatarFallback className='bg-primary/10 font-mono font-bold text-primary text-xs'>
 								{initials}
 							</AvatarFallback>
 						</Avatar>
 						<div className='min-w-0 flex-1 group-data-[collapsible=icon]:hidden'>
-							<p className='truncate font-semibold text-sm'>{displayName}</p>
-							<p className='truncate text-xs text-muted-foreground'>{email}</p>
+							<p className='truncate font-sans font-semibold text-xs text-foreground'>
+								{displayName}
+							</p>
+							<p className='truncate font-mono text-[10px] text-muted-foreground'>{email}</p>
 						</div>
 					</div>
-					<div className='mt-3'>
+					<div className='mt-2'>
 						{isSignedIn ? (
 							<SignOutButton redirectUrl='/'>
 								<Button
 									type='button'
 									variant='outline'
 									size='sm'
-									className='h-10 w-full justify-start gap-3 rounded-2xl border-border/70 bg-background px-3 shadow-none group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0'
+									className='h-8 w-full justify-start gap-2 rounded-lg border-border/70 bg-background px-2.5 font-sans font-medium text-muted-foreground text-xs shadow-none hover:bg-muted/50 hover:text-foreground group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0'
 								>
-									<LogOut className='h-4 w-4 shrink-0' />
+									<LogOut className='size-3.5 shrink-0' />
 									<span className='group-data-[collapsible=icon]:hidden'>Cerrar sesión</span>
 								</Button>
 							</SignOutButton>
@@ -179,9 +182,9 @@ export function AppSidebar() {
 								variant='outline'
 								size='sm'
 								onClick={() => void openSignIn({ fallbackRedirectUrl: '/home' })}
-								className='h-10 w-full justify-start gap-3 rounded-2xl border-border/70 bg-background px-3 shadow-none group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0'
+								className='h-8 w-full justify-start gap-2 rounded-lg border-border/70 bg-background px-2.5 font-sans font-medium text-muted-foreground text-xs shadow-none hover:bg-muted/50 hover:text-foreground group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0'
 							>
-								<LogIn className='h-4 w-4 shrink-0' />
+								<LogIn className='size-3.5 shrink-0' />
 								<span className='group-data-[collapsible=icon]:hidden'>Iniciar sesión</span>
 							</Button>
 						)}

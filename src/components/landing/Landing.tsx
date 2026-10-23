@@ -21,11 +21,14 @@ const Cta = dynamic(() => import('@/components/landing/Cta').then((m) => m.Cta),
 
 export function Landing() {
 	return (
-		<div className='relative min-h-screen bg-[#F6F3FC] text-zinc-900 selection:bg-[#8B5CF6]/40 dark:bg-[#0B0A12] dark:text-zinc-50'>
-			<StarField count={70} className='fixed inset-0 opacity-50' />
+		<div className='relative min-h-screen bg-background text-foreground selection:bg-primary/20 selection:text-foreground'>
+			<StarField
+				count={35}
+				className='pointer-events-none fixed inset-0 opacity-20 dark:opacity-35'
+			/>
 			<LandingNav />
 			<KoFiOverlay />
-			<div className='relative z-0 overflow-x-clip'>
+			<main className='relative z-0 overflow-x-clip'>
 				<Hero />
 				<Marquee />
 				<Features />
@@ -33,7 +36,7 @@ export function Landing() {
 				<Faq />
 				<Support />
 				<Cta />
-			</div>
+			</main>
 		</div>
 	);
 }

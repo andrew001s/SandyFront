@@ -2,6 +2,7 @@
 
 import { saveSettings } from '@/api/settings';
 import { OnboardingStepFrame } from '@/components/onboarding/OnboardingStepFrame';
+import type { SandyOnboardingContext, StepProps } from '@/components/onboarding/onboarding.types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -10,12 +11,11 @@ import {
 	normalizeSandyCoreConfig,
 	toSandyCorePayload,
 } from '@/lib/sandycore-config';
-import type { StepProps, SandyOnboardingContext } from '@/components/onboarding/onboarding.types';
 import { useAuth } from '@clerk/nextjs';
 import { useOnboarding } from '@onboardjs/react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Download, FileJson, Sparkles } from 'lucide-react';
-import { useCallback, useRef, useState, type DragEvent } from 'react';
+import { type DragEvent, useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 export function SandyCoreStep({ payload }: StepProps) {

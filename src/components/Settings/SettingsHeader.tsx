@@ -1,6 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardDescription, CardTitle } from '@/components/ui/card';
-import { Save } from 'lucide-react';
+import { Save, Sparkles } from 'lucide-react';
 
 type SettingsHeaderProps = {
 	isBusy: boolean;
@@ -10,29 +9,27 @@ type SettingsHeaderProps = {
 
 export function SettingsHeader({ isBusy, isSaving, onSave }: SettingsHeaderProps) {
 	return (
-		<Card className='overflow-hidden border-border/60 bg-card/90 shadow-[0_30px_90px_-40px_rgba(15,23,42,0.22)] backdrop-blur-xl'>
-			<div className='px-6 py-6 sm:px-8'>
-				<div className='flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between'>
-					<div className='space-y-2'>
-						<CardTitle className='font-bold text-3xl [font-family:var(--font-unbounded)] sm:text-4xl'>
-							Configuración
-						</CardTitle>
-						<CardDescription className='max-w-2xl text-sm sm:text-base'>
-							Ajusta los proveedores, claves y voz con una interfaz más limpia, clara y modular.
-						</CardDescription>
-					</div>
-					<div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
-						<Button
-							onClick={onSave}
-							disabled={isBusy}
-							className='bg-[#8B5CF6] text-white hover:bg-[#7C3AED]'
-						>
-							<Save className='size-4' />
-							{isSaving ? 'Guardando...' : 'Guardar configuración'}
-						</Button>
-					</div>
+		<div className='flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4 sm:flex-row sm:items-center sm:justify-between'>
+			<div className='flex items-center gap-2.5'>
+				<span className='flex size-8 items-center justify-center rounded-lg border border-border/60 bg-background/50 text-primary'>
+					<Sparkles className='size-4' />
+				</span>
+				<div>
+					<p className='font-display font-medium text-foreground text-sm'>Ajustes y Parámetros</p>
+					<p className='font-sans text-muted-foreground text-xs'>
+						Guarda los cambios antes de volver a iniciar la transmisión en vivo.
+					</p>
 				</div>
 			</div>
-		</Card>
+			<Button
+				onClick={onSave}
+				disabled={isBusy}
+				size='sm'
+				className='gap-2 rounded-lg bg-primary font-sans font-semibold text-primary-foreground text-xs shadow-xs hover:bg-primary/90'
+			>
+				<Save className='size-3.5' />
+				<span>{isSaving ? 'Guardando...' : 'Guardar configuración'}</span>
+			</Button>
+		</div>
 	);
 }
