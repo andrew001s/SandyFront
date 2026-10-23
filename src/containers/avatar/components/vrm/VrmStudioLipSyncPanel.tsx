@@ -17,7 +17,7 @@ import {
 	getStoredEdgeTtsConfig,
 	storeEdgeTtsConfig,
 } from '@/lib/tts-provider';
-import { Activity, Mic, Play, Square, Volume2, X, Zap } from 'lucide-react';
+import { Activity, ChevronDown, Mic, Play, Square, Volume2, X, Zap } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -196,18 +196,21 @@ export function VrmStudioLipSyncPanel({ onClose }: Props) {
 						{currentVoiceObj?.lang || 'es-ES'}
 					</span>
 				</div>
-				<select
-					value={selectedVoice}
-					onChange={(e) => handleVoiceChange(e.target.value)}
-					disabled={isProcessing || isPlaying}
-					className='h-8 w-full rounded-lg border border-border/70 bg-card px-2 font-medium text-foreground text-xs outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50'
-				>
-					{EDGE_VOICE_PRESETS.map((voice) => (
-						<option key={voice.id} value={voice.id} className='bg-background text-foreground'>
-							{voice.name} ({voice.gender === 'female' ? 'Mujer' : 'Hombre'})
-						</option>
-					))}
-				</select>
+				<div className='relative w-full'>
+					<select
+						value={selectedVoice}
+						onChange={(e) => handleVoiceChange(e.target.value)}
+						disabled={isProcessing || isPlaying}
+						className='h-8 w-full cursor-pointer appearance-none rounded-lg border border-border/70 bg-card pr-8 pl-2.5 font-medium text-foreground text-xs outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50'
+					>
+						{EDGE_VOICE_PRESETS.map((voice) => (
+							<option key={voice.id} value={voice.id} className='bg-background text-foreground'>
+								{voice.name} ({voice.gender === 'female' ? 'Mujer' : 'Hombre'})
+							</option>
+						))}
+					</select>
+					<ChevronDown className='-translate-y-1/2 pointer-events-none absolute top-1/2 right-2.5 size-3.5 text-muted-foreground' />
+				</div>
 			</div>
 
 			{/* Frase y botón de hablar */}

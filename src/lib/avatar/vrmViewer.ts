@@ -10,6 +10,12 @@ export interface VrmViewerOptions {
 	transparent?: boolean;
 }
 
+export interface VrmCameraTransform {
+	position: { x: number; y: number; z: number };
+	target: { x: number; y: number; z: number };
+	zoom?: number;
+}
+
 export type VrmCameraPreset = 'face' | 'upperBody' | 'fullBody';
 
 export class VrmViewer {
@@ -130,6 +136,48 @@ export class VrmViewer {
 				break;
 		}
 		this.controls.update();
+	}
+
+	public getCameraTransform(): VrmCameraTransform {
+		return {
+			position: {
+				x: Number(this.camera.position.x.toFixed(4)),
+				y: Number(this.camera.position.y.toFixed(4)),
+				z: Number(this.camera.position.z.toFixed(4)),
+			},
+			target: {
+				x: Number(this.controls.target.x.toFixed(4)),
+				y: Number(this.controls.target.y.toFixed(4)),
+				z: Number(this.controls.target.z.toFixed(4)),
+			},
+			zoom: this.camera.zoom,
+		};
+	}
+
+	public setCameraTransform(t: VrmCameraTransform): void {
+		this.camera.position.set(t.position.x, t.position.y, t.position.z);
+		this.controls.target.set(t.target.x, t.target.y, t.target.z);
+		if (t.zoom && Math.abs(t.zoom - this.camera.zoom) > 0.001) {
+			this.camera.zoom = t.zoom;
+			this.camera.updateProjectionMatrix();
+		}
+		this.controls.update();
+	}
+
+	public onCameraChange(callback: (transform: VrmCameraTransform) => void): () => void {
+		let rafId: number | null = null;
+		const listener = () => {
+			if (rafId !== null) return;
+			rafId = requestAnimationFrame(() => {
+				rafId = null;
+				callback(this.getCameraTransform());
+			});
+		};
+		this.controls.addEventListener('change', listener);
+		return () => {
+			if (rafId !== null) cancelAnimationFrame(rafId);
+			this.controls.removeEventListener('change', listener);
+		};
 	}
 
 	/**

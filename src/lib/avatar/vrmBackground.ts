@@ -63,8 +63,7 @@ export const VRM_BACKGROUND_PRESETS: VrmBackgroundPreset[] = [
 		id: 'checker',
 		label: 'Transparente (PNG)',
 		description: 'Cuadrícula de transparencia para verificar silueta del avatar',
-		styleClass:
-			'bg-[repeating-conic-gradient(#27272a_0%_25%,#18181b_0%_50%)] bg-[size:24px_24px]',
+		styleClass: 'bg-[repeating-conic-gradient(#27272a_0%_25%,#18181b_0%_50%)] bg-[size:24px_24px]',
 		swatchStyle: {
 			background: 'repeating-conic-gradient(#3f3f46 0% 25%, #18181b 0% 50%) 0 0 / 12px 12px',
 		},
@@ -155,7 +154,7 @@ export function storeBackgroundState(state: VrmBackgroundState): void {
 		const { imageUrl, ...rest } = state;
 		window.localStorage.setItem(STORAGE_KEY, JSON.stringify(rest));
 
-		if (imageUrl && imageUrl.startsWith('data:')) {
+		if (imageUrl?.startsWith('data:')) {
 			try {
 				window.localStorage.setItem(IMAGE_STORAGE_KEY, imageUrl);
 			} catch {

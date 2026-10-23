@@ -25,6 +25,7 @@ import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import {
 	FiActivity,
+	FiChevronDown,
 	FiMessageSquare,
 	FiMic,
 	FiMusic,
@@ -247,19 +248,22 @@ export function LipSyncTest({ connected, software = 'vnyan' }: Props) {
 						</span>
 					</div>
 
-					<select
-						id='edge-voice-selector'
-						value={selectedVoice}
-						onChange={(e) => handleVoiceChange(e.target.value)}
-						disabled={isProcessing || isPlaying}
-						className='h-9 w-full rounded-lg border border-border/70 bg-card px-2.5 font-medium text-foreground text-xs outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50'
-					>
-						{EDGE_VOICE_PRESETS.map((voice) => (
-							<option key={voice.id} value={voice.id} className='bg-background text-foreground'>
-								{voice.name} ({voice.gender === 'female' ? 'Mujer' : 'Hombre'})
-							</option>
-						))}
-					</select>
+					<div className='relative w-full'>
+						<select
+							id='edge-voice-selector'
+							value={selectedVoice}
+							onChange={(e) => handleVoiceChange(e.target.value)}
+							disabled={isProcessing || isPlaying}
+							className='h-9 w-full cursor-pointer appearance-none rounded-lg border border-border/70 bg-card pr-8 pl-2.5 font-medium text-foreground text-xs outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50'
+						>
+							{EDGE_VOICE_PRESETS.map((voice) => (
+								<option key={voice.id} value={voice.id} className='bg-background text-foreground'>
+									{voice.name} ({voice.gender === 'female' ? 'Mujer' : 'Hombre'})
+								</option>
+							))}
+						</select>
+						<FiChevronDown className='-translate-y-1/2 pointer-events-none absolute top-1/2 right-2.5 size-4 text-muted-foreground' />
+					</div>
 				</div>
 
 				{/* Estado de reproducción en tiempo real */}

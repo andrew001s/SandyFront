@@ -17,6 +17,11 @@ import { LuGithub } from 'react-icons/lu';
 
 export const Footer = () => {
 	const pathname = usePathname();
+
+	if (pathname?.startsWith('/overlay')) {
+		return null;
+	}
+
 	const isSidebarPage = [
 		'/home',
 		'/conexiones',

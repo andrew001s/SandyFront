@@ -66,10 +66,16 @@ export function VrmCanvas({ className = '' }: Props) {
 	// Estado avanzado del Fondo (Color sólido, Presets, Imagen propia)
 	const [bgState, setBgState] = useState<VrmBackgroundState>(DEFAULT_VRM_BACKGROUND_STATE);
 
-	// Cargar configuración guardada del fondo al montar
+	// Cargar configuración guardada del fondo al montar y sincronizar con vrmManager
 	useEffect(() => {
 		const stored = getStoredBackgroundState();
 		setBgState(stored);
+		vrmManager.setBackground(stored);
+
+		const unregisterBg = vrmManager.subscribeBackground((next) => {
+			setBgState(next);
+		});
+		return () => unregisterBg();
 	}, []);
 
 	// Suscribirse al reproductor de audio global
@@ -94,6 +100,9 @@ export function VrmCanvas({ className = '' }: Props) {
 
 		const unregisterFps = viewer.onFpsUpdate((val) => setFps(val));
 		const unregisterViewer = vrmManager.registerViewer(viewer);
+		const unregisterCamera = viewer.onCameraChange((transform) => {
+			vrmManager.setCameraTransform(transform);
+		});
 
 		const unsubscribeMeta = vrmManager.subscribe(() => {
 			setModelMeta(vrmManager.getMeta());
@@ -102,6 +111,7 @@ export function VrmCanvas({ className = '' }: Props) {
 		return () => {
 			unregisterFps();
 			unregisterViewer();
+			unregisterCamera();
 			unsubscribeMeta();
 			viewer.dispose();
 			viewerRef.current = null;
@@ -169,6 +179,7 @@ export function VrmCanvas({ className = '' }: Props) {
 	const handleBackgroundChange = (next: VrmBackgroundState) => {
 		setBgState(next);
 		storeBackgroundState(next);
+		vrmManager.setBackground(next);
 	};
 
 	const handleFileUpload = async (file: File) => {
@@ -221,7 +232,7 @@ export function VrmCanvas({ className = '' }: Props) {
 
 	const handleCameraChange = (preset: VrmCameraPreset) => {
 		setCameraPreset(preset);
-		viewerRef.current?.setCameraPreset(preset);
+		vrmManager.setCameraPreset(preset);
 	};
 
 	const copyOverlayUrl = () => {
