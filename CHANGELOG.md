@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.5](https://github.com/andrew001s/SandyFront/compare/v0.2.4...v0.2.5) (2026-10-23)
+
+
+### Features
+
+* ✨ add avatar studio control deck, connection pages, and social integration components ([81d412e](https://github.com/andrew001s/SandyFront/commit/81d412e6b9b2bf1f1f850a6a406c7c8c3b4a5ca5))
+* ✨ add impeccable skills and design-taste-frontend agent configurations ([0e2b711](https://github.com/andrew001s/SandyFront/commit/0e2b711e6770004c0118a2430dc31eec737bd92c))
+* ✨ add stream rewards configuration page and UI components ([3382280](https://github.com/andrew001s/SandyFront/commit/338228018cbdcced7cbc434425b1a63c18b4a031))
+* add LipSyncTest component for real-time avatar lip synchronization with Edge TTS ([0935a02](https://github.com/andrew001s/SandyFront/commit/0935a02683500a83235a1bb2b45b660b7e91295d))
+* **avatar:** add comprehensive VRM avatar management system with audio lip-sync and 3D controls ([d2da013](https://github.com/andrew001s/SandyFront/commit/d2da01376dd5b7df383d9c5d515387f913bfa205))
+* initialize frontend application with core UI component ([ff88026](https://github.com/andrew001s/SandyFront/commit/ff8802650c1036184857509fef2eb3a663c79499))
+* **landing:** ✨ implement landing page components, layout, and global styling for SandyFront ([f8df220](https://github.com/andrew001s/SandyFront/commit/f8df220dba97fec280baedb3673c2c936988a03e))
+
 ### [0.2.4](https://github.com/andrew001s/SandyFront/compare/v0.1.9...v0.2.4) (2026-10-22)
 
 
