@@ -3,17 +3,33 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { VrmStudioBackgroundPanel } from '@/containers/avatar/components/vrm/VrmStudioBackgroundPanel';
+import { VrmStudioCameraPanel } from '@/containers/avatar/components/vrm/VrmStudioCameraPanel';
+import {
+	type VrmActiveTool,
+	VrmStudioDock,
+} from '@/containers/avatar/components/vrm/VrmStudioDock';
+import { VrmStudioExpressionsPanel } from '@/containers/avatar/components/vrm/VrmStudioExpressionsPanel';
+import { VrmStudioLipSyncPanel } from '@/containers/avatar/components/vrm/VrmStudioLipSyncPanel';
+import { VrmStudioModelPanel } from '@/containers/avatar/components/vrm/VrmStudioModelPanel';
+import { AudioQueueManager } from '@/lib/audioQueueSingleton';
+import {
+	DEFAULT_VRM_BACKGROUND_STATE,
+	VRM_BACKGROUND_PRESETS,
+	type VrmBackgroundState,
+	fileToDataUrl,
+	getStoredBackgroundState,
+	storeBackgroundState,
+} from '@/lib/avatar/vrmBackground';
 import { vrmManager } from '@/lib/avatar/vrmManager';
 import { type VrmCameraPreset, VrmViewer } from '@/lib/avatar/vrmViewer';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
 	Box,
-	Camera,
 	Check,
 	Copy,
 	ExternalLink,
-	Palette,
 	RefreshCw,
-	RotateCcw,
 	Sparkles,
 	Trash2,
 	Upload,
@@ -27,10 +43,10 @@ interface Props {
 	onEmotionSelect?: (emotion: string) => void;
 }
 
-type VrmBackgroundMode = 'studio' | 'checker' | 'chroma';
-
 export function VrmCanvas({ className = '' }: Props) {
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
+	const containerRef = useRef<HTMLDivElement | null>(null);
+	const viewportRef = useRef<HTMLDivElement | null>(null);
 	const viewerRef = useRef<VrmViewer | null>(null);
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -39,8 +55,31 @@ export function VrmCanvas({ className = '' }: Props) {
 	const [isDragging, setIsDragging] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 	const [cameraPreset, setCameraPreset] = useState<VrmCameraPreset>('face');
-	const [bgMode, setBgMode] = useState<VrmBackgroundMode>('studio');
 	const [copied, setCopied] = useState(false);
+
+	// Estado de la suite VTube Studio / VNyan
+	const [activeTool, setActiveTool] = useState<VrmActiveTool>(null);
+	const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+	const [isHudVisible, setIsHudVisible] = useState<boolean>(true);
+	const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
+
+	// Estado avanzado del Fondo (Color sólido, Presets, Imagen propia)
+	const [bgState, setBgState] = useState<VrmBackgroundState>(DEFAULT_VRM_BACKGROUND_STATE);
+
+	// Cargar configuración guardada del fondo al montar
+	useEffect(() => {
+		const stored = getStoredBackgroundState();
+		setBgState(stored);
+	}, []);
+
+	// Suscribirse al reproductor de audio global
+	useEffect(() => {
+		const manager = AudioQueueManager.getInstance();
+		const unsubscribe = manager.subscribe((playing) => {
+			setIsPlayingAudio(playing);
+		});
+		return () => unsubscribe();
+	}, []);
 
 	// Montar y gestionar el renderizador WebGL
 	useEffect(() => {
@@ -56,21 +95,11 @@ export function VrmCanvas({ className = '' }: Props) {
 		const unregisterFps = viewer.onFpsUpdate((val) => setFps(val));
 		const unregisterViewer = vrmManager.registerViewer(viewer);
 
-		const handleResize = () => {
-			if (canvas.parentElement) {
-				viewer.resize(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight || 560);
-			}
-		};
-
-		window.addEventListener('resize', handleResize);
-		handleResize();
-
 		const unsubscribeMeta = vrmManager.subscribe(() => {
 			setModelMeta(vrmManager.getMeta());
 		});
 
 		return () => {
-			window.removeEventListener('resize', handleResize);
 			unregisterFps();
 			unregisterViewer();
 			unsubscribeMeta();
@@ -79,23 +108,106 @@ export function VrmCanvas({ className = '' }: Props) {
 		};
 	}, []);
 
+	// Observador de dimensiones exactas del viewport (elimina cualquier estiramiento en fullscreen o al ocultar HUD)
+	useEffect(() => {
+		const viewport = viewportRef.current;
+		if (!viewport) return;
+
+		const handleResize = (width: number, height: number) => {
+			if (width > 0 && height > 0 && viewerRef.current) {
+				viewerRef.current.resize(width, height);
+			}
+		};
+
+		const ro = new ResizeObserver((entries) => {
+			for (const entry of entries) {
+				const { width, height } = entry.contentRect;
+				handleResize(width, height);
+			}
+		});
+
+		ro.observe(viewport);
+		handleResize(viewport.clientWidth, viewport.clientHeight);
+
+		return () => ro.disconnect();
+	}, []);
+
+	// Escuchar cambios de pantalla completa del navegador (incluyendo tecla Escape)
+	useEffect(() => {
+		const handleFullscreenChange = () => {
+			const isFs = Boolean(document.fullscreenElement);
+			setIsFullscreen(isFs);
+			setTimeout(() => {
+				const viewport = viewportRef.current;
+				if (viewport && viewerRef.current) {
+					viewerRef.current.resize(viewport.clientWidth, viewport.clientHeight);
+				}
+			}, 50);
+		};
+
+		document.addEventListener('fullscreenchange', handleFullscreenChange);
+		return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+	}, []);
+
+	const handleToggleFullscreen = async () => {
+		try {
+			const target = containerRef.current;
+			if (!target) return;
+
+			if (!document.fullscreenElement) {
+				if (target.requestFullscreen) {
+					await target.requestFullscreen();
+				}
+			} else if (document.exitFullscreen) {
+				await document.exitFullscreen();
+			}
+		} catch {
+			toast.error('No se pudo alternar pantalla completa');
+		}
+	};
+
+	const handleBackgroundChange = (next: VrmBackgroundState) => {
+		setBgState(next);
+		storeBackgroundState(next);
+	};
+
 	const handleFileUpload = async (file: File) => {
-		if (!file.name.toLowerCase().endsWith('.vrm')) {
-			toast.error('Por favor selecciona un archivo con formato .vrm');
+		// Detección inteligente: archivo .vrm o imagen de fondo
+		if (file.name.toLowerCase().endsWith('.vrm')) {
+			setIsLoading(true);
+			const toastId = toast.loading(`Cargando modelo VRM: ${file.name}...`);
+			try {
+				await vrmManager.loadModelFile(file);
+				toast.success(`Avatar "${file.name}" cargado con éxito`, { id: toastId });
+			} catch (err) {
+				const msg = err instanceof Error ? err.message : 'Error al cargar el avatar VRM';
+				toast.error(msg, { id: toastId });
+			} finally {
+				setIsLoading(false);
+			}
 			return;
 		}
 
-		setIsLoading(true);
-		const toastId = toast.loading(`Cargando modelo VRM: ${file.name}...`);
-		try {
-			await vrmManager.loadModelFile(file);
-			toast.success(`Avatar "${file.name}" cargado con éxito`, { id: toastId });
-		} catch (err) {
-			const msg = err instanceof Error ? err.message : 'Error al cargar el avatar VRM';
-			toast.error(msg, { id: toastId });
-		} finally {
-			setIsLoading(false);
+		if (file.type.startsWith('image/')) {
+			try {
+				toast.loading('Cargando imagen como fondo del estudio...', { id: 'drop-bg' });
+				const dataUrl = await fileToDataUrl(file);
+				const nextState: VrmBackgroundState = {
+					...bgState,
+					mode: 'image',
+					imageUrl: dataUrl,
+					imageName: file.name,
+				};
+				handleBackgroundChange(nextState);
+				setActiveTool('background');
+				toast.success(`Fondo actualizado con "${file.name}"`, { id: 'drop-bg' });
+			} catch {
+				toast.error('Error al procesar la imagen de fondo', { id: 'drop-bg' });
+			}
+			return;
 		}
+
+		toast.error('Formato no compatible. Arrastra un modelo .vrm o una imagen .png/.jpg');
 	};
 
 	const handleDrop = (e: React.DragEvent) => {
@@ -121,36 +233,65 @@ export function VrmCanvas({ className = '' }: Props) {
 		toast.success(`URL de OBS copiada: ${url}`);
 	};
 
-	const cycleBackground = () => {
-		const next: Record<VrmBackgroundMode, VrmBackgroundMode> = {
-			studio: 'checker',
-			checker: 'chroma',
-			chroma: 'studio',
-		};
-		const nextMode = next[bgMode];
-		setBgMode(nextMode);
-		const labels: Record<VrmBackgroundMode, string> = {
-			studio: 'Fondo Estudio Oscuro',
-			checker: 'Fondo Transparente (Cuadrícula)',
-			chroma: 'Fondo Croma Verde (#00FF00)',
-		};
-		toast.info(labels[nextMode]);
-	};
-
-	const getBackgroundClass = () => {
-		switch (bgMode) {
-			case 'studio':
-				return 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-zinc-950 to-black';
-			case 'checker':
-				return 'bg-[repeating-conic-gradient(#27272a_0%_25%,#18181b_0%_50%)] bg-[size:24px_24px]';
-			case 'chroma':
-				return 'bg-[#00FF00]';
+	// Generar estilos visuales del fondo
+	const renderBackgroundLayer = () => {
+		if (bgState.mode === 'color') {
+			return (
+				<div
+					className='absolute inset-0 transition-colors duration-300'
+					style={{ backgroundColor: bgState.customColor }}
+				/>
+			);
 		}
+
+		if (bgState.mode === 'image' && bgState.imageUrl) {
+			return (
+				<>
+					<div
+						className='absolute inset-0 transition-all duration-300'
+						style={{
+							backgroundImage: `url("${bgState.imageUrl}")`,
+							backgroundSize: bgState.imageFit,
+							backgroundPosition: 'center',
+							backgroundRepeat: 'no-repeat',
+							filter: bgState.imageBlur > 0 ? `blur(${bgState.imageBlur}px)` : undefined,
+							transform: bgState.imageBlur > 0 ? 'scale(1.04)' : undefined, // evita bordes blancos al desenfocar
+						}}
+					/>
+					{bgState.imageDim > 0 && (
+						<div
+							className='pointer-events-none absolute inset-0 bg-black transition-opacity'
+							style={{ opacity: bgState.imageDim }}
+						/>
+					)}
+				</>
+			);
+		}
+
+		// Presets
+		const match =
+			VRM_BACKGROUND_PRESETS.find((p) => p.id === bgState.presetId) || VRM_BACKGROUND_PRESETS[0];
+
+		if (match.backgroundColor) {
+			return (
+				<div
+					className='absolute inset-0 transition-colors duration-300'
+					style={{ backgroundColor: match.backgroundColor }}
+				/>
+			);
+		}
+
+		return <div className={`absolute inset-0 transition-all duration-300 ${match.styleClass}`} />;
 	};
 
 	return (
 		<Card
-			className={`flex w-full flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-md ${className}`}
+			ref={containerRef}
+			className={`relative flex w-full flex-col overflow-hidden bg-card shadow-2xl transition-all duration-300 ${
+				isFullscreen
+					? 'fixed inset-0 z-50 h-screen w-screen rounded-none border-0'
+					: 'rounded-2xl border border-border/80'
+			} ${className}`}
 			onDragOver={(e) => {
 				e.preventDefault();
 				setIsDragging(true);
@@ -158,174 +299,190 @@ export function VrmCanvas({ className = '' }: Props) {
 			onDragLeave={() => setIsDragging(false)}
 			onDrop={handleDrop}
 		>
-			{/* Encabezado HUD superior (Estilo VTuber Studio) */}
-			<CardHeader className='border-border/60 border-b bg-card/75 px-5 py-3 backdrop-blur-md'>
-				<div className='flex flex-wrap items-center justify-between gap-3'>
-					{/* Estado del Modelo y Branding */}
-					<div className='flex min-w-0 items-center gap-3'>
-						<div className='rounded-xl bg-secondary/15 p-2.5 text-secondary shadow-xs'>
-							<Box className='size-5' />
-						</div>
-						<div className='min-w-0'>
-							<div className='flex flex-wrap items-center gap-2'>
-								<span className='font-bold font-display text-foreground text-sm tracking-tight sm:text-base'>
-									Sandy Studio 3D (VRM)
-								</span>
-								<Badge
-									variant='outline'
-									className='h-5 border-emerald-500/30 bg-emerald-500/10 px-2 font-mono text-[10px] text-emerald-400'
-								>
-									<span className='mr-1.5 size-1.5 animate-pulse rounded-full bg-emerald-400' />
-									{fps} FPS
-								</Badge>
-							</div>
-
-							<div className='mt-0.5 flex items-center gap-2 text-xs'>
-								{modelMeta ? (
-									<span
-										className='flex max-w-[240px] items-center gap-1.5 truncate font-mono text-[11px] text-muted-foreground sm:max-w-md'
-										title={modelMeta.name}
-									>
-										<Sparkles className='size-3 shrink-0 text-secondary' />
-										<span className='truncate font-medium text-foreground'>{modelMeta.name}</span>
-										<span className='text-muted-foreground/60'>· VRM en memoria</span>
-									</span>
-								) : (
-									<span className='font-sans text-[11px] text-muted-foreground'>
-										Sin avatar cargado · Arrastra tu archivo .vrm
-									</span>
-								)}
-							</div>
-						</div>
-					</div>
-
-					{/* Botones de acción directos */}
-					<div className='flex items-center gap-2'>
-						{/* Botón Overlay OBS */}
-						<Button
-							variant='outline'
-							size='sm'
-							onClick={copyOverlayUrl}
-							className='h-8.5 gap-1.5 border-border/70 px-3 font-medium font-sans text-xs shadow-xs hover:border-primary/50'
-							title='Copiar enlace de Navegador para OBS Studio'
-						>
-							{copied ? (
-								<Check className='size-3.5 text-emerald-400' />
-							) : (
-								<Copy className='size-3.5 text-primary' />
-							)}
-							<span>Overlay OBS</span>
-						</Button>
-
-						{/* Botón Cargar / Cambiar Avatar */}
-						<Button
-							variant='secondary'
-							size='sm'
-							onClick={() => fileInputRef.current?.click()}
-							disabled={isLoading}
-							className='h-8.5 gap-1.5 px-3 font-medium font-sans text-xs shadow-xs'
-							title='Cargar o reemplazar avatar .vrm'
-						>
-							<Upload className='size-3.5' />
-							<span>{modelMeta ? 'Cambiar Avatar' : 'Cargar Avatar .VRM'}</span>
-						</Button>
-
-						{/* Quitar Modelo */}
-						{modelMeta && (
-							<Button
-								variant='ghost'
-								size='icon'
-								onClick={() => void vrmManager.removeModel()}
-								className='h-8.5 w-8.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive'
-								title='Quitar avatar actual'
-							>
-								<Trash2 className='size-4' />
-							</Button>
-						)}
-					</div>
-				</div>
-			</CardHeader>
-
-			{/* Escenario 3D a pantalla ancha (Full-Width Viewport) */}
-			<CardContent className='relative p-0'>
-				<div
-					className={`relative h-[560px] w-full min-w-0 transition-all duration-300 md:h-[620px] ${getBackgroundClass()}`}
+			{/* Encabezado HUD superior (Estilo VTuber Studio / VNyan) */}
+			{isHudVisible && (
+				<CardHeader
+					className={`z-20 border-border/60 border-b px-4 py-2.5 backdrop-blur-md sm:px-5 ${
+						isFullscreen ? 'absolute inset-x-0 top-0 bg-card/85 shadow-md' : 'relative bg-card/85'
+					}`}
 				>
+					<div className='flex flex-wrap items-center justify-between gap-3'>
+						{/* Estado del Modelo y Branding */}
+						<div className='flex min-w-0 items-center gap-3'>
+							<button
+								type='button'
+								onClick={() => setActiveTool(activeTool === 'model' ? null : 'model')}
+								className='flex size-9 items-center justify-center rounded-xl bg-secondary/15 text-secondary shadow-xs transition-transform hover:scale-105'
+								title='Ver detalles del avatar'
+							>
+								<Box className='size-5' />
+							</button>
+
+							<div className='min-w-0'>
+								<div className='flex flex-wrap items-center gap-2'>
+									<span className='font-bold font-display text-foreground text-sm tracking-tight sm:text-base'>
+										Sandy Studio 3D (VRM)
+									</span>
+									<Badge
+										variant='outline'
+										className='h-5 border-emerald-500/30 bg-emerald-500/10 px-2 font-mono text-[10px] text-emerald-400'
+									>
+										<span className='mr-1.5 size-1.5 animate-pulse rounded-full bg-emerald-400' />
+										{fps} FPS
+									</Badge>
+									{isPlayingAudio && (
+										<Badge
+											variant='outline'
+											className='h-5 border-primary/40 bg-primary/10 px-2 font-mono text-[10px] text-primary'
+										>
+											<span className='mr-1.5 size-1.5 animate-ping rounded-full bg-primary' />
+											AUDIO ON
+										</Badge>
+									)}
+								</div>
+
+								<div className='mt-0.5 flex items-center gap-2 text-xs'>
+									{modelMeta ? (
+										<span
+											className='flex max-w-[240px] items-center gap-1.5 truncate font-mono text-[11px] text-muted-foreground sm:max-w-md'
+											title={modelMeta.name}
+										>
+											<Sparkles className='size-3 shrink-0 text-secondary' />
+											<span className='truncate font-medium text-foreground'>{modelMeta.name}</span>
+											<span className='text-muted-foreground/60'>· VRM en memoria</span>
+										</span>
+									) : (
+										<span className='font-sans text-[11px] text-muted-foreground'>
+											Sin avatar cargado · Arrastra tu archivo .vrm
+										</span>
+									)}
+								</div>
+							</div>
+						</div>
+
+						{/* Botones de acción directos superiores */}
+						<div className='flex items-center gap-2'>
+							{/* Botón Overlay OBS */}
+							<Button
+								variant='outline'
+								size='sm'
+								onClick={copyOverlayUrl}
+								className='h-8 gap-1.5 border-border/70 px-3 font-medium font-sans text-xs shadow-xs hover:border-primary/50'
+								title='Copiar enlace de Navegador para OBS Studio'
+							>
+								{copied ? (
+									<Check className='size-3.5 text-emerald-400' />
+								) : (
+									<Copy className='size-3.5 text-primary' />
+								)}
+								<span className='hidden sm:inline'>Overlay OBS</span>
+							</Button>
+
+							{/* Botón Cargar / Cambiar Avatar */}
+							<Button
+								variant='secondary'
+								size='sm'
+								onClick={() => fileInputRef.current?.click()}
+								disabled={isLoading}
+								className='h-8 gap-1.5 px-3 font-medium font-sans text-xs shadow-xs'
+								title='Cargar o reemplazar avatar .vrm'
+							>
+								<Upload className='size-3.5' />
+								<span>{modelMeta ? 'Cambiar Avatar' : 'Cargar VRM'}</span>
+							</Button>
+
+							{/* Quitar Modelo */}
+							{modelMeta && (
+								<Button
+									variant='ghost'
+									size='icon'
+									onClick={() => void vrmManager.removeModel()}
+									className='size-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive'
+									title='Quitar avatar actual'
+								>
+									<Trash2 className='size-3.5' />
+								</Button>
+							)}
+						</div>
+					</div>
+				</CardHeader>
+			)}
+
+			{/* Escenario 3D Interactivo con Dock y Paneles Flotantes (VTube Studio / VNyan Style) */}
+			<CardContent
+				className={`relative flex flex-col p-0 ${isFullscreen ? 'h-full min-h-0 flex-1' : ''}`}
+			>
+				<div
+					ref={viewportRef}
+					className={`relative w-full min-w-0 overflow-hidden ${
+						isFullscreen ? 'h-full min-h-0 flex-1' : 'h-[560px] md:h-[620px] lg:h-[660px]'
+					}`}
+				>
+					{/* Capa de Fondo (Presets / Color / Imagen) */}
+					{renderBackgroundLayer()}
+
+					{/* Canvas WebGL Three.js a 60 FPS */}
 					<canvas
 						ref={canvasRef}
-						className='block h-full w-full cursor-grab active:cursor-grabbing'
+						className='relative z-10 block h-full w-full cursor-grab active:cursor-grabbing'
 					/>
 
-					{/* HUD Flotante de Controles Rápidos (Estilo VTube Studio / VNyan) */}
-					<div className='absolute right-4 bottom-4 z-10 flex flex-wrap items-center gap-1.5 rounded-full border border-border/80 bg-background/90 p-1.5 shadow-2xl backdrop-blur-md'>
-						{/* Selector de Encuadre */}
-						<div className='flex items-center gap-1 px-2 font-mono text-[11px] text-muted-foreground'>
-							<Camera className='size-3.5 text-secondary' />
-							<span className='hidden sm:inline'>Cámara:</span>
-						</div>
+					{/* Dock Lateral Vertical (Estilo VTube Studio / VNyan) */}
+					<VrmStudioDock
+						activeTool={activeTool}
+						onToggleTool={(tool) => setActiveTool(tool)}
+						isPlayingAudio={isPlayingAudio}
+						isFullscreen={isFullscreen}
+						onToggleFullscreen={handleToggleFullscreen}
+						isHudVisible={isHudVisible}
+						onToggleHud={() => setIsHudVisible(!isHudVisible)}
+						hasCustomBackground={bgState.mode !== 'preset' || bgState.presetId !== 'studio'}
+					/>
 
-						<button
-							type='button'
-							onClick={() => handleCameraChange('face')}
-							className={`rounded-full px-3 py-1 font-medium font-sans text-xs transition-all ${
-								cameraPreset === 'face'
-									? 'bg-secondary text-secondary-foreground shadow-xs'
-									: 'text-muted-foreground hover:bg-muted hover:text-foreground'
-							}`}
-						>
-							Rostro
-						</button>
-						<button
-							type='button'
-							onClick={() => handleCameraChange('upperBody')}
-							className={`rounded-full px-3 py-1 font-medium font-sans text-xs transition-all ${
-								cameraPreset === 'upperBody'
-									? 'bg-secondary text-secondary-foreground shadow-xs'
-									: 'text-muted-foreground hover:bg-muted hover:text-foreground'
-							}`}
-						>
-							Busto
-						</button>
-						<button
-							type='button'
-							onClick={() => handleCameraChange('fullBody')}
-							className={`rounded-full px-3 py-1 font-medium font-sans text-xs transition-all ${
-								cameraPreset === 'fullBody'
-									? 'bg-secondary text-secondary-foreground shadow-xs'
-									: 'text-muted-foreground hover:bg-muted hover:text-foreground'
-							}`}
-						>
-							Entero
-						</button>
+					{/* Paneles Flotantes Modulares dentro del Escenario */}
+					<AnimatePresence>
+						{activeTool && isHudVisible && (
+							<motion.div
+								initial={{ opacity: 0, x: 20, scale: 0.96 }}
+								animate={{ opacity: 1, x: 0, scale: 1 }}
+								exit={{ opacity: 0, x: 20, scale: 0.96 }}
+								transition={{ duration: 0.2, ease: 'easeOut' }}
+								className='absolute top-4 right-16 z-30 max-h-[calc(100%-2rem)] overflow-y-auto sm:right-18'
+							>
+								{activeTool === 'expressions' && (
+									<VrmStudioExpressionsPanel onClose={() => setActiveTool(null)} />
+								)}
 
-						<div className='mx-1 h-4 w-px bg-border/80' />
+								{activeTool === 'lipsync' && (
+									<VrmStudioLipSyncPanel onClose={() => setActiveTool(null)} />
+								)}
 
-						{/* Botón de Fondo Activo (Cambia entre Estudio, Transparente y Croma) */}
-						<button
-							type='button'
-							onClick={cycleBackground}
-							className='flex items-center gap-1.5 rounded-full px-3 py-1 font-medium font-sans text-muted-foreground text-xs transition-colors hover:bg-muted hover:text-foreground'
-							title={`Fondo actual: ${bgMode}. Clic para cambiar (Estudio / Transparente / Croma Verde)`}
-						>
-							<Palette className='size-3.5 text-primary' />
-							<span className='capitalize'>
-								{bgMode === 'studio'
-									? 'Estudio'
-									: bgMode === 'checker'
-										? 'Transparente'
-										: 'Croma Verde'}
-							</span>
-						</button>
+								{activeTool === 'background' && (
+									<VrmStudioBackgroundPanel
+										state={bgState}
+										onChange={handleBackgroundChange}
+										onClose={() => setActiveTool(null)}
+									/>
+								)}
 
-						<button
-							type='button'
-							onClick={() => handleCameraChange(cameraPreset)}
-							className='flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-							title='Centrar cámara'
-						>
-							<RotateCcw className='size-3.5' />
-						</button>
-					</div>
+								{activeTool === 'camera' && (
+									<VrmStudioCameraPanel
+										currentPreset={cameraPreset}
+										onSelectPreset={handleCameraChange}
+										onClose={() => setActiveTool(null)}
+									/>
+								)}
+
+								{activeTool === 'model' && (
+									<VrmStudioModelPanel
+										modelMeta={modelMeta}
+										onUploadClick={() => fileInputRef.current?.click()}
+										onClose={() => setActiveTool(null)}
+									/>
+								)}
+							</motion.div>
+						)}
+					</AnimatePresence>
 
 					{/* Zona de Drop / Carga cuando no hay modelo o mientras se arrastra */}
 					{(!modelMeta || isDragging) && (
@@ -343,11 +500,13 @@ export function VrmCanvas({ className = '' }: Props) {
 							</div>
 							<div className='max-w-md space-y-1.5'>
 								<p className='font-display font-semibold text-base text-foreground'>
-									{isDragging ? 'Suelta tu avatar .VRM aquí' : 'Carga tu avatar 3D (.vrm)'}
+									{isDragging
+										? 'Suelta tu archivo .VRM o imagen aquí'
+										: 'Carga tu avatar 3D (.vrm)'}
 								</p>
 								<p className='text-muted-foreground text-xs leading-relaxed'>
-									Arrastra y suelta tu archivo de VRoid Studio o Booth, o haz clic para
-									seleccionarlo. Se guardará automáticamente en tu navegador.
+									Arrastra tu modelo .vrm o haz clic para seleccionarlo. También puedes arrastrar
+									imágenes para usarlas de fondo.
 								</p>
 							</div>
 							<span
@@ -371,7 +530,7 @@ export function VrmCanvas({ className = '' }: Props) {
 					<input
 						ref={fileInputRef}
 						type='file'
-						accept='.vrm'
+						accept='.vrm,image/*'
 						className='hidden'
 						onChange={(e) => {
 							const file = e.target.files?.[0];
@@ -381,22 +540,24 @@ export function VrmCanvas({ className = '' }: Props) {
 				</div>
 			</CardContent>
 
-			{/* Pie informativo claro de navegación 3D */}
-			<CardFooter className='flex flex-wrap items-center justify-between gap-3 border-border/60 border-t bg-card/50 px-5 py-2.5 text-xs'>
-				<span className='font-mono text-[11px] text-muted-foreground'>
-					Rotar: Clic izquierdo arrastrar · Zoom: Rueda ratón · Desplazar: Clic derecho arrastrar
-				</span>
-				<div className='flex items-center gap-3'>
-					<a
-						href='/overlay/avatar'
-						target='_blank'
-						rel='noopener noreferrer'
-						className='flex items-center gap-1.5 font-medium text-secondary text-xs hover:underline'
-					>
-						<ExternalLink className='size-3.5' /> Abrir Overlay OBS en ventana independiente
-					</a>
-				</div>
-			</CardFooter>
+			{/* Pie informativo de navegación 3D */}
+			{isHudVisible && !isFullscreen && (
+				<CardFooter className='flex flex-wrap items-center justify-between gap-3 border-border/60 border-t bg-card/60 px-4 py-2.5 text-xs sm:px-5'>
+					<span className='font-mono text-[11px] text-muted-foreground'>
+						Rotar: Clic izq · Zoom: Rueda ratón · Desplazar: Clic der
+					</span>
+					<div className='flex items-center gap-3'>
+						<a
+							href='/overlay/avatar'
+							target='_blank'
+							rel='noopener noreferrer'
+							className='flex items-center gap-1.5 font-medium text-secondary text-xs hover:underline'
+						>
+							<ExternalLink className='size-3.5' /> Abrir Overlay OBS en ventana independiente
+						</a>
+					</div>
+				</CardFooter>
+			)}
 		</Card>
 	);
 }

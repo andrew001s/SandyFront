@@ -58,22 +58,9 @@ export const AvatarContainer = () => {
 			</motion.div>
 
 			{activeSoftware === 'vrm' ? (
-				<div className='w-full space-y-6'>
-					{/* Escenario 3D interactivo WebGL a pantalla completa (Full Width) */}
+				<div className='w-full'>
+					{/* Escenario 3D interactivo WebGL (Estilo VTube Studio / VNyan con Dock, Expresiones, Lip Sync y Fondo) */}
 					<VrmCanvas className='w-full' />
-
-					{/* Consolas de Control de Estudio (Estilo VTS / VNyan) */}
-					<div className='grid grid-cols-1 items-start gap-6 lg:grid-cols-2'>
-						{/* Deck de Expresiones y Emociones VRM */}
-						<Avatar3DEmotionsCard
-							connected={true}
-							onSetEmotion={setEmotion}
-							onResetEmotions={resetEmotions}
-						/>
-
-						{/* Deck de Lip Sync y Voz Edge TTS */}
-						<LipSyncTest connected={true} software='vrm' />
-					</div>
 				</div>
 			) : is3D ? (
 				<div className='space-y-6'>
