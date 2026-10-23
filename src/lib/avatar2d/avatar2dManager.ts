@@ -1,0 +1,393 @@
+'use client';
+
+import { AudioQueueManager } from '@/lib/audioQueueSingleton';
+import { DEFAULT_SANDY_EMOTIONS, DEFAULT_SANDY_SPRITES } from '@/lib/avatar2d/defaultSprites';
+import type {
+	Avatar2dMode,
+	Avatar2dState,
+	Avatar2dSyncMessage,
+	Avatar2dTransform,
+	PngTuberPhysics,
+	PngTuberSpriteKey,
+} from '@/lib/avatar2d/types';
+
+const STORAGE_KEY = 'sandy_avatar2d_state';
+
+export const DEFAULT_AVATAR2D_STATE: Avatar2dState = {
+	mode: 'pngtuber',
+	pngtuber: {
+		sprites: DEFAULT_SANDY_SPRITES,
+		activeEmotion: 'neutral',
+		emotions: DEFAULT_SANDY_EMOTIONS,
+		physics: {
+			bounceAmount: 14,
+			bounceSpeed: 180,
+			breathing: true,
+			blinkInterval: 3800,
+		},
+		transform: {
+			x: 0,
+			y: 0,
+			scale: 1,
+			rotation: 0,
+		},
+	},
+	live2d: {
+		modelUrl: null,
+		modelName: undefined,
+		transform: {
+			x: 0,
+			y: 0,
+			scale: 1,
+			rotation: 0,
+		},
+		eyeTracking: true,
+		autoBlink: true,
+		breath: true,
+	},
+};
+
+export class Avatar2dManager {
+	private static instance: Avatar2dManager;
+	private state: Avatar2dState = DEFAULT_AVATAR2D_STATE;
+	private isSpeaking = false;
+	private broadcastChannel: BroadcastChannel | null = null;
+	private listeners = new Set<(state: Avatar2dState) => void>();
+	private speakingListeners = new Set<(isSpeaking: boolean) => void>();
+
+	private constructor() {
+		if (typeof window !== 'undefined') {
+			try {
+				const raw = window.localStorage.getItem(STORAGE_KEY);
+				if (raw) {
+					const parsed = JSON.parse(raw) as Partial<Avatar2dState>;
+					this.state = {
+						...DEFAULT_AVATAR2D_STATE,
+						...parsed,
+						pngtuber: {
+							...DEFAULT_AVATAR2D_STATE.pngtuber,
+							...parsed.pngtuber,
+							sprites: {
+								...DEFAULT_SANDY_SPRITES,
+								...(parsed.pngtuber?.sprites || {}),
+							},
+						},
+						live2d: {
+							...DEFAULT_AVATAR2D_STATE.live2d,
+							...parsed.live2d,
+						},
+					};
+				}
+			} catch {
+				// Ignorar error de carga
+			}
+
+			// BroadcastChannel para sincronizar en tiempo real con Overlay OBS
+			if ('BroadcastChannel' in window) {
+				this.broadcastChannel = new BroadcastChannel('sandy_avatar2d_sync');
+				this.broadcastChannel.onmessage = (event: MessageEvent<Avatar2dSyncMessage>) => {
+					this.handleSyncMessage(event.data);
+				};
+
+				// Solicitar sincronización inicial
+				setTimeout(() => {
+					this.broadcastChannel?.postMessage({ type: 'requestState' });
+				}, 100);
+			}
+
+			// Suscribirse al reproductor de voz global para activar la boca de forma reactiva
+			const audioQueue = AudioQueueManager.getInstance();
+			audioQueue.subscribe((playing) => {
+				this.setSpeaking(playing);
+			});
+
+			// Redundancia con eventos storage entre pestañas
+			window.addEventListener('storage', (event) => {
+				if (event.key === STORAGE_KEY && event.newValue) {
+					try {
+						const next = JSON.parse(event.newValue) as Avatar2dState;
+						this.state = next;
+						this.notify();
+					} catch {
+						// Ignorar
+					}
+				}
+			});
+		}
+	}
+
+	public static getInstance(): Avatar2dManager {
+		if (!Avatar2dManager.instance) {
+			Avatar2dManager.instance = new Avatar2dManager();
+		}
+		return Avatar2dManager.instance;
+	}
+
+	public getState(): Avatar2dState {
+		return this.state;
+	}
+
+	public getIsSpeaking(): boolean {
+		return this.isSpeaking;
+	}
+
+	public subscribe(listener: (state: Avatar2dState) => void): () => void {
+		this.listeners.add(listener);
+		listener(this.state);
+		return () => this.listeners.delete(listener);
+	}
+
+	public subscribeSpeaking(listener: (isSpeaking: boolean) => void): () => void {
+		this.speakingListeners.add(listener);
+		listener(this.isSpeaking);
+		return () => this.speakingListeners.delete(listener);
+	}
+
+	private notify(): void {
+		for (const listener of this.listeners) {
+			listener(this.state);
+		}
+	}
+
+	private notifySpeaking(): void {
+		for (const listener of this.speakingListeners) {
+			listener(this.isSpeaking);
+		}
+	}
+
+	private save(): void {
+		if (typeof window !== 'undefined') {
+			try {
+				window.localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+			} catch {
+				// Ignorar cuota
+			}
+		}
+	}
+
+	public setSpeaking(speaking: boolean, broadcast = true): void {
+		if (this.isSpeaking === speaking) return;
+		this.isSpeaking = speaking;
+		this.notifySpeaking();
+		if (broadcast) {
+			this.broadcastChannel?.postMessage({ type: 'speaking', speaking });
+		}
+	}
+
+	public setMode(mode: Avatar2dMode): void {
+		this.state = { ...this.state, mode };
+		this.save();
+		this.notify();
+		this.broadcastChannel?.postMessage({ type: 'mode', mode });
+	}
+
+	public setEmotion(emotion: string): void {
+		this.state = {
+			...this.state,
+			pngtuber: {
+				...this.state.pngtuber,
+				activeEmotion: emotion,
+			},
+		};
+		this.save();
+		this.notify();
+		this.broadcastChannel?.postMessage({ type: 'emotion', emotion });
+	}
+
+	public setTransform(transform: Avatar2dTransform, target: Avatar2dMode, broadcast = true): void {
+		if (target === 'pngtuber') {
+			this.state = {
+				...this.state,
+				pngtuber: {
+					...this.state.pngtuber,
+					transform,
+				},
+			};
+		} else {
+			this.state = {
+				...this.state,
+				live2d: {
+					...this.state.live2d,
+					transform,
+				},
+			};
+		}
+		this.save();
+		this.notify();
+		if (broadcast) {
+			this.broadcastChannel?.postMessage({
+				type: 'transform',
+				transform,
+				target,
+			});
+		}
+	}
+
+	public setPhysics(physics: PngTuberPhysics): void {
+		this.state = {
+			...this.state,
+			pngtuber: {
+				...this.state.pngtuber,
+				physics,
+			},
+		};
+		this.save();
+		this.notify();
+		this.broadcastChannel?.postMessage({ type: 'physics', physics });
+	}
+
+	public setLive2dModel(modelUrl: string | null, modelName?: string, broadcast = true): void {
+		this.state = {
+			...this.state,
+			mode: 'live2d',
+			live2d: {
+				...this.state.live2d,
+				modelUrl,
+				modelName,
+			},
+		};
+		this.save();
+		this.notify();
+		if (broadcast) {
+			this.broadcastChannel?.postMessage({
+				type: 'live2dModel',
+				modelUrl,
+				modelName,
+			});
+		}
+	}
+
+	public updateSprite(key: PngTuberSpriteKey, dataUrl: string): void {
+		const nextSprites = {
+			...this.state.pngtuber.sprites,
+			[key]: dataUrl,
+		};
+		const nextEmotions = this.state.pngtuber.emotions.map((em) =>
+			em.id === 'neutral'
+				? {
+						...em,
+						[key]: dataUrl,
+					}
+				: em,
+		);
+		this.state = {
+			...this.state,
+			pngtuber: {
+				...this.state.pngtuber,
+				sprites: nextSprites,
+				activeEmotion: 'neutral',
+				emotions: nextEmotions,
+			},
+		};
+		this.save();
+		this.notify();
+		this.broadcastChannel?.postMessage({
+			type: 'sprites',
+			sprites: nextSprites,
+		});
+		this.broadcastChannel?.postMessage({
+			type: 'emotion',
+			emotion: 'neutral',
+		});
+	}
+
+	public resetDefaultSprites(): void {
+		this.state = {
+			...this.state,
+			pngtuber: {
+				...this.state.pngtuber,
+				sprites: DEFAULT_SANDY_SPRITES,
+				activeEmotion: 'neutral',
+				emotions: DEFAULT_SANDY_EMOTIONS,
+			},
+		};
+		this.save();
+		this.notify();
+		this.broadcastChannel?.postMessage({
+			type: 'sprites',
+			sprites: DEFAULT_SANDY_SPRITES,
+		});
+	}
+
+	public requestSync(): void {
+		if (this.broadcastChannel) {
+			this.broadcastChannel.postMessage({ type: 'requestState' });
+		}
+	}
+
+	private handleSyncMessage(msg: Avatar2dSyncMessage): void {
+		switch (msg.type) {
+			case 'speaking':
+				this.isSpeaking = msg.speaking;
+				this.notifySpeaking();
+				break;
+			case 'emotion':
+				this.state = {
+					...this.state,
+					pngtuber: {
+						...this.state.pngtuber,
+						activeEmotion: msg.emotion,
+					},
+				};
+				this.notify();
+				break;
+			case 'mode':
+				this.state = { ...this.state, mode: msg.mode };
+				this.notify();
+				break;
+			case 'transform':
+				if (msg.target === 'pngtuber') {
+					this.state = {
+						...this.state,
+						pngtuber: { ...this.state.pngtuber, transform: msg.transform },
+					};
+				} else {
+					this.state = {
+						...this.state,
+						live2d: { ...this.state.live2d, transform: msg.transform },
+					};
+				}
+				this.notify();
+				break;
+			case 'physics':
+				this.state = {
+					...this.state,
+					pngtuber: { ...this.state.pngtuber, physics: msg.physics },
+				};
+				this.notify();
+				break;
+			case 'sprites':
+				this.state = {
+					...this.state,
+					pngtuber: { ...this.state.pngtuber, sprites: msg.sprites },
+				};
+				this.notify();
+				break;
+			case 'live2dModel':
+				this.state = {
+					...this.state,
+					mode: 'live2d',
+					live2d: {
+						...this.state.live2d,
+						modelUrl: msg.modelUrl,
+						modelName: msg.modelName,
+					},
+				};
+				this.notify();
+				break;
+			case 'requestState':
+				this.broadcastChannel?.postMessage({
+					type: 'fullState',
+					state: this.state,
+				});
+				break;
+			case 'fullState':
+				this.state = msg.state;
+				this.save();
+				this.notify();
+				break;
+		}
+	}
+}
+
+export const avatar2dManager = Avatar2dManager.getInstance();

@@ -30,7 +30,7 @@ export function AvatarSoftwareSelector({
 						className='flex h-8 items-center justify-center gap-2 rounded-md px-3 font-medium font-sans text-xs transition-colors data-[state=active]:bg-primary/10 data-[state=active]:font-semibold data-[state=active]:text-primary'
 					>
 						<Tv className='size-3.5 text-primary' />
-						<span>VTube Studio (2D)</span>
+						<span>Avatar 2D (Navegador)</span>
 						{connectedSoftware === 'vtubestudio' && (
 							<span className='size-1.5 rounded-full bg-emerald-400' />
 						)}
@@ -51,7 +51,7 @@ export function AvatarSoftwareSelector({
 			<div className='flex items-center gap-2 text-xs'>
 				<span className='font-mono text-[11px] text-muted-foreground'>
 					{selectedSoftware === 'vtubestudio'
-						? 'Entorno Live2D · WebSocket local'
+						? 'Entorno 2D (PNGTuber / Live2D) · En navegador'
 						: 'Entorno 3D VRM · WebGL en navegador'}
 				</span>
 				{connectedSoftware === selectedSoftware ? (

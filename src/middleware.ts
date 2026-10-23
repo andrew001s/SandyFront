@@ -14,6 +14,7 @@ const isMaintenanceExempt = createRouteMatcher([
 	'/sign-up(.*)',
 	'/__clerk(.*)',
 	'/api/avatar(.*)',
+	'/overlay(.*)',
 ]);
 
 export default clerkMiddleware(

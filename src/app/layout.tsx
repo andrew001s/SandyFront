@@ -114,6 +114,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
 })(window,document,'script','dataLayer','GTM-PPZXNM4Q');`}
 				</Script>
+				<Script src='/live2d/live2dcubismcore.min.js' strategy='beforeInteractive' />
 			</head>
 			<body
 				className={`${fontDisplay.variable} ${fontSans.variable} ${fontMono.variable} ${geistSans.variable} ${geistMono.variable} ${unbounded.variable} flex min-h-screen flex-col font-sans antialiased`}
