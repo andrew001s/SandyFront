@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 import {
 	DEFAULT_VRM_BACKGROUND_STATE,
 	VRM_BACKGROUND_PRESETS,
@@ -18,7 +19,6 @@ import {
 	Upload,
 	X,
 } from 'lucide-react';
-import Image from 'next/image';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 

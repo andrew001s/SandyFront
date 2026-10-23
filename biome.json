@@ -20,7 +20,6 @@
 			"pnpm-lock.yaml",
 			".next",
 			"out",
-			"public/**",
 			"tsconfig.json"
 		]
 	},
