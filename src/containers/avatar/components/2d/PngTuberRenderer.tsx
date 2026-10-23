@@ -4,7 +4,7 @@ import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
 import type { Avatar2dTransform, PngTuberConfig } from '@/lib/avatar2d/types';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface Props {
 	config: PngTuberConfig;
@@ -13,6 +13,7 @@ interface Props {
 }
 
 export function PngTuberRenderer({ config, onTransformChange, interactive = true }: Props) {
+	const containerRef = useRef<HTMLDivElement | null>(null);
 	const [isSpeaking, setIsSpeaking] = useState(avatar2dManager.getIsSpeaking());
 	const [isBlinking, setIsBlinking] = useState(false);
 	const [dragPosition, setDragPosition] = useState({
@@ -20,6 +21,12 @@ export function PngTuberRenderer({ config, onTransformChange, interactive = true
 		y: config.transform.y,
 	});
 	const [scale, setScale] = useState(config.transform.scale || 1);
+
+	const dragPositionRef = useRef(dragPosition);
+	dragPositionRef.current = dragPosition;
+
+	const scaleRef = useRef(scale);
+	scaleRef.current = scale;
 
 	// Sincronizar speaking con el manager
 	useEffect(() => {
@@ -34,6 +41,35 @@ export function PngTuberRenderer({ config, onTransformChange, interactive = true
 		setDragPosition({ x: config.transform.x, y: config.transform.y });
 		setScale(config.transform.scale || 1);
 	}, [config.transform.x, config.transform.y, config.transform.scale]);
+
+	// Zoom fluido con rueda del ratón SIN que haga scroll la página entera
+	useEffect(() => {
+		const container = containerRef.current;
+		if (!container || !interactive) return;
+
+		const onWheel = (e: WheelEvent) => {
+			// Evitar que la página web se desplace verticalmente
+			e.preventDefault();
+			e.stopPropagation();
+
+			const zoomFactor = e.deltaY < 0 ? 1.05 : 0.95;
+			const nextScale = Math.min(Math.max(scaleRef.current * zoomFactor, 0.4), 2.5);
+			const currentPos = dragPositionRef.current;
+
+			setScale(nextScale);
+			onTransformChange?.({
+				x: currentPos.x,
+				y: currentPos.y,
+				scale: nextScale,
+				rotation: 0,
+			});
+		};
+
+		container.addEventListener('wheel', onWheel, { passive: false });
+		return () => {
+			container.removeEventListener('wheel', onWheel);
+		};
+	}, [interactive, onTransformChange]);
 
 	// Temporizador de parpadeo automático
 	useEffect(() => {
@@ -79,27 +115,12 @@ export function PngTuberRenderer({ config, onTransformChange, interactive = true
 		}
 	}
 
-	// Manejo de zoom con la rueda del ratón
-	const handleWheel = (e: React.WheelEvent) => {
-		if (!interactive) return;
-		e.preventDefault();
-		const zoomFactor = e.deltaY < 0 ? 1.05 : 0.95;
-		const nextScale = Math.min(Math.max(scale * zoomFactor, 0.4), 2.5);
-		setScale(nextScale);
-		onTransformChange?.({
-			x: dragPosition.x,
-			y: dragPosition.y,
-			scale: nextScale,
-			rotation: 0,
-		});
-	};
-
 	const { bounceAmount, bounceSpeed, breathing } = config.physics;
 
 	return (
 		<div
-			onWheel={handleWheel}
-			className='relative flex h-full w-full items-center justify-center overflow-hidden'
+			ref={containerRef}
+			className='relative flex h-full w-full touch-none select-none items-center justify-center overflow-hidden overscroll-contain'
 		>
 			<motion.div
 				drag={interactive}
@@ -150,12 +171,12 @@ export function PngTuberRenderer({ config, onTransformChange, interactive = true
 					<Image
 						src={activeSprite}
 						alt='Avatar 2D PNGTuber'
-						width={480}
-						height={520}
+						width={520}
+						height={560}
 						unoptimized
 						priority
 						draggable={false}
-						className='pointer-events-none max-h-[460px] max-w-[420px] select-none object-contain drop-shadow-2xl sm:max-h-[520px] sm:max-w-[480px]'
+						className='pointer-events-none max-h-[min(75vh,560px)] max-w-[min(90vw,500px)] select-none object-contain drop-shadow-2xl'
 					/>
 				</motion.div>
 			</motion.div>
