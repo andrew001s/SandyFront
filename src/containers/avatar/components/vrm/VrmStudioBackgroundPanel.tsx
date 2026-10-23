@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 import {
 	DEFAULT_VRM_BACKGROUND_STATE,
 	VRM_BACKGROUND_PRESETS,
@@ -73,7 +74,7 @@ export function VrmStudioBackgroundPanel({ state, onChange, onClose }: Props) {
 			onChange(next);
 			setActiveTab('image');
 			toast.success(`Imagen "${file.name}" cargada como fondo`, { id: 'bg-img-upload' });
-		} catch (_err) {
+		} catch {
 			toast.error('No se pudo cargar la imagen', { id: 'bg-img-upload' });
 		}
 	};
@@ -304,11 +305,12 @@ export function VrmStudioBackgroundPanel({ state, onChange, onClose }: Props) {
 						<div className='space-y-3 rounded-xl border border-border/60 bg-card/40 p-3'>
 							{/* Miniatura previa */}
 							<div className='relative h-28 w-full overflow-hidden rounded-xl border border-border/60 bg-background'>
-								{/* biome-ignore lint/nursery/noImgElement: local user uploaded background preview */}
-								<img
+								<Image
 									src={state.imageUrl}
 									alt='Fondo personalizado'
-									className='h-full w-full object-cover'
+									fill
+									className='object-cover'
+									unoptimized
 								/>
 								<div className='absolute inset-x-0 bottom-0 bg-black/70 p-1.5 backdrop-blur-xs'>
 									<p className='truncate font-mono text-[10px] text-white'>
