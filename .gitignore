@@ -31,3 +31,4 @@ tsconfig.tsbuildinfo
 /.clerk/
 .vercel
 .env*
+backlog.md
