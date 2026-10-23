@@ -3,6 +3,7 @@
 import { StarField } from '@/components/landing/StarField';
 import { NewsModal, openNewsModal } from '@/components/modals/NewsModal';
 import { AppSidebar } from '@/components/ui/app-sidebar';
+import { Footer } from '@/components/ui/footer';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSettingsProvider } from '@/context/AppSettingsContext';
 import { useLocalAiRelay } from '@/hooks/useLocalAiRelay';
@@ -77,6 +78,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 						<div className='pointer-events-none fixed inset-x-0 top-0 h-64 bg-[radial-gradient(ellipse_at_top,rgba(140,124,255,0.06),transparent_70%)]' />
 						<div className='relative z-10 flex h-full flex-col'>{children}</div>
 					</div>
+					<Footer forceRender className='mt-auto border-border/50 border-t bg-card/30' />
 				</SidebarInset>
 			</SidebarProvider>
 		</AppSettingsProvider>

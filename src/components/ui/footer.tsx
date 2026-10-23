@@ -15,21 +15,38 @@ import {
 } from 'react-icons/fa6';
 import { LuGithub } from 'react-icons/lu';
 
-export const Footer = () => {
+const DASHBOARD_ROUTES = [
+	'/home',
+	'/conexiones',
+	'/recompensas',
+	'/moderacion',
+	'/avatar',
+	'/settings',
+	'/account',
+];
+
+export const isDashboardRoute = (pathname: string | null): boolean => {
+	if (!pathname) return false;
+	return DASHBOARD_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+};
+
+export interface FooterProps {
+	forceRender?: boolean;
+	className?: string;
+}
+
+export const Footer = ({ forceRender = false, className }: FooterProps) => {
 	const pathname = usePathname();
 
 	if (pathname?.startsWith('/overlay')) {
 		return null;
 	}
 
-	const isSidebarPage = [
-		'/home',
-		'/conexiones',
-		'/moderacion',
-		'/avatar',
-		'/settings',
-		'/account',
-	].some((route) => pathname === route || pathname.startsWith(`${route}/`));
+	// Si no es un render forzado (dentro de DashboardShell) y estamos en una página de dashboard,
+	// evitar renderizar en el layout raíz para prevenir choques de ancho y scroll con la sidebar
+	if (!forceRender && isDashboardRoute(pathname)) {
+		return null;
+	}
 
 	const socialLinks = [
 		{
@@ -72,19 +89,19 @@ export const Footer = () => {
 	return (
 		<footer
 			className={cn(
-				'w-full border-t border-border/60 bg-background/80 px-4 py-6 backdrop-blur-sm',
-				isSidebarPage && 'md:pl-[17rem]',
+				'w-full border-t border-border/60 bg-background/80 px-4 py-5 backdrop-blur-sm sm:px-6 md:px-8',
+				className,
 			)}
 		>
-			<div className='container mx-auto flex flex-col items-center justify-between gap-4 md:flex-row'>
+			<div className='mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-4 md:flex-row'>
 				<motion.div
 					initial={{ opacity: 0, y: 12 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.45 }}
-					className='flex flex-col items-center gap-3 text-center text-sm text-muted-foreground md:items-start md:text-left'
+					className='flex flex-col items-center gap-2.5 text-center text-sm text-muted-foreground md:items-start md:text-left'
 				>
 					<div>© Shandrew {new Date().getFullYear()}. Todos los derechos reservados.</div>
-					<nav className='flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs'>
+					<nav className='flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-xs'>
 						<Link
 							href='/privacy-policy'
 							className='transition-colors hover:text-foreground'
@@ -124,7 +141,7 @@ export const Footer = () => {
 									asChild
 									variant='outline'
 									size='icon'
-									className='size-10 rounded-full border-border/70 bg-background/90 shadow-none text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
+									className='size-9 rounded-full border-border/70 bg-background/90 shadow-none text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
 								>
 									<Link
 										href={link.url}
@@ -132,7 +149,7 @@ export const Footer = () => {
 										rel='noopener noreferrer'
 										aria-label={link.name}
 									>
-										<Icon size={20} />
+										<Icon size={18} />
 									</Link>
 								</Button>
 							</motion.div>
