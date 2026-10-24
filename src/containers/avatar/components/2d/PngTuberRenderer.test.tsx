@@ -41,10 +41,10 @@ describe('PngTuberRenderer', () => {
 		vi.useRealTimers();
 	});
 
-	it('renders speakingBlink sprite when speaking and blinking coincide, and returns to speaking sprite when blink ends', () => {
+	it('renders speaking sprite when speaking, and handles blink during speech', () => {
 		render(<PngTuberRenderer config={mockConfig} />);
 
-		// 1. En reposo (sin hablar ni parpadear), muestra el sprite idle
+		// 1. En reposo (sin hablar ni parpadear), muestra el sprite idle de la emoción activa
 		const img = screen.getByAltText('Avatar 2D PNGTuber') as HTMLImageElement;
 		expect(img.src).toContain('happy_idle.png');
 
@@ -58,14 +58,112 @@ describe('PngTuberRenderer', () => {
 		act(() => {
 			vi.advanceTimersByTime(500); // Activa blinkInterval
 		});
-		// Debe mostrar speakingBlink (boca abierta con ojos cerrados)
-		expect(img.src).toContain('speakingBlink.png');
+		expect(img.src).toContain('happy_closed_blink.png');
 
 		// 4. Finaliza el parpadeo (160ms después)
 		act(() => {
 			vi.advanceTimersByTime(160);
 		});
-		// Vuelve a la variante de habla normal
+		// Sigue en la variante de habla
 		expect(img.src).toContain('happy_speaking.png');
+	});
+
+	it('switches to speaking sprite on speech and blink sprite on blink when expression variants are omitted, and returns to expression on idle', () => {
+		const customConfig: PngTuberConfig = {
+			...mockConfig,
+			activeEmotion: 'custom_cool',
+			emotions: [
+				{
+					id: 'custom_cool',
+					label: 'Cool',
+					idle: 'https://example.com/custom_avatar_idle.png',
+				},
+			],
+		};
+
+		render(<PngTuberRenderer config={customConfig} />);
+		const img = screen.getByAltText('Avatar 2D PNGTuber') as HTMLImageElement;
+		// 1. En reposo muestra la imagen de la expresión personalizada
+		expect(img.src).toContain('custom_avatar_idle.png');
+
+		// 2. Al hablar abre la boca cambiando al sprite de habla
+		act(() => {
+			avatar2dManager.setSpeaking(true, false);
+		});
+		expect(img.src).toContain('speaking.png');
+
+		// 3. Al detener el habla regresa a la imagen de la expresión personalizada
+		act(() => {
+			avatar2dManager.setSpeaking(false, false);
+		});
+		expect(img.src).toContain('custom_avatar_idle.png');
+
+		// 4. Al ocurrir parpadeo cambia al sprite de parpadeo
+		act(() => {
+			vi.advanceTimersByTime(500);
+		});
+		expect(img.src).toContain('blink.png');
+
+		// 5. Al terminar el parpadeo vuelve a la expresión personalizada
+		act(() => {
+			vi.advanceTimersByTime(160);
+		});
+		expect(img.src).toContain('custom_avatar_idle.png');
+	});
+
+	it('uses custom speaking and blinking sprites when provided for the expression', () => {
+		const fullCustomConfig: PngTuberConfig = {
+			...mockConfig,
+			activeEmotion: 'custom_expressive',
+			emotions: [
+				{
+					id: 'custom_expressive',
+					label: 'Expresiva',
+					idle: 'https://example.com/custom_idle.png',
+					speaking: 'https://example.com/custom_speaking.png',
+					blink: 'https://example.com/custom_blink.png',
+				},
+			],
+		};
+
+		render(<PngTuberRenderer config={fullCustomConfig} />);
+		const img = screen.getByAltText('Avatar 2D PNGTuber') as HTMLImageElement;
+		expect(img.src).toContain('custom_idle.png');
+
+		// Al hablar usa la variante speaking de la expresión
+		act(() => {
+			avatar2dManager.setSpeaking(true, false);
+		});
+		expect(img.src).toContain('custom_speaking.png');
+
+		act(() => {
+			avatar2dManager.setSpeaking(false, false);
+		});
+		expect(img.src).toContain('custom_idle.png');
+
+		// Al parpadear usa la variante blink de la expresión
+		act(() => {
+			vi.advanceTimersByTime(500);
+		});
+		expect(img.src).toContain('custom_blink.png');
+	});
+
+	it('switches visible sprite immediately when a new custom expression is created and activated in manager', () => {
+		const created = avatar2dManager.addCustomEmotion(
+			'Pensativo',
+			'data:image/png;base64,custom_pensativo_idle',
+		);
+		avatar2dManager.setEmotion(created.id);
+
+		const { rerender } = render(<PngTuberRenderer config={avatar2dManager.getState().pngtuber} />);
+		const img = screen.getByAltText('Avatar 2D PNGTuber') as HTMLImageElement;
+		expect(img.src).toContain('custom_pensativo_idle');
+
+		// Switch back to neutral
+		act(() => {
+			avatar2dManager.setEmotion('neutral');
+		});
+		rerender(<PngTuberRenderer config={avatar2dManager.getState().pngtuber} />);
+		expect(img.src).not.toContain('custom_pensativo_idle');
 	});
 });

@@ -3,7 +3,6 @@
 import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
 import type { Avatar2dTransform, PngTuberConfig } from '@/lib/avatar2d/types';
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
 interface Props {
@@ -93,21 +92,41 @@ export function PngTuberRenderer({ config, onTransformChange, interactive = true
 	// Determinar el sprite activo según emoción, habla y parpadeo
 	const { activeEmotion, emotions, sprites } = config;
 	const isCustomEmotion = Boolean(activeEmotion && activeEmotion !== 'neutral');
-	const currentEmotionObj = isCustomEmotion ? emotions.find((e) => e.id === activeEmotion) : null;
+	const currentEmotionObj = isCustomEmotion
+		? (emotions || []).find((e) => e.id === activeEmotion)
+		: null;
 
 	let activeSprite = sprites.idle;
 
-	if (isSpeaking) {
-		if (isBlinking) {
-			activeSprite = sprites.speakingBlink || currentEmotionObj?.speaking || sprites.speaking;
+	if (currentEmotionObj) {
+		// Una emoción / expresión está seleccionada
+		if (isSpeaking) {
+			if (isBlinking) {
+				activeSprite =
+					currentEmotionObj.blink ||
+					currentEmotionObj.speaking ||
+					sprites.speakingBlink ||
+					sprites.speaking;
+			} else {
+				activeSprite = currentEmotionObj.speaking || sprites.speaking;
+			}
+		} else if (isBlinking) {
+			activeSprite = currentEmotionObj.blink || sprites.blink;
 		} else {
-			activeSprite = currentEmotionObj?.speaking || sprites.speaking;
+			activeSprite = currentEmotionObj.idle || sprites.idle;
 		}
 	} else {
-		if (isBlinking) {
-			activeSprite = currentEmotionObj?.blink || sprites.blink || sprites.idle;
+		// Estado neutral / avatar base
+		if (isSpeaking) {
+			if (isBlinking) {
+				activeSprite = sprites.speakingBlink || sprites.speaking;
+			} else {
+				activeSprite = sprites.speaking;
+			}
+		} else if (isBlinking) {
+			activeSprite = sprites.blink;
 		} else {
-			activeSprite = currentEmotionObj?.idle || sprites.idle;
+			activeSprite = sprites.idle;
 		}
 	}
 
@@ -164,15 +183,15 @@ export function PngTuberRenderer({ config, onTransformChange, interactive = true
 					}}
 					className='relative flex items-center justify-center'
 				>
-					<Image
+					{/* biome-ignore lint/nursery/noImgElement: Dynamic base64 and SVG data URLs require native img to prevent selector limits */}
+					<img
 						src={activeSprite}
 						alt='Avatar 2D PNGTuber'
 						width={520}
 						height={560}
-						unoptimized
-						priority
 						draggable={false}
-						className='pointer-events-none max-h-[min(82vh,780px)] max-w-[min(90vw,720px)] select-none object-contain drop-shadow-2xl'
+						className='pointer-events-none h-auto max-h-[min(82vh,780px)] w-auto max-w-[min(90vw,720px)] select-none object-contain drop-shadow-2xl'
+						style={{ minWidth: '320px', minHeight: '360px' }}
 					/>
 				</motion.div>
 			</motion.div>

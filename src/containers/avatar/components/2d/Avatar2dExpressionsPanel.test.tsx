@@ -55,4 +55,28 @@ describe('Avatar2dExpressionsPanel custom expressions', () => {
 
 		readAsDataURLSpy.mockRestore();
 	});
+
+	it('triggers expression activation and updates active state when clicked from dock expressions panel', () => {
+		const setEmotionSpy = vi.spyOn(avatar2dManager, 'setEmotion');
+		render(<Avatar2dExpressionsPanel onClose={vi.fn()} />);
+
+		// Click on an expression button (e.g., "Feliz / Radiante")
+		const happyBtn = screen.getByRole('button', { name: /feliz/i });
+		fireEvent.click(happyBtn);
+
+		expect(setEmotionSpy).toHaveBeenCalledWith('happy');
+		expect(avatar2dManager.getState().pngtuber.activeEmotion).toBe('happy');
+	});
+
+	it('resets active expression back to neutral when reset button is clicked', () => {
+		avatar2dManager.setEmotion('happy');
+		const setEmotionSpy = vi.spyOn(avatar2dManager, 'setEmotion');
+		render(<Avatar2dExpressionsPanel onClose={vi.fn()} />);
+
+		const resetBtn = screen.getByRole('button', { name: /restablecer a neutral/i });
+		fireEvent.click(resetBtn);
+
+		expect(setEmotionSpy).toHaveBeenCalledWith('neutral');
+		expect(avatar2dManager.getState().pngtuber.activeEmotion).toBe('neutral');
+	});
 });

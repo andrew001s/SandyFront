@@ -74,7 +74,7 @@ function createSandySvg(options: {
 		`
 		: '';
 
-	const svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 480" width="100%" height="100%">
+	const svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 480" width="400" height="480">
 		<defs>
 			<filter id="soft-shadow" x="-10%" y="-10%" width="120%" height="120%">
 				<feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#000" flood-opacity="0.18" />

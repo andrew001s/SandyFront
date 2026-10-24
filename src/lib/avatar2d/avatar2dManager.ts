@@ -227,15 +227,26 @@ export class Avatar2dManager {
 		};
 		this.save();
 		this.notify();
-		this.broadcastChannel?.postMessage({ type: 'emotion', emotion });
+		try {
+			this.broadcastChannel?.postMessage({ type: 'emotion', emotion });
+		} catch {
+			// Ignorar error si broadcast falla por límites de clonado
+		}
 	}
 
-	public addCustomEmotion(label: string, idleImage: string): PngTuberEmotion {
+	public addCustomEmotion(
+		label: string,
+		idleImage: string,
+		speakingImage?: string,
+		blinkImage?: string,
+	): PngTuberEmotion {
 		const id = `custom_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 		const newEmotion: PngTuberEmotion = {
 			id,
 			label: label.trim(),
 			idle: idleImage,
+			speaking: speakingImage,
+			blink: blinkImage,
 		};
 		const nextEmotions = [...this.state.pngtuber.emotions, newEmotion];
 		this.state = {
@@ -247,10 +258,14 @@ export class Avatar2dManager {
 		};
 		this.save();
 		this.notify();
-		this.broadcastChannel?.postMessage({
-			type: 'emotions',
-			emotions: nextEmotions,
-		});
+		try {
+			this.broadcastChannel?.postMessage({
+				type: 'emotions',
+				emotions: nextEmotions,
+			});
+		} catch {
+			// Ignorar error si broadcast falla por payload grande
+		}
 		return newEmotion;
 	}
 

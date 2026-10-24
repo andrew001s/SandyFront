@@ -78,8 +78,11 @@ export function Avatar2dSettingsPanel({ mode: propMode, onClose }: Props) {
 		const file = e.target.files?.[0];
 		if (!file) return;
 
-		if (!file.type.startsWith('image/')) {
-			toast.error('Por favor selecciona una imagen válida (PNG, GIF o WebP)');
+		if (
+			!file.type.startsWith('image/') &&
+			!file.name.match(/\.(png|jpe?g|gif|webp|svg|bmp|avif)$/i)
+		) {
+			toast.error('Por favor selecciona una imagen válida (PNG, JPG, GIF, WebP o SVG)');
 			return;
 		}
 
@@ -123,7 +126,7 @@ export function Avatar2dSettingsPanel({ mode: propMode, onClose }: Props) {
 			<input
 				ref={fileInputRef}
 				type='file'
-				accept='image/png,image/gif,image/webp,image/svg+xml'
+				accept='image/*,.png,.jpg,.jpeg,.gif,.webp,.svg,.avif,.bmp'
 				onChange={handleFileSelect}
 				className='hidden'
 			/>

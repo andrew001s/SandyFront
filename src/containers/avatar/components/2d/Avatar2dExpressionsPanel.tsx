@@ -5,8 +5,8 @@ import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
 import type { Avatar2dState } from '@/lib/avatar2d/types';
 import { motion } from 'framer-motion';
 import { Mic, Plus, RotateCcw, Smile, Upload, Volume2, X } from 'lucide-react';
-import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 interface Props {
 	onClose: () => void;
@@ -18,6 +18,9 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 	const [isCreating, setIsCreating] = useState(false);
 	const [newLabel, setNewLabel] = useState('');
 	const [newImage, setNewImage] = useState<string | null>(null);
+	const [newSpeakingImage, setNewSpeakingImage] = useState<string | null>(null);
+	const [newBlinkImage, setNewBlinkImage] = useState<string | null>(null);
+	const [uploadTarget, setUploadTarget] = useState<'idle' | 'speaking' | 'blink'>('idle');
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -35,13 +38,17 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 
 	const handleSelectEmotion = (id: string) => {
 		avatar2dManager.setEmotion(id);
+		const selected = emotions.find((e) => e.id === id);
+		if (selected) {
+			toast.info(`Expresión activa: ${selected.label}`);
+		}
 	};
 
 	const handleToggleSpeaking = () => {
 		avatar2dManager.setSpeaking(!isSpeaking);
 	};
 
-	const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+	const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
 		if (!file) return;
 
@@ -49,11 +56,18 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 		reader.onload = (event) => {
 			const result = event.target?.result as string;
 			if (result) {
-				setNewImage(result);
-				setErrorMessage(null);
+				if (uploadTarget === 'idle') {
+					setNewImage(result);
+					setErrorMessage(null);
+				} else if (uploadTarget === 'speaking') {
+					setNewSpeakingImage(result);
+				} else if (uploadTarget === 'blink') {
+					setNewBlinkImage(result);
+				}
 			}
 		};
 		reader.readAsDataURL(file);
+		e.target.value = '';
 	};
 
 	const handleCreateExpression = () => {
@@ -66,16 +80,32 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 			return;
 		}
 
-		avatar2dManager.addCustomEmotion(newLabel.trim(), newImage);
-		setNewLabel('');
-		setNewImage(null);
-		setErrorMessage(null);
-		setIsCreating(false);
+		try {
+			const created = avatar2dManager.addCustomEmotion(
+				newLabel.trim(),
+				newImage,
+				newSpeakingImage || undefined,
+				newBlinkImage || undefined,
+			);
+			avatar2dManager.setEmotion(created.id);
+			toast.success(`Expresión "${created.label}" creada y activada`);
+			setNewLabel('');
+			setNewImage(null);
+			setNewSpeakingImage(null);
+			setNewBlinkImage(null);
+			setErrorMessage(null);
+			setIsCreating(false);
+		} catch (err) {
+			console.error('Error al guardar expresión:', err);
+			setErrorMessage('No se pudo guardar la expresión. Prueba con una imagen más liviana.');
+		}
 	};
 
 	const handleCancelCreate = () => {
 		setNewLabel('');
 		setNewImage(null);
+		setNewSpeakingImage(null);
+		setNewBlinkImage(null);
 		setErrorMessage(null);
 		setIsCreating(false);
 	};
@@ -164,32 +194,105 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 							<input
 								ref={fileInputRef}
 								type='file'
-								accept='image/*'
+								accept='image/*,.png,.jpg,.jpeg,.gif,.webp,.svg,.avif,.bmp'
 								onChange={handleFileSelect}
 								className='hidden'
 							/>
-							<div className='flex items-center gap-2'>
-								<Button
-									type='button'
-									variant='outline'
-									size='sm'
-									onClick={() => fileInputRef.current?.click()}
-									className='h-7 flex-1 gap-1.5 text-[11px]'
-								>
-									<Upload className='size-3' />
-									{newImage ? 'Cambiar imagen' : 'Subir imagen'}
-								</Button>
-								{newImage && (
-									<div className='relative size-7 overflow-hidden rounded-md border border-border bg-black/20'>
-										<Image
-											src={newImage}
-											alt='Preview'
-											fill
-											unoptimized
-											className='object-contain'
-										/>
-									</div>
-								)}
+							<div className='space-y-1.5'>
+								<span className='text-[10px] text-muted-foreground'>Imágenes de la expresión:</span>
+								<div className='grid grid-cols-3 gap-1.5'>
+									{/* Reposo */}
+									<button
+										type='button'
+										onClick={() => {
+											setUploadTarget('idle');
+											fileInputRef.current?.click();
+										}}
+										className={`group relative flex flex-col items-center gap-1 rounded-lg border p-1 text-center transition-all ${
+											newImage
+												? 'border-primary bg-primary/10'
+												: 'border-border/70 bg-card hover:border-primary/50'
+										}`}
+									>
+										<div className='relative size-9 overflow-hidden rounded bg-black/20'>
+											{newImage ? (
+												// biome-ignore lint/nursery/noImgElement: Data URL preview
+												<img src={newImage} alt='Reposo' className='h-full w-full object-contain' />
+											) : (
+												<div className='flex h-full w-full items-center justify-center text-muted-foreground'>
+													<Upload className='size-3.5' />
+												</div>
+											)}
+										</div>
+										<span className='font-medium text-[9px] text-foreground'>Reposo *</span>
+									</button>
+
+									{/* Hablando */}
+									<button
+										type='button'
+										onClick={() => {
+											setUploadTarget('speaking');
+											fileInputRef.current?.click();
+										}}
+										className={`group relative flex flex-col items-center gap-1 rounded-lg border p-1 text-center transition-all ${
+											newSpeakingImage
+												? 'border-primary bg-primary/10'
+												: 'border-border/70 bg-card hover:border-primary/50'
+										}`}
+									>
+										<div className='relative size-9 overflow-hidden rounded bg-black/20'>
+											{newSpeakingImage ? (
+												// biome-ignore lint/nursery/noImgElement: Data URL preview
+												<img
+													src={newSpeakingImage}
+													alt='Hablando'
+													className='h-full w-full object-contain'
+												/>
+											) : (
+												<div className='flex h-full w-full items-center justify-center text-muted-foreground'>
+													<Upload className='size-3.5' />
+												</div>
+											)}
+										</div>
+										<span className='font-medium text-[9px] text-muted-foreground'>
+											Boca abierta
+										</span>
+									</button>
+
+									{/* Parpadeo */}
+									<button
+										type='button'
+										onClick={() => {
+											setUploadTarget('blink');
+											fileInputRef.current?.click();
+										}}
+										className={`group relative flex flex-col items-center gap-1 rounded-lg border p-1 text-center transition-all ${
+											newBlinkImage
+												? 'border-primary bg-primary/10'
+												: 'border-border/70 bg-card hover:border-primary/50'
+										}`}
+									>
+										<div className='relative size-9 overflow-hidden rounded bg-black/20'>
+											{newBlinkImage ? (
+												// biome-ignore lint/nursery/noImgElement: Data URL preview
+												<img
+													src={newBlinkImage}
+													alt='Parpadeo'
+													className='h-full w-full object-contain'
+												/>
+											) : (
+												<div className='flex h-full w-full items-center justify-center text-muted-foreground'>
+													<Upload className='size-3.5' />
+												</div>
+											)}
+										</div>
+										<span className='font-medium text-[9px] text-muted-foreground'>Parpadeo</span>
+									</button>
+								</div>
+								<p className='text-[9px] text-muted-foreground leading-tight'>
+									* Reposo es obligatorio. Si no subes boca abierta o parpadeo, el modelo usará sus
+									gestos predeterminados.
+								</p>
 							</div>
 
 							{errorMessage && <p className='text-[10px] text-destructive'>{errorMessage}</p>}
@@ -224,14 +327,26 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 									key={em.id}
 									type='button'
 									onClick={() => handleSelectEmotion(em.id)}
-									className={`flex items-center justify-between rounded-xl border px-3 py-2 text-left text-xs transition-all ${
+									className={`flex items-center justify-between gap-1.5 rounded-xl border px-2.5 py-2 text-left text-xs transition-all ${
 										isSelected
 											? 'border-primary bg-primary/10 font-semibold text-primary shadow-xs ring-1 ring-primary/30'
 											: 'border-border/60 bg-card/60 text-muted-foreground hover:border-border hover:bg-muted/40 hover:text-foreground'
 									}`}
 								>
-									<span>{em.label}</span>
-									{isSelected && <span className='size-1.5 rounded-full bg-primary' />}
+									<div className='flex min-w-0 items-center gap-1.5'>
+										{em.idle && (
+											<div className='relative size-4.5 shrink-0 overflow-hidden rounded bg-black/20'>
+												{/* biome-ignore lint/nursery/noImgElement: Data URL thumbnail */}
+												<img
+													src={em.idle}
+													alt={em.label}
+													className='h-full w-full object-contain'
+												/>
+											</div>
+										)}
+										<span className='truncate'>{em.label}</span>
+									</div>
+									{isSelected && <span className='size-1.5 shrink-0 rounded-full bg-primary' />}
 								</button>
 							);
 						})}
