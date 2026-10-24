@@ -375,7 +375,7 @@ export function Avatar2dSettingsPanel({ mode: propMode, onClose }: Props) {
 							</Button>
 						)}
 
-						<div className='space-y-2 rounded-lg border border-border/60 bg-card/50 p-2.5'>
+						<div className='rounded-lg border border-border/60 bg-card/50 p-2.5'>
 							<div className='flex items-center justify-between'>
 								<span className='text-[11px] text-foreground'>Seguimiento con el cursor</span>
 								<Switch
@@ -388,10 +388,6 @@ export function Avatar2dSettingsPanel({ mode: propMode, onClose }: Props) {
 										}));
 									}}
 								/>
-							</div>
-							<div className='flex items-center justify-between'>
-								<span className='text-[11px] text-foreground'>Reactividad de voz (Lip Sync)</span>
-								<Switch checked={true} disabled />
 							</div>
 						</div>
 					</div>
