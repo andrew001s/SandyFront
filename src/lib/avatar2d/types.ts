@@ -65,5 +65,6 @@ export type Avatar2dSyncMessage =
 	| { type: 'sprites'; sprites: Record<PngTuberSpriteKey, string> }
 	| { type: 'live2dModel'; modelUrl: string | null; modelName?: string }
 	| { type: 'mouth'; mouthOpenY: number; mouthForm: number }
+	| { type: 'eyeTracking'; enabled: boolean }
 	| { type: 'requestState' }
 	| { type: 'fullState'; state: Avatar2dState };

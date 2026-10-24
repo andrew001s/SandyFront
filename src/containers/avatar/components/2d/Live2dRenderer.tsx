@@ -57,6 +57,86 @@ export function applyLive2dMouthParams(
 	}
 }
 
+export interface Live2dFocusPoint {
+	x: number;
+	y: number;
+}
+
+/**
+ * Calcula las coordenadas normalizadas de enfoque para Live2D dentro del rango [-clampLimit, clampLimit].
+ * +X: derecha, -X: izquierda
+ * +Y: arriba, -Y: abajo
+ */
+export function calculateLive2dFocusPoint(
+	clientX: number,
+	clientY: number,
+	viewport: { width: number; height: number },
+	clampLimit = 1.0,
+): Live2dFocusPoint {
+	if (viewport.width <= 0 || viewport.height <= 0) {
+		return { x: 0, y: 0 };
+	}
+	const rawX = (clientX / viewport.width - 0.5) * 2;
+	const rawY = -(clientY / viewport.height - 0.5) * 2;
+
+	const x = Math.max(-clampLimit, Math.min(clampLimit, rawX));
+	const y = Math.max(-clampLimit, Math.min(clampLimit, rawY));
+
+	return { x, y };
+}
+
+/**
+ * Aplica interpolación suave (lerp) hacia la posición objetivo, convergiendo a ella si la diferencia es insignificante.
+ */
+export function stepLive2dFocusDecay(
+	current: Live2dFocusPoint,
+	target: Live2dFocusPoint,
+	speed = 0.1,
+	threshold = 0.005,
+): Live2dFocusPoint {
+	const dx = target.x - current.x;
+	const dy = target.y - current.y;
+
+	const nextX = Math.abs(dx) < threshold ? target.x : current.x + dx * speed;
+	const nextY = Math.abs(dy) < threshold ? target.y : current.y + dy * speed;
+
+	return { x: nextX, y: nextY };
+}
+
+/**
+ * Aplica la posición normalizada de enfoque al modelo Live2D.
+ * Delega en focusController (estándar de pixi-live2d-display) y en los parámetros de coreModel.
+ */
+export function applyLive2dFocusPoint(
+	// biome-ignore lint/suspicious/noExplicitAny: dynamic Live2D model instance
+	model: any,
+	focus: Live2dFocusPoint,
+): void {
+	if (!model) return;
+
+	try {
+		// 1. Canal estándar de pixi-live2d-display vía focusController
+		if (model.internalModel?.focusController) {
+			model.internalModel.focusController.focus(focus.x, focus.y, true);
+		} else if (typeof model.focus === 'function') {
+			model.focus(focus.x, focus.y);
+		}
+
+		// 2. Inyección directa en coreModel como garantía inmediata (ojos y cabeza)
+		const core = model.internalModel?.coreModel;
+		if (core?.setParameterValueById) {
+			core.setParameterValueById('ParamEyeBallX', focus.x);
+			core.setParameterValueById('ParamEyeBallY', focus.y);
+			core.setParameterValueById('ParamAngleX', focus.x * 30);
+			core.setParameterValueById('ParamAngleY', focus.y * 30);
+			core.setParameterValueById('ParamAngleZ', focus.x * focus.y * -30);
+			core.setParameterValueById('ParamBodyAngleX', focus.x * 10);
+		}
+	} catch {
+		// Ignorar si el modelo no soporta los parámetros
+	}
+}
+
 export function Live2dRenderer({ config, onTransformChange, interactive = true }: Props) {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -121,6 +201,40 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 		});
 		return () => unsub();
 	}, []);
+
+	// Puntos de enfoque para seguimiento de cursor suave con amortiguación
+	const targetFocusRef = useRef<Live2dFocusPoint>({ x: 0, y: 0 });
+	const currentFocusRef = useRef<Live2dFocusPoint>({ x: 0, y: 0 });
+
+	// Seguimiento de cursor a nivel de ventana para evitar pérdidas de tracking fuera del canvas
+	useEffect(() => {
+		if (typeof window === 'undefined' || !interactive) return;
+
+		const handleWindowPointerMove = (e: PointerEvent) => {
+			if (isDraggingRef.current || !config.eyeTracking) {
+				targetFocusRef.current = { x: 0, y: 0 };
+				return;
+			}
+			targetFocusRef.current = calculateLive2dFocusPoint(e.clientX, e.clientY, {
+				width: window.innerWidth,
+				height: window.innerHeight,
+			});
+		};
+
+		const handleWindowPointerLeave = () => {
+			targetFocusRef.current = { x: 0, y: 0 };
+		};
+
+		window.addEventListener('pointermove', handleWindowPointerMove);
+		window.addEventListener('blur', handleWindowPointerLeave);
+		document.addEventListener('mouseleave', handleWindowPointerLeave);
+
+		return () => {
+			window.removeEventListener('pointermove', handleWindowPointerMove);
+			window.removeEventListener('blur', handleWindowPointerLeave);
+			document.removeEventListener('mouseleave', handleWindowPointerLeave);
+		};
+	}, [config.eyeTracking, interactive]);
 
 	// Función centralizada para aplicar escala y posición con centrado matemático perfecto
 	const applyModelTransform = useCallback(
@@ -355,38 +469,52 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 		return () => ro.disconnect();
 	}, [applyModelTransform]);
 
-	// Animar el habla (Lip Sync) en cada frame del modelo
+	// Animar el habla (Lip Sync) y seguimiento de cursor en cada frame
 	useEffect(() => {
-		const app = appRef.current;
-		if (!app) return;
-
 		let frameId: number;
-		const animateLipSync = () => {
+		let isRunning = true;
+
+		const animateFrame = () => {
+			if (!isRunning) return;
 			const model = modelRef.current;
-			if (model?.internalModel?.coreModel) {
-				const core = model.internalModel.coreModel;
-				try {
-					if (isSpeaking) {
-						const currentParams = mouthParamsRef.current;
-						if (currentParams.mouthOpenY > 0 || currentParams.mouthForm !== 0) {
-							applyLive2dMouthParams(core, currentParams);
+			if (model) {
+				// 1. Modulación labial
+				if (model.internalModel?.coreModel) {
+					const core = model.internalModel.coreModel;
+					try {
+						if (isSpeaking) {
+							const currentParams = mouthParamsRef.current;
+							if (currentParams.mouthOpenY > 0 || currentParams.mouthForm !== 0) {
+								applyLive2dMouthParams(core, currentParams);
+							} else {
+								const fallbackOpen = 0.35 + Math.sin(Date.now() / 90) * 0.45;
+								applyLive2dMouthParams(core, { mouthOpenY: fallbackOpen, mouthForm: 0 });
+							}
 						} else {
-							const fallbackOpen = 0.35 + Math.sin(Date.now() / 90) * 0.45;
-							applyLive2dMouthParams(core, { mouthOpenY: fallbackOpen, mouthForm: 0 });
+							applyLive2dMouthParams(core, { mouthOpenY: 0, mouthForm: 0 });
 						}
-					} else {
-						applyLive2dMouthParams(core, { mouthOpenY: 0, mouthForm: 0 });
+					} catch {
+						// Parámetro no soportado en este modelo
 					}
-				} catch {
-					// Parámetro no soportado en este modelo
 				}
+
+				// 2. Seguimiento suave de cursor con amortiguación continua (easing hacia target)
+				const target =
+					config.eyeTracking && !isDraggingRef.current ? targetFocusRef.current : { x: 0, y: 0 };
+				const nextFocus = stepLive2dFocusDecay(currentFocusRef.current, target, 0.12);
+				currentFocusRef.current = nextFocus;
+
+				applyLive2dFocusPoint(model, nextFocus);
 			}
-			frameId = requestAnimationFrame(animateLipSync);
+			frameId = requestAnimationFrame(animateFrame);
 		};
 
-		frameId = requestAnimationFrame(animateLipSync);
-		return () => cancelAnimationFrame(frameId);
-	}, [isSpeaking]);
+		frameId = requestAnimationFrame(animateFrame);
+		return () => {
+			isRunning = false;
+			cancelAnimationFrame(frameId);
+		};
+	}, [isSpeaking, config.eyeTracking]);
 
 	// Seguimiento de cursor (Eye tracking) y Arrastre del Modelo
 	const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -409,7 +537,7 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 	};
 
 	const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-		// 1. Manejo de arrastre (pan) con escala de delta normalizada
+		// Manejo de arrastre (pan) con escala de delta normalizada
 		if (isDraggingRef.current) {
 			const dx = e.clientX - dragStartRef.current.startX;
 			const dy = e.clientY - dragStartRef.current.startY;
@@ -419,22 +547,6 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 
 			dragPositionRef.current = { x: nextX, y: nextY };
 			applyModelTransform(nextX, nextY, scaleRef.current);
-			return;
-		}
-
-		// 2. Seguimiento de ojos / cabeza cuando no se está arrastrando
-		if (!interactive || !config.eyeTracking || !modelRef.current) return;
-		const rect = e.currentTarget.getBoundingClientRect();
-		const normX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
-		const normY = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
-
-		try {
-			const model = modelRef.current;
-			if (model.internalModel?.focus) {
-				model.internalModel.focus(normX, -normY);
-			}
-		} catch {
-			// Ignorar
 		}
 	};
 

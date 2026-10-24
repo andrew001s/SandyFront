@@ -292,6 +292,25 @@ export class Avatar2dManager {
 		}
 	}
 
+	public setEyeTracking(enabled: boolean, broadcast = true): void {
+		if (this.state.live2d.eyeTracking === enabled) return;
+		this.state = {
+			...this.state,
+			live2d: {
+				...this.state.live2d,
+				eyeTracking: enabled,
+			},
+		};
+		this.save();
+		this.notify();
+		if (broadcast) {
+			this.broadcastChannel?.postMessage({
+				type: 'eyeTracking',
+				enabled,
+			});
+		}
+	}
+
 	public updateSprite(key: PngTuberSpriteKey, dataUrl: string): void {
 		const nextSprites = {
 			...this.state.pngtuber.sprites,
@@ -419,6 +438,16 @@ export class Avatar2dManager {
 			case 'mouth':
 				this.mouthParams = { mouthOpenY: msg.mouthOpenY, mouthForm: msg.mouthForm };
 				this.notifyMouth();
+				break;
+			case 'eyeTracking':
+				this.state = {
+					...this.state,
+					live2d: {
+						...this.state.live2d,
+						eyeTracking: msg.enabled,
+					},
+				};
+				this.notify();
 				break;
 			case 'fullState':
 				this.state = msg.state;

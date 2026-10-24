@@ -381,7 +381,7 @@ export function Avatar2dSettingsPanel({ mode: propMode, onClose }: Props) {
 								<Switch
 									checked={state.live2d.eyeTracking}
 									onCheckedChange={(checked) => {
-										avatar2dManager.setLive2dModel(state.live2d.modelUrl, state.live2d.modelName);
+										avatar2dManager.setEyeTracking(checked);
 										setState((prev) => ({
 											...prev,
 											live2d: { ...prev.live2d, eyeTracking: checked },
