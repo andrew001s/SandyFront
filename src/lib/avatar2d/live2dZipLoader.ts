@@ -78,6 +78,43 @@ export async function unpackLive2dZip(file: File): Promise<Live2dPackage> {
 		modelName = mainFileName.replace(/\.model3?\.json$/i, '');
 	}
 
+	// 4. Auto-descubrir expresiones si el .model3.json no las lista pero el ZIP contiene archivos .exp3.json (ej. modelos VTS)
+	if (modelSettingsJson && typeof modelSettingsJson === 'object') {
+		if (!modelSettingsJson.FileReferences) {
+			modelSettingsJson.FileReferences = {};
+		}
+		const existingExpr = modelSettingsJson.FileReferences.Expressions;
+		if (!Array.isArray(existingExpr) || existingExpr.length === 0) {
+			const baseDir = model3Path.includes('/')
+				? model3Path.substring(0, model3Path.lastIndexOf('/') + 1)
+				: '';
+			const discovered: Array<{ Name: string; File: string }> = [];
+
+			for (const rawPath of Object.keys(zip.files)) {
+				const lower = rawPath.toLowerCase();
+				if (
+					(lower.endsWith('.exp3.json') || lower.endsWith('.exp.json')) &&
+					!lower.includes('__macosx') &&
+					!zip.files[rawPath].dir
+				) {
+					const norm = rawPath.replace(/\\/g, '/').replace(/^\.?\//, '');
+					const fileName = norm.split('/').pop() || '';
+					const nameWithoutExt = fileName.replace(/\.(exp3|exp)?\.json$/i, '');
+					const relFile = norm.startsWith(baseDir) ? norm.substring(baseDir.length) : fileName;
+
+					discovered.push({
+						Name: nameWithoutExt,
+						File: relFile,
+					});
+				}
+			}
+
+			if (discovered.length > 0) {
+				modelSettingsJson.FileReferences.Expressions = discovered;
+			}
+		}
+	}
+
 	return {
 		modelSettingsJson,
 		fileMap,

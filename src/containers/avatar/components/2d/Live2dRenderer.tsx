@@ -7,6 +7,7 @@ import type { Avatar2dTransform, Live2dConfig } from '@/lib/avatar2d/types';
 import { AlertCircle, Loader2, Sparkles, Upload } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { extractLive2dExpressions } from './Live2dExpressionsPanel';
 
 interface Props {
 	config: Live2dConfig;
@@ -137,6 +138,156 @@ export function applyLive2dFocusPoint(
 	}
 }
 
+/**
+ * Aplica una expresión gestual al modelo Live2D en WebGL.
+ * Si se pasa un identificador de expresión, la activa.
+ * Si se pasa null, resetea la expresión al estado neutral.
+ */
+export function applyLive2dExpression(
+	// biome-ignore lint/suspicious/noExplicitAny: dynamic Live2D model instance
+	model: any,
+	expressionId: string | null | undefined,
+): void {
+	if (!model) return;
+	try {
+		if (expressionId) {
+			if (typeof model.expression === 'function') {
+				const res = model.expression(expressionId);
+				if (res && typeof res.catch === 'function') {
+					res.catch(() => {
+						// Ignorar fallo de expresión nativa si el modelo no la define
+					});
+				}
+			}
+		} else if (model.internalModel?.motionManager?.expressionManager) {
+			model.internalModel.motionManager.expressionManager.resetExpression();
+		} else if (typeof model.expression === 'function') {
+			model.expression('');
+		}
+	} catch {
+		// Ignorar si el modelo no soporta la expresión
+	}
+}
+
+export interface Live2dExpressionParameter {
+	Id: string;
+	Value: number;
+	Blend?: 'Add' | 'Multiply' | 'Overwrite' | string;
+}
+
+/**
+ * Busca la URL virtual (Blob) del archivo de expresión dentro de fileMap
+ */
+export function findExpressionUrlInFileMap(
+	fileMap?: Record<string, string> | null,
+	expressionId?: string | null,
+): string | null {
+	if (!fileMap || !expressionId) return null;
+	const clean = expressionId.replace(/\.(exp3|exp)?\.json$/i, '').toLowerCase();
+
+	if (fileMap[expressionId]) return fileMap[expressionId];
+	if (fileMap[`${expressionId}.exp3.json`]) return fileMap[`${expressionId}.exp3.json`];
+	if (fileMap[`${expressionId}.exp.json`]) return fileMap[`${expressionId}.exp.json`];
+
+	for (const [key, url] of Object.entries(fileMap)) {
+		const fileName = key.split(/[/\\]/).pop() || '';
+		const keyClean = fileName.replace(/\.(exp3|exp)?\.json$/i, '').toLowerCase();
+
+		if (keyClean === clean) {
+			return url;
+		}
+	}
+
+	return null;
+}
+
+/**
+ * Parsea parámetros de expresiones tanto para Cubism 4 (Parameters) como Cubism 2/3 (params)
+ */
+export function parseLive2dExpressionParams(
+	// biome-ignore lint/suspicious/noExplicitAny: dynamic JSON object
+	data: any,
+): Live2dExpressionParameter[] {
+	if (!data) return [];
+	if (Array.isArray(data.Parameters)) {
+		return data.Parameters.map((p: Record<string, unknown>) => ({
+			Id: String(p.Id || ''),
+			Value: typeof p.Value === 'number' ? p.Value : Number(p.Value || 0),
+			Blend: typeof p.Blend === 'string' ? p.Blend : 'Overwrite',
+		}));
+	}
+	if (Array.isArray(data.params)) {
+		return data.params.map((p: Record<string, unknown>) => ({
+			Id: String(p.id || ''),
+			Value: typeof p.val === 'number' ? p.val : Number(p.val || 0),
+			Blend: p.calc === 'add' ? 'Add' : p.calc === 'mult' ? 'Multiply' : 'Overwrite',
+		}));
+	}
+	return [];
+}
+
+/**
+ * Restablece los parámetros de una expresión desactivada a sus valores por defecto o neutrales
+ */
+export function resetLive2dExpressionParams(
+	// biome-ignore lint/suspicious/noExplicitAny: dynamic Live2D core model
+	core: any,
+	params: Live2dExpressionParameter[],
+): void {
+	if (!core || !Array.isArray(params)) return;
+	for (const p of params) {
+		try {
+			if (
+				typeof core.getParameterIndex === 'function' &&
+				typeof core.getParameterDefaultValue === 'function'
+			) {
+				const idx = core.getParameterIndex(p.Id);
+				if (idx >= 0) {
+					const defVal = core.getParameterDefaultValue(idx);
+					if (typeof core.setParameterValueByIndex === 'function') {
+						core.setParameterValueByIndex(idx, typeof defVal === 'number' ? defVal : 0);
+						continue;
+					}
+					if (typeof core.setParameterValueById === 'function') {
+						core.setParameterValueById(p.Id, typeof defVal === 'number' ? defVal : 0);
+						continue;
+					}
+				}
+			}
+			if (typeof core.setParameterValueById === 'function') {
+				core.setParameterValueById(p.Id, 0);
+			}
+		} catch {
+			// Ignorar si el modelo no tiene el parámetro
+		}
+	}
+}
+
+/**
+ * Aplica los parámetros de modulación gestual directamente sobre el coreModel de Live2D.
+ * Garantiza que morphs como Blush, Dead Eyes, Fanged Smile se reflejen inmediatamente en WebGL.
+ */
+export function applyLive2dExpressionParams(
+	// biome-ignore lint/suspicious/noExplicitAny: dynamic Live2D model instance
+	core: any,
+	params: Live2dExpressionParameter[],
+): void {
+	if (!core || !Array.isArray(params)) return;
+	for (const p of params) {
+		try {
+			if (p.Blend === 'Add' && typeof core.addParameterValueById === 'function') {
+				core.addParameterValueById(p.Id, p.Value);
+			} else if (p.Blend === 'Multiply' && typeof core.multiplyParameterValueById === 'function') {
+				core.multiplyParameterValueById(p.Id, p.Value);
+			} else if (typeof core.setParameterValueById === 'function') {
+				core.setParameterValueById(p.Id, p.Value);
+			}
+		} catch {
+			// Ignorar si el modelo no tiene este parámetro específico
+		}
+	}
+}
+
 export function Live2dRenderer({ config, onTransformChange, interactive = true }: Props) {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -201,6 +352,101 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 		});
 		return () => unsub();
 	}, []);
+
+	// Mapa en memoria de parámetros cacheados por id de expresión
+	const expressionParamsCacheRef = useRef<Map<string, Live2dExpressionParameter[]>>(new Map());
+	// Parámetros activos consolidados para inyección continua en el ciclo de renderizado
+	const activeExpressionParamsRef = useRef<Live2dExpressionParameter[]>([]);
+	// Conjunto de parámetros aplicados en el ciclo anterior para resetear los que se apaguen
+	const previouslyAppliedParamsRef = useRef<Live2dExpressionParameter[]>([]);
+
+	const syncExpressions = useCallback(
+		(activeIds: string[]) => {
+			const model = modelRef.current;
+			if (!model) return;
+
+			if (activeIds.length === 0) {
+				applyLive2dExpression(model, null);
+				if (previouslyAppliedParamsRef.current.length > 0 && model.internalModel?.coreModel) {
+					resetLive2dExpressionParams(
+						model.internalModel.coreModel,
+						previouslyAppliedParamsRef.current,
+					);
+				}
+				previouslyAppliedParamsRef.current = [];
+				activeExpressionParamsRef.current = [];
+				return;
+			}
+
+			// Compatibilidad con motion manager nativo (última expresión activada)
+			applyLive2dExpression(model, activeIds[activeIds.length - 1]);
+
+			// Consolidar parámetros de todas las expresiones activas
+			const consolidatedParams: Live2dExpressionParameter[] = [];
+
+			for (const id of activeIds) {
+				const cached = expressionParamsCacheRef.current.get(id);
+				if (cached) {
+					consolidatedParams.push(...cached);
+				} else if (pkg?.fileMap) {
+					const targetUrl = findExpressionUrlInFileMap(pkg.fileMap, id);
+					if (targetUrl) {
+						fetch(targetUrl)
+							.then((res) => res.json())
+							.then((data) => {
+								const parsed = parseLive2dExpressionParams(data);
+								expressionParamsCacheRef.current.set(id, parsed);
+								// Re-sincronizar cuando los parámetros se descarguen
+								const currentActive = avatar2dManager.getState().live2d.activeExpressions || [];
+								if (currentActive.includes(id)) {
+									syncExpressions(currentActive);
+								}
+							})
+							.catch(() => {
+								// Ignorar error de lectura de archivo de expresión
+							});
+					}
+				}
+			}
+
+			// Resetear parámetros que ya no están en ninguna expresión activa
+			const activeParamIds = new Set(consolidatedParams.map((p) => p.Id));
+			const paramsToReset = previouslyAppliedParamsRef.current.filter(
+				(p) => !activeParamIds.has(p.Id),
+			);
+			if (paramsToReset.length > 0 && model.internalModel?.coreModel) {
+				resetLive2dExpressionParams(model.internalModel.coreModel, paramsToReset);
+			}
+
+			previouslyAppliedParamsRef.current = consolidatedParams;
+			activeExpressionParamsRef.current = consolidatedParams;
+
+			// Inyección inmediata sobre el coreModel
+			if (consolidatedParams.length > 0 && model.internalModel?.coreModel) {
+				applyLive2dExpressionParams(model.internalModel.coreModel, consolidatedParams);
+			}
+		},
+		[pkg?.fileMap],
+	);
+
+	useEffect(() => {
+		const currentExpressions =
+			config.activeExpressions ??
+			(config.activeExpression ? [config.activeExpression] : []) ??
+			avatar2dManager.getState().live2d.activeExpressions ??
+			[];
+		syncExpressions(currentExpressions);
+	}, [config.activeExpressions, config.activeExpression, syncExpressions]);
+
+	useEffect(() => {
+		const unsub = avatar2dManager.subscribe((state) => {
+			const expressions =
+				state.live2d.activeExpressions ??
+				(state.live2d.activeExpression ? [state.live2d.activeExpression] : []);
+			syncExpressions(expressions);
+		});
+		return () => unsub();
+	}, [syncExpressions]);
 
 	// Puntos de enfoque para seguimiento de cursor suave con amortiguación
 	const targetFocusRef = useRef<Live2dFocusPoint>({ x: 0, y: 0 });
@@ -318,7 +564,9 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				if (!isMounted) return;
 
 				const PIXI = await import('pixi.js');
-				const { Live2DModel, Live2DFactory } = await import('pixi-live2d-display/cubism4');
+				const { Live2DModel, Live2DFactory, Cubism4ExpressionManager } = await import(
+					'pixi-live2d-display/cubism4'
+				);
 
 				try {
 					Live2DModel.registerTicker(PIXI.Ticker);
@@ -359,6 +607,23 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 					modelRef.current = null;
 				}
 
+				// Auto-descubrir y enriquecer expresiones en modelSettingsJson para que Cubism4ExpressionManager se instancie
+				const discovered = extractLive2dExpressions(pkg.modelSettingsJson, pkg.fileMap);
+				if (discovered.length > 0) {
+					if (!pkg.modelSettingsJson.FileReferences) {
+						pkg.modelSettingsJson.FileReferences = {};
+					}
+					if (
+						!Array.isArray(pkg.modelSettingsJson.FileReferences.Expressions) ||
+						pkg.modelSettingsJson.FileReferences.Expressions.length === 0
+					) {
+						pkg.modelSettingsJson.FileReferences.Expressions = discovered.map((e) => ({
+							Name: e.id,
+							File: e.file || `${e.id}.exp3.json`,
+						}));
+					}
+				}
+
 				// Obtener el runtime correspondiente e instanciar ModelSettings
 				const runtime = Live2DFactory.findRuntime(pkg.modelSettingsJson);
 				if (!runtime) {
@@ -368,17 +633,33 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				}
 
 				const settings = runtime.createModelSettings(pkg.modelSettingsJson);
+				if (!settings.expressions && discovered.length > 0) {
+					settings.expressions = discovered.map((e) => ({
+						Name: e.id,
+						File: e.file || `${e.id}.exp3.json`,
+					}));
+				}
 
 				// Reemplazar la función resolveURL para alimentar los recursos desde el mapa de Blob URLs
 				settings.resolveURL = (path: string) => {
-					const norm = path.replace(/\\/g, '/').replace(/^\.?\//, '');
+					let decoded = path;
+					try {
+						decoded = decodeURIComponent(path);
+					} catch {
+						// Ignorar
+					}
+					const norm = decoded.replace(/\\/g, '/').replace(/^\.?\//, '');
 					if (pkg.fileMap[norm]) return pkg.fileMap[norm];
 
 					const fname = norm.split('/').pop() || norm;
 					if (pkg.fileMap[fname]) return pkg.fileMap[fname];
 
+					const lowerFname = fname.toLowerCase();
 					for (const [k, v] of Object.entries(pkg.fileMap)) {
-						if (k.endsWith(`/${fname}`)) return v;
+						const lowerK = k.toLowerCase();
+						if (lowerK === lowerFname || lowerK.endsWith(`/${lowerFname}`)) {
+							return v;
+						}
 					}
 
 					return path;
@@ -392,6 +673,24 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				if (!isMounted) {
 					model.destroy();
 					return;
+				}
+
+				// Inicializar ExpressionManager si no se instanció automáticamente
+				if (
+					model.internalModel?.motionManager &&
+					!model.internalModel.motionManager.expressionManager &&
+					settings.expressions &&
+					settings.expressions.length > 0 &&
+					Cubism4ExpressionManager
+				) {
+					try {
+						model.internalModel.motionManager.expressionManager = new Cubism4ExpressionManager(
+							settings,
+							{ autoInteract: false },
+						);
+					} catch {
+						// Ignorar
+					}
 				}
 
 				// Mantener ancla en (0,0) para calcular límites visuales reales
@@ -426,9 +725,29 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				visualBoundsRef.current = bounds;
 				app.stage.addChild(model);
 				modelRef.current = model;
-
 				// Aplicar transformación inicial centrada
 				applyModelTransform(dragPosition.x, dragPosition.y, scale);
+
+				// Inyectar parámetros de expresiones en beforeModelUpdate en cada tick
+				const onBeforeModelUpdate = () => {
+					if (activeExpressionParamsRef.current.length > 0 && model.internalModel?.coreModel) {
+						applyLive2dExpressionParams(
+							model.internalModel.coreModel,
+							activeExpressionParamsRef.current,
+						);
+					}
+				};
+				if (typeof model.internalModel?.on === 'function') {
+					model.internalModel.on('beforeModelUpdate', onBeforeModelUpdate);
+				}
+
+				// Sincronizar expresiones activas
+				const initialExpressions =
+					config.activeExpressions ??
+					(config.activeExpression ? [config.activeExpression] : []) ??
+					avatar2dManager.getState().live2d.activeExpressions ??
+					[];
+				syncExpressions(initialExpressions);
 				setIsLoading(false);
 			} catch (err) {
 				if (!isMounted) return;
@@ -444,6 +763,9 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 
 		return () => {
 			isMounted = false;
+			if (modelRef.current?.internalModel?.off) {
+				modelRef.current.internalModel.off('beforeModelUpdate');
+			}
 		};
 	}, [pkg]);
 
@@ -505,6 +827,14 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				currentFocusRef.current = nextFocus;
 
 				applyLive2dFocusPoint(model, nextFocus);
+
+				// 3. Modulación gestual de expresión activa directamente en el coreModel
+				if (activeExpressionParamsRef.current.length > 0 && model.internalModel?.coreModel) {
+					applyLive2dExpressionParams(
+						model.internalModel.coreModel,
+						activeExpressionParamsRef.current,
+					);
+				}
 			}
 			frameId = requestAnimationFrame(animateFrame);
 		};

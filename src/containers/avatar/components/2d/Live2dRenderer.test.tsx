@@ -1,9 +1,14 @@
 import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+	applyLive2dExpression,
+	applyLive2dExpressionParams,
 	applyLive2dFocusPoint,
 	applyLive2dMouthParams,
 	calculateLive2dFocusPoint,
+	findExpressionUrlInFileMap,
+	parseLive2dExpressionParams,
+	resetLive2dExpressionParams,
 	stepLive2dFocusDecay,
 } from './Live2dRenderer';
 
@@ -100,5 +105,101 @@ describe('Live2dRenderer phonetic mouth parameter injection', () => {
 		expect(setParamSpy).toHaveBeenCalledWith('ParamEyeBallY', -0.4);
 		expect(setParamSpy).toHaveBeenCalledWith('ParamAngleX', 24);
 		expect(setParamSpy).toHaveBeenCalledWith('ParamAngleY', -12);
+	});
+
+	it('applies active Live2D expression directly to the rendered model instance', () => {
+		const expressionSpy = vi.fn();
+		const resetExpressionSpy = vi.fn();
+		const mockModel = {
+			expression: expressionSpy,
+			internalModel: {
+				motionManager: {
+					expressionManager: {
+						resetExpression: resetExpressionSpy,
+					},
+				},
+			},
+		};
+
+		// 1. Activar una expresión
+		applyLive2dExpression(mockModel, 'Blush');
+		expect(expressionSpy).toHaveBeenCalledWith('Blush');
+
+		// 2. Desactivar / resetear expresión al neutral
+		applyLive2dExpression(mockModel, null);
+		expect(resetExpressionSpy).toHaveBeenCalledTimes(1);
+	});
+
+	it('injects expression parameters directly into core model via applyLive2dExpressionParams', () => {
+		const addParamSpy = vi.fn();
+		const setParamSpy = vi.fn();
+		const mockCore = {
+			addParameterValueById: addParamSpy,
+			setParameterValueById: setParamSpy,
+		};
+
+		const params = [
+			{ Id: 'Blush', Value: 1.0, Blend: 'Add' },
+			{ Id: 'FangedSmile', Value: 1.0, Blend: 'Overwrite' },
+		];
+
+		applyLive2dExpressionParams(mockCore, params);
+
+		expect(addParamSpy).toHaveBeenCalledWith('Blush', 1.0);
+		expect(setParamSpy).toHaveBeenCalledWith('FangedSmile', 1.0);
+	});
+
+	it('finds expression blob url in fileMap by matching basename, filename, or id', () => {
+		const fileMap = {
+			'RetrynowMiku/VTS Model File/Blush.exp3.json': 'blob:http://localhost/blush-full',
+			'Blush.exp3.json': 'blob:http://localhost/blush',
+			'Dead Eyes.exp3.json': 'blob:http://localhost/dead-eyes',
+		};
+
+		expect(findExpressionUrlInFileMap(fileMap, 'Blush')).toBe('blob:http://localhost/blush');
+		expect(findExpressionUrlInFileMap(fileMap, 'Dead Eyes')).toBe(
+			'blob:http://localhost/dead-eyes',
+		);
+		expect(findExpressionUrlInFileMap(fileMap, 'Unknown')).toBeNull();
+	});
+
+	it('resets expression parameters to default or zero values when deactivated via resetLive2dExpressionParams', () => {
+		const setParamSpy = vi.fn();
+		const getParamIndexSpy = vi.fn((id: string) => (id === 'ParamCheek' ? 2 : -1));
+		const getParamDefaultSpy = vi.fn((idx: number) => (idx === 2 ? 0.0 : 0.0));
+
+		const mockCore = {
+			setParameterValueById: setParamSpy,
+			getParameterIndex: getParamIndexSpy,
+			getParameterDefaultValue: getParamDefaultSpy,
+		};
+
+		const params = [
+			{ Id: 'ParamCheek', Value: 1.0, Blend: 'Add' },
+			{ Id: 'ParamCustom', Value: 0.8, Blend: 'Overwrite' },
+		];
+
+		resetLive2dExpressionParams(mockCore, params);
+
+		expect(setParamSpy).toHaveBeenCalledWith('ParamCheek', 0.0);
+		expect(setParamSpy).toHaveBeenCalledWith('ParamCustom', 0.0);
+	});
+
+	it('parses expression parameters from both Cubism 4 (Parameters) and Cubism 2/3 (params) formats', () => {
+		const cubism4Data = {
+			Type: 'Live2D Expression',
+			Parameters: [{ Id: 'ParamCheek', Value: 1.0, Blend: 'Add' }],
+		};
+		const cubism2Data = {
+			type: 'Live2D Expression',
+			params: [{ id: 'PARAM_CHEEK', val: 0.8, calc: 'add' }],
+		};
+
+		expect(parseLive2dExpressionParams(cubism4Data)).toEqual([
+			{ Id: 'ParamCheek', Value: 1.0, Blend: 'Add' },
+		]);
+		expect(parseLive2dExpressionParams(cubism2Data)).toEqual([
+			{ Id: 'PARAM_CHEEK', Value: 0.8, Blend: 'Add' },
+		]);
 	});
 });

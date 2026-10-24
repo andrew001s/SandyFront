@@ -45,6 +45,8 @@ export const DEFAULT_AVATAR2D_STATE: Avatar2dState = {
 		eyeTracking: true,
 		autoBlink: true,
 		breath: true,
+		activeExpression: null,
+		activeExpressions: [],
 	},
 };
 
@@ -78,6 +80,9 @@ export class Avatar2dManager {
 						live2d: {
 							...DEFAULT_AVATAR2D_STATE.live2d,
 							...parsed.live2d,
+							activeExpressions:
+								parsed.live2d?.activeExpressions ??
+								(parsed.live2d?.activeExpression ? [parsed.live2d.activeExpression] : []),
 						},
 					};
 				}
@@ -443,6 +448,60 @@ export class Avatar2dManager {
 		}
 	}
 
+	public toggleLive2dExpression(expression: string, broadcast = true): void {
+		const currentList = this.state.live2d.activeExpressions || [];
+		const isCurrentlyActive = currentList.includes(expression);
+		const nextList = isCurrentlyActive
+			? currentList.filter((id) => id !== expression)
+			: [...currentList, expression];
+		const nextActive = nextList.length > 0 ? nextList[nextList.length - 1] : null;
+
+		this.state = {
+			...this.state,
+			live2d: {
+				...this.state.live2d,
+				activeExpression: nextActive,
+				activeExpressions: nextList,
+			},
+		};
+		this.save();
+		this.notify();
+		if (broadcast) {
+			this.broadcastChannel?.postMessage({
+				type: 'live2dExpression',
+				expression: nextActive,
+				expressions: nextList,
+			});
+		}
+	}
+
+	public setLive2dExpression(expression: string | null, broadcast = true): void {
+		const nextExpressions = expression ? [expression] : [];
+		if (
+			this.state.live2d.activeExpression === expression &&
+			JSON.stringify(this.state.live2d.activeExpressions || []) === JSON.stringify(nextExpressions)
+		) {
+			return;
+		}
+		this.state = {
+			...this.state,
+			live2d: {
+				...this.state.live2d,
+				activeExpression: expression,
+				activeExpressions: nextExpressions,
+			},
+		};
+		this.save();
+		this.notify();
+		if (broadcast) {
+			this.broadcastChannel?.postMessage({
+				type: 'live2dExpression',
+				expression,
+				expressions: nextExpressions,
+			});
+		}
+	}
+
 	public updateSprite(key: PngTuberSpriteKey, dataUrl: string): void {
 		const nextSprites = {
 			...this.state.pngtuber.sprites,
@@ -591,6 +650,19 @@ export class Avatar2dManager {
 				};
 				this.notify();
 				break;
+			case 'live2dExpression': {
+				const nextExpressions = msg.expressions ?? (msg.expression ? [msg.expression] : []);
+				this.state = {
+					...this.state,
+					live2d: {
+						...this.state.live2d,
+						activeExpression: msg.expression,
+						activeExpressions: nextExpressions,
+					},
+				};
+				this.notify();
+				break;
+			}
 			case 'fullState':
 				this.state = msg.state;
 				this.save();

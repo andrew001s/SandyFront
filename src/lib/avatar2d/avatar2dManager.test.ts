@@ -18,6 +18,42 @@ describe('avatar2dManager eyeTracking management', () => {
 	});
 });
 
+describe('avatar2dManager Live2D expressions', () => {
+	it('persists and synchronizes active Live2D expression in avatar2dManager', () => {
+		avatar2dManager.setLive2dExpression('smile', false);
+		expect(avatar2dManager.getState().live2d.activeExpression).toBe('smile');
+
+		avatar2dManager.setLive2dExpression(null, false);
+		expect(avatar2dManager.getState().live2d.activeExpression).toBe(null);
+	});
+
+	it('toggles Live2D expression on and off in activeExpressions and activeExpression', () => {
+		avatar2dManager.setLive2dExpression(null, false);
+		expect(avatar2dManager.getState().live2d.activeExpressions).toEqual([]);
+		expect(avatar2dManager.getState().live2d.activeExpression).toBe(null);
+
+		// Toggle 'blush' ON
+		avatar2dManager.toggleLive2dExpression('blush', false);
+		expect(avatar2dManager.getState().live2d.activeExpressions).toEqual(['blush']);
+		expect(avatar2dManager.getState().live2d.activeExpression).toBe('blush');
+
+		// Toggle 'smile' ON (both active)
+		avatar2dManager.toggleLive2dExpression('smile', false);
+		expect(avatar2dManager.getState().live2d.activeExpressions).toEqual(['blush', 'smile']);
+		expect(avatar2dManager.getState().live2d.activeExpression).toBe('smile');
+
+		// Toggle 'blush' OFF
+		avatar2dManager.toggleLive2dExpression('blush', false);
+		expect(avatar2dManager.getState().live2d.activeExpressions).toEqual(['smile']);
+		expect(avatar2dManager.getState().live2d.activeExpression).toBe('smile');
+
+		// Toggle 'smile' OFF
+		avatar2dManager.toggleLive2dExpression('smile', false);
+		expect(avatar2dManager.getState().live2d.activeExpressions).toEqual([]);
+		expect(avatar2dManager.getState().live2d.activeExpression).toBe(null);
+	});
+});
+
 describe('avatar2dManager custom emotions', () => {
 	it('adds and persists custom expression in avatar2dManager', () => {
 		const created = avatar2dManager.addCustomEmotion(
