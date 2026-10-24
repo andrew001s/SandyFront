@@ -29,6 +29,8 @@ import {
 	Check,
 	Copy,
 	ExternalLink,
+	Maximize2,
+	Minimize2,
 	RefreshCw,
 	Sparkles,
 	Trash2,
@@ -298,10 +300,10 @@ export function VrmCanvas({ className = '' }: Props) {
 	return (
 		<Card
 			ref={containerRef}
-			className={`relative flex w-full flex-col overflow-hidden bg-card shadow-2xl transition-all duration-300 ${
+			className={`relative flex w-full flex-col overflow-hidden bg-card shadow-2xl ${
 				isFullscreen
 					? 'fixed inset-0 z-50 h-screen w-screen rounded-none border-0'
-					: 'rounded-2xl border border-border/80'
+					: 'rounded-2xl border border-border/80 transition-shadow duration-300'
 			} ${className}`}
 			onDragOver={(e) => {
 				e.preventDefault();
@@ -310,11 +312,13 @@ export function VrmCanvas({ className = '' }: Props) {
 			onDragLeave={() => setIsDragging(false)}
 			onDrop={handleDrop}
 		>
-			{/* Encabezado HUD superior (Estilo VTuber Studio / VNyan) */}
+			{/* Encabezado HUD superior (Flotante en fullscreen para no redimensionar el canvas) */}
 			{isHudVisible && (
 				<CardHeader
-					className={`z-20 border-border/60 border-b px-4 py-2.5 backdrop-blur-md sm:px-5 ${
-						isFullscreen ? 'absolute inset-x-0 top-0 bg-card/85 shadow-md' : 'relative bg-card/85'
+					className={`z-20 backdrop-blur-xl transition-all ${
+						isFullscreen
+							? 'pointer-events-auto absolute top-3 right-20 left-4 rounded-2xl border border-border/80 bg-background/85 px-4 py-2 shadow-2xl'
+							: 'relative shrink-0 border-border/60 border-b bg-card/85 px-4 py-2.5 sm:px-5'
 					}`}
 				>
 					<div className='flex flex-wrap items-center justify-between gap-3'>
@@ -414,6 +418,17 @@ export function VrmCanvas({ className = '' }: Props) {
 									<Trash2 className='size-3.5' />
 								</Button>
 							)}
+
+							{/* Botón Pantalla Completa */}
+							<Button
+								variant='ghost'
+								size='icon'
+								onClick={handleToggleFullscreen}
+								className='size-8 text-muted-foreground hover:text-foreground'
+								title={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
+							>
+								{isFullscreen ? <Minimize2 className='size-4' /> : <Maximize2 className='size-4' />}
+							</Button>
 						</div>
 					</div>
 				</CardHeader>
@@ -421,12 +436,14 @@ export function VrmCanvas({ className = '' }: Props) {
 
 			{/* Escenario 3D Interactivo con Dock y Paneles Flotantes (VTube Studio / VNyan Style) */}
 			<CardContent
-				className={`relative flex flex-col p-0 ${isFullscreen ? 'h-full min-h-0 flex-1' : ''}`}
+				className={`relative flex flex-col p-0 ${
+					isFullscreen ? 'absolute inset-0 h-full w-full' : ''
+				}`}
 			>
 				<div
 					ref={viewportRef}
 					className={`relative w-full min-w-0 overflow-hidden ${
-						isFullscreen ? 'h-full min-h-0 flex-1' : 'h-[560px] md:h-[620px] lg:h-[660px]'
+						isFullscreen ? 'h-full flex-1' : 'h-[560px] md:h-[620px] lg:h-[660px]'
 					}`}
 				>
 					{/* Capa de Fondo (Presets / Color / Imagen) */}

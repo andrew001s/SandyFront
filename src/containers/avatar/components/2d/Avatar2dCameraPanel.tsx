@@ -13,18 +13,21 @@ export type Avatar2dCameraPreset = 'fit' | 'bust' | 'face';
 export function getAvatar2dCameraPresetTransform(
 	preset: Avatar2dCameraPreset,
 	mode: Avatar2dMode,
-	containerHeight = 600,
+	_containerHeight = 600,
 ): Avatar2dTransform {
 	if (preset === 'fit') {
 		return { x: 0, y: 0, scale: 1, rotation: 0 };
 	}
+
+	// Altura base canónica de 600px para normalizar transformaciones independientemente de la resolución
+	const BASE_HEIGHT = 600;
 
 	if (mode === 'live2d') {
 		if (preset === 'bust') {
 			// Busto / Webcam Streaming: cabeza cómodamente visible con margen superior (~9%), torso centrado
 			return {
 				x: 0,
-				y: Math.round(containerHeight * 0.3),
+				y: Math.round(BASE_HEIGHT * 0.3),
 				scale: 1.6,
 				rotation: 0,
 			};
@@ -32,7 +35,7 @@ export function getAvatar2dCameraPresetTransform(
 		// Rostro / Primer Plano: encuadre de cara y ojos centrado en tercio superior sin cortes
 		return {
 			x: 0,
-			y: Math.round(containerHeight * 0.6),
+			y: Math.round(BASE_HEIGHT * 0.6),
 			scale: 2.3,
 			rotation: 0,
 		};
@@ -42,14 +45,14 @@ export function getAvatar2dCameraPresetTransform(
 	if (preset === 'bust') {
 		return {
 			x: 0,
-			y: Math.round(containerHeight * 0.16),
+			y: Math.round(BASE_HEIGHT * 0.16),
 			scale: 1.4,
 			rotation: 0,
 		};
 	}
 	return {
 		x: 0,
-		y: Math.round(containerHeight * 0.32),
+		y: Math.round(BASE_HEIGHT * 0.32),
 		scale: 1.9,
 		rotation: 0,
 	};

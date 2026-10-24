@@ -117,7 +117,12 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 			const availW = Math.max(80, screenW - marginX * 2);
 			const availH = Math.max(80, screenH - marginY * 2);
 
-			const baseFitScale = Math.min(availW / bounds.width, availH / bounds.height);
+			// En encuadres de estudio y VTuber (busto, rostro, cuerpo completo), la escala base
+			// se adapta proporcionalmente a la altura vertical de la pantalla para garantizar
+			// consistencia matemática del 100% entre vista normal y pantalla completa.
+			const fitByHeight = availH / bounds.height;
+			const baseFitScale =
+				screenW < 400 ? Math.min(availW / bounds.width, fitByHeight) : fitByHeight;
 			const effectiveScale = Math.max(0.0001, baseFitScale * curScale);
 
 			model.scale.set(effectiveScale);
@@ -130,9 +135,15 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 			const modelCenterX = bounds.x + bounds.width / 2;
 			const modelCenterY = bounds.y + bounds.height / 2;
 
-			// Posicionar el modelo para que el centro visual coincida exactamente con el centro del viewport + desplazamiento del usuario
-			model.x = screenCenterX + curX - modelCenterX * effectiveScale;
-			model.y = screenCenterY + curY - modelCenterY * effectiveScale;
+			// Proporción de escala relativa a la altura base (600px) para mantener encuadre y escala 100% consistentes
+			const BASE_CANVAS_HEIGHT = 600;
+			const heightRatio = screenH / BASE_CANVAS_HEIGHT;
+			const scaledX = curX * heightRatio;
+			const scaledY = curY * heightRatio;
+
+			// Posicionar el modelo para que el centro visual coincida exactamente con el centro del viewport + desplazamiento escalado
+			model.x = screenCenterX + scaledX - modelCenterX * effectiveScale;
+			model.y = screenCenterY + scaledY - modelCenterY * effectiveScale;
 		},
 		[],
 	);
@@ -365,12 +376,13 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 	};
 
 	const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-		// 1. Manejo de arrastre (pan)
+		// 1. Manejo de arrastre (pan) con escala de delta normalizada
 		if (isDraggingRef.current) {
 			const dx = e.clientX - dragStartRef.current.startX;
 			const dy = e.clientY - dragStartRef.current.startY;
-			const nextX = dragStartRef.current.initialX + dx;
-			const nextY = dragStartRef.current.initialY + dy;
+			const heightRatio = Math.max(0.2, (appRef.current?.screen?.height || 600) / 600);
+			const nextX = dragStartRef.current.initialX + dx / heightRatio;
+			const nextY = dragStartRef.current.initialY + dy / heightRatio;
 
 			dragPositionRef.current = { x: nextX, y: nextY };
 			applyModelTransform(nextX, nextY, scaleRef.current);

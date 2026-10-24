@@ -176,7 +176,7 @@ export function PngTuberRenderer({ config, onTransformChange, interactive = true
 						unoptimized
 						priority
 						draggable={false}
-						className='pointer-events-none max-h-[min(75vh,560px)] max-w-[min(90vw,500px)] select-none object-contain drop-shadow-2xl'
+						className='pointer-events-none max-h-[min(82vh,780px)] max-w-[min(90vw,720px)] select-none object-contain drop-shadow-2xl'
 					/>
 				</motion.div>
 			</motion.div>
