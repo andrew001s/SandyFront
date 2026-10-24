@@ -269,6 +269,54 @@ export class Avatar2dManager {
 		return newEmotion;
 	}
 
+	public updateCustomEmotion(
+		id: string,
+		updates: Partial<Omit<PngTuberEmotion, 'id'>>,
+	): PngTuberEmotion | null {
+		const target = this.state.pngtuber.emotions.find((e) => e.id === id);
+		if (!target) return null;
+
+		const updatedEmotion: PngTuberEmotion = {
+			...target,
+			...updates,
+			id: target.id,
+			label: updates.label !== undefined ? updates.label.trim() : target.label,
+		};
+
+		const nextEmotions = this.state.pngtuber.emotions.map((e) =>
+			e.id === id ? updatedEmotion : e,
+		);
+
+		this.state = {
+			...this.state,
+			pngtuber: {
+				...this.state.pngtuber,
+				emotions: nextEmotions,
+			},
+		};
+
+		this.save();
+		this.notify();
+
+		try {
+			this.broadcastChannel?.postMessage({
+				type: 'emotions',
+				emotions: nextEmotions,
+			});
+		} catch {
+			// Ignorar error si broadcast falla
+		}
+
+		return updatedEmotion;
+	}
+
+	public updateEmotion(
+		id: string,
+		updates: Partial<Omit<PngTuberEmotion, 'id'>>,
+	): PngTuberEmotion | null {
+		return this.updateCustomEmotion(id, updates);
+	}
+
 	public setTransform(transform: Avatar2dTransform, target: Avatar2dMode, broadcast = true): void {
 		if (target === 'pngtuber') {
 			this.state = {

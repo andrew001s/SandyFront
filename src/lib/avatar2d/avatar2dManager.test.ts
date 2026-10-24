@@ -42,4 +42,31 @@ describe('avatar2dManager custom emotions', () => {
 			true,
 		);
 	});
+
+	it('updates existing custom expression label and image in avatar2dManager and persists state', () => {
+		const created = avatar2dManager.addCustomEmotion(
+			'Sonriente',
+			'data:image/png;base64,original_idle',
+		);
+
+		const updated = avatar2dManager.updateCustomEmotion(created.id, {
+			label: 'Sonriente Editado',
+			idle: 'data:image/png;base64,new_idle',
+			speaking: 'data:image/png;base64,new_speaking',
+		});
+
+		expect(updated).toBeDefined();
+		expect(updated?.label).toBe('Sonriente Editado');
+		expect(updated?.idle).toBe('data:image/png;base64,new_idle');
+		expect(updated?.speaking).toBe('data:image/png;base64,new_speaking');
+
+		const stored = avatar2dManager.getState().pngtuber.emotions.find((e) => e.id === created.id);
+		expect(stored?.label).toBe('Sonriente Editado');
+		expect(stored?.idle).toBe('data:image/png;base64,new_idle');
+
+		const saved = JSON.parse(window.localStorage.getItem('sandy_avatar2d_state') || '{}');
+		const savedEmotion = saved.pngtuber?.emotions?.find((e: { id: string }) => e.id === created.id);
+		expect(savedEmotion?.label).toBe('Sonriente Editado');
+		expect(savedEmotion?.idle).toBe('data:image/png;base64,new_idle');
+	});
 });

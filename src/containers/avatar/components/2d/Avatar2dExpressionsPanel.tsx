@@ -2,9 +2,9 @@
 
 import { Button } from '@/components/ui/button';
 import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
-import type { Avatar2dState } from '@/lib/avatar2d/types';
+import type { Avatar2dState, PngTuberEmotion } from '@/lib/avatar2d/types';
 import { motion } from 'framer-motion';
-import { Mic, Plus, RotateCcw, Smile, Upload, Volume2, X } from 'lucide-react';
+import { Mic, Pencil, Plus, RotateCcw, Smile, Upload, Volume2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -16,6 +16,7 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 	const [state, setState] = useState<Avatar2dState>(avatar2dManager.getState());
 	const [isSpeaking, setIsSpeaking] = useState(avatar2dManager.getIsSpeaking());
 	const [isCreating, setIsCreating] = useState(false);
+	const [editingEmotion, setEditingEmotion] = useState<PngTuberEmotion | null>(null);
 	const [newLabel, setNewLabel] = useState('');
 	const [newImage, setNewImage] = useState<string | null>(null);
 	const [newSpeakingImage, setNewSpeakingImage] = useState<string | null>(null);
@@ -110,6 +111,53 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 		setIsCreating(false);
 	};
 
+	const handleStartEdit = (em: PngTuberEmotion) => {
+		setIsCreating(false);
+		setEditingEmotion(em);
+		setNewLabel(em.label);
+		setNewImage(em.idle);
+		setNewSpeakingImage(em.speaking || null);
+		setNewBlinkImage(em.blink || null);
+		setErrorMessage(null);
+	};
+
+	const handleCancelEdit = () => {
+		setEditingEmotion(null);
+		setNewLabel('');
+		setNewImage(null);
+		setNewSpeakingImage(null);
+		setNewBlinkImage(null);
+		setErrorMessage(null);
+	};
+
+	const handleSaveEdit = () => {
+		if (!editingEmotion) return;
+		if (!newLabel.trim()) {
+			setErrorMessage('El nombre es obligatorio');
+			return;
+		}
+		if (!newImage) {
+			setErrorMessage('Selecciona una imagen para la expresión');
+			return;
+		}
+
+		try {
+			const updated = avatar2dManager.updateCustomEmotion(editingEmotion.id, {
+				label: newLabel.trim(),
+				idle: newImage,
+				speaking: newSpeakingImage || undefined,
+				blink: newBlinkImage || undefined,
+			});
+			if (updated) {
+				toast.success(`Expresión "${updated.label}" actualizada`);
+			}
+			handleCancelEdit();
+		} catch (err) {
+			console.error('Error al actualizar expresión:', err);
+			setErrorMessage('No se pudo actualizar la expresión.');
+		}
+	};
+
 	return (
 		<motion.div
 			initial={{ opacity: 0, scale: 0.96, x: 20 }}
@@ -162,23 +210,31 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 					</Button>
 				</div>
 
-				{/* Grilla de Emociones y Formulario de Nueva Expresión */}
+				{/* Grilla de Emociones y Formulario de Nueva/Editar Expresión */}
 				<div className='space-y-1.5'>
 					<div className='flex items-center justify-between'>
 						<span className='font-medium text-[11px] text-muted-foreground'>Estados de ánimo</span>
 						<Button
 							variant='ghost'
 							size='sm'
-							onClick={() => setIsCreating(!isCreating)}
+							onClick={() => {
+								setEditingEmotion(null);
+								setIsCreating(!isCreating);
+							}}
 							className='h-6 px-1.5 text-[11px] text-primary hover:text-primary/80'
 						>
 							<Plus className='mr-1 size-3' /> Nueva expresión
 						</Button>
 					</div>
 
-					{/* Formulario de creación */}
-					{isCreating && (
+					{/* Formulario de creación o edición */}
+					{(isCreating || editingEmotion) && (
 						<div className='space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-2.5'>
+							<div className='flex items-center justify-between'>
+								<span className='font-medium text-[11px] text-primary'>
+									{editingEmotion ? `Editar "${editingEmotion.label}"` : 'Nueva expresión'}
+								</span>
+							</div>
 							<input
 								type='text'
 								placeholder='Nombre de la expresión'
@@ -302,7 +358,7 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 									type='button'
 									variant='ghost'
 									size='sm'
-									onClick={handleCancelCreate}
+									onClick={editingEmotion ? handleCancelEdit : handleCancelCreate}
 									className='h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground'
 								>
 									Cancelar
@@ -310,10 +366,10 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 								<Button
 									type='button'
 									size='sm'
-									onClick={handleCreateExpression}
+									onClick={editingEmotion ? handleSaveEdit : handleCreateExpression}
 									className='h-6 px-2 text-[10px]'
 								>
-									Guardar expresión
+									{editingEmotion ? 'Guardar cambios' : 'Guardar expresión'}
 								</Button>
 							</div>
 						</div>
@@ -323,17 +379,19 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 						{emotions.map((em) => {
 							const isSelected = activeEmotion === em.id;
 							return (
-								<button
+								<div
 									key={em.id}
-									type='button'
-									onClick={() => handleSelectEmotion(em.id)}
 									className={`flex items-center justify-between gap-1.5 rounded-xl border px-2.5 py-2 text-left text-xs transition-all ${
 										isSelected
 											? 'border-primary bg-primary/10 font-semibold text-primary shadow-xs ring-1 ring-primary/30'
 											: 'border-border/60 bg-card/60 text-muted-foreground hover:border-border hover:bg-muted/40 hover:text-foreground'
 									}`}
 								>
-									<div className='flex min-w-0 items-center gap-1.5'>
+									<button
+										type='button'
+										onClick={() => handleSelectEmotion(em.id)}
+										className='flex min-w-0 flex-1 items-center gap-1.5 text-left focus:outline-none'
+									>
 										{em.idle && (
 											<div className='relative size-4.5 shrink-0 overflow-hidden rounded bg-black/20'>
 												{/* biome-ignore lint/nursery/noImgElement: Data URL thumbnail */}
@@ -345,9 +403,23 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 											</div>
 										)}
 										<span className='truncate'>{em.label}</span>
+									</button>
+									<div className='flex shrink-0 items-center gap-1'>
+										<button
+											type='button'
+											onClick={(e) => {
+												e.stopPropagation();
+												handleStartEdit(em);
+											}}
+											aria-label={`Editar ${em.label}`}
+											title={`Editar ${em.label}`}
+											className='rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none'
+										>
+											<Pencil className='size-3' />
+										</button>
+										{isSelected && <span className='size-1.5 shrink-0 rounded-full bg-primary' />}
 									</div>
-									{isSelected && <span className='size-1.5 shrink-0 rounded-full bg-primary' />}
-								</button>
+								</div>
 							);
 						})}
 					</div>

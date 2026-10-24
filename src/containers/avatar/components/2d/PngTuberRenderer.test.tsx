@@ -166,4 +166,27 @@ describe('PngTuberRenderer', () => {
 		rerender(<PngTuberRenderer config={avatar2dManager.getState().pngtuber} />);
 		expect(img.src).not.toContain('custom_pensativo_idle');
 	});
+
+	it('immediately updates visible avatar sprite when the active custom expression image is edited', () => {
+		const created = avatar2dManager.addCustomEmotion(
+			'Divertido Original',
+			'data:image/png;base64,divertido_v1_idle',
+		);
+		avatar2dManager.setEmotion(created.id);
+
+		const { rerender } = render(<PngTuberRenderer config={avatar2dManager.getState().pngtuber} />);
+		const img = screen.getByAltText('Avatar 2D PNGTuber') as HTMLImageElement;
+		expect(img.src).toContain('divertido_v1_idle');
+
+		// Edit the custom emotion's idle sprite
+		act(() => {
+			avatar2dManager.updateCustomEmotion(created.id, {
+				idle: 'data:image/png;base64,divertido_v2_updated_idle',
+			});
+		});
+
+		rerender(<PngTuberRenderer config={avatar2dManager.getState().pngtuber} />);
+		expect(img.src).toContain('divertido_v2_updated_idle');
+		expect(img.src).not.toContain('divertido_v1_idle');
+	});
 });
