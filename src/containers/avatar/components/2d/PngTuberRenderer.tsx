@@ -99,11 +99,7 @@ export function PngTuberRenderer({ config, onTransformChange, interactive = true
 
 	if (isSpeaking) {
 		if (isBlinking) {
-			activeSprite =
-				currentEmotionObj?.blink ||
-				sprites.speakingBlink ||
-				currentEmotionObj?.speaking ||
-				sprites.speaking;
+			activeSprite = sprites.speakingBlink || currentEmotionObj?.speaking || sprites.speaking;
 		} else {
 			activeSprite = currentEmotionObj?.speaking || sprites.speaking;
 		}

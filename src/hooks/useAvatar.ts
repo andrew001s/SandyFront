@@ -11,6 +11,7 @@ import {
 import { vnyanClient } from '@/lib/avatar/vnyanClient';
 import { createVrmLipSyncHandler } from '@/lib/avatar/vrmLipSync';
 import { vrmManager } from '@/lib/avatar/vrmManager';
+import { createAvatar2dLipSyncHandler } from '@/lib/avatar2d/avatar2dLipSync';
 import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
 import type { AvatarBackendPayload } from '@/lib/vtsAvatarPayload';
 import { createVtsLipSyncHandler, stopVtsLipSync } from '@/lib/vtsLipSync';
@@ -310,6 +311,10 @@ export function useAvatar() {
 			await vtsInjectParameters(params);
 		});
 
+		const avatar2dHandler = createAvatar2dLipSyncHandler((isSpeaking) => {
+			avatar2dManager.setSpeaking(isSpeaking);
+		});
+
 		AudioQueueManager.getInstance().setLipSyncHandler({
 			prepare: async (blob) => {
 				if (
@@ -318,6 +323,8 @@ export function useAvatar() {
 					activeSoftware === 'vseeface'
 				) {
 					await vrmHandler.prepare(blob);
+				} else if (activeSoftware === 'pngtuber' || activeSoftware === 'live2d') {
+					await avatar2dHandler.prepare(blob);
 				}
 			},
 			start: async (blob, clock) => {
@@ -330,6 +337,8 @@ export function useAvatar() {
 					await vrmHandler.start(blob, clock);
 				} else if (activeSoftware === 'vtubestudio' && vtsConnected) {
 					await vtsHandler(blob, clock);
+				} else if (activeSoftware === 'pngtuber' || activeSoftware === 'live2d') {
+					await avatar2dHandler.start(blob, clock);
 				}
 			},
 			stop: () => {
@@ -339,8 +348,10 @@ export function useAvatar() {
 					activeSoftware === 'vseeface'
 				) {
 					vrmHandler.stop();
-				} else {
+				} else if (activeSoftware === 'vtubestudio') {
 					stopVtsLipSync();
+				} else if (activeSoftware === 'pngtuber' || activeSoftware === 'live2d') {
+					avatar2dHandler.stop();
 				}
 			},
 		});
@@ -348,6 +359,7 @@ export function useAvatar() {
 		return () => {
 			vrmHandler.stop();
 			stopVtsLipSync();
+			avatar2dHandler.stop();
 		};
 	}, [activeSoftware, vnyanState.connected, vtsConnected, vtsInjectParameters]);
 
