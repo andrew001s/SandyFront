@@ -7,6 +7,7 @@ import type {
 	Avatar2dState,
 	Avatar2dSyncMessage,
 	Avatar2dTransform,
+	PngTuberEmotion,
 	PngTuberPhysics,
 	PngTuberSpriteKey,
 } from '@/lib/avatar2d/types';
@@ -229,6 +230,30 @@ export class Avatar2dManager {
 		this.broadcastChannel?.postMessage({ type: 'emotion', emotion });
 	}
 
+	public addCustomEmotion(label: string, idleImage: string): PngTuberEmotion {
+		const id = `custom_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+		const newEmotion: PngTuberEmotion = {
+			id,
+			label: label.trim(),
+			idle: idleImage,
+		};
+		const nextEmotions = [...this.state.pngtuber.emotions, newEmotion];
+		this.state = {
+			...this.state,
+			pngtuber: {
+				...this.state.pngtuber,
+				emotions: nextEmotions,
+			},
+		};
+		this.save();
+		this.notify();
+		this.broadcastChannel?.postMessage({
+			type: 'emotions',
+			emotions: nextEmotions,
+		});
+		return newEmotion;
+	}
+
 	public setTransform(transform: Avatar2dTransform, target: Avatar2dMode, broadcast = true): void {
 		if (target === 'pngtuber') {
 			this.state = {
@@ -381,6 +406,16 @@ export class Avatar2dManager {
 					pngtuber: {
 						...this.state.pngtuber,
 						activeEmotion: msg.emotion,
+					},
+				};
+				this.notify();
+				break;
+			case 'emotions':
+				this.state = {
+					...this.state,
+					pngtuber: {
+						...this.state.pngtuber,
+						emotions: msg.emotions,
 					},
 				};
 				this.notify();

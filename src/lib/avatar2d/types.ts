@@ -59,6 +59,7 @@ export type Avatar2dActiveTool =
 export type Avatar2dSyncMessage =
 	| { type: 'speaking'; speaking: boolean }
 	| { type: 'emotion'; emotion: string }
+	| { type: 'emotions'; emotions: PngTuberEmotion[] }
 	| { type: 'mode'; mode: Avatar2dMode }
 	| { type: 'transform'; transform: Avatar2dTransform; target: Avatar2dMode }
 	| { type: 'physics'; physics: PngTuberPhysics }

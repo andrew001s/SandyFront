@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
 import type { Avatar2dState } from '@/lib/avatar2d/types';
 import { motion } from 'framer-motion';
-import { Mic, RotateCcw, Smile, Volume2, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Mic, Plus, RotateCcw, Smile, Upload, Volume2, X } from 'lucide-react';
+import Image from 'next/image';
+import { useEffect, useRef, useState } from 'react';
 
 interface Props {
 	onClose: () => void;
@@ -14,6 +15,11 @@ interface Props {
 export function Avatar2dExpressionsPanel({ onClose }: Props) {
 	const [state, setState] = useState<Avatar2dState>(avatar2dManager.getState());
 	const [isSpeaking, setIsSpeaking] = useState(avatar2dManager.getIsSpeaking());
+	const [isCreating, setIsCreating] = useState(false);
+	const [newLabel, setNewLabel] = useState('');
+	const [newImage, setNewImage] = useState<string | null>(null);
+	const [errorMessage, setErrorMessage] = useState<string | null>(null);
+	const fileInputRef = useRef<HTMLInputElement | null>(null);
 
 	useEffect(() => {
 		const unsubState = avatar2dManager.subscribe((next) => setState(next));
@@ -33,6 +39,45 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 
 	const handleToggleSpeaking = () => {
 		avatar2dManager.setSpeaking(!isSpeaking);
+	};
+
+	const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+
+		const reader = new FileReader();
+		reader.onload = (event) => {
+			const result = event.target?.result as string;
+			if (result) {
+				setNewImage(result);
+				setErrorMessage(null);
+			}
+		};
+		reader.readAsDataURL(file);
+	};
+
+	const handleCreateExpression = () => {
+		if (!newLabel.trim()) {
+			setErrorMessage('El nombre es obligatorio');
+			return;
+		}
+		if (!newImage) {
+			setErrorMessage('Selecciona una imagen para la expresión');
+			return;
+		}
+
+		avatar2dManager.addCustomEmotion(newLabel.trim(), newImage);
+		setNewLabel('');
+		setNewImage(null);
+		setErrorMessage(null);
+		setIsCreating(false);
+	};
+
+	const handleCancelCreate = () => {
+		setNewLabel('');
+		setNewImage(null);
+		setErrorMessage(null);
+		setIsCreating(false);
 	};
 
 	return (
@@ -87,9 +132,90 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 					</Button>
 				</div>
 
-				{/* Grilla de Emociones */}
+				{/* Grilla de Emociones y Formulario de Nueva Expresión */}
 				<div className='space-y-1.5'>
-					<span className='font-medium text-[11px] text-muted-foreground'>Estados de ánimo</span>
+					<div className='flex items-center justify-between'>
+						<span className='font-medium text-[11px] text-muted-foreground'>Estados de ánimo</span>
+						<Button
+							variant='ghost'
+							size='sm'
+							onClick={() => setIsCreating(!isCreating)}
+							className='h-6 px-1.5 text-[11px] text-primary hover:text-primary/80'
+						>
+							<Plus className='mr-1 size-3' /> Nueva expresión
+						</Button>
+					</div>
+
+					{/* Formulario de creación */}
+					{isCreating && (
+						<div className='space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-2.5'>
+							<input
+								type='text'
+								placeholder='Nombre de la expresión'
+								value={newLabel}
+								onChange={(e) => {
+									setNewLabel(e.target.value);
+									if (errorMessage) setErrorMessage(null);
+								}}
+								className='h-7 w-full rounded-md border border-border/80 bg-background px-2 font-normal text-foreground text-xs placeholder:text-muted-foreground focus:border-primary focus:outline-none'
+							/>
+
+							{/* Selector de imagen + preview */}
+							<input
+								ref={fileInputRef}
+								type='file'
+								accept='image/*'
+								onChange={handleFileSelect}
+								className='hidden'
+							/>
+							<div className='flex items-center gap-2'>
+								<Button
+									type='button'
+									variant='outline'
+									size='sm'
+									onClick={() => fileInputRef.current?.click()}
+									className='h-7 flex-1 gap-1.5 text-[11px]'
+								>
+									<Upload className='size-3' />
+									{newImage ? 'Cambiar imagen' : 'Subir imagen'}
+								</Button>
+								{newImage && (
+									<div className='relative size-7 overflow-hidden rounded-md border border-border bg-black/20'>
+										<Image
+											src={newImage}
+											alt='Preview'
+											fill
+											unoptimized
+											className='object-contain'
+										/>
+									</div>
+								)}
+							</div>
+
+							{errorMessage && <p className='text-[10px] text-destructive'>{errorMessage}</p>}
+
+							<div className='flex items-center justify-end gap-1.5 pt-1'>
+								<Button
+									type='button'
+									variant='ghost'
+									size='sm'
+									onClick={handleCancelCreate}
+									className='h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground'
+								>
+									Cancelar
+								</Button>
+								<Button
+									type='button'
+									size='sm'
+									onClick={handleCreateExpression}
+									className='h-6 px-2 text-[10px]'
+								>
+									Guardar expresión
+								</Button>
+							</div>
+						</div>
+					)}
+
 					<div className='grid grid-cols-2 gap-1.5'>
 						{emotions.map((em) => {
 							const isSelected = activeEmotion === em.id;
