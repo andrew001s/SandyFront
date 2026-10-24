@@ -1,10 +1,18 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from '@/components/ui/dialog';
 import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
 import type { Avatar2dState, PngTuberEmotion } from '@/lib/avatar2d/types';
 import { motion } from 'framer-motion';
-import { Mic, Pencil, Plus, RotateCcw, Smile, Upload, Volume2, X } from 'lucide-react';
+import { Mic, Pencil, Plus, RotateCcw, Smile, Trash2, Upload, Volume2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -17,6 +25,7 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 	const [isSpeaking, setIsSpeaking] = useState(avatar2dManager.getIsSpeaking());
 	const [isCreating, setIsCreating] = useState(false);
 	const [editingEmotion, setEditingEmotion] = useState<PngTuberEmotion | null>(null);
+	const [emotionToDelete, setEmotionToDelete] = useState<PngTuberEmotion | null>(null);
 	const [newLabel, setNewLabel] = useState('');
 	const [newImage, setNewImage] = useState<string | null>(null);
 	const [newSpeakingImage, setNewSpeakingImage] = useState<string | null>(null);
@@ -155,6 +164,23 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 		} catch (err) {
 			console.error('Error al actualizar expresión:', err);
 			setErrorMessage('No se pudo actualizar la expresión.');
+		}
+	};
+
+	const handleDeleteClick = (em: PngTuberEmotion) => {
+		setEmotionToDelete(em);
+	};
+
+	const handleConfirmDelete = () => {
+		if (!emotionToDelete) return;
+		const target = emotionToDelete;
+		setEmotionToDelete(null);
+		const deleted = avatar2dManager.deleteEmotion(target.id);
+		if (deleted) {
+			toast.success(`Expresión "${target.label}" eliminada`);
+			if (editingEmotion?.id === target.id) {
+				handleCancelEdit();
+			}
 		}
 	};
 
@@ -417,6 +443,18 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 										>
 											<Pencil className='size-3' />
 										</button>
+										<button
+											type='button'
+											onClick={(e) => {
+												e.stopPropagation();
+												handleDeleteClick(em);
+											}}
+											aria-label={`Eliminar ${em.label}`}
+											title={`Eliminar ${em.label}`}
+											className='rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus:outline-none'
+										>
+											<Trash2 className='size-3' />
+										</button>
 										{isSelected && <span className='size-1.5 shrink-0 rounded-full bg-primary' />}
 									</div>
 								</div>
@@ -436,6 +474,58 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 					Restablecer a Neutral
 				</Button>
 			</div>
+
+			{/* Confirmación accesible de eliminación con Dialog */}
+			<Dialog
+				open={!!emotionToDelete}
+				onOpenChange={(open) => {
+					if (!open) setEmotionToDelete(null);
+				}}
+			>
+				<DialogContent className='border-border/80 bg-background/95 p-6 shadow-2xl backdrop-blur-xl sm:max-w-md'>
+					<DialogHeader className='gap-2.5 p-0 text-left'>
+						<div className='flex items-center gap-3'>
+							<div className='flex size-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive'>
+								<Trash2 className='size-5' />
+							</div>
+							<div>
+								<DialogTitle className='font-bold text-base text-foreground sm:text-lg'>
+									¿Eliminar expresión?
+								</DialogTitle>
+								<p className='text-muted-foreground text-xs'>
+									Confirmación de eliminación definitiva
+								</p>
+							</div>
+						</div>
+						<DialogDescription className='pt-2 text-foreground/80 text-sm leading-relaxed'>
+							Esta acción no se puede deshacer. Se eliminarán permanentemente los sprites y la
+							configuración de{' '}
+							<span className='rounded border border-border/80 bg-muted/60 px-1.5 py-0.5 font-semibold text-foreground'>
+								{emotionToDelete?.label}
+							</span>
+							.
+						</DialogDescription>
+					</DialogHeader>
+					<DialogFooter className='flex gap-2.5 p-0 pt-4 sm:justify-end'>
+						<Button
+							type='button'
+							variant='outline'
+							onClick={() => setEmotionToDelete(null)}
+							className='h-9 px-4 text-sm'
+						>
+							Cancelar
+						</Button>
+						<Button
+							type='button'
+							variant='destructive'
+							onClick={handleConfirmDelete}
+							className='h-9 px-4 text-sm'
+						>
+							Eliminar expresión
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</motion.div>
 	);
 }

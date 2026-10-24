@@ -69,4 +69,28 @@ describe('avatar2dManager custom emotions', () => {
 		expect(savedEmotion?.label).toBe('Sonriente Editado');
 		expect(savedEmotion?.idle).toBe('data:image/png;base64,new_idle');
 	});
+
+	it('removes expression by ID from storage, notifies listeners, and falls back activeEmotion if deleted emotion was active', () => {
+		const created = avatar2dManager.addCustomEmotion(
+			'Temporal',
+			'data:image/png;base64,temporal_idle',
+		);
+		avatar2dManager.setEmotion(created.id);
+		expect(avatar2dManager.getState().pngtuber.activeEmotion).toBe(created.id);
+
+		// Delete the created emotion
+		const result = avatar2dManager.deleteEmotion(created.id);
+		expect(result).toBe(true);
+
+		// Should not be in emotions list anymore
+		const emotions = avatar2dManager.getState().pngtuber.emotions;
+		expect(emotions.some((e) => e.id === created.id)).toBe(false);
+
+		// Fallback should switch activeEmotion to 'neutral' (or first available emotion)
+		expect(avatar2dManager.getState().pngtuber.activeEmotion).toBe('neutral');
+
+		// LocalStorage should also be updated
+		const saved = JSON.parse(window.localStorage.getItem('sandy_avatar2d_state') || '{}');
+		expect(saved.pngtuber?.emotions?.some((e: { id: string }) => e.id === created.id)).toBe(false);
+	});
 });

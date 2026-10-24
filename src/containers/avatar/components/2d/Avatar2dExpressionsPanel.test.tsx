@@ -170,4 +170,29 @@ describe('Avatar2dExpressionsPanel custom expressions', () => {
 
 		readAsDataURLSpy.mockRestore();
 	});
+
+	it('renders delete button for expressions and prompts confirmation before deleting', () => {
+		avatar2dManager.addCustomEmotion('Expresión Para Borrar', 'data:image/png;base64,delete_idle');
+		const deleteSpy = vi.spyOn(avatar2dManager, 'deleteEmotion');
+
+		render(<Avatar2dExpressionsPanel onClose={vi.fn()} />);
+
+		// Delete button exists for the expression
+		const deleteBtn = screen.getByRole('button', { name: /eliminar expresión para borrar/i });
+		expect(deleteBtn).toBeInTheDocument();
+
+		// Click delete button
+		fireEvent.click(deleteBtn);
+
+		// Confirmation Dialog was shown
+		expect(screen.getByRole('heading', { name: /¿eliminar expresión\?/i })).toBeInTheDocument();
+		expect(screen.getByText(/se eliminarán permanentemente los sprites/i)).toBeInTheDocument();
+
+		// Cancel the deletion via the dialog's cancel button
+		const cancelBtn = screen.getByRole('button', { name: /cancelar/i });
+		fireEvent.click(cancelBtn);
+
+		// Because user cancelled, deleteEmotion was not called
+		expect(deleteSpy).not.toHaveBeenCalled();
+	});
 });

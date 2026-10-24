@@ -317,6 +317,50 @@ export class Avatar2dManager {
 		return this.updateCustomEmotion(id, updates);
 	}
 
+	public deleteEmotion(id: string): boolean {
+		const exists = this.state.pngtuber.emotions.some((e) => e.id === id);
+		if (!exists) return false;
+
+		const nextEmotions = this.state.pngtuber.emotions.filter((e) => e.id !== id);
+		let nextActiveEmotion = this.state.pngtuber.activeEmotion;
+
+		if (nextActiveEmotion === id) {
+			const hasNeutral = nextEmotions.some((e) => e.id === 'neutral');
+			nextActiveEmotion = hasNeutral ? 'neutral' : nextEmotions[0]?.id || 'neutral';
+		}
+
+		this.state = {
+			...this.state,
+			pngtuber: {
+				...this.state.pngtuber,
+				emotions: nextEmotions,
+				activeEmotion: nextActiveEmotion,
+			},
+		};
+
+		this.save();
+		this.notify();
+
+		try {
+			this.broadcastChannel?.postMessage({
+				type: 'emotions',
+				emotions: nextEmotions,
+			});
+			this.broadcastChannel?.postMessage({
+				type: 'emotion',
+				emotion: nextActiveEmotion,
+			});
+		} catch {
+			// Ignorar error de broadcast
+		}
+
+		return true;
+	}
+
+	public deleteCustomEmotion(id: string): boolean {
+		return this.deleteEmotion(id);
+	}
+
 	public setTransform(transform: Avatar2dTransform, target: Avatar2dMode, broadcast = true): void {
 		if (target === 'pngtuber') {
 			this.state = {
