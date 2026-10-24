@@ -51,9 +51,11 @@ export class Avatar2dManager {
 	private static instance: Avatar2dManager;
 	private state: Avatar2dState = DEFAULT_AVATAR2D_STATE;
 	private isSpeaking = false;
+	private mouthParams = { mouthOpenY: 0, mouthForm: 0 };
 	private broadcastChannel: BroadcastChannel | null = null;
 	private listeners = new Set<(state: Avatar2dState) => void>();
 	private speakingListeners = new Set<(isSpeaking: boolean) => void>();
+	private mouthListeners = new Set<(mouthOpenY: number, mouthForm: number) => void>();
 
 	private constructor() {
 		if (typeof window !== 'undefined') {
@@ -143,6 +145,18 @@ export class Avatar2dManager {
 		return () => this.speakingListeners.delete(listener);
 	}
 
+	public getMouthParams(): { mouthOpenY: number; mouthForm: number } {
+		return this.mouthParams;
+	}
+
+	public subscribeMouthParams(
+		listener: (mouthOpenY: number, mouthForm: number) => void,
+	): () => void {
+		this.mouthListeners.add(listener);
+		listener(this.mouthParams.mouthOpenY, this.mouthParams.mouthForm);
+		return () => this.mouthListeners.delete(listener);
+	}
+
 	private notify(): void {
 		for (const listener of this.listeners) {
 			listener(this.state);
@@ -152,6 +166,12 @@ export class Avatar2dManager {
 	private notifySpeaking(): void {
 		for (const listener of this.speakingListeners) {
 			listener(this.isSpeaking);
+		}
+	}
+
+	private notifyMouth(): void {
+		for (const listener of this.mouthListeners) {
+			listener(this.mouthParams.mouthOpenY, this.mouthParams.mouthForm);
 		}
 	}
 
@@ -171,6 +191,21 @@ export class Avatar2dManager {
 		this.notifySpeaking();
 		if (broadcast) {
 			this.broadcastChannel?.postMessage({ type: 'speaking', speaking });
+		}
+	}
+
+	public setMouthParams(mouthOpenY: number, mouthForm: number, broadcast = true): void {
+		if (this.mouthParams.mouthOpenY === mouthOpenY && this.mouthParams.mouthForm === mouthForm) {
+			return;
+		}
+		this.mouthParams = { mouthOpenY, mouthForm };
+		this.notifyMouth();
+		if (broadcast) {
+			this.broadcastChannel?.postMessage({
+				type: 'mouth',
+				mouthOpenY,
+				mouthForm,
+			});
 		}
 	}
 
@@ -380,6 +415,10 @@ export class Avatar2dManager {
 					type: 'fullState',
 					state: this.state,
 				});
+				break;
+			case 'mouth':
+				this.mouthParams = { mouthOpenY: msg.mouthOpenY, mouthForm: msg.mouthForm };
+				this.notifyMouth();
 				break;
 			case 'fullState':
 				this.state = msg.state;

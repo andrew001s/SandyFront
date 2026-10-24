@@ -64,5 +64,6 @@ export type Avatar2dSyncMessage =
 	| { type: 'physics'; physics: PngTuberPhysics }
 	| { type: 'sprites'; sprites: Record<PngTuberSpriteKey, string> }
 	| { type: 'live2dModel'; modelUrl: string | null; modelName?: string }
+	| { type: 'mouth'; mouthOpenY: number; mouthForm: number }
 	| { type: 'requestState' }
 	| { type: 'fullState'; state: Avatar2dState };

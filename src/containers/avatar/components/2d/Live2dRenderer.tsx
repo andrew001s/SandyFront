@@ -38,6 +38,25 @@ async function ensureCubismCore(): Promise<void> {
 	});
 }
 
+/**
+ * Aplica los parámetros de modulación fonética a un modelo Live2D Cubism Core.
+ * - ParamMouthOpenY: Apertura vertical continua (0.0 a 1.0)
+ * - ParamMouthForm: Curvatura y forma horizontal (-1.0 redondeada a +1.0 ensanchada/sonrisa)
+ */
+export function applyLive2dMouthParams(
+	// biome-ignore lint/suspicious/noExplicitAny: dynamic Live2D model instance
+	coreModel: any,
+	params: { mouthOpenY: number; mouthForm: number },
+): void {
+	if (!coreModel?.setParameterValueById) return;
+	try {
+		coreModel.setParameterValueById('ParamMouthOpenY', params.mouthOpenY);
+		coreModel.setParameterValueById('ParamMouthForm', params.mouthForm);
+	} catch {
+		// Ignorar si el modelo no soporta los parámetros
+	}
+}
+
 export function Live2dRenderer({ config, onTransformChange, interactive = true }: Props) {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -90,6 +109,15 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 	useEffect(() => {
 		const unsub = avatar2dManager.subscribeSpeaking((speaking) => {
 			setIsSpeaking(speaking);
+		});
+		return () => unsub();
+	}, []);
+
+	// Parámetros de modulación fonética calculados (apertura vertical y forma horizontal)
+	const mouthParamsRef = useRef(avatar2dManager.getMouthParams());
+	useEffect(() => {
+		const unsub = avatar2dManager.subscribeMouthParams((mouthOpenY, mouthForm) => {
+			mouthParamsRef.current = { mouthOpenY, mouthForm };
 		});
 		return () => unsub();
 	}, []);
@@ -339,10 +367,15 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				const core = model.internalModel.coreModel;
 				try {
 					if (isSpeaking) {
-						const mouthValue = 0.35 + Math.sin(Date.now() / 90) * 0.45;
-						core.setParameterValueById?.('ParamMouthOpenY', mouthValue);
+						const currentParams = mouthParamsRef.current;
+						if (currentParams.mouthOpenY > 0 || currentParams.mouthForm !== 0) {
+							applyLive2dMouthParams(core, currentParams);
+						} else {
+							const fallbackOpen = 0.35 + Math.sin(Date.now() / 90) * 0.45;
+							applyLive2dMouthParams(core, { mouthOpenY: fallbackOpen, mouthForm: 0 });
+						}
 					} else {
-						core.setParameterValueById?.('ParamMouthOpenY', 0);
+						applyLive2dMouthParams(core, { mouthOpenY: 0, mouthForm: 0 });
 					}
 				} catch {
 					// Parámetro no soportado en este modelo

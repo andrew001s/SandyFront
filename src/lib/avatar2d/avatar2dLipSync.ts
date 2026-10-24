@@ -252,9 +252,9 @@ export function createAvatar2dLipSyncHandler(
 	handler.prepare = prepare;
 	handler.start = start;
 	handler.stop = stop;
-	Object.defineProperty(handler, 'tick', {
-		get: () => externalTick,
-	});
+	handler.tick = () => {
+		externalTick?.();
+	};
 
 	return handler;
 }
