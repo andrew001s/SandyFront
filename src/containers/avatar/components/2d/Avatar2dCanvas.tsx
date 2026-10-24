@@ -7,6 +7,7 @@ import { Avatar2dCameraPanel } from '@/containers/avatar/components/2d/Avatar2dC
 import { Avatar2dExpressionsPanel } from '@/containers/avatar/components/2d/Avatar2dExpressionsPanel';
 import { Avatar2dLipSyncPanel } from '@/containers/avatar/components/2d/Avatar2dLipSyncPanel';
 import { Avatar2dSettingsPanel } from '@/containers/avatar/components/2d/Avatar2dSettingsPanel';
+import { Live2dExpressionsPanel } from '@/containers/avatar/components/2d/Live2dExpressionsPanel';
 import { Live2dRenderer } from '@/containers/avatar/components/2d/Live2dRenderer';
 import { PngTuberRenderer } from '@/containers/avatar/components/2d/PngTuberRenderer';
 import {
@@ -432,9 +433,15 @@ export function Avatar2dCanvas({ className = '', mode }: Props) {
 					<AnimatePresence>
 						{activeTool && isHudVisible && (
 							<>
-								{(activeTool === 'emotions' || activeTool === 'expressions') && (
-									<Avatar2dExpressionsPanel onClose={() => setActiveTool(null)} />
-								)}
+								{(activeTool === 'emotions' || activeTool === 'expressions') &&
+									(currentMode === 'live2d' ? (
+										<Live2dExpressionsPanel
+											onClose={() => setActiveTool(null)}
+											onOpenModelSelect={() => setActiveTool('model')}
+										/>
+									) : (
+										<Avatar2dExpressionsPanel onClose={() => setActiveTool(null)} />
+									))}
 
 								{activeTool === 'lipsync' && (
 									<Avatar2dLipSyncPanel onClose={() => setActiveTool(null)} />
