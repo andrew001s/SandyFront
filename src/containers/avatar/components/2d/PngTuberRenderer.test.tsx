@@ -189,4 +189,24 @@ describe('PngTuberRenderer', () => {
 		expect(img.src).toContain('divertido_v2_updated_idle');
 		expect(img.src).not.toContain('divertido_v1_idle');
 	});
+
+	it('immediately switches visible avatar sprite to fallback emotion when the active expression is deleted', () => {
+		const created = avatar2dManager.addCustomEmotion(
+			'Temporal Visible',
+			'data:image/png;base64,temporal_visible_idle',
+		);
+		avatar2dManager.setEmotion(created.id);
+
+		const { rerender } = render(<PngTuberRenderer config={avatar2dManager.getState().pngtuber} />);
+		const img = screen.getByAltText('Avatar 2D PNGTuber') as HTMLImageElement;
+		expect(img.src).toContain('temporal_visible_idle');
+
+		// Delete the active emotion
+		act(() => {
+			avatar2dManager.deleteEmotion(created.id);
+		});
+
+		rerender(<PngTuberRenderer config={avatar2dManager.getState().pngtuber} />);
+		expect(img.src).not.toContain('temporal_visible_idle');
+	});
 });

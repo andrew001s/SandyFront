@@ -195,4 +195,33 @@ describe('Avatar2dExpressionsPanel custom expressions', () => {
 		// Because user cancelled, deleteEmotion was not called
 		expect(deleteSpy).not.toHaveBeenCalled();
 	});
+
+	it('deletes expression upon confirmation, removes it from the list, and triggers fallback if active', async () => {
+		const created = avatar2dManager.addCustomEmotion(
+			'Expresión Efímera',
+			'data:image/png;base64,efimera_idle',
+		);
+		avatar2dManager.setEmotion(created.id);
+		expect(avatar2dManager.getState().pngtuber.activeEmotion).toBe(created.id);
+
+		const deleteSpy = vi.spyOn(avatar2dManager, 'deleteEmotion');
+		render(<Avatar2dExpressionsPanel onClose={vi.fn()} />);
+
+		// Click delete button for the created expression
+		const deleteBtn = screen.getByRole('button', { name: /eliminar expresión efímera/i });
+		fireEvent.click(deleteBtn);
+
+		// Confirm deletion in the Dialog
+		const confirmBtn = screen.getByRole('button', { name: /^eliminar expresión$/i });
+		fireEvent.click(confirmBtn);
+
+		// Verify avatar2dManager.deleteEmotion was called
+		expect(deleteSpy).toHaveBeenCalledWith(created.id);
+
+		// Verify expression is removed from the list
+		expect(screen.queryByRole('button', { name: /^expresión efímera/i })).not.toBeInTheDocument();
+
+		// Verify fallback activeEmotion switched
+		expect(avatar2dManager.getState().pngtuber.activeEmotion).not.toBe(created.id);
+	});
 });
