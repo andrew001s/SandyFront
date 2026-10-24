@@ -11,6 +11,7 @@ import {
 import { vnyanClient } from '@/lib/avatar/vnyanClient';
 import { createVrmLipSyncHandler } from '@/lib/avatar/vrmLipSync';
 import { vrmManager } from '@/lib/avatar/vrmManager';
+import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
 import type { AvatarBackendPayload } from '@/lib/vtsAvatarPayload';
 import { createVtsLipSyncHandler, stopVtsLipSync } from '@/lib/vtsLipSync';
 import type {
@@ -24,7 +25,22 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 export function useAvatar() {
 	const vts = useVTubeStudio();
 
-	const [activeSoftware, setActiveSoftware] = useState<AvatarSoftware>('vtubestudio');
+	const [activeSoftware, setActiveSoftware] = useState<AvatarSoftware>(() => {
+		if (typeof window === 'undefined') return 'pngtuber';
+		const stored = window.localStorage.getItem(
+			AVATAR_SOFTWARE_STORAGE_KEY,
+		) as AvatarSoftware | null;
+		if (
+			stored === 'pngtuber' ||
+			stored === 'live2d' ||
+			stored === 'vrm' ||
+			stored === 'vtubestudio'
+		) {
+			return stored;
+		}
+		if (stored === 'vseeface' || stored === 'vnyan') return 'vrm';
+		return 'pngtuber';
+	});
 	const [configs, setConfigs] = useState<AvatarSoftwareConfigs>(DEFAULT_SOFTWARE_CONFIGS);
 	const [vnyanState, setVnyanState] = useState(vnyanClient.getState());
 
@@ -42,8 +58,16 @@ export function useAvatar() {
 			if (storedSoftware === 'vseeface' || storedSoftware === 'vnyan') {
 				setActiveSoftware('vrm');
 				window.localStorage.setItem(AVATAR_SOFTWARE_STORAGE_KEY, 'vrm');
-			} else if (storedSoftware === 'vtubestudio' || storedSoftware === 'vrm') {
+			} else if (
+				storedSoftware === 'pngtuber' ||
+				storedSoftware === 'live2d' ||
+				storedSoftware === 'vtubestudio' ||
+				storedSoftware === 'vrm'
+			) {
 				setActiveSoftware(storedSoftware);
+				if (storedSoftware === 'pngtuber' || storedSoftware === 'live2d') {
+					avatar2dManager.setMode(storedSoftware);
+				}
 			}
 		}
 
@@ -77,6 +101,10 @@ export function useAvatar() {
 			setActiveSoftware(targetSoftware);
 			if (typeof window !== 'undefined') {
 				window.localStorage.setItem(AVATAR_SOFTWARE_STORAGE_KEY, targetSoftware);
+			}
+
+			if (targetSoftware === 'pngtuber' || targetSoftware === 'live2d') {
+				avatar2dManager.setMode(targetSoftware);
 			}
 
 			// Desconectar el otro software al alternar

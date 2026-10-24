@@ -91,10 +91,10 @@ export const AvatarContainer = () => {
 						onResetEmotions={resetEmotions}
 					/>
 				</div>
-			) : (
+			) : activeSoftware === 'live2d' ? (
 				<div className='w-full space-y-6'>
-					{/* Escenario 2D interactivo en Navegador (PNGTuber Reactivo + Live2D con Dock, Expresiones, Lip Sync y Fondo) */}
-					<Avatar2dCanvas className='w-full' />
+					{/* Escenario Live2D dedicado en Navegador */}
+					<Avatar2dCanvas mode='live2d' className='w-full' />
 
 					{/* Opción secundaria para streamers que usen VTube Studio Desktop por WebSocket */}
 					<div className='flex flex-col gap-3 rounded-2xl border border-border/70 bg-card/40 p-4'>
@@ -160,6 +160,11 @@ export const AvatarContainer = () => {
 							</div>
 						)}
 					</div>
+				</div>
+			) : (
+				<div className='w-full space-y-6'>
+					{/* Escenario PNGTuber dedicado en Navegador */}
+					<Avatar2dCanvas mode='pngtuber' className='w-full' />
 				</div>
 			)}
 		</div>

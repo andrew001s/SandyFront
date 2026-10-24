@@ -21,7 +21,7 @@ import {
 import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
 import { live2dStore } from '@/lib/avatar2d/live2dStore';
 import { unpackLive2dZip } from '@/lib/avatar2d/live2dZipLoader';
-import type { Avatar2dActiveTool, Avatar2dState } from '@/lib/avatar2d/types';
+import type { Avatar2dActiveTool, Avatar2dMode, Avatar2dState } from '@/lib/avatar2d/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
 	Activity,
@@ -39,6 +39,7 @@ import { toast } from 'sonner';
 
 interface Props {
 	className?: string;
+	mode?: Avatar2dMode;
 }
 
 const fileToDataUrl = (file: File): Promise<string> => {
@@ -50,7 +51,7 @@ const fileToDataUrl = (file: File): Promise<string> => {
 	});
 };
 
-export function Avatar2dCanvas({ className = '' }: Props) {
+export function Avatar2dCanvas({ className = '', mode }: Props) {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<Avatar2dState>(avatar2dManager.getState());
 	const [activeTool, setActiveTool] = useState<Avatar2dActiveTool>(null);
@@ -60,6 +61,14 @@ export function Avatar2dCanvas({ className = '' }: Props) {
 	const [copied, setCopied] = useState(false);
 	const [bgState, setBgState] = useState<VrmBackgroundState>(DEFAULT_VRM_BACKGROUND_STATE);
 	const [isDragging, setIsDragging] = useState(false);
+
+	const currentMode = mode ?? state.mode;
+
+	useEffect(() => {
+		if (mode && mode !== avatar2dManager.getState().mode) {
+			avatar2dManager.setMode(mode);
+		}
+	}, [mode]);
 
 	useEffect(() => {
 		const unsubState = avatar2dManager.subscribe((next) => setState(next));
@@ -301,10 +310,12 @@ export function Avatar2dCanvas({ className = '' }: Props) {
 							<div>
 								<div className='flex items-center gap-2'>
 									<h2 className='font-bold font-display text-foreground text-sm tracking-tight sm:text-base'>
-										Estudio 2D en Navegador
+										{currentMode === 'pngtuber'
+											? 'Estudio PNGTuber en Navegador'
+											: 'Estudio Live2D en Navegador'}
 									</h2>
 									<Badge variant='secondary' className='h-5 gap-1 px-1.5 font-mono text-[10px]'>
-										{state.mode === 'pngtuber' ? (
+										{currentMode === 'pngtuber' ? (
 											<>
 												<Layers className='size-2.5 text-primary' /> PNGTuber
 											</>
@@ -329,7 +340,7 @@ export function Avatar2dCanvas({ className = '' }: Props) {
 									<span className='flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground'>
 										<Sparkles className='size-3 text-primary' />
 										<span>
-											{state.mode === 'pngtuber'
+											{currentMode === 'pngtuber'
 												? 'Sandy Chibi Reactiva · Reactividad por Voz'
 												: 'Visor WebGL Live2D'}
 										</span>
@@ -384,7 +395,7 @@ export function Avatar2dCanvas({ className = '' }: Props) {
 					{renderBackgroundLayer()}
 
 					{/* Renderizador activo: PNGTuber o Live2D */}
-					{state.mode === 'pngtuber' ? (
+					{currentMode === 'pngtuber' ? (
 						<PngTuberRenderer
 							config={state.pngtuber}
 							onTransformChange={(transform) => avatar2dManager.setTransform(transform, 'pngtuber')}

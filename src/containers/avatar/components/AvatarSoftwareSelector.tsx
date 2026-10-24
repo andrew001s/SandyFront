@@ -2,7 +2,7 @@
 
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { AvatarSoftware } from '@/types/avatar';
-import { Box, Tv } from 'lucide-react';
+import { Activity, Box, Layers } from 'lucide-react';
 
 interface Props {
 	selectedSoftware: AvatarSoftware;
@@ -24,20 +24,33 @@ export function AvatarSoftwareSelector({
 				onValueChange={(val) => onSelect(val as AvatarSoftware)}
 				className='w-full sm:w-auto'
 			>
-				<TabsList className='grid h-10 w-full grid-cols-2 gap-1 rounded-lg border border-border/80 bg-card p-1 sm:w-84'>
+				<TabsList className='grid h-10 w-full grid-cols-3 gap-1 rounded-lg border border-border/80 bg-card p-1 sm:w-96'>
 					<TabsTrigger
-						value='vtubestudio'
-						className='flex h-8 items-center justify-center gap-2 rounded-md px-3 font-medium font-sans text-xs transition-colors data-[state=active]:bg-primary/10 data-[state=active]:font-semibold data-[state=active]:text-primary'
+						value='pngtuber'
+						onClick={() => onSelect('pngtuber')}
+						className='flex h-8 items-center justify-center gap-1.5 rounded-md px-2.5 font-medium font-sans text-xs transition-colors data-[state=active]:bg-primary/10 data-[state=active]:font-semibold data-[state=active]:text-primary'
 					>
-						<Tv className='size-3.5 text-primary' />
-						<span>Avatar 2D (Navegador)</span>
-						{connectedSoftware === 'vtubestudio' && (
+						<Layers className='size-3.5 text-primary' />
+						<span>PNGTuber</span>
+						{connectedSoftware === 'pngtuber' && (
+							<span className='size-1.5 rounded-full bg-emerald-400' />
+						)}
+					</TabsTrigger>
+					<TabsTrigger
+						value='live2d'
+						onClick={() => onSelect('live2d')}
+						className='flex h-8 items-center justify-center gap-1.5 rounded-md px-2.5 font-medium font-sans text-xs transition-colors data-[state=active]:bg-cyan-500/10 data-[state=active]:font-semibold data-[state=active]:text-cyan-500'
+					>
+						<Activity className='size-3.5 text-cyan-400' />
+						<span>Live2D</span>
+						{connectedSoftware === 'live2d' && (
 							<span className='size-1.5 rounded-full bg-emerald-400' />
 						)}
 					</TabsTrigger>
 					<TabsTrigger
 						value='vrm'
-						className='flex h-8 items-center justify-center gap-2 rounded-md px-3 font-medium font-sans text-xs transition-colors data-[state=active]:bg-secondary/10 data-[state=active]:font-semibold data-[state=active]:text-secondary'
+						onClick={() => onSelect('vrm')}
+						className='flex h-8 items-center justify-center gap-1.5 rounded-md px-2.5 font-medium font-sans text-xs transition-colors data-[state=active]:bg-secondary/10 data-[state=active]:font-semibold data-[state=active]:text-secondary'
 					>
 						<Box className='size-3.5 text-secondary' />
 						<span>Avatar 3D (VRM)</span>
@@ -50,9 +63,13 @@ export function AvatarSoftwareSelector({
 
 			<div className='flex items-center gap-2 text-xs'>
 				<span className='font-mono text-[11px] text-muted-foreground'>
-					{selectedSoftware === 'vtubestudio'
-						? 'Entorno 2D (PNGTuber / Live2D) · En navegador'
-						: 'Entorno 3D VRM · WebGL en navegador'}
+					{selectedSoftware === 'pngtuber'
+						? 'Entorno PNGTuber 2D · Sprites reactivos por voz'
+						: selectedSoftware === 'live2d'
+							? 'Entorno Live2D 2D · WebGL en navegador'
+							: selectedSoftware === 'vtubestudio'
+								? 'Entorno 2D (PNGTuber / Live2D) · En navegador'
+								: 'Entorno 3D VRM · WebGL en navegador'}
 				</span>
 				{connectedSoftware === selectedSoftware ? (
 					<span className='flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] text-emerald-400'>
