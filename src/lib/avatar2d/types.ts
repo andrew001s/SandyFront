@@ -48,6 +48,7 @@ export interface Avatar2dState {
 }
 
 export type Avatar2dActiveTool =
+	| 'expressions'
 	| 'emotions'
 	| 'lipsync'
 	| 'background'

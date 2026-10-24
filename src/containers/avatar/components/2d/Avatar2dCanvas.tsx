@@ -3,12 +3,16 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Avatar2dCameraPanel } from '@/containers/avatar/components/2d/Avatar2dCameraPanel';
 import { Avatar2dExpressionsPanel } from '@/containers/avatar/components/2d/Avatar2dExpressionsPanel';
 import { Avatar2dLipSyncPanel } from '@/containers/avatar/components/2d/Avatar2dLipSyncPanel';
 import { Avatar2dSettingsPanel } from '@/containers/avatar/components/2d/Avatar2dSettingsPanel';
-import { Avatar2dStudioDock } from '@/containers/avatar/components/2d/Avatar2dStudioDock';
 import { Live2dRenderer } from '@/containers/avatar/components/2d/Live2dRenderer';
 import { PngTuberRenderer } from '@/containers/avatar/components/2d/PngTuberRenderer';
+import {
+	type StudioActiveTool,
+	StudioDock,
+} from '@/containers/avatar/components/common/StudioDock';
 import { VrmStudioBackgroundPanel } from '@/containers/avatar/components/vrm/VrmStudioBackgroundPanel';
 import { AudioQueueManager } from '@/lib/audioQueueSingleton';
 import {
@@ -21,7 +25,7 @@ import {
 import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
 import { live2dStore } from '@/lib/avatar2d/live2dStore';
 import { unpackLive2dZip } from '@/lib/avatar2d/live2dZipLoader';
-import type { Avatar2dActiveTool, Avatar2dMode, Avatar2dState } from '@/lib/avatar2d/types';
+import type { Avatar2dMode, Avatar2dState } from '@/lib/avatar2d/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
 	Activity,
@@ -54,7 +58,7 @@ const fileToDataUrl = (file: File): Promise<string> => {
 export function Avatar2dCanvas({ className = '', mode }: Props) {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<Avatar2dState>(avatar2dManager.getState());
-	const [activeTool, setActiveTool] = useState<Avatar2dActiveTool>(null);
+	const [activeTool, setActiveTool] = useState<StudioActiveTool>(null);
 	const [isFullscreen, setIsFullscreen] = useState(false);
 	const [isHudVisible, setIsHudVisible] = useState(true);
 	const [isPlayingAudio, setIsPlayingAudio] = useState(false);
@@ -407,8 +411,9 @@ export function Avatar2dCanvas({ className = '', mode }: Props) {
 						/>
 					)}
 
-					{/* Dock Lateral Vertical */}
-					<Avatar2dStudioDock
+					{/* Dock Lateral Vertical Unificado (Lado derecho homologado) */}
+					<StudioDock
+						mode={currentMode}
 						activeTool={activeTool}
 						onToggleTool={(tool) => setActiveTool(tool)}
 						isPlayingAudio={isPlayingAudio}
@@ -423,7 +428,7 @@ export function Avatar2dCanvas({ className = '', mode }: Props) {
 					<AnimatePresence>
 						{activeTool && isHudVisible && (
 							<>
-								{activeTool === 'emotions' && (
+								{(activeTool === 'emotions' || activeTool === 'expressions') && (
 									<Avatar2dExpressionsPanel onClose={() => setActiveTool(null)} />
 								)}
 
@@ -433,11 +438,11 @@ export function Avatar2dCanvas({ className = '', mode }: Props) {
 
 								{activeTool === 'background' && (
 									<motion.div
-										initial={{ opacity: 0, scale: 0.95, x: -10 }}
+										initial={{ opacity: 0, scale: 0.96, x: 20 }}
 										animate={{ opacity: 1, scale: 1, x: 0 }}
-										exit={{ opacity: 0, scale: 0.95, x: -10 }}
-										transition={{ duration: 0.2 }}
-										className='pointer-events-auto absolute top-4 left-18 z-30 max-h-[calc(100%-2rem)] overflow-y-auto'
+										exit={{ opacity: 0, scale: 0.96, x: 20 }}
+										transition={{ duration: 0.2, ease: 'easeOut' }}
+										className='pointer-events-auto absolute top-4 right-20 z-30 max-h-[calc(100%-2rem)] overflow-y-auto'
 									>
 										<VrmStudioBackgroundPanel
 											state={bgState}
@@ -447,8 +452,16 @@ export function Avatar2dCanvas({ className = '', mode }: Props) {
 									</motion.div>
 								)}
 
+								{activeTool === 'camera' && (
+									<Avatar2dCameraPanel
+										mode={currentMode}
+										containerHeight={containerRef.current?.clientHeight || 600}
+										onClose={() => setActiveTool(null)}
+									/>
+								)}
+
 								{activeTool === 'settings' && (
-									<Avatar2dSettingsPanel onClose={() => setActiveTool(null)} />
+									<Avatar2dSettingsPanel mode={currentMode} onClose={() => setActiveTool(null)} />
 								)}
 							</>
 						)}

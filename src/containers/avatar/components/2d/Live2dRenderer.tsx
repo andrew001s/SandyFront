@@ -4,18 +4,7 @@ import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
 import { type Live2dPackage, live2dStore } from '@/lib/avatar2d/live2dStore';
 import { unpackLive2dZip } from '@/lib/avatar2d/live2dZipLoader';
 import type { Avatar2dTransform, Live2dConfig } from '@/lib/avatar2d/types';
-import {
-	AlertCircle,
-	Focus,
-	Loader2,
-	Maximize,
-	RotateCcw,
-	Sparkles,
-	Upload,
-	UserCheck,
-	ZoomIn,
-	ZoomOut,
-} from 'lucide-react';
+import { AlertCircle, Loader2, Sparkles, Upload } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -72,7 +61,7 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 	});
 	const [scale, setScale] = useState(config.transform.scale || 1);
 
-	// Control de arrastre
+	// Control de arrastre y referencias para animación fluida a 60fps
 	const isDraggingRef = useRef(false);
 	const dragStartRef = useRef({
 		startX: 0,
@@ -80,6 +69,14 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 		initialX: 0,
 		initialY: 0,
 	});
+	const dragPositionRef = useRef({
+		x: config.transform.x || 0,
+		y: config.transform.y || 0,
+	});
+	dragPositionRef.current = dragPosition;
+
+	const scaleRef = useRef(config.transform.scale || 1);
+	scaleRef.current = scale;
 
 	// Suscribirse al store de Live2DPackage en memoria
 	useEffect(() => {
@@ -97,12 +94,6 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 		return () => unsub();
 	}, []);
 
-	// Sincronizar transformación externa
-	useEffect(() => {
-		setDragPosition({ x: config.transform.x || 0, y: config.transform.y || 0 });
-		setScale(config.transform.scale || 1);
-	}, [config.transform.x, config.transform.y, config.transform.scale]);
-
 	// Función centralizada para aplicar escala y posición con centrado matemático perfecto
 	const applyModelTransform = useCallback(
 		(overrideX?: number, overrideY?: number, overrideScale?: number) => {
@@ -111,9 +102,9 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 			const bounds = visualBoundsRef.current;
 			if (!model || !app || !bounds) return;
 
-			const curX = overrideX !== undefined ? overrideX : dragPosition.x;
-			const curY = overrideY !== undefined ? overrideY : dragPosition.y;
-			const curScale = overrideScale !== undefined ? overrideScale : scale;
+			const curX = overrideX !== undefined ? overrideX : dragPositionRef.current.x;
+			const curY = overrideY !== undefined ? overrideY : dragPositionRef.current.y;
+			const curScale = overrideScale !== undefined ? overrideScale : scaleRef.current;
 
 			const screenW = app.screen.width;
 			const screenH = app.screen.height;
@@ -143,13 +134,19 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 			model.x = screenCenterX + curX - modelCenterX * effectiveScale;
 			model.y = screenCenterY + curY - modelCenterY * effectiveScale;
 		},
-		[dragPosition.x, dragPosition.y, scale],
+		[],
 	);
 
-	// Actualizar modelo cuando cambian dragPosition o scale
+	// Sincronizar transformación externa en tiempo real
 	useEffect(() => {
-		applyModelTransform();
-	}, [applyModelTransform]);
+		if (isDraggingRef.current) return;
+		const nextX = config.transform.x || 0;
+		const nextY = config.transform.y || 0;
+		const nextScale = config.transform.scale || 1;
+		setDragPosition({ x: nextX, y: nextY });
+		setScale(nextScale);
+		applyModelTransform(nextX, nextY, nextScale);
+	}, [config.transform.x, config.transform.y, config.transform.scale, applyModelTransform]);
 
 	// Inicializar PixiJS y compilar el modelo Live2D WebGL
 	useEffect(() => {
@@ -356,8 +353,8 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 		dragStartRef.current = {
 			startX: e.clientX,
 			startY: e.clientY,
-			initialX: dragPosition.x,
-			initialY: dragPosition.y,
+			initialX: dragPositionRef.current.x,
+			initialY: dragPositionRef.current.y,
 		};
 
 		try {
@@ -375,8 +372,8 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 			const nextX = dragStartRef.current.initialX + dx;
 			const nextY = dragStartRef.current.initialY + dy;
 
-			setDragPosition({ x: nextX, y: nextY });
-			applyModelTransform(nextX, nextY, scale);
+			dragPositionRef.current = { x: nextX, y: nextY };
+			applyModelTransform(nextX, nextY, scaleRef.current);
 			return;
 		}
 
@@ -404,22 +401,18 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 			} catch {
 				// Ignorar
 			}
+			const finalPos = dragPositionRef.current;
+			setDragPosition(finalPos);
 			onTransformChange?.({
-				x: dragPosition.x,
-				y: dragPosition.y,
-				scale,
+				x: finalPos.x,
+				y: finalPos.y,
+				scale: scaleRef.current,
 				rotation: 0,
 			});
 		}
 	};
 
 	// Zoom fluido con rueda del ratón SIN que haga scroll la página entera
-	const dragPositionRef = useRef(dragPosition);
-	dragPositionRef.current = dragPosition;
-
-	const scaleRef = useRef(scale);
-	scaleRef.current = scale;
-
 	useEffect(() => {
 		const container = containerRef.current;
 		if (!container || !interactive) return;
@@ -450,50 +443,6 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 			container.removeEventListener('wheel', onWheel);
 		};
 	}, [interactive, applyModelTransform, onTransformChange]);
-
-	// Ajustes de encuadre predefinidos (Cuerpo Completo, Busto, Rostro)
-	const applyFramingPreset = (preset: 'fit' | 'bust' | 'face') => {
-		const app = appRef.current;
-		const screenH = app?.screen?.height || 600;
-
-		let newScale = 1;
-		let newX = 0;
-		let newY = 0;
-
-		if (preset === 'fit') {
-			// Cuerpo Completo: escala base ajustada 100%, centrada con margen
-			newScale = 1;
-			newX = 0;
-			newY = 0;
-		} else if (preset === 'bust') {
-			// Busto / Webcam de Streaming: aumento 1.85x y encuadre de torso y cabeza
-			newScale = 1.85;
-			newX = 0;
-			newY = screenH * 0.32;
-		} else if (preset === 'face') {
-			// Rostro / Primer Plano: aumento 2.8x para calibración de expresiones
-			newScale = 2.8;
-			newX = 0;
-			newY = screenH * 0.62;
-		}
-
-		setDragPosition({ x: newX, y: newY });
-		setScale(newScale);
-		applyModelTransform(newX, newY, newScale);
-		onTransformChange?.({ x: newX, y: newY, scale: newScale, rotation: 0 });
-	};
-
-	const handleZoomStep = (delta: number) => {
-		const nextScale = Math.min(Math.max(scale + delta, 0.35), 4.5);
-		setScale(nextScale);
-		applyModelTransform(dragPosition.x, dragPosition.y, nextScale);
-		onTransformChange?.({
-			x: dragPosition.x,
-			y: dragPosition.y,
-			scale: nextScale,
-			rotation: 0,
-		});
-	};
 
 	// Cargar archivo ZIP manualmente
 	const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -603,83 +552,6 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 						<span className='mt-4 inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3.5 py-1 font-medium font-sans text-primary text-xs shadow-xs group-hover:bg-primary group-hover:text-primary-foreground'>
 							<Sparkles className='size-3' /> Seleccionar archivo .ZIP
 						</span>
-					</button>
-				</div>
-			)}
-
-			{/* Barra flotante de Encuadre Rápido y Zoom Dinámico */}
-			{hasActiveModel && !isLoading && interactive && (
-				<div className='pointer-events-auto absolute right-4 bottom-4 z-20 flex items-center gap-1 rounded-2xl border border-border/80 bg-background/90 p-1.5 shadow-2xl backdrop-blur-xl transition-all sm:right-6'>
-					{/* Auto-Ajustar / Cuerpo Completo */}
-					<button
-						type='button'
-						onClick={() => applyFramingPreset('fit')}
-						className='flex items-center gap-1.5 rounded-xl px-2.5 py-1 font-medium font-sans text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-						title='Ajustar modelo completo al contenedor (100% visible sin cortes)'
-					>
-						<Maximize className='size-3.5 text-primary' />
-						<span className='hidden sm:inline'>Ajustar</span>
-					</button>
-
-					{/* Busto (Webcam Streaming) */}
-					<button
-						type='button'
-						onClick={() => applyFramingPreset('bust')}
-						className='flex items-center gap-1.5 rounded-xl px-2.5 py-1 font-medium font-sans text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-						title='Encuadre Busto / Webcam (Torso y Cabeza)'
-					>
-						<UserCheck className='size-3.5 text-primary' />
-						<span className='hidden sm:inline'>Busto</span>
-					</button>
-
-					{/* Primer Plano Rostro */}
-					<button
-						type='button'
-						onClick={() => applyFramingPreset('face')}
-						className='flex items-center gap-1.5 rounded-xl px-2.5 py-1 font-medium font-sans text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-						title='Primer Plano (Rostro y Ojos)'
-					>
-						<Focus className='size-3.5 text-primary' />
-						<span className='hidden sm:inline'>Rostro</span>
-					</button>
-
-					<div className='mx-0.5 h-3.5 w-px bg-border/60' />
-
-					{/* Zoom Menos */}
-					<button
-						type='button'
-						onClick={() => handleZoomStep(-0.15)}
-						className='flex size-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-						title='Alejar zoom (-)'
-					>
-						<ZoomOut className='size-3.5' />
-					</button>
-
-					{/* Porcentaje de Escala */}
-					<span className='min-w-[40px] text-center font-mono text-[10px] text-muted-foreground'>
-						{Math.round(scale * 100)}%
-					</span>
-
-					{/* Zoom Más */}
-					<button
-						type='button'
-						onClick={() => handleZoomStep(0.15)}
-						className='flex size-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-						title='Acercar zoom (+)'
-					>
-						<ZoomIn className='size-3.5' />
-					</button>
-
-					<div className='mx-0.5 h-3.5 w-px bg-border/60' />
-
-					{/* Restablecer Posición y Centrado */}
-					<button
-						type='button'
-						onClick={() => applyFramingPreset('fit')}
-						className='flex size-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-						title='Restablecer posición al centro'
-					>
-						<RotateCcw className='size-3.5' />
 					</button>
 				</div>
 			)}

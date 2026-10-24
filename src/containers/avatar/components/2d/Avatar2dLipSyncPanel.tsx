@@ -89,11 +89,11 @@ export function Avatar2dLipSyncPanel({ onClose }: Props) {
 
 	return (
 		<motion.div
-			initial={{ opacity: 0, scale: 0.95, x: -10 }}
+			initial={{ opacity: 0, scale: 0.96, x: 20 }}
 			animate={{ opacity: 1, scale: 1, x: 0 }}
-			exit={{ opacity: 0, scale: 0.95, x: -10 }}
-			transition={{ duration: 0.2 }}
-			className='pointer-events-auto absolute top-4 left-18 z-30'
+			exit={{ opacity: 0, scale: 0.96, x: 20 }}
+			transition={{ duration: 0.2, ease: 'easeOut' }}
+			className='pointer-events-auto absolute top-4 right-20 z-30 max-h-[calc(100%-2rem)] overflow-y-auto'
 		>
 			<div className='flex w-84 max-w-[calc(100vw-5rem)] flex-col gap-3 rounded-2xl border border-border/80 bg-background/90 p-3.5 shadow-2xl backdrop-blur-xl sm:w-92'>
 				{/* Cabecera */}

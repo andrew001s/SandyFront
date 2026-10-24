@@ -1,36 +1,23 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
 import { live2dStore } from '@/lib/avatar2d/live2dStore';
 import { unpackLive2dZip } from '@/lib/avatar2d/live2dZipLoader';
 import type { Avatar2dMode, Avatar2dState, PngTuberSpriteKey } from '@/lib/avatar2d/types';
 import { motion } from 'framer-motion';
-import {
-	Activity,
-	Focus,
-	Layers,
-	Maximize,
-	RotateCcw,
-	Sliders,
-	Sparkles,
-	Trash2,
-	Upload,
-	UserCheck,
-	X,
-} from 'lucide-react';
+import { Box, RotateCcw, Sparkles, Trash2, Upload, X } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 interface Props {
+	mode?: Avatar2dMode;
 	onClose: () => void;
 }
 
-export function Avatar2dSettingsPanel({ onClose }: Props) {
+export function Avatar2dSettingsPanel({ mode: propMode, onClose }: Props) {
 	const [state, setState] = useState<Avatar2dState>(avatar2dManager.getState());
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
 	const zipInputRef = useRef<HTMLInputElement | null>(null);
@@ -43,13 +30,6 @@ export function Avatar2dSettingsPanel({ onClose }: Props) {
 
 	const { mode, pngtuber } = state;
 	const { physics, sprites } = pngtuber;
-
-	const handleModeChange = (newMode: Avatar2dMode) => {
-		avatar2dManager.setMode(newMode);
-		toast.success(
-			`Modo cambiado a: ${newMode === 'pngtuber' ? 'PNGTuber Reactivo' : 'Live2D WebGL'}`,
-		);
-	};
 
 	const handleBounceChange = (val: number) => {
 		avatar2dManager.setPhysics({
@@ -130,13 +110,15 @@ export function Avatar2dSettingsPanel({ onClose }: Props) {
 		e.target.value = '';
 	};
 
+	const activeMode = propMode ?? mode;
+
 	return (
 		<motion.div
-			initial={{ opacity: 0, scale: 0.95, x: -10 }}
+			initial={{ opacity: 0, scale: 0.96, x: 20 }}
 			animate={{ opacity: 1, scale: 1, x: 0 }}
-			exit={{ opacity: 0, scale: 0.95, x: -10 }}
-			transition={{ duration: 0.2 }}
-			className='pointer-events-auto absolute top-4 left-18 z-30'
+			exit={{ opacity: 0, scale: 0.96, x: 20 }}
+			transition={{ duration: 0.2, ease: 'easeOut' }}
+			className='pointer-events-auto absolute top-4 right-20 z-30 max-h-[calc(100%-2rem)] overflow-y-auto'
 		>
 			<input
 				ref={fileInputRef}
@@ -151,10 +133,10 @@ export function Avatar2dSettingsPanel({ onClose }: Props) {
 				<div className='flex items-center justify-between border-border/60 border-b pb-2'>
 					<div className='flex items-center gap-2'>
 						<div className='flex size-6 items-center justify-center rounded-lg bg-primary/10 text-primary'>
-							<Sliders className='size-3.5' />
+							<Box className='size-3.5' />
 						</div>
 						<span className='font-semibold text-foreground text-xs'>
-							Configuración del Avatar 2D
+							{activeMode === 'pngtuber' ? 'Configuración de PNGTuber' : 'Configuración de Live2D'}
 						</span>
 					</div>
 					<Button
@@ -167,32 +149,7 @@ export function Avatar2dSettingsPanel({ onClose }: Props) {
 					</Button>
 				</div>
 
-				{/* Selector de Modo: PNGTuber vs Live2D */}
-				<div className='space-y-1.5'>
-					<Label className='text-[11px] text-muted-foreground'>Motor del Modelo 2D</Label>
-					<Tabs
-						value={mode}
-						onValueChange={(v) => handleModeChange(v as Avatar2dMode)}
-						className='w-full'
-					>
-						<TabsList className='grid h-8 w-full grid-cols-2 rounded-lg border border-border/70 bg-card p-0.5'>
-							<TabsTrigger
-								value='pngtuber'
-								className='h-7 font-medium text-xs data-[state=active]:bg-primary/15 data-[state=active]:text-primary'
-							>
-								<Layers className='mr-1.5 size-3' /> PNGTuber
-							</TabsTrigger>
-							<TabsTrigger
-								value='live2d'
-								className='h-7 font-medium text-xs data-[state=active]:bg-primary/15 data-[state=active]:text-primary'
-							>
-								<Activity className='mr-1.5 size-3' /> Live2D WebGL
-							</TabsTrigger>
-						</TabsList>
-					</Tabs>
-				</div>
-
-				{mode === 'pngtuber' ? (
+				{activeMode === 'pngtuber' ? (
 					<>
 						{/* Física y Rebote de PNGTuber */}
 						<div className='space-y-2.5 rounded-xl border border-border/60 bg-muted/25 p-2.5'>
@@ -435,110 +392,6 @@ export function Avatar2dSettingsPanel({ onClose }: Props) {
 							<div className='flex items-center justify-between'>
 								<span className='text-[11px] text-foreground'>Reactividad de voz (Lip Sync)</span>
 								<Switch checked={true} disabled />
-							</div>
-						</div>
-
-						{/* Presets de Encuadre para Live2D */}
-						<div className='space-y-2.5 rounded-lg border border-border/60 bg-card/50 p-2.5'>
-							<span className='font-medium text-[11px] text-foreground'>
-								Encuadre y Ajuste al Contenedor
-							</span>
-
-							<div className='grid grid-cols-3 gap-1.5'>
-								<Button
-									type='button'
-									variant='outline'
-									size='sm'
-									onClick={() => {
-										avatar2dManager.setTransform({ x: 0, y: 0, scale: 1, rotation: 0 }, 'live2d');
-										toast.success('Encuadre: Cuerpo Completo (Auto-ajustado)');
-									}}
-									className='h-7 gap-1 px-1.5 font-medium text-[10px]'
-									title='Ajustar todo el cuerpo dentro del contenedor'
-								>
-									<Maximize className='size-3 text-primary' /> Completo
-								</Button>
-
-								<Button
-									type='button'
-									variant='outline'
-									size='sm'
-									onClick={() => {
-										avatar2dManager.setTransform(
-											{ x: 0, y: 190, scale: 1.85, rotation: 0 },
-											'live2d',
-										);
-										toast.success('Encuadre: Busto para streaming');
-									}}
-									className='h-7 gap-1 px-1.5 font-medium text-[10px]'
-									title='Encuadre estándar de busto / webcam para stream'
-								>
-									<UserCheck className='size-3 text-primary' /> Busto
-								</Button>
-
-								<Button
-									type='button'
-									variant='outline'
-									size='sm'
-									onClick={() => {
-										avatar2dManager.setTransform(
-											{ x: 0, y: 380, scale: 2.8, rotation: 0 },
-											'live2d',
-										);
-										toast.success('Encuadre: Primer plano de rostro');
-									}}
-									className='h-7 gap-1 px-1.5 font-medium text-[10px]'
-									title='Primer plano para probar expresiones faciales'
-								>
-									<Focus className='size-3 text-primary' /> Rostro
-								</Button>
-							</div>
-
-							{/* Slider de Escala / Zoom */}
-							<div className='space-y-1 pt-1'>
-								<div className='flex justify-between text-[10px] text-muted-foreground'>
-									<span>Zoom / Escala</span>
-									<span className='font-mono text-primary'>
-										{Math.round((state.live2d.transform.scale || 1) * 100)}%
-									</span>
-								</div>
-								<input
-									type='range'
-									min={40}
-									max={350}
-									step={5}
-									value={Math.round((state.live2d.transform.scale || 1) * 100)}
-									onChange={(e) => {
-										const nextScale = Number(e.target.value) / 100;
-										avatar2dManager.setTransform(
-											{ ...state.live2d.transform, scale: nextScale },
-											'live2d',
-										);
-									}}
-									className='h-1.5 w-full cursor-pointer rounded-lg bg-muted accent-primary'
-								/>
-							</div>
-
-							{/* Slider de Posición Vertical (Y) */}
-							<div className='space-y-1'>
-								<div className='flex justify-between text-[10px] text-muted-foreground'>
-									<span>Posición Vertical (Y)</span>
-									<span className='font-mono text-primary'>
-										{Math.round(state.live2d.transform.y || 0)}px
-									</span>
-								</div>
-								<input
-									type='range'
-									min={-350}
-									max={450}
-									step={5}
-									value={Math.round(state.live2d.transform.y || 0)}
-									onChange={(e) => {
-										const nextY = Number(e.target.value);
-										avatar2dManager.setTransform({ ...state.live2d.transform, y: nextY }, 'live2d');
-									}}
-									className='h-1.5 w-full cursor-pointer rounded-lg bg-muted accent-primary'
-								/>
 							</div>
 						</div>
 					</div>

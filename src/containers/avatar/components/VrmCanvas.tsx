@@ -3,12 +3,12 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import {
+	type StudioActiveTool,
+	StudioDock,
+} from '@/containers/avatar/components/common/StudioDock';
 import { VrmStudioBackgroundPanel } from '@/containers/avatar/components/vrm/VrmStudioBackgroundPanel';
 import { VrmStudioCameraPanel } from '@/containers/avatar/components/vrm/VrmStudioCameraPanel';
-import {
-	type VrmActiveTool,
-	VrmStudioDock,
-} from '@/containers/avatar/components/vrm/VrmStudioDock';
 import { VrmStudioExpressionsPanel } from '@/containers/avatar/components/vrm/VrmStudioExpressionsPanel';
 import { VrmStudioLipSyncPanel } from '@/containers/avatar/components/vrm/VrmStudioLipSyncPanel';
 import { VrmStudioModelPanel } from '@/containers/avatar/components/vrm/VrmStudioModelPanel';
@@ -58,7 +58,7 @@ export function VrmCanvas({ className = '' }: Props) {
 	const [copied, setCopied] = useState(false);
 
 	// Estado de la suite VTube Studio / VNyan
-	const [activeTool, setActiveTool] = useState<VrmActiveTool>(null);
+	const [activeTool, setActiveTool] = useState<StudioActiveTool>(null);
 	const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 	const [isHudVisible, setIsHudVisible] = useState<boolean>(true);
 	const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
@@ -439,7 +439,8 @@ export function VrmCanvas({ className = '' }: Props) {
 					/>
 
 					{/* Dock Lateral Vertical (Estilo VTube Studio / VNyan) */}
-					<VrmStudioDock
+					<StudioDock
+						mode='vrm'
 						activeTool={activeTool}
 						onToggleTool={(tool) => setActiveTool(tool)}
 						isPlayingAudio={isPlayingAudio}
@@ -458,7 +459,7 @@ export function VrmCanvas({ className = '' }: Props) {
 								animate={{ opacity: 1, x: 0, scale: 1 }}
 								exit={{ opacity: 0, x: 20, scale: 0.96 }}
 								transition={{ duration: 0.2, ease: 'easeOut' }}
-								className='absolute top-4 right-16 z-30 max-h-[calc(100%-2rem)] overflow-y-auto sm:right-18'
+								className='absolute top-4 right-20 z-30 max-h-[calc(100%-2rem)] overflow-y-auto'
 							>
 								{activeTool === 'expressions' && (
 									<VrmStudioExpressionsPanel onClose={() => setActiveTool(null)} />
