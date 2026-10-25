@@ -9,6 +9,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { vrmManager } from '@/lib/avatar/vrmManager';
 import {
 	DEFAULT_VRM_SLIME_COLOR,
@@ -21,12 +22,31 @@ import {
 	getVrmTriggerRules,
 	saveVrmTriggerRules,
 } from '@/lib/avatar/vrmTriggerGraph';
-import { Check, Play, Plus, Radio, Search, Trash2, X } from 'lucide-react';
+import { Check, ChevronDown, CircleHelp, Play, Plus, Radio, Search, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface Props {
 	onClose: () => void;
 }
+
+const TRIGGER_FILTER_DESCRIPTIONS: Record<
+	Exclude<VrmTriggerName, 'channel_point_reward'>,
+	string
+> = {
+	chat_message:
+		'Compara el texto con el nombre del usuario y el mensaje. Puedes escribir una palabra o frase; no distingue mayúsculas. Déjalo vacío para aceptar cualquier mensaje del chat.',
+	follow:
+		'Compara el texto con el nombre de quien siguió el canal. Déjalo vacío para aceptar cualquier follow.',
+	subscribe:
+		'Compara el texto con el nombre de quien se suscribió. Déjalo vacío para aceptar cualquier suscripción.',
+	subscription_message:
+		'Compara el texto con el nombre del usuario y su mensaje de suscripción. Déjalo vacío para aceptar cualquiera.',
+	sub_gift:
+		'Compara el texto con el nombre de quien regaló la suscripción. Déjalo vacío para aceptar cualquier regalo.',
+	cheer:
+		'Compara el texto con el nombre del usuario y su mensaje. La cantidad de bits no se filtra. Déjalo vacío para aceptar cualquier cheer.',
+	raid: 'Compara el texto con el nombre del canal que hizo el raid. Déjalo vacío para aceptar cualquier raid.',
+};
 
 export function VrmStudioTriggersPanel({ onClose }: Props) {
 	const [rules, setRules] = useState<VrmTriggerRule[]>(() => getVrmTriggerRules());
@@ -127,25 +147,31 @@ export function VrmStudioTriggersPanel({ onClose }: Props) {
 									onChange={(event) => updateRule(rule.id, { enabled: event.target.checked })}
 									type='checkbox'
 								/>
-								<select
-									aria-label='Evento de Twitch'
-									className='h-8 min-w-0 flex-1 rounded-md border border-border bg-background px-2 text-xs'
-									onChange={(event) => {
-										const trigger = event.target.value as VrmTriggerName;
-										updateRule(rule.id, {
-											trigger,
-											rewardId: trigger === 'channel_point_reward' ? rule.rewardId : undefined,
-											contains: trigger === 'channel_point_reward' ? undefined : rule.contains,
-										});
-									}}
-									value={rule.trigger}
-								>
-									{VRM_TRIGGER_NAMES.map((trigger) => (
-										<option key={trigger.id} value={trigger.id}>
-											{trigger.label}
-										</option>
-									))}
-								</select>
+								<div className='relative min-w-0 flex-1'>
+									<select
+										aria-label='Evento de Twitch'
+										className='h-8 w-full appearance-none rounded-md border border-border bg-background py-1 pr-8 pl-2 text-xs'
+										onChange={(event) => {
+											const trigger = event.target.value as VrmTriggerName;
+											updateRule(rule.id, {
+												trigger,
+												rewardId: trigger === 'channel_point_reward' ? rule.rewardId : undefined,
+												contains: trigger === 'channel_point_reward' ? undefined : rule.contains,
+											});
+										}}
+										value={rule.trigger}
+									>
+										{VRM_TRIGGER_NAMES.map((trigger) => (
+											<option key={trigger.id} value={trigger.id}>
+												{trigger.label}
+											</option>
+										))}
+									</select>
+									<ChevronDown
+										aria-hidden='true'
+										className='-translate-y-1/2 pointer-events-none absolute top-1/2 right-2 size-3.5 text-muted-foreground'
+									/>
+								</div>
 								<button
 									aria-label='Eliminar regla'
 									className='rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive'
@@ -180,13 +206,36 @@ export function VrmStudioTriggersPanel({ onClose }: Props) {
 									</button>
 								</div>
 							) : (
-								<input
-									aria-label='Filtrar evento por texto'
-									className='h-8 w-full rounded-md border border-border bg-background px-2 text-xs'
-									onChange={(event) => updateRule(rule.id, { contains: event.target.value })}
-									placeholder='Filtro de texto (opcional)'
-									value={rule.contains ?? ''}
-								/>
+								<div className='flex items-center gap-1.5'>
+									<input
+										aria-label='Filtrar evento por texto'
+										className='h-8 min-w-0 flex-1 rounded-md border border-border bg-background px-2 text-xs'
+										onChange={(event) => updateRule(rule.id, { contains: event.target.value })}
+										placeholder='Filtro de texto (opcional)'
+										value={rule.contains ?? ''}
+									/>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<button
+												aria-label='Ayuda sobre el filtro de texto'
+												className='rounded-full p-1 text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring'
+												type='button'
+											>
+												<CircleHelp aria-hidden='true' className='size-4' />
+											</button>
+										</TooltipTrigger>
+										<TooltipContent
+											className='max-w-xs whitespace-normal leading-relaxed'
+											side='top'
+										>
+											{
+												TRIGGER_FILTER_DESCRIPTIONS[
+													rule.trigger as Exclude<VrmTriggerName, 'channel_point_reward'>
+												]
+											}
+										</TooltipContent>
+									</Tooltip>
+								</div>
 							)}
 							{rule.trigger === 'channel_point_reward' &&
 								!channelRewardsLoading &&
@@ -197,53 +246,65 @@ export function VrmStudioTriggersPanel({ onClose }: Props) {
 								)}
 							<div className='flex items-center gap-2'>
 								<span className='shrink-0 text-[11px] text-muted-foreground'>Ejecutar</span>
-								<select
-									aria-label='Acción del nodo'
-									className='h-8 min-w-0 flex-1 rounded-md border border-border bg-background px-2 text-xs'
-									onChange={(event) => {
-										const type = event.target.value;
-										if (type === 'expression')
-											updateAction(rule.id, { type, expression: 'surprised' });
-										else if (type === 'idle') updateAction(rule.id, { type, enabled: true });
-										else if (type === 'slime') {
-											updateAction(rule.id, {
-												type,
-												enabled: true,
-												durationSeconds: 10,
-												color: DEFAULT_VRM_SLIME_COLOR,
-											});
-										} else if (type === 'throw_object') {
-											updateAction(rule.id, { type, kind: 'random' });
-										}
-									}}
-									value={rule.action.type}
-								>
-									<option value='throw_object'>Lanzar objeto</option>
-									<option value='expression'>Activar expresión</option>
-									<option value='idle'>Activar idle</option>
-									<option value='slime'>Activar slime</option>
-								</select>
+								<div className='relative min-w-0 flex-1'>
+									<select
+										aria-label='Acción del nodo'
+										className='h-8 w-full appearance-none rounded-md border border-border bg-background py-1 pr-8 pl-2 text-xs'
+										onChange={(event) => {
+											const type = event.target.value;
+											if (type === 'expression')
+												updateAction(rule.id, { type, expression: 'surprised' });
+											else if (type === 'idle') updateAction(rule.id, { type, enabled: true });
+											else if (type === 'slime') {
+												updateAction(rule.id, {
+													type,
+													enabled: true,
+													durationSeconds: 10,
+													color: DEFAULT_VRM_SLIME_COLOR,
+												});
+											} else if (type === 'throw_object') {
+												updateAction(rule.id, { type, kind: 'random' });
+											}
+										}}
+										value={rule.action.type}
+									>
+										<option value='throw_object'>Lanzar objeto</option>
+										<option value='expression'>Activar expresión</option>
+										<option value='idle'>Activar idle</option>
+										<option value='slime'>Activar slime</option>
+									</select>
+									<ChevronDown
+										aria-hidden='true'
+										className='-translate-y-1/2 pointer-events-none absolute top-1/2 right-2 size-3.5 text-muted-foreground'
+									/>
+								</div>
 							</div>
 							{rule.action.type === 'expression' && (
 								<div className='flex gap-2'>
-									<select
-										aria-label='Expresión'
-										className='h-8 flex-1 rounded-md border border-border bg-background px-2 text-xs'
-										onChange={(event) =>
-											updateAction(rule.id, {
-												type: 'expression',
-												expression: event.target.value,
-											})
-										}
-										value={rule.action.expression}
-									>
-										{vrmManager.getAvailableExpressions().map((expression) => (
-											<option key={expression}>{expression}</option>
-										))}
-										{!vrmManager.getAvailableExpressions().length && (
-											<option value='surprised'>surprised</option>
-										)}
-									</select>
+									<div className='relative min-w-0 flex-1'>
+										<select
+											aria-label='Expresión'
+											className='h-8 w-full appearance-none rounded-md border border-border bg-background py-1 pr-8 pl-2 text-xs'
+											onChange={(event) =>
+												updateAction(rule.id, {
+													type: 'expression',
+													expression: event.target.value,
+												})
+											}
+											value={rule.action.expression}
+										>
+											{vrmManager.getAvailableExpressions().map((expression) => (
+												<option key={expression}>{expression}</option>
+											))}
+											{!vrmManager.getAvailableExpressions().length && (
+												<option value='surprised'>surprised</option>
+											)}
+										</select>
+										<ChevronDown
+											aria-hidden='true'
+											className='-translate-y-1/2 pointer-events-none absolute top-1/2 right-2 size-3.5 text-muted-foreground'
+										/>
+									</div>
 								</div>
 							)}
 							{(rule.action.type === 'idle' || rule.action.type === 'slime') && (
@@ -263,26 +324,32 @@ export function VrmStudioTriggersPanel({ onClose }: Props) {
 							{rule.action.type === 'throw_object' && (
 								<label className='flex items-center gap-2 text-muted-foreground text-xs'>
 									<span className='shrink-0'>Objeto</span>
-									<select
-										aria-label='Tipo de objeto 3D'
-										className='h-8 min-w-0 flex-1 rounded-md border border-border bg-background px-2 text-foreground text-xs'
-										onChange={(event) =>
-											updateAction(rule.id, {
-												type: 'throw_object',
-												kind: event.target.value as VrmDropObjectKind,
-											})
-										}
-										value={rule.action.kind ?? 'random'}
-									>
-										<option value='random'>Aleatorio</option>
-										<option value='ball'>Pelota</option>
-										<option value='rubber_duck'>Patito de hule</option>
-										<option value='sneaker'>Zapatilla</option>
-										<option value='apple'>Manzana</option>
-										<option value='donut'>Dona</option>
-										<option value='heart'>Corazón</option>
-										<option value='star'>Estrella</option>
-									</select>
+									<div className='relative min-w-0 flex-1'>
+										<select
+											aria-label='Tipo de objeto 3D'
+											className='h-8 w-full appearance-none rounded-md border border-border bg-background py-1 pr-8 pl-2 text-foreground text-xs'
+											onChange={(event) =>
+												updateAction(rule.id, {
+													type: 'throw_object',
+													kind: event.target.value as VrmDropObjectKind,
+												})
+											}
+											value={rule.action.kind ?? 'random'}
+										>
+											<option value='random'>Aleatorio</option>
+											<option value='ball'>Pelota</option>
+											<option value='rubber_duck'>Patito de hule</option>
+											<option value='sneaker'>Zapatilla</option>
+											<option value='apple'>Manzana</option>
+											<option value='donut'>Dona</option>
+											<option value='heart'>Corazón</option>
+											<option value='star'>Estrella</option>
+										</select>
+										<ChevronDown
+											aria-hidden='true'
+											className='-translate-y-1/2 pointer-events-none absolute top-1/2 right-2 size-3.5 text-muted-foreground'
+										/>
+									</div>
 								</label>
 							)}
 							{rule.action.type === 'slime' && (
