@@ -40,6 +40,14 @@ export const AVATAR_SOFTWARE_LIST: SoftwareMeta[] = [
 ];
 
 export const DEFAULT_SOFTWARE_CONFIGS: AvatarSoftwareConfigs = {
+	pngtuber: {
+		port: 0,
+		host: 'localhost',
+	},
+	live2d: {
+		port: 0,
+		host: 'localhost',
+	},
 	vtubestudio: {
 		port: 8001,
 		host: '127.0.0.1',

@@ -1,4 +1,4 @@
-export type AvatarSoftware = 'vtubestudio' | 'vrm' | 'vnyan' | 'vseeface';
+export type AvatarSoftware = 'pngtuber' | 'live2d' | 'vtubestudio' | 'vrm' | 'vnyan' | 'vseeface';
 
 export type SoftwareMeta = {
 	id: AvatarSoftware;

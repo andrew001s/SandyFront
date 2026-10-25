@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
 export const SANDY_NEWS_STORAGE_KEY = 'sandy_news_last_seen_version';
-export const CURRENT_NEWS_VERSION = '0.2.5';
+export const CURRENT_NEWS_VERSION = '0.2.6';
 export const OPEN_NEWS_MODAL_EVENT = 'open-sandy-news-modal';
 
 export const openNewsModal = () => {
@@ -92,8 +92,8 @@ export function NewsModal() {
 					{/* Top Artwork Area with Custom VTuber Flat Banner */}
 					<div className='relative h-60 w-full overflow-hidden sm:h-64'>
 						<Image
-							src='/news/vrm-studio-banner.jpg'
-							alt='Novedad Sandy v0.2.5 - Nuevo Estudio 3D y Sincronización OBS'
+							src='/news/avatar-studio-banner.png'
+							alt='Sandy Studio con herramientas para avatares Live2D, PNGTuber y VRM'
 							fill
 							priority
 							className='pointer-events-none select-none object-cover object-center'
@@ -119,10 +119,10 @@ export function NewsModal() {
 						<div className='flex items-center justify-between border-slate-100 border-b pb-3'>
 							<div>
 								<DialogTitle className='font-extrabold text-slate-900 text-xl tracking-tight sm:text-2xl'>
-									Actualización v{CURRENT_NEWS_VERSION}:
+									Tu VTuber Studio, en 2D y 3D
 								</DialogTitle>
 								<DialogDescription className='mt-0.5 font-medium text-slate-500 text-xs sm:text-sm'>
-									¡Nuevo Estudio Avatar 3D y Sincronización OBS!
+									Live2D, PNGTuber y VRM en un solo espacio
 								</DialogDescription>
 							</div>
 
@@ -130,15 +130,15 @@ export function NewsModal() {
 								variant='outline'
 								className='border-cyan-200 bg-cyan-50 font-bold font-mono text-[11px] text-cyan-700'
 							>
-								VRM 3D
+								2D + 3D
 							</Badge>
 						</div>
 
 						{/* Notice Body */}
 						<div className='mt-3.5 space-y-2.5 text-slate-600 text-xs sm:text-[13px] sm:leading-relaxed'>
 							<p className='font-semibold text-slate-800'>
-								¡Hola streamers! Rediseñamos por completo el escenario 3D para brindarte una suite
-								profesional al estilo VTube Studio y VNyan:
+								¡Hola, streamers! Sandy Studio estrena un espacio completo para preparar y controlar
+								tu avatar, tanto si usas un modelo 2D como uno 3D:
 							</p>
 
 							{/* Numbered bullet list matching the reference layout */}
@@ -148,9 +148,9 @@ export function NewsModal() {
 										1
 									</span>
 									<p className='text-slate-700'>
-										<strong className='text-slate-900'>Dock modular y paneles flotantes:</strong>{' '}
-										Controla expresiones con slider de intensidad, prueba de voz Edge TTS y
-										selección rápida de gestos.
+										<strong className='text-slate-900'>Estudio 2D para Live2D y PNGTuber:</strong>{' '}
+										Ajusta la cámara, el encuadre y las expresiones; usa tus modelos Live2D o
+										sprites PNG con estados para hablar y parpadear.
 									</p>
 								</div>
 
@@ -159,9 +159,9 @@ export function NewsModal() {
 										2
 									</span>
 									<p className='text-slate-700'>
-										<strong className='text-slate-900'>Fondos personalizados y Croma OBS:</strong>{' '}
-										Elige entre pantalla verde, azul, magenta o cuadrícula transparente para recorte
-										limpio en OBS, o sube tu propia imagen.
+										<strong className='text-slate-900'>Controles de estudio para tu avatar:</strong>{' '}
+										Organiza el panel de trabajo y prueba expresiones y sincronización labial
+										mientras ajustas tu personaje.
 									</p>
 								</div>
 
@@ -170,11 +170,9 @@ export function NewsModal() {
 										3
 									</span>
 									<p className='text-slate-700'>
-										<strong className='text-slate-900'>
-											Sincronización en vivo con Overlay OBS:
-										</strong>{' '}
-										Tus cambios de cámara, rotación, zoom, expresiones y fondos se reflejan de
-										inmediato en tu enlace de navegador para OBS.
+										<strong className='text-slate-900'>Escenario 3D para modelos VRM:</strong>{' '}
+										Continúa usando tu modelo VRM con controles de cámara, expresiones y fondos en
+										el estudio 3D.
 									</p>
 								</div>
 							</div>
@@ -188,7 +186,7 @@ export function NewsModal() {
 										className='h-10 flex-1 gap-2 rounded-xl bg-violet-600 font-semibold text-white text-xs shadow-md transition-all hover:bg-violet-700 active:scale-[0.98]'
 									>
 										<Box className='size-3.5' />
-										<span>Probar Estudio 3D</span>
+										<span>Abrir estudio de avatares</span>
 										<ArrowRight className='size-3.5' />
 									</Button>
 

@@ -132,10 +132,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 						<ClerkProvider localization={esES}>
 							<ThemeProvider attribute='class' defaultTheme='dark' enableSystem>
 								<AppProviders>
-									<main className='w-full flex-grow'>
-										<Toaster richColors position='top-right' />
-										{children}
-									</main>
+									<Toaster richColors position='top-right' />
+									<main className='w-full flex-grow'>{children}</main>
 									<Footer />
 								</AppProviders>
 							</ThemeProvider>

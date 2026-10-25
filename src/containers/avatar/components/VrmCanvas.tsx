@@ -2,13 +2,13 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import {
+	type StudioActiveTool,
+	StudioDock,
+} from '@/containers/avatar/components/common/StudioDock';
 import { VrmStudioBackgroundPanel } from '@/containers/avatar/components/vrm/VrmStudioBackgroundPanel';
 import { VrmStudioCameraPanel } from '@/containers/avatar/components/vrm/VrmStudioCameraPanel';
-import {
-	type VrmActiveTool,
-	VrmStudioDock,
-} from '@/containers/avatar/components/vrm/VrmStudioDock';
 import { VrmStudioExpressionsPanel } from '@/containers/avatar/components/vrm/VrmStudioExpressionsPanel';
 import { VrmStudioLipSyncPanel } from '@/containers/avatar/components/vrm/VrmStudioLipSyncPanel';
 import { VrmStudioModelPanel } from '@/containers/avatar/components/vrm/VrmStudioModelPanel';
@@ -28,15 +28,16 @@ import {
 	Box,
 	Check,
 	Copy,
-	ExternalLink,
+	Maximize2,
+	Minimize2,
 	RefreshCw,
 	Sparkles,
-	Trash2,
 	Upload,
 	User,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import AvatarFooter from './AvatarFooter';
 
 interface Props {
 	className?: string;
@@ -58,7 +59,7 @@ export function VrmCanvas({ className = '' }: Props) {
 	const [copied, setCopied] = useState(false);
 
 	// Estado de la suite VTube Studio / VNyan
-	const [activeTool, setActiveTool] = useState<VrmActiveTool>(null);
+	const [activeTool, setActiveTool] = useState<StudioActiveTool>(null);
 	const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 	const [isHudVisible, setIsHudVisible] = useState<boolean>(true);
 	const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
@@ -298,10 +299,10 @@ export function VrmCanvas({ className = '' }: Props) {
 	return (
 		<Card
 			ref={containerRef}
-			className={`relative flex w-full flex-col overflow-hidden bg-card shadow-2xl transition-all duration-300 ${
+			className={`relative flex w-full flex-col overflow-hidden bg-card shadow-2xl ${
 				isFullscreen
 					? 'fixed inset-0 z-50 h-screen w-screen rounded-none border-0'
-					: 'rounded-2xl border border-border/80'
+					: 'rounded-2xl border border-border/80 transition-shadow duration-300'
 			} ${className}`}
 			onDragOver={(e) => {
 				e.preventDefault();
@@ -310,11 +311,13 @@ export function VrmCanvas({ className = '' }: Props) {
 			onDragLeave={() => setIsDragging(false)}
 			onDrop={handleDrop}
 		>
-			{/* Encabezado HUD superior (Estilo VTuber Studio / VNyan) */}
+			{/* Encabezado HUD superior (Flotante en fullscreen para no redimensionar el canvas) */}
 			{isHudVisible && (
 				<CardHeader
-					className={`z-20 border-border/60 border-b px-4 py-2.5 backdrop-blur-md sm:px-5 ${
-						isFullscreen ? 'absolute inset-x-0 top-0 bg-card/85 shadow-md' : 'relative bg-card/85'
+					className={`z-20 backdrop-blur-xl transition-all ${
+						isFullscreen
+							? 'pointer-events-auto absolute top-3 right-20 left-4 rounded-2xl border border-border/80 bg-background/85 px-4 py-2 shadow-2xl'
+							: 'relative shrink-0 border-border/60 border-b bg-card/85 px-4 py-2.5 sm:px-5'
 					}`}
 				>
 					<div className='flex flex-wrap items-center justify-between gap-3'>
@@ -389,31 +392,16 @@ export function VrmCanvas({ className = '' }: Props) {
 								<span className='hidden sm:inline'>Overlay OBS</span>
 							</Button>
 
-							{/* Botón Cargar / Cambiar Avatar */}
+							{/* Botón Pantalla Completa */}
 							<Button
-								variant='secondary'
-								size='sm'
-								onClick={() => fileInputRef.current?.click()}
-								disabled={isLoading}
-								className='h-8 gap-1.5 px-3 font-medium font-sans text-xs shadow-xs'
-								title='Cargar o reemplazar avatar .vrm'
+								variant='ghost'
+								size='icon'
+								onClick={handleToggleFullscreen}
+								className='size-8 text-muted-foreground hover:text-foreground'
+								title={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
 							>
-								<Upload className='size-3.5' />
-								<span>{modelMeta ? 'Cambiar Avatar' : 'Cargar VRM'}</span>
+								{isFullscreen ? <Minimize2 className='size-4' /> : <Maximize2 className='size-4' />}
 							</Button>
-
-							{/* Quitar Modelo */}
-							{modelMeta && (
-								<Button
-									variant='ghost'
-									size='icon'
-									onClick={() => void vrmManager.removeModel()}
-									className='size-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive'
-									title='Quitar avatar actual'
-								>
-									<Trash2 className='size-3.5' />
-								</Button>
-							)}
 						</div>
 					</div>
 				</CardHeader>
@@ -421,12 +409,14 @@ export function VrmCanvas({ className = '' }: Props) {
 
 			{/* Escenario 3D Interactivo con Dock y Paneles Flotantes (VTube Studio / VNyan Style) */}
 			<CardContent
-				className={`relative flex flex-col p-0 ${isFullscreen ? 'h-full min-h-0 flex-1' : ''}`}
+				className={`relative flex flex-col p-0 ${
+					isFullscreen ? 'absolute inset-0 h-full w-full' : ''
+				}`}
 			>
 				<div
 					ref={viewportRef}
 					className={`relative w-full min-w-0 overflow-hidden ${
-						isFullscreen ? 'h-full min-h-0 flex-1' : 'h-[560px] md:h-[620px] lg:h-[660px]'
+						isFullscreen ? 'h-full flex-1' : 'h-[560px] md:h-[620px] lg:h-[660px]'
 					}`}
 				>
 					{/* Capa de Fondo (Presets / Color / Imagen) */}
@@ -439,7 +429,8 @@ export function VrmCanvas({ className = '' }: Props) {
 					/>
 
 					{/* Dock Lateral Vertical (Estilo VTube Studio / VNyan) */}
-					<VrmStudioDock
+					<StudioDock
+						mode='vrm'
 						activeTool={activeTool}
 						onToggleTool={(tool) => setActiveTool(tool)}
 						isPlayingAudio={isPlayingAudio}
@@ -458,7 +449,7 @@ export function VrmCanvas({ className = '' }: Props) {
 								animate={{ opacity: 1, x: 0, scale: 1 }}
 								exit={{ opacity: 0, x: 20, scale: 0.96 }}
 								transition={{ duration: 0.2, ease: 'easeOut' }}
-								className='absolute top-4 right-16 z-30 max-h-[calc(100%-2rem)] overflow-y-auto sm:right-18'
+								className='absolute top-4 right-20 z-30 max-h-[calc(100%-2rem)] overflow-y-auto'
 							>
 								{activeTool === 'expressions' && (
 									<VrmStudioExpressionsPanel onClose={() => setActiveTool(null)} />
@@ -550,25 +541,7 @@ export function VrmCanvas({ className = '' }: Props) {
 					/>
 				</div>
 			</CardContent>
-
-			{/* Pie informativo de navegación 3D */}
-			{isHudVisible && !isFullscreen && (
-				<CardFooter className='flex flex-wrap items-center justify-between gap-3 border-border/60 border-t bg-card/60 px-4 py-2.5 text-xs sm:px-5'>
-					<span className='font-mono text-[11px] text-muted-foreground'>
-						Rotar: Clic izq · Zoom: Rueda ratón · Desplazar: Clic der
-					</span>
-					<div className='flex items-center gap-3'>
-						<a
-							href='/overlay/avatar'
-							target='_blank'
-							rel='noopener noreferrer'
-							className='flex items-center gap-1.5 font-medium text-secondary text-xs hover:underline'
-						>
-							<ExternalLink className='size-3.5' /> Abrir Overlay OBS en ventana independiente
-						</a>
-					</div>
-				</CardFooter>
-			)}
+			<AvatarFooter isHudVisible={isHudVisible} isFullscreen={isFullscreen} />
 		</Card>
 	);
 }

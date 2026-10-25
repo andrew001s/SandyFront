@@ -11,6 +11,9 @@ import {
 import { vnyanClient } from '@/lib/avatar/vnyanClient';
 import { createVrmLipSyncHandler } from '@/lib/avatar/vrmLipSync';
 import { vrmManager } from '@/lib/avatar/vrmManager';
+import { createAvatar2dLipSyncHandler } from '@/lib/avatar2d/avatar2dLipSync';
+import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
+import { createLive2dLipSyncHandler } from '@/lib/avatar2d/live2dLipSync';
 import type { AvatarBackendPayload } from '@/lib/vtsAvatarPayload';
 import { createVtsLipSyncHandler, stopVtsLipSync } from '@/lib/vtsLipSync';
 import type {
@@ -24,7 +27,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 export function useAvatar() {
 	const vts = useVTubeStudio();
 
-	const [activeSoftware, setActiveSoftware] = useState<AvatarSoftware>('vtubestudio');
+	const [activeSoftware, setActiveSoftware] = useState<AvatarSoftware>('pngtuber');
 	const [configs, setConfigs] = useState<AvatarSoftwareConfigs>(DEFAULT_SOFTWARE_CONFIGS);
 	const [vnyanState, setVnyanState] = useState(vnyanClient.getState());
 
@@ -42,8 +45,16 @@ export function useAvatar() {
 			if (storedSoftware === 'vseeface' || storedSoftware === 'vnyan') {
 				setActiveSoftware('vrm');
 				window.localStorage.setItem(AVATAR_SOFTWARE_STORAGE_KEY, 'vrm');
-			} else if (storedSoftware === 'vtubestudio' || storedSoftware === 'vrm') {
+			} else if (
+				storedSoftware === 'pngtuber' ||
+				storedSoftware === 'live2d' ||
+				storedSoftware === 'vtubestudio' ||
+				storedSoftware === 'vrm'
+			) {
 				setActiveSoftware(storedSoftware);
+				if (storedSoftware === 'pngtuber' || storedSoftware === 'live2d') {
+					avatar2dManager.setMode(storedSoftware);
+				}
 			}
 		}
 
@@ -77,6 +88,10 @@ export function useAvatar() {
 			setActiveSoftware(targetSoftware);
 			if (typeof window !== 'undefined') {
 				window.localStorage.setItem(AVATAR_SOFTWARE_STORAGE_KEY, targetSoftware);
+			}
+
+			if (targetSoftware === 'pngtuber' || targetSoftware === 'live2d') {
+				avatar2dManager.setMode(targetSoftware);
 			}
 
 			// Desconectar el otro software al alternar
@@ -282,6 +297,15 @@ export function useAvatar() {
 			await vtsInjectParameters(params);
 		});
 
+		const avatar2dHandler = createAvatar2dLipSyncHandler((isSpeaking) => {
+			avatar2dManager.setSpeaking(isSpeaking);
+		});
+
+		const live2dHandler = createLive2dLipSyncHandler((frame) => {
+			avatar2dManager.setMouthParams(frame.mouthOpenY, frame.mouthForm);
+			avatar2dManager.setSpeaking(frame.mouthOpenY > 0.05);
+		});
+
 		AudioQueueManager.getInstance().setLipSyncHandler({
 			prepare: async (blob) => {
 				if (
@@ -290,6 +314,10 @@ export function useAvatar() {
 					activeSoftware === 'vseeface'
 				) {
 					await vrmHandler.prepare(blob);
+				} else if (activeSoftware === 'pngtuber') {
+					await avatar2dHandler.prepare(blob);
+				} else if (activeSoftware === 'live2d') {
+					await live2dHandler.prepare(blob);
 				}
 			},
 			start: async (blob, clock) => {
@@ -302,6 +330,10 @@ export function useAvatar() {
 					await vrmHandler.start(blob, clock);
 				} else if (activeSoftware === 'vtubestudio' && vtsConnected) {
 					await vtsHandler(blob, clock);
+				} else if (activeSoftware === 'pngtuber') {
+					await avatar2dHandler.start(blob, clock);
+				} else if (activeSoftware === 'live2d') {
+					await live2dHandler.start(blob, clock);
 				}
 			},
 			stop: () => {
@@ -311,8 +343,12 @@ export function useAvatar() {
 					activeSoftware === 'vseeface'
 				) {
 					vrmHandler.stop();
-				} else {
+				} else if (activeSoftware === 'vtubestudio') {
 					stopVtsLipSync();
+				} else if (activeSoftware === 'pngtuber') {
+					avatar2dHandler.stop();
+				} else if (activeSoftware === 'live2d') {
+					live2dHandler.stop();
 				}
 			},
 		});
@@ -320,6 +356,8 @@ export function useAvatar() {
 		return () => {
 			vrmHandler.stop();
 			stopVtsLipSync();
+			avatar2dHandler.stop();
+			live2dHandler.stop();
 		};
 	}, [activeSoftware, vnyanState.connected, vtsConnected, vtsInjectParameters]);
 

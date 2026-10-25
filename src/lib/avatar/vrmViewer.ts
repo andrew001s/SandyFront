@@ -265,6 +265,14 @@ export class VrmViewer {
 	}
 
 	/**
+	 * Obtiene los nombres de todas las expresiones declaradas en el modelo VRM actual.
+	 */
+	public getAvailableExpressions(): string[] {
+		if (!this.currentVrm?.expressionManager) return [];
+		return this.currentVrm.expressionManager.expressions.map((e) => e.expressionName);
+	}
+
+	/**
 	 * Activa una expresión facial (Alegría, Enojo, Tristeza, Sorpresa, etc.).
 	 */
 	public setExpression(name: string, intensity = 1.0): void {

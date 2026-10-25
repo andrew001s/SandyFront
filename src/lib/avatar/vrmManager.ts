@@ -50,6 +50,7 @@ export class VrmManager {
 	private currentCameraPreset: VrmCameraPreset = 'face';
 	private currentCameraTransform: VrmCameraTransform | null = null;
 	private currentBackground: VrmBackgroundState | null = null;
+	private availableExpressions: string[] = [];
 
 	private constructor() {
 		if (typeof window !== 'undefined') {
@@ -155,7 +156,9 @@ export class VrmManager {
 		};
 
 		const unregisterModelLoaded = viewer.onModelLoaded(() => {
+			this.availableExpressions = viewer.getAvailableExpressions();
 			applyActiveState();
+			this.notify();
 		});
 
 		if (this.currentBuffer) {
@@ -230,9 +233,14 @@ export class VrmManager {
 		this.notify();
 	}
 
+	public getAvailableExpressions(): string[] {
+		return this.availableExpressions;
+	}
+
 	public async removeModel(): Promise<void> {
 		this.currentBuffer = null;
 		this.currentMeta = null;
+		this.availableExpressions = [];
 		await clearSavedVrmModel();
 		this.notify();
 		this.broadcastChannel?.postMessage({ type: 'modelUpdated' });
