@@ -11,6 +11,7 @@ import {
 	Palette,
 	Smile,
 	Wind,
+	Zap,
 } from 'lucide-react';
 
 export type StudioAvatarMode = 'vrm' | 'pngtuber' | 'live2d';
@@ -23,6 +24,7 @@ export type StudioActiveTool =
 	| 'camera'
 	| 'model'
 	| 'idle'
+	| 'triggers'
 	| 'settings'
 	| null;
 
@@ -133,6 +135,18 @@ export function StudioDock({
 						<span className='-top-0.5 -right-0.5 absolute size-2 rounded-full bg-emerald-400' />
 					)}
 				</button>
+
+				{mode === 'vrm' && (
+					<button
+						aria-label='Nodos activables'
+						className={`flex size-9.5 items-center justify-center rounded-xl border transition-all sm:size-10 ${activeTool === 'triggers' ? 'border-primary/50 bg-primary/20 text-primary' : 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'}`}
+						onClick={() => onToggleTool(activeTool === 'triggers' ? null : 'triggers')}
+						title='Nodos activables'
+						type='button'
+					>
+						<Zap className='size-4' />
+					</button>
+				)}
 
 				{/* 4. Cámara y Encuadre (Disponible en 3D, PNGTuber y Live2D) */}
 				<button

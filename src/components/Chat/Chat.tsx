@@ -5,6 +5,7 @@ import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
 import { useAvatar } from '@/hooks/useAvatar';
 import { useVoiceErrorReporter } from '@/hooks/useVoiceErrorReporter';
+import { vrmManager } from '@/lib/avatar/vrmManager';
 import { singleChunkStream, speakTextStream, speechDeduplicator } from '@/lib/speechPipeline';
 import type { AvatarBackendPayload } from '@/lib/vtsAvatarPayload';
 import { useAuth } from '@clerk/nextjs';
@@ -14,7 +15,7 @@ type StreamEventPayload = AvatarBackendPayload & {
 	client_id?: number;
 };
 
-type StreamEventName = 'speech' | 'reaction' | 'system';
+type StreamEventName = 'speech' | 'reaction' | 'system' | 'avatar_trigger';
 
 const backendUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
 const RECONNECT_BASE_DELAY_MS = 1500;
@@ -220,6 +221,18 @@ const StreamChat = () => {
 					return;
 				}
 
+				if (normalizedType === 'avatar_trigger') {
+					processedMessages.current.add(messageKey);
+					trimProcessedMessages(processedMessages);
+					vrmManager.handleAvatarTrigger(
+						parsedData as StreamEventPayload & {
+							trigger?: string;
+							data?: Record<string, unknown>;
+						},
+					);
+					return;
+				}
+
 				if (normalizedType === 'system') {
 					processedMessages.current.add(messageKey);
 					trimProcessedMessages(processedMessages);
@@ -249,6 +262,12 @@ const StreamChat = () => {
 					event: 'reaction',
 					handler: (event) => {
 						void handleStreamPayload('reaction', event.data);
+					},
+				},
+				{
+					event: 'avatar_trigger',
+					handler: (event) => {
+						void handleStreamPayload('avatar_trigger', event.data);
 					},
 				},
 				{

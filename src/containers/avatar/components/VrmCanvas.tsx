@@ -13,6 +13,7 @@ import { VrmStudioExpressionsPanel } from '@/containers/avatar/components/vrm/Vr
 import { VrmStudioIdlePanel } from '@/containers/avatar/components/vrm/VrmStudioIdlePanel';
 import { VrmStudioLipSyncPanel } from '@/containers/avatar/components/vrm/VrmStudioLipSyncPanel';
 import { VrmStudioModelPanel } from '@/containers/avatar/components/vrm/VrmStudioModelPanel';
+import { VrmStudioTriggersPanel } from '@/containers/avatar/components/vrm/VrmStudioTriggersPanel';
 import { AudioQueueManager } from '@/lib/audioQueueSingleton';
 import {
 	DEFAULT_VRM_BACKGROUND_STATE,
@@ -486,6 +487,10 @@ export function VrmCanvas({ className = '' }: Props) {
 										onUploadClick={() => fileInputRef.current?.click()}
 										onClose={() => setActiveTool(null)}
 									/>
+								)}
+
+								{activeTool === 'triggers' && (
+									<VrmStudioTriggersPanel onClose={() => setActiveTool(null)} />
 								)}
 							</motion.div>
 						)}

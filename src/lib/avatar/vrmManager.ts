@@ -17,6 +17,12 @@ import {
 	loadSavedVrmModel,
 	saveVrmModel,
 } from '@/lib/avatar/vrmStorage';
+import {
+	DEFAULT_VRM_SLIME_COLOR,
+	type VrmDropObjectKind,
+	type VrmTriggerAction,
+	getVrmTriggerRules,
+} from '@/lib/avatar/vrmTriggerGraph';
 import type { VrmCameraPreset, VrmCameraTransform, VrmViewer } from '@/lib/avatar/vrmViewer';
 
 export type VrmSyncMessage =
@@ -28,6 +34,9 @@ export type VrmSyncMessage =
 	| { type: 'cameraPreset'; preset: VrmCameraPreset }
 	| { type: 'cameraTransform'; transform: VrmCameraTransform }
 	| { type: 'background'; state: VrmBackgroundState }
+	| { type: 'throwObject'; kind: VrmDropObjectKind }
+	| { type: 'slime'; enabled: boolean; color?: string }
+	| { type: 'slimeColor'; color: string }
 	| { type: 'requestState' }
 	| {
 			type: 'fullState';
@@ -36,6 +45,8 @@ export type VrmSyncMessage =
 			cameraPreset: VrmCameraPreset;
 			cameraTransform?: VrmCameraTransform;
 			background?: VrmBackgroundState;
+			slimeActive?: boolean;
+			slimeColor?: string;
 			idleSettings?: VrmIdleSettings;
 	  };
 
@@ -60,6 +71,9 @@ export class VrmManager {
 	private currentCameraTransform: VrmCameraTransform | null = null;
 	private currentBackground: VrmBackgroundState | null = null;
 	private availableExpressions: string[] = [];
+	private currentSlimeActive = false;
+	private currentSlimeColor = DEFAULT_VRM_SLIME_COLOR;
+	private slimeOffTimer: ReturnType<typeof setTimeout> | null = null;
 
 	private constructor() {
 		if (typeof window !== 'undefined') {
@@ -162,6 +176,7 @@ export class VrmManager {
 			if (this.currentEmotion !== 'neutral') {
 				viewer.setExpression(this.currentEmotion, this.currentIntensity);
 			}
+			viewer.setSlimeActive(this.currentSlimeActive, this.currentSlimeColor);
 			if (this.currentCameraTransform) {
 				viewer.setCameraTransform(this.currentCameraTransform);
 			} else {
@@ -305,6 +320,81 @@ export class VrmManager {
 		this.broadcastChannel?.postMessage({ type: 'reset' });
 	}
 
+	public executeTriggerAction(action: VrmTriggerAction, broadcast = true): void {
+		switch (action.type) {
+			case 'expression':
+				this.setEmotion(action.expression, 1);
+				break;
+			case 'idle':
+				this.setIdleSettings({ enabled: action.enabled });
+				break;
+			case 'throw_object':
+				{
+					const kind =
+						action.kind && action.kind !== 'random'
+							? action.kind
+							: (['ball', 'rubber_duck', 'sneaker'] as const)[Math.floor(Math.random() * 3)];
+					for (const viewer of this.activeViewers) viewer.spawnDropObject(kind);
+					if (broadcast) this.broadcastChannel?.postMessage({ type: 'throwObject', kind });
+				}
+				break;
+			case 'slime':
+				if (this.slimeOffTimer) clearTimeout(this.slimeOffTimer);
+				this.slimeOffTimer = null;
+				this.currentSlimeActive = action.enabled;
+				this.currentSlimeColor = action.color ?? this.currentSlimeColor;
+				for (const viewer of this.activeViewers) {
+					viewer.setSlimeActive(action.enabled, this.currentSlimeColor);
+				}
+				if (broadcast)
+					this.broadcastChannel?.postMessage({
+						type: 'slime',
+						enabled: action.enabled,
+						color: this.currentSlimeColor,
+					});
+				if (action.enabled && action.durationSeconds && action.durationSeconds > 0) {
+					const seconds = Math.min(300, Math.max(1, action.durationSeconds));
+					this.slimeOffTimer = setTimeout(() => {
+						this.slimeOffTimer = null;
+						this.executeTriggerAction({
+							type: 'slime',
+							enabled: false,
+							color: this.currentSlimeColor,
+						});
+					}, seconds * 1000);
+				}
+				break;
+		}
+	}
+
+	public setSlimeColor(color: string, broadcast = true): void {
+		if (!/^#[\da-f]{6}$/i.test(color)) return;
+		this.currentSlimeColor = color;
+		for (const viewer of this.activeViewers) viewer.setSlimeColor(color);
+		if (broadcast) this.broadcastChannel?.postMessage({ type: 'slimeColor', color });
+	}
+
+	public handleAvatarTrigger(event: { trigger?: string; data?: Record<string, unknown> }): void {
+		const trigger = String(event.trigger ?? '');
+		const searchable = Object.values(event.data ?? {})
+			.filter((value): value is string => typeof value === 'string')
+			.map((value) => value.toLocaleLowerCase())
+			.join(' ');
+		const rewardId = String(event.data?.rewardId ?? '');
+		for (const rule of getVrmTriggerRules()) {
+			if (!rule.enabled || rule.trigger !== trigger) continue;
+			if (rule.trigger === 'channel_point_reward' && rule.rewardId && rule.rewardId !== rewardId)
+				continue;
+			if (
+				rule.trigger !== 'channel_point_reward' &&
+				rule.contains?.trim() &&
+				!searchable.includes(rule.contains.trim().toLocaleLowerCase())
+			)
+				continue;
+			this.executeTriggerAction(rule.action);
+		}
+	}
+
 	public setCameraPreset(preset: VrmCameraPreset): void {
 		this.currentCameraPreset = preset;
 		this.currentCameraTransform = null;
@@ -397,6 +487,19 @@ export class VrmManager {
 				storeBackgroundState(msg.state);
 				this.notifyBg(msg.state);
 				break;
+			case 'throwObject':
+				for (const viewer of this.activeViewers) viewer.spawnDropObject(msg.kind);
+				break;
+			case 'slime':
+				this.currentSlimeActive = msg.enabled;
+				this.currentSlimeColor = msg.color ?? this.currentSlimeColor;
+				for (const viewer of this.activeViewers) {
+					viewer.setSlimeActive(msg.enabled, this.currentSlimeColor);
+				}
+				break;
+			case 'slimeColor':
+				this.setSlimeColor(msg.color, false);
+				break;
 			case 'requestState':
 				this.broadcastChannel?.postMessage({
 					type: 'fullState',
@@ -405,6 +508,8 @@ export class VrmManager {
 					cameraPreset: this.currentCameraPreset,
 					cameraTransform: this.currentCameraTransform ?? undefined,
 					background: this.getBackground(),
+					slimeActive: this.currentSlimeActive,
+					slimeColor: this.currentSlimeColor,
 					idleSettings: this.currentIdleSettings,
 				});
 				break;
@@ -435,6 +540,15 @@ export class VrmManager {
 					this.currentBackground = msg.background;
 					storeBackgroundState(msg.background);
 					this.notifyBg(msg.background);
+				}
+				if (msg.slimeActive !== undefined) {
+					this.currentSlimeActive = msg.slimeActive;
+					this.currentSlimeColor = msg.slimeColor ?? this.currentSlimeColor;
+					for (const viewer of this.activeViewers) {
+						viewer.setSlimeActive(msg.slimeActive, this.currentSlimeColor);
+					}
+				} else if (msg.slimeColor) {
+					this.setSlimeColor(msg.slimeColor, false);
 				}
 				this.notify();
 				break;
