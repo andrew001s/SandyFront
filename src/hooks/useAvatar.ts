@@ -27,22 +27,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 export function useAvatar() {
 	const vts = useVTubeStudio();
 
-	const [activeSoftware, setActiveSoftware] = useState<AvatarSoftware>(() => {
-		if (typeof window === 'undefined') return 'pngtuber';
-		const stored = window.localStorage.getItem(
-			AVATAR_SOFTWARE_STORAGE_KEY,
-		) as AvatarSoftware | null;
-		if (
-			stored === 'pngtuber' ||
-			stored === 'live2d' ||
-			stored === 'vrm' ||
-			stored === 'vtubestudio'
-		) {
-			return stored;
-		}
-		if (stored === 'vseeface' || stored === 'vnyan') return 'vrm';
-		return 'pngtuber';
-	});
+	const [activeSoftware, setActiveSoftware] = useState<AvatarSoftware>('pngtuber');
 	const [configs, setConfigs] = useState<AvatarSoftwareConfigs>(DEFAULT_SOFTWARE_CONFIGS);
 	const [vnyanState, setVnyanState] = useState(vnyanClient.getState());
 
