@@ -38,10 +38,14 @@ pre-commit:
     check:
       glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}"
       exclude: '(^|/)(\.agents|\.claude|\.codex|\.github|\.impeccable)/|skills-lock\.json'
+      env:
+        PATH: "/opt/homebrew/bin:/usr/local/bin:$HOME/.bun/bin:./node_modules/.bin:$PATH"
       run: npx @biomejs/biome check --write --no-errors-on-unmatched --files-ignore-unknown=true --colors=off {staged_files}
       stage_fixed: true
       
 commit-msg:
   commands:
     lint-commit-msg:
+      env:
+        PATH: "/opt/homebrew/bin:/usr/local/bin:$HOME/.bun/bin:./node_modules/.bin:$PATH"
       run: npx commitlint --edit

@@ -5,6 +5,7 @@ import { type Live2dPackage, live2dStore } from '@/lib/avatar2d/live2dStore';
 import { unpackLive2dZip } from '@/lib/avatar2d/live2dZipLoader';
 import type { Avatar2dTransform, Live2dConfig } from '@/lib/avatar2d/types';
 import { AlertCircle, Loader2, Sparkles, Upload } from 'lucide-react';
+import type { Cubism4ModelSettings } from 'pixi-live2d-display/cubism4';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { extractLive2dExpressions } from './Live2dExpressionsPanel';
@@ -432,7 +433,7 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 	useEffect(() => {
 		const currentExpressions =
 			config.activeExpressions ??
-			(config.activeExpression ? [config.activeExpression] : []) ??
+			(config.activeExpression ? [config.activeExpression] : undefined) ??
 			avatar2dManager.getState().live2d.activeExpressions ??
 			[];
 		syncExpressions(currentExpressions);
@@ -632,7 +633,7 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 					);
 				}
 
-				const settings = runtime.createModelSettings(pkg.modelSettingsJson);
+				const settings = runtime.createModelSettings(pkg.modelSettingsJson) as Cubism4ModelSettings;
 				if (!settings.expressions && discovered.length > 0) {
 					settings.expressions = discovered.map((e) => ({
 						Name: e.id,
@@ -686,7 +687,6 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 					try {
 						model.internalModel.motionManager.expressionManager = new Cubism4ExpressionManager(
 							settings,
-							{ autoInteract: false },
 						);
 					} catch {
 						// Ignorar
@@ -744,7 +744,7 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				// Sincronizar expresiones activas
 				const initialExpressions =
 					config.activeExpressions ??
-					(config.activeExpression ? [config.activeExpression] : []) ??
+					(config.activeExpression ? [config.activeExpression] : undefined) ??
 					avatar2dManager.getState().live2d.activeExpressions ??
 					[];
 				syncExpressions(initialExpressions);
