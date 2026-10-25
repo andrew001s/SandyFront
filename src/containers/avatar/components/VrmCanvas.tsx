@@ -2,7 +2,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
 	type StudioActiveTool,
 	StudioDock,
@@ -28,17 +28,16 @@ import {
 	Box,
 	Check,
 	Copy,
-	ExternalLink,
 	Maximize2,
 	Minimize2,
 	RefreshCw,
 	Sparkles,
-	Trash2,
 	Upload,
 	User,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import AvatarFooter from './AvatarFooter';
 
 interface Props {
 	className?: string;
@@ -393,32 +392,6 @@ export function VrmCanvas({ className = '' }: Props) {
 								<span className='hidden sm:inline'>Overlay OBS</span>
 							</Button>
 
-							{/* Botón Cargar / Cambiar Avatar */}
-							<Button
-								variant='secondary'
-								size='sm'
-								onClick={() => fileInputRef.current?.click()}
-								disabled={isLoading}
-								className='h-8 gap-1.5 px-3 font-medium font-sans text-xs shadow-xs'
-								title='Cargar o reemplazar avatar .vrm'
-							>
-								<Upload className='size-3.5' />
-								<span>{modelMeta ? 'Cambiar Avatar' : 'Cargar VRM'}</span>
-							</Button>
-
-							{/* Quitar Modelo */}
-							{modelMeta && (
-								<Button
-									variant='ghost'
-									size='icon'
-									onClick={() => void vrmManager.removeModel()}
-									className='size-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive'
-									title='Quitar avatar actual'
-								>
-									<Trash2 className='size-3.5' />
-								</Button>
-							)}
-
 							{/* Botón Pantalla Completa */}
 							<Button
 								variant='ghost'
@@ -568,25 +541,7 @@ export function VrmCanvas({ className = '' }: Props) {
 					/>
 				</div>
 			</CardContent>
-
-			{/* Pie informativo de navegación 3D */}
-			{isHudVisible && !isFullscreen && (
-				<CardFooter className='flex flex-wrap items-center justify-between gap-3 border-border/60 border-t bg-card/60 px-4 py-2.5 text-xs sm:px-5'>
-					<span className='font-mono text-[11px] text-muted-foreground'>
-						Rotar: Clic izq · Zoom: Rueda ratón · Desplazar: Clic der
-					</span>
-					<div className='flex items-center gap-3'>
-						<a
-							href='/overlay/avatar'
-							target='_blank'
-							rel='noopener noreferrer'
-							className='flex items-center gap-1.5 font-medium text-secondary text-xs hover:underline'
-						>
-							<ExternalLink className='size-3.5' /> Abrir Overlay OBS en ventana independiente
-						</a>
-					</div>
-				</CardFooter>
-			)}
+			<AvatarFooter isHudVisible={isHudVisible} isFullscreen={isFullscreen} />
 		</Card>
 	);
 }

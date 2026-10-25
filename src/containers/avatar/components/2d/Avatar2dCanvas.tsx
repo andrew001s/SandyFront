@@ -28,19 +28,10 @@ import { live2dStore } from '@/lib/avatar2d/live2dStore';
 import { unpackLive2dZip } from '@/lib/avatar2d/live2dZipLoader';
 import type { Avatar2dMode, Avatar2dState } from '@/lib/avatar2d/types';
 import { AnimatePresence, motion } from 'framer-motion';
-import {
-	Activity,
-	Check,
-	Copy,
-	Layers,
-	Maximize2,
-	Minimize2,
-	Sparkles,
-	Tv,
-	Upload,
-} from 'lucide-react';
+import { Check, Copy, Maximize2, Minimize2, Sparkles, Tv, Upload } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import AvatarFooter from '../AvatarFooter';
 
 interface Props {
 	className?: string;
@@ -317,21 +308,9 @@ export function Avatar2dCanvas({ className = '', mode }: Props) {
 							<div>
 								<div className='flex items-center gap-2'>
 									<h2 className='font-bold font-display text-foreground text-sm tracking-tight sm:text-base'>
-										{currentMode === 'pngtuber'
-											? 'Estudio PNGTuber en Navegador'
-											: 'Estudio Live2D en Navegador'}
+										{currentMode === 'pngtuber' ? 'Sandy Studio PNGTuber' : 'Sandy Studio 2D'}
 									</h2>
-									<Badge variant='secondary' className='h-5 gap-1 px-1.5 font-mono text-[10px]'>
-										{currentMode === 'pngtuber' ? (
-											<>
-												<Layers className='size-2.5 text-primary' /> PNGTuber
-											</>
-										) : (
-											<>
-												<Activity className='size-2.5 text-cyan-400' /> Live2D
-											</>
-										)}
-									</Badge>
+
 									{isPlayingAudio && (
 										<Badge
 											variant='outline'
@@ -347,9 +326,7 @@ export function Avatar2dCanvas({ className = '', mode }: Props) {
 									<span className='flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground'>
 										<Sparkles className='size-3 text-primary' />
 										<span>
-											{currentMode === 'pngtuber'
-												? 'Sandy Chibi Reactiva · Reactividad por Voz'
-												: 'Visor WebGL Live2D'}
+											{currentMode === 'pngtuber' ? 'PNGTuber Reactiva' : 'Visor WebGL Live2D'}
 										</span>
 									</span>
 								</div>
@@ -502,6 +479,7 @@ export function Avatar2dCanvas({ className = '', mode }: Props) {
 						)}
 					</AnimatePresence>
 				</div>
+				<AvatarFooter isHudVisible={isHudVisible} isFullscreen={isFullscreen} />
 			</CardContent>
 		</Card>
 	);
