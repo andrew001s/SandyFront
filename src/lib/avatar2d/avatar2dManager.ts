@@ -66,16 +66,63 @@ export class Avatar2dManager {
 				const raw = window.localStorage.getItem(STORAGE_KEY);
 				if (raw) {
 					const parsed = JSON.parse(raw) as Partial<Avatar2dState>;
+					const cleanStoredSprites: Partial<Record<PngTuberSpriteKey, string>> =
+						parsed.pngtuber?.sprites || {};
+					const isStaleIdle =
+						!cleanStoredSprites.idle || cleanStoredSprites.idle.startsWith('data:image/svg+xml');
+					const isStaleSpeaking =
+						!cleanStoredSprites.speaking ||
+						cleanStoredSprites.speaking.startsWith('data:image/svg+xml');
+					const isStaleBlink =
+						!cleanStoredSprites.blink ||
+						cleanStoredSprites.blink === '/avatars/sandy/sandy_idle.png' ||
+						cleanStoredSprites.blink.startsWith('data:image/svg+xml');
+					const isStaleSpeakingBlink =
+						!cleanStoredSprites.speakingBlink ||
+						cleanStoredSprites.speakingBlink === '/avatars/sandy/sandy_speaking.png' ||
+						cleanStoredSprites.speakingBlink.startsWith('data:image/svg+xml');
+
+					const cleanSprites: Record<PngTuberSpriteKey, string> = {
+						...DEFAULT_SANDY_SPRITES,
+						...cleanStoredSprites,
+						idle:
+							isStaleIdle || !cleanStoredSprites.idle
+								? DEFAULT_SANDY_SPRITES.idle
+								: cleanStoredSprites.idle,
+						speaking:
+							isStaleSpeaking || !cleanStoredSprites.speaking
+								? DEFAULT_SANDY_SPRITES.speaking
+								: cleanStoredSprites.speaking,
+						blink:
+							isStaleBlink || !cleanStoredSprites.blink
+								? DEFAULT_SANDY_SPRITES.blink
+								: cleanStoredSprites.blink,
+						speakingBlink:
+							isStaleSpeakingBlink || !cleanStoredSprites.speakingBlink
+								? DEFAULT_SANDY_SPRITES.speakingBlink
+								: cleanStoredSprites.speakingBlink,
+					};
+
+					const cleanEmotions = (parsed.pngtuber?.emotions || DEFAULT_SANDY_EMOTIONS).map((em) => {
+						if (em.id === 'neutral') {
+							return {
+								...em,
+								idle: isStaleIdle ? DEFAULT_SANDY_SPRITES.idle : em.idle,
+								speaking: isStaleSpeaking ? DEFAULT_SANDY_SPRITES.speaking : em.speaking,
+								blink: isStaleBlink ? DEFAULT_SANDY_SPRITES.blink : em.blink,
+							};
+						}
+						return em;
+					});
+
 					this.state = {
 						...DEFAULT_AVATAR2D_STATE,
 						...parsed,
 						pngtuber: {
 							...DEFAULT_AVATAR2D_STATE.pngtuber,
 							...parsed.pngtuber,
-							sprites: {
-								...DEFAULT_SANDY_SPRITES,
-								...(parsed.pngtuber?.sprites || {}),
-							},
+							sprites: cleanSprites,
+							emotions: cleanEmotions,
 						},
 						live2d: {
 							...DEFAULT_AVATAR2D_STATE.live2d,

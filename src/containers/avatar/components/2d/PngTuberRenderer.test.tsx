@@ -233,4 +233,48 @@ describe('PngTuberRenderer', () => {
 		});
 		expect(img.src).toContain('sandy_idle.png');
 	});
+
+	it('triggers Sandy blink sprite during idle silence and speakingBlink sprite during speech', () => {
+		vi.useFakeTimers();
+		avatar2dManager.setEmotion('neutral');
+		avatar2dManager.setSpeaking(false, false);
+
+		render(<PngTuberRenderer config={avatar2dManager.getState().pngtuber} />);
+		const img = screen.getByAltText('Avatar 2D PNGTuber') as HTMLImageElement;
+
+		// 1. Inicialmente muestra idle
+		expect(img.src).toContain('sandy_idle.png');
+
+		// 2. Al cumplirse el intervalo de parpadeo en reposo, muestra sandy_blink.png
+		act(() => {
+			vi.advanceTimersByTime(3800);
+		});
+		expect(img.src).toContain('sandy_blink.png');
+
+		// 3. Pasados 160ms del parpadeo, regresa a reposo con ojos abiertos
+		act(() => {
+			vi.advanceTimersByTime(160);
+		});
+		expect(img.src).toContain('sandy_idle.png');
+
+		// 4. Al hablar, muestra sandy_speaking.png
+		act(() => {
+			avatar2dManager.setSpeaking(true, false);
+		});
+		expect(img.src).toContain('sandy_speaking.png');
+
+		// 5. Al ocurrir el siguiente ciclo de parpadeo (7600ms totales, faltan 3640ms), muestra el sprite de parpadeo
+		act(() => {
+			vi.advanceTimersByTime(3640);
+		});
+		expect(img.src).toContain('sandy_blink.png');
+
+		// 6. Al terminar el parpadeo (160ms), regresa al estado de habla normal
+		act(() => {
+			vi.advanceTimersByTime(160);
+		});
+		expect(img.src).toContain('sandy_speaking.png');
+
+		vi.useRealTimers();
+	});
 });

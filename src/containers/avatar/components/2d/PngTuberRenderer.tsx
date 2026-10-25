@@ -119,7 +119,7 @@ export function PngTuberRenderer({ config, onTransformChange, interactive = true
 		// Estado neutral / avatar base
 		if (isSpeaking) {
 			if (isBlinking) {
-				activeSprite = sprites.speakingBlink || sprites.speaking;
+				activeSprite = sprites.speakingBlink || sprites.blink || sprites.speaking;
 			} else {
 				activeSprite = sprites.speaking;
 			}

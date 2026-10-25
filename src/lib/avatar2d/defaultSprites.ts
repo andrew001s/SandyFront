@@ -150,8 +150,8 @@ function createSandySvg(options: {
 export const DEFAULT_SANDY_SPRITES = {
 	idle: '/avatars/sandy/sandy_idle.png',
 	speaking: '/avatars/sandy/sandy_speaking.png',
-	blink: '/avatars/sandy/sandy_idle.png',
-	speakingBlink: '/avatars/sandy/sandy_speaking.png',
+	blink: '/avatars/sandy/sandy_blink.png',
+	speakingBlink: '/avatars/sandy/sandy_blink.png',
 };
 
 export const DEFAULT_SANDY_EMOTIONS = [
