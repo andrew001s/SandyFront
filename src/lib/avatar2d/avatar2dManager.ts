@@ -62,80 +62,7 @@ export class Avatar2dManager {
 
 	private constructor() {
 		if (typeof window !== 'undefined') {
-			try {
-				const raw = window.localStorage.getItem(STORAGE_KEY);
-				if (raw) {
-					const parsed = JSON.parse(raw) as Partial<Avatar2dState>;
-					const cleanStoredSprites: Partial<Record<PngTuberSpriteKey, string>> =
-						parsed.pngtuber?.sprites || {};
-					const isStaleIdle =
-						!cleanStoredSprites.idle || cleanStoredSprites.idle.startsWith('data:image/svg+xml');
-					const isStaleSpeaking =
-						!cleanStoredSprites.speaking ||
-						cleanStoredSprites.speaking.startsWith('data:image/svg+xml');
-					const isStaleBlink =
-						!cleanStoredSprites.blink ||
-						cleanStoredSprites.blink === '/avatars/sandy/sandy_idle.png' ||
-						cleanStoredSprites.blink.startsWith('data:image/svg+xml');
-					const isStaleSpeakingBlink =
-						!cleanStoredSprites.speakingBlink ||
-						cleanStoredSprites.speakingBlink === '/avatars/sandy/sandy_speaking.png' ||
-						cleanStoredSprites.speakingBlink.startsWith('data:image/svg+xml');
-
-					const cleanSprites: Record<PngTuberSpriteKey, string> = {
-						...DEFAULT_SANDY_SPRITES,
-						...cleanStoredSprites,
-						idle:
-							isStaleIdle || !cleanStoredSprites.idle
-								? DEFAULT_SANDY_SPRITES.idle
-								: cleanStoredSprites.idle,
-						speaking:
-							isStaleSpeaking || !cleanStoredSprites.speaking
-								? DEFAULT_SANDY_SPRITES.speaking
-								: cleanStoredSprites.speaking,
-						blink:
-							isStaleBlink || !cleanStoredSprites.blink
-								? DEFAULT_SANDY_SPRITES.blink
-								: cleanStoredSprites.blink,
-						speakingBlink:
-							isStaleSpeakingBlink || !cleanStoredSprites.speakingBlink
-								? DEFAULT_SANDY_SPRITES.speakingBlink
-								: cleanStoredSprites.speakingBlink,
-					};
-
-					const cleanEmotions = (parsed.pngtuber?.emotions || DEFAULT_SANDY_EMOTIONS).map((em) => {
-						if (em.id === 'neutral') {
-							return {
-								...em,
-								idle: isStaleIdle ? DEFAULT_SANDY_SPRITES.idle : em.idle,
-								speaking: isStaleSpeaking ? DEFAULT_SANDY_SPRITES.speaking : em.speaking,
-								blink: isStaleBlink ? DEFAULT_SANDY_SPRITES.blink : em.blink,
-							};
-						}
-						return em;
-					});
-
-					this.state = {
-						...DEFAULT_AVATAR2D_STATE,
-						...parsed,
-						pngtuber: {
-							...DEFAULT_AVATAR2D_STATE.pngtuber,
-							...parsed.pngtuber,
-							sprites: cleanSprites,
-							emotions: cleanEmotions,
-						},
-						live2d: {
-							...DEFAULT_AVATAR2D_STATE.live2d,
-							...parsed.live2d,
-							activeExpressions:
-								parsed.live2d?.activeExpressions ??
-								(parsed.live2d?.activeExpression ? [parsed.live2d.activeExpression] : []),
-						},
-					};
-				}
-			} catch {
-				// Ignorar error de carga
-			}
+			this.loadFromStorage();
 
 			// BroadcastChannel para sincronizar en tiempo real con Overlay OBS
 			if ('BroadcastChannel' in window) {
@@ -599,6 +526,93 @@ export class Avatar2dManager {
 			type: 'sprites',
 			sprites: DEFAULT_SANDY_SPRITES,
 		});
+	}
+
+	public loadFromStorage(): void {
+		if (typeof window === 'undefined') return;
+		try {
+			const raw = window.localStorage.getItem(STORAGE_KEY);
+			if (raw) {
+				const parsed = JSON.parse(raw) as Partial<Avatar2dState>;
+				const cleanStoredSprites: Partial<Record<PngTuberSpriteKey, string>> =
+					parsed.pngtuber?.sprites || {};
+				const isStaleIdle =
+					!cleanStoredSprites.idle || cleanStoredSprites.idle.startsWith('data:image/svg+xml');
+				const isStaleSpeaking =
+					!cleanStoredSprites.speaking ||
+					cleanStoredSprites.speaking.startsWith('data:image/svg+xml');
+				const isStaleBlink =
+					!cleanStoredSprites.blink ||
+					cleanStoredSprites.blink === '/avatars/sandy/sandy_idle.png' ||
+					cleanStoredSprites.blink.startsWith('data:image/svg+xml');
+				const isStaleSpeakingBlink =
+					!cleanStoredSprites.speakingBlink ||
+					cleanStoredSprites.speakingBlink === '/avatars/sandy/sandy_speaking.png' ||
+					cleanStoredSprites.speakingBlink.startsWith('data:image/svg+xml');
+
+				const cleanSprites: Record<PngTuberSpriteKey, string> = {
+					...DEFAULT_SANDY_SPRITES,
+					...cleanStoredSprites,
+					idle:
+						isStaleIdle || !cleanStoredSprites.idle
+							? DEFAULT_SANDY_SPRITES.idle
+							: cleanStoredSprites.idle,
+					speaking:
+						isStaleSpeaking || !cleanStoredSprites.speaking
+							? DEFAULT_SANDY_SPRITES.speaking
+							: cleanStoredSprites.speaking,
+					blink:
+						isStaleBlink || !cleanStoredSprites.blink
+							? DEFAULT_SANDY_SPRITES.blink
+							: cleanStoredSprites.blink,
+					speakingBlink:
+						isStaleSpeakingBlink || !cleanStoredSprites.speakingBlink
+							? DEFAULT_SANDY_SPRITES.speakingBlink
+							: cleanStoredSprites.speakingBlink,
+				};
+
+				const cleanEmotions = (parsed.pngtuber?.emotions || DEFAULT_SANDY_EMOTIONS).map((em) => {
+					const defaultEmotion = DEFAULT_SANDY_EMOTIONS.find((d) => d.id === em.id);
+					if (defaultEmotion) {
+						const isIdleSvg = !em.idle || em.idle.startsWith('data:image/svg+xml');
+						const isSpeakingSvg = !em.speaking || em.speaking.startsWith('data:image/svg+xml');
+						const isBlinkSvg =
+							!em.blink ||
+							em.blink.startsWith('data:image/svg+xml') ||
+							em.blink === '/avatars/sandy/sandy_idle.png';
+
+						return {
+							...em,
+							idle: isIdleSvg ? defaultEmotion.idle : em.idle,
+							speaking: isSpeakingSvg ? defaultEmotion.speaking : em.speaking,
+							blink: isBlinkSvg ? defaultEmotion.blink : em.blink,
+						};
+					}
+					return em;
+				});
+
+				this.state = {
+					...DEFAULT_AVATAR2D_STATE,
+					...parsed,
+					pngtuber: {
+						...DEFAULT_AVATAR2D_STATE.pngtuber,
+						...parsed.pngtuber,
+						sprites: cleanSprites,
+						emotions: cleanEmotions,
+					},
+					live2d: {
+						...DEFAULT_AVATAR2D_STATE.live2d,
+						...parsed.live2d,
+						activeExpressions:
+							parsed.live2d?.activeExpressions ??
+							(parsed.live2d?.activeExpression ? [parsed.live2d.activeExpression] : []),
+					},
+				};
+				this.notify();
+			}
+		} catch {
+			// Ignorar error de carga
+		}
 	}
 
 	public requestSync(): void {

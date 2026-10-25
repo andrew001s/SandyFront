@@ -137,4 +137,65 @@ describe('avatar2dManager default Sandy sprites', () => {
 		expect(sprites.idle).toBe('/avatars/sandy/sandy_idle.png');
 		expect(sprites.speaking).toBe('/avatars/sandy/sandy_speaking.png');
 	});
+
+	it('migrates stored SVG emotion sprites to official Sandy emotion illustrations on initialization', () => {
+		const staleState = {
+			mode: 'pngtuber',
+			pngtuber: {
+				sprites: {
+					idle: 'data:image/svg+xml;utf8,%3Csvg%3Eold_idle%3C/svg%3E',
+					speaking: 'data:image/svg+xml;utf8,%3Csvg%3Eold_speaking%3C/svg%3E',
+					blink: 'data:image/svg+xml;utf8,%3Csvg%3Eold_blink%3C/svg%3E',
+					speakingBlink: 'data:image/svg+xml;utf8,%3Csvg%3Eold_sp_blink%3C/svg%3E',
+				},
+				activeEmotion: 'happy',
+				emotions: [
+					{
+						id: 'neutral',
+						label: 'Neutral',
+						idle: 'data:image/svg+xml;utf8,%3Csvg%3Eold_neutral%3C/svg%3E',
+					},
+					{
+						id: 'happy',
+						label: 'Feliz / Radiante',
+						idle: 'data:image/svg+xml;utf8,%3Csvg%3Eold_happy%3C/svg%3E',
+						speaking: 'data:image/svg+xml;utf8,%3Csvg%3Eold_happy_sp%3C/svg%3E',
+					},
+					{
+						id: 'surprised',
+						label: 'Sorpresa / ¡Oh!',
+						idle: 'data:image/svg+xml;utf8,%3Csvg%3Eold_surprised%3C/svg%3E',
+					},
+					{
+						id: 'angry',
+						label: 'Puchero / Enojada',
+						idle: 'data:image/svg+xml;utf8,%3Csvg%3Eold_angry%3C/svg%3E',
+					},
+					{
+						id: 'custom_user_1',
+						label: 'Mi Emocion Custom',
+						idle: 'data:image/png;base64,custom_keep_me',
+					},
+				],
+			},
+		};
+		window.localStorage.setItem('sandy_avatar2d_state', JSON.stringify(staleState));
+
+		avatar2dManager.loadFromStorage();
+
+		const emotions = avatar2dManager.getState().pngtuber.emotions;
+		const happy = emotions.find((e) => e.id === 'happy');
+		const surprised = emotions.find((e) => e.id === 'surprised');
+		const angry = emotions.find((e) => e.id === 'angry');
+		const custom = emotions.find((e) => e.id === 'custom_user_1');
+
+		// All default emotions should now be migrated to Sandy PNG illustrations
+		expect(happy?.idle).toBe('/avatars/sandy/sandy_happy.png');
+		expect(happy?.speaking).toBe('/avatars/sandy/sandy_happy_speaking.png');
+		expect(surprised?.idle).toBe('/avatars/sandy/sandy_surprised.png');
+		expect(angry?.idle).toBe('/avatars/sandy/sandy_angry.png');
+
+		// User custom emotion should NOT be overwritten
+		expect(custom?.idle).toBe('data:image/png;base64,custom_keep_me');
+	});
 });
