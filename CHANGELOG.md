@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.6](https://github.com/andrew001s/SandyFront/compare/v0.2.5...v0.2.6) (2026-10-25)
+
+
+### Features
+
+* ✨ add 2D and 3D avatar rendering, management, and testing utilities ([60f7563](https://github.com/andrew001s/SandyFront/commit/60f756358be3ee8512b69ed8b89f8ce36d80a142))
+* ✨ add 2D avatar canvas and components including live2d and pngtuber renderers ([b3b635e](https://github.com/andrew001s/SandyFront/commit/b3b635e1fd58fd3de73d16d6fa098b69a0745c45))
+* ✨ add 2D avatar support with Live2D and PNGTuber renderers and studio panels ([5c5bfcf](https://github.com/andrew001s/SandyFront/commit/5c5bfcf0425ec5a3045c9a5879824d5e4b32fd55))
+* ✨ add avatar 2d types, live2d renderer, settings panel, and manager implementation ([ece0879](https://github.com/andrew001s/SandyFront/commit/ece0879ebf3d704d24c0cc65b5322ee9daa3c6db))
+* ✨ add dedicated blink sprite for 2D PngTuber avatar and handle stale sprite cache cleanup ([985cee2](https://github.com/andrew001s/SandyFront/commit/985cee2ad0713c5175538e590be89bfcf4dc3b3f))
+* ✨ add emotion deletion functionality with confirmation dialog and tests ([5f234a0](https://github.com/andrew001s/SandyFront/commit/5f234a0aeac82483f804b4b03fd822ea8e28476f))
+* ✨ add Live2dExpressionsPanel and integrate it into Avatar2dCanvas with tests ([80dc75b](https://github.com/andrew001s/SandyFront/commit/80dc75bfa6e7694a285c1a57a1cbcaa3a64b2036))
+* ✨ add method to retrieve available facial expressions from VRM models with corresponding tests ([2e7381e](https://github.com/andrew001s/SandyFront/commit/2e7381eaad80f58ef7c96b50f57ef8e91eee8aed))
+* ✨ add official PNG character sprites for Sandy avatar ([3cafc70](https://github.com/andrew001s/SandyFront/commit/3cafc70e65cb9f5c353947c918d1889dd9bd6178))
+* ✨ add PNG emotion sprites for Sandy avatar and update default sprites configuration ([0b91da9](https://github.com/andrew001s/SandyFront/commit/0b91da948c4b314ad302d3c8f64800946372c62c))
+* ✨ add support for custom avatar 2d expressions and image uploads ([9aaff8a](https://github.com/andrew001s/SandyFront/commit/9aaff8a2b351063ef9ecaf76c610435df6e02fcb))
+* ✨ add support for loading, parsing, and applying Live2D expression parameters and animations ([6a94cc5](https://github.com/andrew001s/SandyFront/commit/6a94cc5f0a16e378c099949fdf59f0c0b7a5d945))
+* ✨ implement Live2D 2D avatar rendering container, hooks, lip sync manager, and tests ([bebbb27](https://github.com/andrew001s/SandyFront/commit/bebbb27aa35b953235a7c900f2dc7666c67d9e33))
+* ✨ update news modal for v0.2.6 avatar studio release ([b14cc4c](https://github.com/andrew001s/SandyFront/commit/b14cc4c3232ac6d61d4996f6d4fe668871cd3bc4))
+* add 2D avatar settings panel, renderers, and agent workflow skills ([dc04d85](https://github.com/andrew001s/SandyFront/commit/dc04d855347c93d762fa0f1ed0ae7f8c230dda3e))
+* add functionality to update and edit custom and default avatar expressions ([7e892f1](https://github.com/andrew001s/SandyFront/commit/7e892f1a1896dff796ea97fba2489922907a5b79))
+* **Avatar2dSettingsPanel:** ✨ add Avatar2dSettingsPanel component ([0e5f77c](https://github.com/andrew001s/SandyFront/commit/0e5f77cdd76120bba38eb0ccc867cd73b5e14928))
+* **PngTuberRender:** ✨ implement 2D PNGTuber avatar renderer, lipsync, and avatar management hook ([08784a5](https://github.com/andrew001s/SandyFront/commit/08784a5385c4a41e8db88b1d83f3994e3ee9a195))
+* **StudioDock:** ✨ add avatar studio dock and 2d avatar components with type definitions ([f733e0c](https://github.com/andrew001s/SandyFront/commit/f733e0cb3de795a15320cef52d0e32659d2aae3f))
+* update news modal to version 0.2.5 with VRM 3D studio banner and release notes ([b45d4db](https://github.com/andrew001s/SandyFront/commit/b45d4db31b431baaf07849676ee39c8bafa34e7e))
+* update sandy_surprised avatar image ([66920ab](https://github.com/andrew001s/SandyFront/commit/66920ab9d701a5ceb660b84cc6e43676af60a04f))
+
+
+### Bug Fixes
+
+* ♻️ remove empty deleted file ([12d45ef](https://github.com/andrew001s/SandyFront/commit/12d45eff2eb4f8eabf569f27b896741a590e86d2))
+* 🐛 move Toaster component outside of main layout container in root layout ([40b37db](https://github.com/andrew001s/SandyFront/commit/40b37db8bf8613f815b5fc0aadc184341f099744))
+
 ### [0.2.5](https://github.com/andrew001s/SandyFront/compare/v0.2.4...v0.2.5) (2026-10-23)
 
 
