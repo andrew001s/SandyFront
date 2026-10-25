@@ -10,6 +10,7 @@ import {
 import { VrmStudioBackgroundPanel } from '@/containers/avatar/components/vrm/VrmStudioBackgroundPanel';
 import { VrmStudioCameraPanel } from '@/containers/avatar/components/vrm/VrmStudioCameraPanel';
 import { VrmStudioExpressionsPanel } from '@/containers/avatar/components/vrm/VrmStudioExpressionsPanel';
+import { VrmStudioIdlePanel } from '@/containers/avatar/components/vrm/VrmStudioIdlePanel';
 import { VrmStudioLipSyncPanel } from '@/containers/avatar/components/vrm/VrmStudioLipSyncPanel';
 import { VrmStudioModelPanel } from '@/containers/avatar/components/vrm/VrmStudioModelPanel';
 import { AudioQueueManager } from '@/lib/audioQueueSingleton';
@@ -453,6 +454,10 @@ export function VrmCanvas({ className = '' }: Props) {
 							>
 								{activeTool === 'expressions' && (
 									<VrmStudioExpressionsPanel onClose={() => setActiveTool(null)} />
+								)}
+
+								{activeTool === 'idle' && (
+									<VrmStudioIdlePanel onClose={() => setActiveTool(null)} />
 								)}
 
 								{activeTool === 'lipsync' && (

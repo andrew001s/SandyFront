@@ -7,6 +7,11 @@ import {
 	storeBackgroundState,
 } from '@/lib/avatar/vrmBackground';
 import {
+	DEFAULT_VRM_IDLE_SETTINGS,
+	type VrmIdleSettings,
+	normalizeVrmIdleSettings,
+} from '@/lib/avatar/vrmIdle';
+import {
 	type VrmModelMeta,
 	clearSavedVrmModel,
 	loadSavedVrmModel,
@@ -17,6 +22,7 @@ import type { VrmCameraPreset, VrmCameraTransform, VrmViewer } from '@/lib/avata
 export type VrmSyncMessage =
 	| { type: 'vowels'; vowels: { A?: number; I?: number; U?: number; E?: number; O?: number } }
 	| { type: 'emotion'; emotion: string; intensity: number }
+	| { type: 'idleSettings'; settings: VrmIdleSettings }
 	| { type: 'reset' }
 	| { type: 'modelUpdated' }
 	| { type: 'cameraPreset'; preset: VrmCameraPreset }
@@ -30,10 +36,12 @@ export type VrmSyncMessage =
 			cameraPreset: VrmCameraPreset;
 			cameraTransform?: VrmCameraTransform;
 			background?: VrmBackgroundState;
+			idleSettings?: VrmIdleSettings;
 	  };
 
 const CAMERA_STORAGE_KEY = 'sandy_vrm_camera_transform';
 const PRESET_STORAGE_KEY = 'sandy_vrm_camera_preset';
+const IDLE_STORAGE_KEY = 'sandy_vrm_idle_settings';
 
 export class VrmManager {
 	private static instance: VrmManager;
@@ -47,6 +55,7 @@ export class VrmManager {
 	// Estado activo para sincronización espejo en tiempo real con OBS Overlay
 	private currentEmotion = 'neutral';
 	private currentIntensity = 1.0;
+	private currentIdleSettings: VrmIdleSettings = { ...DEFAULT_VRM_IDLE_SETTINGS };
 	private currentCameraPreset: VrmCameraPreset = 'face';
 	private currentCameraTransform: VrmCameraTransform | null = null;
 	private currentBackground: VrmBackgroundState | null = null;
@@ -62,6 +71,10 @@ export class VrmManager {
 				const savedPreset = window.localStorage.getItem(PRESET_STORAGE_KEY);
 				if (savedPreset) {
 					this.currentCameraPreset = savedPreset as VrmCameraPreset;
+				}
+				const savedIdle = window.localStorage.getItem(IDLE_STORAGE_KEY);
+				if (savedIdle) {
+					this.currentIdleSettings = normalizeVrmIdleSettings(JSON.parse(savedIdle));
 				}
 				this.currentBackground = getStoredBackgroundState();
 			} catch {
@@ -145,6 +158,7 @@ export class VrmManager {
 		this.activeViewers.add(viewer);
 
 		const applyActiveState = () => {
+			viewer.setIdleSettings(this.currentIdleSettings);
 			if (this.currentEmotion !== 'neutral') {
 				viewer.setExpression(this.currentEmotion, this.currentIntensity);
 			}
@@ -235,6 +249,27 @@ export class VrmManager {
 
 	public getAvailableExpressions(): string[] {
 		return this.availableExpressions;
+	}
+
+	public getIdleSettings(): VrmIdleSettings {
+		return { ...this.currentIdleSettings };
+	}
+
+	public setIdleSettings(settings: Partial<VrmIdleSettings>): void {
+		this.currentIdleSettings = normalizeVrmIdleSettings(settings, this.currentIdleSettings);
+		try {
+			window.localStorage.setItem(IDLE_STORAGE_KEY, JSON.stringify(this.currentIdleSettings));
+		} catch {
+			// Keep the setting in memory when browser storage is unavailable.
+		}
+		for (const viewer of this.activeViewers) {
+			viewer.setIdleSettings(this.currentIdleSettings);
+		}
+		this.broadcastChannel?.postMessage({
+			type: 'idleSettings',
+			settings: this.currentIdleSettings,
+		});
+		this.notify();
 	}
 
 	public async removeModel(): Promise<void> {
@@ -337,6 +372,13 @@ export class VrmManager {
 					viewer.resetExpressions();
 				}
 				break;
+			case 'idleSettings':
+				this.currentIdleSettings = normalizeVrmIdleSettings(msg.settings, this.currentIdleSettings);
+				for (const viewer of this.activeViewers) {
+					viewer.setIdleSettings(this.currentIdleSettings);
+				}
+				this.notify();
+				break;
 			case 'cameraPreset':
 				this.currentCameraPreset = msg.preset;
 				this.currentCameraTransform = null;
@@ -363,11 +405,21 @@ export class VrmManager {
 					cameraPreset: this.currentCameraPreset,
 					cameraTransform: this.currentCameraTransform ?? undefined,
 					background: this.getBackground(),
+					idleSettings: this.currentIdleSettings,
 				});
 				break;
 			case 'fullState':
 				this.currentEmotion = msg.emotion;
 				this.currentIntensity = msg.intensity;
+				if (msg.idleSettings) {
+					this.currentIdleSettings = normalizeVrmIdleSettings(
+						msg.idleSettings,
+						this.currentIdleSettings,
+					);
+					for (const viewer of this.activeViewers) {
+						viewer.setIdleSettings(this.currentIdleSettings);
+					}
+				}
 				if (msg.cameraTransform) {
 					this.currentCameraTransform = msg.cameraTransform;
 					for (const viewer of this.activeViewers) {
@@ -384,6 +436,7 @@ export class VrmManager {
 					storeBackgroundState(msg.background);
 					this.notifyBg(msg.background);
 				}
+				this.notify();
 				break;
 			case 'modelUpdated':
 				void this.restoreSavedModel().then(() => {

@@ -1,9 +1,19 @@
 'use client';
 
-import { type VRM, VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
+import { type VRM, type VRMHumanBoneName, VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { type GLTF, GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import {
+	DEFAULT_VRM_IDLE_SETTINGS,
+	VRM_IDLE_BONES,
+	VRM_RELAXED_ARM_POSE,
+	type VrmIdleBoneName,
+	type VrmIdleRotation,
+	type VrmIdleSettings,
+	normalizeVrmIdleSettings,
+	sampleVrmIdlePose,
+} from './vrmIdle';
 
 export interface VrmViewerOptions {
 	canvas: HTMLCanvasElement;
@@ -28,6 +38,16 @@ export class VrmViewer {
 	private currentVrm: VRM | null = null;
 	private animationFrameId: number | null = null;
 	private isDisposed = false;
+	private idleSettings: VrmIdleSettings = { ...DEFAULT_VRM_IDLE_SETTINGS };
+	private idleRestRotations = new Map<VrmIdleBoneName, THREE.Quaternion>();
+	private idleBlendWeight = 1;
+	private idleBlendStartWeight = 1;
+	private idleBlendTargetWeight = 1;
+	private idleBlendStartTime = 0;
+	private idleBlendDuration = DEFAULT_VRM_IDLE_SETTINGS.smoothSeconds;
+	private idleEuler = new THREE.Euler();
+	private idleDeltaQuaternion = new THREE.Quaternion();
+	private idleTargetQuaternion = new THREE.Quaternion();
 
 	// Micro-animación de respiración y parpadeo natural
 	private nextBlinkTime = 0;
@@ -102,6 +122,23 @@ export class VrmViewer {
 	public onFpsUpdate(callback: (fps: number) => void): () => void {
 		this.onFpsCallbacks.add(callback);
 		return () => this.onFpsCallbacks.delete(callback);
+	}
+
+	public getIdleSettings(): VrmIdleSettings {
+		return { ...this.idleSettings };
+	}
+
+	public setIdleSettings(settings: Partial<VrmIdleSettings>): void {
+		const next = normalizeVrmIdleSettings(settings, this.idleSettings);
+		if (next.enabled !== this.idleSettings.enabled) {
+			const elapsed = this.clock.getElapsedTime();
+			this.idleBlendWeight = this.getIdleBlendWeight(elapsed);
+			this.idleBlendStartWeight = this.idleBlendWeight;
+			this.idleBlendTargetWeight = next.enabled ? 1 : 0;
+			this.idleBlendStartTime = elapsed;
+			this.idleBlendDuration = next.smoothSeconds;
+		}
+		this.idleSettings = next;
 	}
 
 	public resize(width: number, height: number): void {
@@ -205,9 +242,10 @@ export class VrmViewer {
 				VRMUtils.rotateVRM0(vrm);
 				this.currentVrm = vrm;
 				this.scene.add(vrm.scene);
+				this.captureIdleRestPose();
 
 				// Aplicar inmediatamente la postura natural de descanso (eliminar Pose en T)
-				this.updateIdlePose(0);
+				this.updateIdlePose(this.clock.getElapsedTime());
 				vrm.update(0);
 
 				// Centrar objetivo en la cabeza del modelo si está disponible
@@ -349,80 +387,61 @@ export class VrmViewer {
 		}
 	}
 
-	/**
-	 * Aplica una postura de reposo natural continua (eliminando la pose en T rígida)
-	 * con respiración orgánica, micro-balanceo y relajación anatómica de brazos y hombros.
-	 */
+	private captureIdleRestPose(): void {
+		this.idleRestRotations.clear();
+		const humanoid = this.currentVrm?.humanoid;
+		if (!humanoid) return;
+
+		for (const boneName of VRM_IDLE_BONES) {
+			const node = humanoid.getNormalizedBoneNode(boneName as VRMHumanBoneName);
+			if (node) this.idleRestRotations.set(boneName, node.quaternion.clone());
+		}
+	}
+
+	private getIdleBlendWeight(elapsed: number): number {
+		if (this.idleBlendDuration <= 0) return this.idleBlendTargetWeight;
+		const progress = THREE.MathUtils.clamp(
+			(elapsed - this.idleBlendStartTime) / this.idleBlendDuration,
+			0,
+			1,
+		);
+		return THREE.MathUtils.lerp(this.idleBlendStartWeight, this.idleBlendTargetWeight, progress);
+	}
+
+	/** Applies the sampled idle as a local quaternion offset from the model's normalized rest pose. */
 	private updateIdlePose(elapsed: number): void {
-		if (!this.currentVrm?.humanoid) return;
+		const humanoid = this.currentVrm?.humanoid;
+		if (!humanoid) return;
 
-		// Ciclos senoidales suaves para respiración (~3.2s) y micro-balanceo (~6.5s)
-		const breathCycle = Math.sin(elapsed * 1.95) * 0.025;
-		const swayCycle = Math.sin(elapsed * 0.95) * 0.015;
+		this.idleBlendWeight = this.getIdleBlendWeight(elapsed);
+		const pose = sampleVrmIdlePose(elapsed, this.idleSettings);
 
-		const humanoid = this.currentVrm.humanoid;
-		const spine = humanoid.getNormalizedBoneNode('spine');
-		const chest = humanoid.getNormalizedBoneNode('chest');
-		const neck = humanoid.getNormalizedBoneNode('neck');
-		const head = humanoid.getNormalizedBoneNode('head');
-
-		const leftUpperArm = humanoid.getNormalizedBoneNode('leftUpperArm');
-		const rightUpperArm = humanoid.getNormalizedBoneNode('rightUpperArm');
-		const leftLowerArm = humanoid.getNormalizedBoneNode('leftLowerArm');
-		const rightLowerArm = humanoid.getNormalizedBoneNode('rightLowerArm');
-		const leftHand = humanoid.getNormalizedBoneNode('leftHand');
-		const rightHand = humanoid.getNormalizedBoneNode('rightHand');
-
-		// Columna, pecho y cabeza con respiración y micro-balanceo orgánico
-		if (spine) {
-			spine.rotation.x = breathCycle * 0.35;
-			spine.rotation.y = swayCycle * 0.3;
-		}
-		if (chest) {
-			chest.rotation.x = breathCycle * 0.55;
-			chest.rotation.z = swayCycle * 0.25;
-		}
-		if (neck) {
-			neck.rotation.x = -breathCycle * 0.15;
-		}
-		if (head) {
-			head.rotation.x = -breathCycle * 0.2;
-			head.rotation.y = -swayCycle * 0.4;
+		for (const [boneName, offset] of Object.entries(pose) as [VrmIdleBoneName, VrmIdleRotation][]) {
+			this.applyIdleRotation(humanoid, boneName, offset, this.idleBlendWeight);
 		}
 
-		// Brazos relajados hacia abajo a los lados del torso (postura natural de descanso)
-		// En el espacio normalizado de Three-VRM:
-		// +Z baja el brazo izquierdo y -Z baja el brazo derecho hacia el costado del cuerpo.
-		if (leftUpperArm) {
-			leftUpperArm.rotation.z = 1.35 - breathCycle * 0.04;
-			leftUpperArm.rotation.x = 0.05;
-			leftUpperArm.rotation.y = 0.02;
+		for (const [boneName, offset] of Object.entries(VRM_RELAXED_ARM_POSE) as [
+			VrmIdleBoneName,
+			VrmIdleRotation,
+		][]) {
+			this.applyIdleRotation(humanoid, boneName, offset, 1);
 		}
-		if (rightUpperArm) {
-			rightUpperArm.rotation.z = -1.35 + breathCycle * 0.04;
-			rightUpperArm.rotation.x = 0.05;
-			rightUpperArm.rotation.y = -0.02;
-		}
+	}
 
-		// Antebrazos con orientación anatómica relajada
-		if (leftLowerArm) {
-			leftLowerArm.rotation.z = 0.05;
-			leftLowerArm.rotation.y = 0.15;
-			leftLowerArm.rotation.x = 0.05;
-		}
-		if (rightLowerArm) {
-			rightLowerArm.rotation.z = -0.05;
-			rightLowerArm.rotation.y = -0.15;
-			rightLowerArm.rotation.x = 0.05;
-		}
+	private applyIdleRotation(
+		humanoid: NonNullable<VRM['humanoid']>,
+		boneName: VrmIdleBoneName,
+		offset: VrmIdleRotation,
+		weight: number,
+	): void {
+		const node = humanoid.getNormalizedBoneNode(boneName as VRMHumanBoneName);
+		const base = this.idleRestRotations.get(boneName);
+		if (!node || !base) return;
 
-		// Muñecas y manos relajadas
-		if (leftHand) {
-			leftHand.rotation.x = 0.02;
-		}
-		if (rightHand) {
-			rightHand.rotation.x = 0.02;
-		}
+		this.idleEuler.set(offset.x, offset.y, offset.z, 'XYZ');
+		this.idleDeltaQuaternion.setFromEuler(this.idleEuler);
+		this.idleTargetQuaternion.copy(base).multiply(this.idleDeltaQuaternion);
+		node.quaternion.copy(base).slerp(this.idleTargetQuaternion, weight);
 	}
 
 	private animate = (): void => {
@@ -466,6 +485,7 @@ export class VrmViewer {
 			VRMUtils.deepDispose(this.currentVrm.scene);
 			this.currentVrm = null;
 		}
+		this.idleRestRotations.clear();
 
 		this.controls.dispose();
 		this.renderer.dispose();

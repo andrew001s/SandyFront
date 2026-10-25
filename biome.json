@@ -14,6 +14,7 @@
 			".codex",
 			".github",
 			".impeccable",
+			"public/live2d/**",
 			"skills-lock.json",
 			"**/dist",
 			"CHANGELOG.md",

@@ -1,6 +1,17 @@
 'use client';
 
-import { Box, Camera, Eye, EyeOff, Maximize2, Mic, Minimize2, Palette, Smile } from 'lucide-react';
+import {
+	Box,
+	Camera,
+	Eye,
+	EyeOff,
+	Maximize2,
+	Mic,
+	Minimize2,
+	Palette,
+	Smile,
+	Wind,
+} from 'lucide-react';
 
 export type StudioAvatarMode = 'vrm' | 'pngtuber' | 'live2d';
 
@@ -11,6 +22,7 @@ export type StudioActiveTool =
 	| 'background'
 	| 'camera'
 	| 'model'
+	| 'idle'
 	| 'settings'
 	| null;
 
@@ -139,19 +151,34 @@ export function StudioDock({
 
 				{/* Herramientas específicas 3D VRM */}
 				{mode === 'vrm' && (
-					<button
-						type='button'
-						onClick={() => onToggleTool(activeTool === 'model' ? null : 'model')}
-						className={`relative flex size-9.5 items-center justify-center rounded-xl border transition-all sm:size-10 ${
-							activeTool === 'model'
-								? 'scale-105 border-cyan-500/50 bg-cyan-500/20 text-cyan-400 shadow-md ring-1 ring-border/50'
-								: 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'
-						}`}
-						title='Avatar VRM'
-						aria-label='Avatar VRM'
-					>
-						<Box className='size-4.5' />
-					</button>
+					<>
+						<button
+							type='button'
+							onClick={() => onToggleTool(activeTool === 'model' ? null : 'model')}
+							className={`relative flex size-9.5 items-center justify-center rounded-xl border transition-all sm:size-10 ${
+								activeTool === 'model'
+									? 'scale-105 border-cyan-500/50 bg-cyan-500/20 text-cyan-400 shadow-md ring-1 ring-border/50'
+									: 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'
+							}`}
+							title='Avatar VRM'
+							aria-label='Avatar VRM'
+						>
+							<Box className='size-4.5' />
+						</button>
+						<button
+							type='button'
+							onClick={() => onToggleTool(activeTool === 'idle' ? null : 'idle')}
+							className={`relative flex size-9.5 items-center justify-center rounded-xl border transition-all sm:size-10 ${
+								activeTool === 'idle'
+									? 'border-primary/50 bg-primary/20 text-primary ring-1 ring-border/50'
+									: 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'
+							}`}
+							title='Idle del avatar'
+							aria-label='Ajustes de idle del avatar'
+						>
+							<Wind className='size-4.5' />
+						</button>
+					</>
 				)}
 
 				{/* Herramientas específicas PNGTuber */}
