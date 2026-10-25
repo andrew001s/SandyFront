@@ -15,6 +15,7 @@ export function getAvatar2dCameraPresetTransform(
 	mode: Avatar2dMode,
 	_containerHeight = 600,
 ): Avatar2dTransform {
+	void _containerHeight;
 	if (preset === 'fit') {
 		return { x: 0, y: 0, scale: 1, rotation: 0 };
 	}

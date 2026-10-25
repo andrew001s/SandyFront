@@ -47,7 +47,7 @@ async function ensureCubismCore(): Promise<void> {
  */
 export function applyLive2dMouthParams(
 	// biome-ignore lint/suspicious/noExplicitAny: dynamic Live2D model instance
-	coreModel: any,
+	coreModel: any, // eslint-disable-line @typescript-eslint/no-explicit-any -- Live2D core API is provided dynamically by the runtime.
 	params: { mouthOpenY: number; mouthForm: number },
 ): void {
 	if (!coreModel?.setParameterValueById) return;
@@ -111,7 +111,7 @@ export function stepLive2dFocusDecay(
  */
 export function applyLive2dFocusPoint(
 	// biome-ignore lint/suspicious/noExplicitAny: dynamic Live2D model instance
-	model: any,
+	model: any, // eslint-disable-line @typescript-eslint/no-explicit-any -- pixi-live2d-display exposes runtime-specific model internals.
 	focus: Live2dFocusPoint,
 ): void {
 	if (!model) return;
@@ -146,7 +146,7 @@ export function applyLive2dFocusPoint(
  */
 export function applyLive2dExpression(
 	// biome-ignore lint/suspicious/noExplicitAny: dynamic Live2D model instance
-	model: any,
+	model: any, // eslint-disable-line @typescript-eslint/no-explicit-any -- pixi-live2d-display exposes runtime-specific model internals.
 	expressionId: string | null | undefined,
 ): void {
 	if (!model) return;
@@ -207,7 +207,7 @@ export function findExpressionUrlInFileMap(
  */
 export function parseLive2dExpressionParams(
 	// biome-ignore lint/suspicious/noExplicitAny: dynamic JSON object
-	data: any,
+	data: any, // eslint-disable-line @typescript-eslint/no-explicit-any -- Supports multiple external Live2D expression JSON schemas.
 ): Live2dExpressionParameter[] {
 	if (!data) return [];
 	if (Array.isArray(data.Parameters)) {
@@ -232,7 +232,7 @@ export function parseLive2dExpressionParams(
  */
 export function resetLive2dExpressionParams(
 	// biome-ignore lint/suspicious/noExplicitAny: dynamic Live2D core model
-	core: any,
+	core: any, // eslint-disable-line @typescript-eslint/no-explicit-any -- Live2D core APIs vary across Cubism versions.
 	params: Live2dExpressionParameter[],
 ): void {
 	if (!core || !Array.isArray(params)) return;
@@ -270,7 +270,7 @@ export function resetLive2dExpressionParams(
  */
 export function applyLive2dExpressionParams(
 	// biome-ignore lint/suspicious/noExplicitAny: dynamic Live2D model instance
-	core: any,
+	core: any, // eslint-disable-line @typescript-eslint/no-explicit-any -- Live2D core APIs vary across Cubism versions.
 	params: Live2dExpressionParameter[],
 ): void {
 	if (!core || !Array.isArray(params)) return;
@@ -294,9 +294,9 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
 	// biome-ignore lint/suspicious/noExplicitAny: dynamic Pixi application instance
-	const appRef = useRef<any>(null);
+	const appRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any -- Pixi application type is loaded dynamically on the client.
 	// biome-ignore lint/suspicious/noExplicitAny: dynamic Live2D model instance
-	const modelRef = useRef<any>(null);
+	const modelRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any -- Live2D model type is loaded dynamically on the client.
 	const visualBoundsRef = useRef<{ x: number; y: number; width: number; height: number } | null>(
 		null,
 	);
