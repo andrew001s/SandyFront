@@ -209,4 +209,28 @@ describe('PngTuberRenderer', () => {
 		rerender(<PngTuberRenderer config={avatar2dManager.getState().pngtuber} />);
 		expect(img.src).not.toContain('temporal_visible_idle');
 	});
+
+	it('renders Sandy official idle sprite on silence and switches to Sandy speaking sprite on voice activity', () => {
+		// Reset avatar to neutral with default Sandy config
+		avatar2dManager.setEmotion('neutral');
+		avatar2dManager.setSpeaking(false, false);
+
+		render(<PngTuberRenderer config={avatar2dManager.getState().pngtuber} />);
+		const img = screen.getByAltText('Avatar 2D PNGTuber') as HTMLImageElement;
+
+		// 1. En silencio, muestra el sprite oficial de reposo (sandy_idle.png)
+		expect(img.src).toContain('sandy_idle.png');
+
+		// 2. Al hablar, cambia al sprite oficial de habla (sandy_speaking.png)
+		act(() => {
+			avatar2dManager.setSpeaking(true, false);
+		});
+		expect(img.src).toContain('sandy_speaking.png');
+
+		// 3. Al detenerse la voz, regresa inmediatamente al sprite de reposo
+		act(() => {
+			avatar2dManager.setSpeaking(false, false);
+		});
+		expect(img.src).toContain('sandy_idle.png');
+	});
 });

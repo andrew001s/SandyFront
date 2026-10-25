@@ -130,3 +130,11 @@ describe('avatar2dManager custom emotions', () => {
 		expect(saved.pngtuber?.emotions?.some((e: { id: string }) => e.id === created.id)).toBe(false);
 	});
 });
+
+describe('avatar2dManager default Sandy sprites', () => {
+	it('defaults to official Sandy sprites when initialized without stored custom sprites', () => {
+		const sprites = avatar2dManager.getState().pngtuber.sprites;
+		expect(sprites.idle).toBe('/avatars/sandy/sandy_idle.png');
+		expect(sprites.speaking).toBe('/avatars/sandy/sandy_speaking.png');
+	});
+});

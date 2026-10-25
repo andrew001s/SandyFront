@@ -148,10 +148,10 @@ function createSandySvg(options: {
 }
 
 export const DEFAULT_SANDY_SPRITES = {
-	idle: createSandySvg({ mouth: 'closed', eyes: 'open' }),
-	speaking: createSandySvg({ mouth: 'open', eyes: 'open' }),
-	blink: createSandySvg({ mouth: 'closed', eyes: 'blink' }),
-	speakingBlink: createSandySvg({ mouth: 'open', eyes: 'blink' }),
+	idle: '/avatars/sandy/sandy_idle.png',
+	speaking: '/avatars/sandy/sandy_speaking.png',
+	blink: '/avatars/sandy/sandy_idle.png',
+	speakingBlink: '/avatars/sandy/sandy_speaking.png',
 };
 
 export const DEFAULT_SANDY_EMOTIONS = [
