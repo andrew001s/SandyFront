@@ -20,9 +20,19 @@ export type VrmDropObjectKind =
 export const DEFAULT_VRM_SLIME_COLOR = '#8bdc43';
 
 export type VrmTriggerAction =
-	| { type: 'expression'; expression: string }
-	| { type: 'idle'; enabled: boolean }
-	| { type: 'throw_object'; kind?: VrmDropObjectKind }
+	| { type: 'expression'; expression: string; durationSeconds?: number }
+	| { type: 'idle'; enabled: boolean; durationSeconds?: number }
+	| { type: 'bone_pose'; bone: string; rotation: number; durationSeconds: number }
+	| { type: 'bone_scale'; bone: string; scale: number; durationSeconds: number }
+	| {
+			type: 'emoji_rain';
+			amount: number;
+			radius: number;
+			size: number;
+			gravity: number;
+			durationSeconds: number;
+	  }
+	| { type: 'throw_object'; kind?: VrmDropObjectKind; strength?: number }
 	| { type: 'slime'; enabled: boolean; durationSeconds?: number; color?: string };
 
 export interface VrmTriggerRule {
@@ -31,6 +41,11 @@ export interface VrmTriggerRule {
 	trigger: VrmTriggerName;
 	rewardId?: string;
 	contains?: string;
+	matchMode?: 'contains' | 'exact';
+	caseSensitive?: boolean;
+	userContains?: string;
+	minAmount?: number;
+	maxAmount?: number;
 	action: VrmTriggerAction;
 }
 
@@ -51,7 +66,9 @@ export function getVrmTriggerRules(): VrmTriggerRule[] {
 	if (typeof window === 'undefined') return [];
 	try {
 		const value = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || '[]');
-		return Array.isArray(value) ? (value as VrmTriggerRule[]) : [];
+		return Array.isArray(value)
+			? (value.filter((rule) => rule?.action?.type !== 'gesture') as VrmTriggerRule[])
+			: [];
 	} catch {
 		return [];
 	}
@@ -74,4 +91,36 @@ export function addVrmTriggerRule(): VrmTriggerRule {
 		contains: '',
 		action: { type: 'throw_object', kind: 'random' },
 	};
+}
+
+export function matchesVrmTriggerFilter(
+	rule: VrmTriggerRule,
+	eventData: Record<string, unknown>,
+): boolean {
+	if (rule.userContains?.trim()) {
+		const user = String(eventData.user ?? '').toLocaleLowerCase();
+		if (!user.includes(rule.userContains.trim().toLocaleLowerCase())) return false;
+	}
+
+	if (rule.minAmount !== undefined || rule.maxAmount !== undefined) {
+		const rawAmount = eventData.bits ?? eventData.amount ?? eventData.count;
+		const amount = Number(rawAmount);
+		if (!Number.isFinite(amount)) return false;
+		if (rule.minAmount !== undefined && amount < rule.minAmount) return false;
+		if (rule.maxAmount !== undefined && amount > rule.maxAmount) return false;
+	}
+
+	if (!rule.contains?.trim()) return true;
+	const needle = rule.contains.trim();
+	const text = String(
+		eventData.message ?? eventData.input ?? eventData.rewardTitle ?? eventData.user ?? '',
+	);
+	const candidate = rule.caseSensitive ? text : text.toLocaleLowerCase();
+	const filter = rule.caseSensitive ? needle : needle.toLocaleLowerCase();
+	switch (rule.matchMode ?? 'contains') {
+		case 'exact':
+			return candidate.trim() === filter;
+		default:
+			return candidate.includes(filter);
+	}
 }

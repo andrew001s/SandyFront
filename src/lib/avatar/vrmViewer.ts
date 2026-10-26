@@ -30,6 +30,18 @@ export interface VrmCameraTransform {
 
 export type VrmCameraPreset = 'face' | 'upperBody' | 'fullBody';
 
+export interface VrmEmojiRainSettings {
+	amount: number;
+	radius: number;
+	size: number;
+	gravity: number;
+	durationSeconds: number;
+}
+export interface VrmFallingEmote {
+	text: string;
+	imageUrl?: string;
+}
+
 export class VrmViewer {
 	private scene: THREE.Scene;
 	private camera: THREE.PerspectiveCamera;
@@ -90,6 +102,15 @@ export class VrmViewer {
 		VRMHumanBoneName,
 		{ startedAt: number; strength: number; axis: THREE.Vector3 }
 	>();
+	private bonePoseAngles = new Map<VRMHumanBoneName, number>();
+	private boneScaleFactors = new Map<VRMHumanBoneName, number>();
+	private boneRestScales = new Map<VRMHumanBoneName, THREE.Vector3>();
+	private emojiSprites: Array<{
+		sprite: THREE.Sprite;
+		velocity: THREE.Vector3;
+		gravity: number;
+		expiresAt: number;
+	}> = [];
 
 	// Callbacks de estado
 	private onModelLoadedCallbacks = new Set<(vrm: VRM) => void>();
@@ -271,6 +292,9 @@ export class VrmViewer {
 					this.scene.remove(this.currentVrm.scene);
 					VRMUtils.deepDispose(this.currentVrm.scene);
 				}
+				this.bonePoseAngles.clear();
+				this.boneScaleFactors.clear();
+				this.boneRestScales.clear();
 
 				// Ajustes de orientación VRM (rotación T-pose hacia cámara)
 				VRMUtils.rotateVRM0(vrm);
@@ -385,7 +409,136 @@ export class VrmViewer {
 		this.setExpression('neutral', 0);
 	}
 
-	public spawnDropObject(kind: VrmDropObjectKind = 'random'): void {
+	public setBoneRotation(boneName: string, degrees: number): void {
+		const bone = boneName as VRMHumanBoneName;
+		this.bonePoseAngles.set(bone, THREE.MathUtils.clamp(degrees, -90, 90));
+	}
+
+	public resetBonePose(boneName: string): void {
+		const bone = boneName as VRMHumanBoneName;
+		this.bonePoseAngles.delete(bone);
+	}
+
+	public setBoneScale(boneName: string, scale: number): void {
+		const bone = boneName as VRMHumanBoneName;
+		const node = this.currentVrm?.humanoid?.getRawBoneNode(bone);
+		if (!node) return;
+		if (!this.boneRestScales.has(bone)) this.boneRestScales.set(bone, node.scale.clone());
+		this.boneScaleFactors.set(bone, THREE.MathUtils.clamp(scale, 0.5, 1.8));
+	}
+
+	public resetBoneScale(boneName: string): void {
+		const bone = boneName as VRMHumanBoneName;
+		const node = this.currentVrm?.humanoid?.getRawBoneNode(bone);
+		const restScale = this.boneRestScales.get(bone);
+		if (node && restScale) node.scale.copy(restScale);
+		this.boneRestScales.delete(bone);
+		this.boneScaleFactors.delete(bone);
+	}
+
+	public spawnEmojiRain(emojis: VrmFallingEmote[], settings: VrmEmojiRainSettings): void {
+		const pool = emojis.filter((emoji) => emoji.text.trim()).slice(0, 12);
+		if (!pool.length) return;
+		const amount = THREE.MathUtils.clamp(Math.floor(settings.amount), 1, 40);
+		for (let i = 0; i < amount; i += 1) {
+			if (this.emojiSprites.length >= 60) {
+				const oldest = this.emojiSprites.shift();
+				if (oldest) this.disposeEmojiSprite(oldest.sprite);
+			}
+			const emoji = pool[i % pool.length];
+			const canvas = document.createElement('canvas');
+			canvas.width = 128;
+			canvas.height = 128;
+			const context = canvas.getContext('2d');
+			if (!context) continue;
+			context.font = '96px sans-serif';
+			context.textAlign = 'center';
+			context.textBaseline = 'middle';
+			context.fillText(emoji.text, 64, 68);
+			const texture = new THREE.CanvasTexture(canvas);
+			texture.colorSpace = THREE.SRGBColorSpace;
+			const material = new THREE.SpriteMaterial({
+				map: texture,
+				transparent: true,
+				depthWrite: false,
+			});
+			const sprite = new THREE.Sprite(material);
+			if (emoji.imageUrl) {
+				const loader = new THREE.TextureLoader();
+				loader.setCrossOrigin('anonymous');
+				loader.load(emoji.imageUrl, (imageTexture) => {
+					if (this.isDisposed || !sprite.parent) {
+						imageTexture.dispose();
+						return;
+					}
+					imageTexture.colorSpace = THREE.SRGBColorSpace;
+					material.map?.dispose();
+					material.map = imageTexture;
+					material.needsUpdate = true;
+				});
+			}
+			const size = THREE.MathUtils.clamp(settings.size, 0.08, 0.5);
+			sprite.scale.set(size, size, 1);
+			sprite.position.set(
+				(Math.random() - 0.5) * 2 * THREE.MathUtils.clamp(settings.radius, 0.15, 1.5),
+				2.4 + Math.random() * 0.8,
+				0.2 + (Math.random() - 0.5) * 0.55,
+			);
+			this.scene.add(sprite);
+			this.emojiSprites.push({
+				sprite,
+				velocity: new THREE.Vector3((Math.random() - 0.5) * 0.7, -0.2 - Math.random() * 0.5, 0),
+				gravity: THREE.MathUtils.clamp(settings.gravity, 0.2, 4),
+				expiresAt:
+					this.clock.getElapsedTime() + THREE.MathUtils.clamp(settings.durationSeconds, 1, 20),
+			});
+		}
+	}
+
+	private disposeEmojiSprite(sprite: THREE.Sprite): void {
+		this.scene.remove(sprite);
+		(sprite.material as THREE.SpriteMaterial).map?.dispose();
+		(sprite.material as THREE.Material).dispose();
+	}
+
+	private updateEmojiRain(delta: number, elapsed: number): void {
+		for (let i = this.emojiSprites.length - 1; i >= 0; i -= 1) {
+			const item = this.emojiSprites[i];
+			item.velocity.y -= item.gravity * delta;
+			item.sprite.position.addScaledVector(item.velocity, delta);
+			if (item.sprite.position.y < 0.25 || elapsed >= item.expiresAt) {
+				this.disposeEmojiSprite(item.sprite);
+				this.emojiSprites.splice(i, 1);
+			}
+		}
+	}
+
+	private updateBonePoses(): void {
+		const humanoid = this.currentVrm?.humanoid;
+		if (!humanoid) return;
+		for (const [bone, degrees] of this.bonePoseAngles) {
+			const node = humanoid.getNormalizedBoneNode(bone);
+			if (!node) continue;
+			node.quaternion.multiply(
+				this.idleTargetQuaternion.setFromAxisAngle(
+					new THREE.Vector3(0, 0, 1),
+					THREE.MathUtils.degToRad(degrees),
+				),
+			);
+		}
+	}
+
+	private updateBoneScales(): void {
+		const humanoid = this.currentVrm?.humanoid;
+		if (!humanoid) return;
+		for (const [bone, factor] of this.boneScaleFactors) {
+			const node = humanoid.getRawBoneNode(bone);
+			const restScale = this.boneRestScales.get(bone);
+			if (node && restScale) node.scale.copy(restScale).multiplyScalar(factor);
+		}
+	}
+
+	public spawnDropObject(kind: VrmDropObjectKind = 'random', forceMultiplier = 1): void {
 		if (this.spawnedObjects.length >= 16) {
 			const oldest = this.spawnedObjects.shift();
 			if (oldest) this.disposeSpawnedObject(oldest.mesh);
@@ -416,7 +569,9 @@ export class VrmViewer {
 		const velocity = target
 			.sub(launch)
 			.normalize()
-			.multiplyScalar(3.4 + Math.random() * 1.2);
+			.multiplyScalar(
+				(3.4 + Math.random() * 1.2) * THREE.MathUtils.clamp(forceMultiplier, 0.25, 2.5),
+			);
 		this.spawnedObjects.push({
 			mesh,
 			velocity,
@@ -1146,11 +1301,14 @@ export class VrmViewer {
 		if (this.currentVrm) {
 			this.updateBlink(elapsed);
 			this.updateIdlePose(elapsed);
+			this.updateBonePoses();
 			this.updateBoneHitReactions(elapsed);
 			this.currentVrm.update(delta);
+			this.updateBoneScales();
 			this.currentVrm.scene.updateMatrixWorld(true);
 		}
 		this.updateSlime(elapsed);
+		this.updateEmojiRain(delta, elapsed);
 		for (let i = this.spawnedObjects.length - 1; i >= 0; i -= 1) {
 			const item = this.spawnedObjects[i];
 			const step = Math.min(delta, 0.04);
@@ -1212,6 +1370,8 @@ export class VrmViewer {
 			this.disposeSpawnedObject(item.mesh);
 		}
 		this.spawnedObjects = [];
+		for (const item of this.emojiSprites) this.disposeEmojiSprite(item.sprite);
+		this.emojiSprites = [];
 		this.slimeActive = false;
 		this.clearSlimeMesh();
 

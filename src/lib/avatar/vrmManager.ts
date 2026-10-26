@@ -22,8 +22,14 @@ import {
 	type VrmDropObjectKind,
 	type VrmTriggerAction,
 	getVrmTriggerRules,
+	matchesVrmTriggerFilter,
 } from '@/lib/avatar/vrmTriggerGraph';
-import type { VrmCameraPreset, VrmCameraTransform, VrmViewer } from '@/lib/avatar/vrmViewer';
+import type {
+	VrmCameraPreset,
+	VrmCameraTransform,
+	VrmFallingEmote,
+	VrmViewer,
+} from '@/lib/avatar/vrmViewer';
 
 export type VrmSyncMessage =
 	| { type: 'vowels'; vowels: { A?: number; I?: number; U?: number; E?: number; O?: number } }
@@ -34,7 +40,20 @@ export type VrmSyncMessage =
 	| { type: 'cameraPreset'; preset: VrmCameraPreset }
 	| { type: 'cameraTransform'; transform: VrmCameraTransform }
 	| { type: 'background'; state: VrmBackgroundState }
-	| { type: 'throwObject'; kind: VrmDropObjectKind }
+	| { type: 'throwObject'; kind: VrmDropObjectKind; strength: number }
+	| {
+			type: 'emojiRain';
+			emojis: VrmFallingEmote[];
+			amount: number;
+			radius: number;
+			size: number;
+			gravity: number;
+			durationSeconds: number;
+	  }
+	| { type: 'bonePose'; bone: string; rotation: number; durationSeconds: number }
+	| { type: 'boneReset'; bone: string }
+	| { type: 'boneScale'; bone: string; scale: number; durationSeconds: number }
+	| { type: 'boneScaleReset'; bone: string }
 	| { type: 'slime'; enabled: boolean; color?: string }
 	| { type: 'slimeColor'; color: string }
 	| { type: 'requestState' }
@@ -74,6 +93,10 @@ export class VrmManager {
 	private currentSlimeActive = false;
 	private currentSlimeColor = DEFAULT_VRM_SLIME_COLOR;
 	private slimeOffTimer: ReturnType<typeof setTimeout> | null = null;
+	private expressionOffTimer: ReturnType<typeof setTimeout> | null = null;
+	private idleOffTimer: ReturnType<typeof setTimeout> | null = null;
+	private bonePoseTimers = new Map<string, ReturnType<typeof setTimeout>>();
+	private boneScaleTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 	private constructor() {
 		if (typeof window !== 'undefined') {
@@ -271,6 +294,10 @@ export class VrmManager {
 	}
 
 	public setIdleSettings(settings: Partial<VrmIdleSettings>): void {
+		if (settings.enabled === false && this.idleOffTimer) {
+			clearTimeout(this.idleOffTimer);
+			this.idleOffTimer = null;
+		}
 		this.currentIdleSettings = normalizeVrmIdleSettings(settings, this.currentIdleSettings);
 		try {
 			window.localStorage.setItem(IDLE_STORAGE_KEY, JSON.stringify(this.currentIdleSettings));
@@ -304,6 +331,8 @@ export class VrmManager {
 	}
 
 	public setEmotion(emotion: string, intensity = 1.0): void {
+		if (this.expressionOffTimer) clearTimeout(this.expressionOffTimer);
+		this.expressionOffTimer = null;
 		this.currentEmotion = emotion;
 		this.currentIntensity = intensity;
 		for (const viewer of this.activeViewers) {
@@ -313,6 +342,8 @@ export class VrmManager {
 	}
 
 	public resetEmotions(): void {
+		if (this.expressionOffTimer) clearTimeout(this.expressionOffTimer);
+		this.expressionOffTimer = null;
 		this.currentEmotion = 'neutral';
 		for (const viewer of this.activeViewers) {
 			viewer.resetExpressions();
@@ -320,24 +351,149 @@ export class VrmManager {
 		this.broadcastChannel?.postMessage({ type: 'reset' });
 	}
 
-	public executeTriggerAction(action: VrmTriggerAction, broadcast = true): void {
+	public executeTriggerAction(
+		action: VrmTriggerAction,
+		broadcast = true,
+		eventData: Record<string, unknown> = {},
+	): void {
 		switch (action.type) {
-			case 'expression':
+			case 'expression': {
 				this.setEmotion(action.expression, 1);
+				if (action.durationSeconds && action.durationSeconds > 0) {
+					const seconds = Math.min(300, Math.max(1, action.durationSeconds));
+					this.expressionOffTimer = setTimeout(() => {
+						this.expressionOffTimer = null;
+						if (this.currentEmotion === action.expression) this.resetEmotions();
+					}, seconds * 1000);
+				}
 				break;
-			case 'idle':
+			}
+			case 'idle': {
+				if (this.idleOffTimer) clearTimeout(this.idleOffTimer);
+				this.idleOffTimer = null;
 				this.setIdleSettings({ enabled: action.enabled });
+				if (action.enabled && action.durationSeconds && action.durationSeconds > 0) {
+					const seconds = Math.min(300, Math.max(1, action.durationSeconds));
+					this.idleOffTimer = setTimeout(() => {
+						this.idleOffTimer = null;
+						this.setIdleSettings({ enabled: false });
+					}, seconds * 1000);
+				}
 				break;
+			}
 			case 'throw_object':
 				{
+					const availableKinds = [
+						'ball',
+						'rubber_duck',
+						'sneaker',
+						'apple',
+						'donut',
+						'heart',
+						'star',
+					] as const;
 					const kind =
 						action.kind && action.kind !== 'random'
 							? action.kind
-							: (['ball', 'rubber_duck', 'sneaker'] as const)[Math.floor(Math.random() * 3)];
-					for (const viewer of this.activeViewers) viewer.spawnDropObject(kind);
-					if (broadcast) this.broadcastChannel?.postMessage({ type: 'throwObject', kind });
+							: availableKinds[Math.floor(Math.random() * availableKinds.length)];
+					const strength = action.strength ?? 1;
+					for (const viewer of this.activeViewers) viewer.spawnDropObject(kind, strength);
+					if (broadcast)
+						this.broadcastChannel?.postMessage({ type: 'throwObject', kind, strength });
 				}
 				break;
+			case 'bone_pose': {
+				const oldTimer = this.bonePoseTimers.get(action.bone);
+				if (oldTimer) clearTimeout(oldTimer);
+				const seconds = Math.min(300, Math.max(1, action.durationSeconds));
+				for (const viewer of this.activeViewers)
+					viewer.setBoneRotation(action.bone, action.rotation);
+				if (broadcast)
+					this.broadcastChannel?.postMessage({
+						type: 'bonePose',
+						bone: action.bone,
+						rotation: action.rotation,
+						durationSeconds: seconds,
+					});
+				this.bonePoseTimers.set(
+					action.bone,
+					setTimeout(() => {
+						this.bonePoseTimers.delete(action.bone);
+						for (const viewer of this.activeViewers) viewer.resetBonePose(action.bone);
+						if (broadcast)
+							this.broadcastChannel?.postMessage({ type: 'boneReset', bone: action.bone });
+					}, seconds * 1000),
+				);
+				break;
+			}
+			case 'bone_scale': {
+				const oldTimer = this.boneScaleTimers.get(action.bone);
+				if (oldTimer) clearTimeout(oldTimer);
+				const seconds = Math.min(300, Math.max(1, action.durationSeconds));
+				for (const viewer of this.activeViewers) viewer.setBoneScale(action.bone, action.scale);
+				if (broadcast)
+					this.broadcastChannel?.postMessage({
+						type: 'boneScale',
+						bone: action.bone,
+						scale: action.scale,
+						durationSeconds: seconds,
+					});
+				this.boneScaleTimers.set(
+					action.bone,
+					setTimeout(() => {
+						this.boneScaleTimers.delete(action.bone);
+						for (const viewer of this.activeViewers) viewer.resetBoneScale(action.bone);
+						if (broadcast)
+							this.broadcastChannel?.postMessage({ type: 'boneScaleReset', bone: action.bone });
+					}, seconds * 1000),
+				);
+				break;
+			}
+			case 'emoji_rain': {
+				const message = String(eventData.message ?? eventData.input ?? '');
+				const textEmojis = Array.from(
+					new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(message),
+				)
+					.map((part) => part.segment)
+					.filter((part) => /\p{Extended_Pictographic}/u.test(part));
+				const twitchEmotes = Array.isArray(eventData.emotes)
+					? eventData.emotes.flatMap((value): VrmFallingEmote[] => {
+							if (!value || typeof value !== 'object') return [];
+							const emote = value as { name?: unknown; id?: unknown; imageUrl?: unknown };
+							const id = String(emote.id ?? '');
+							const text = String(emote.name ?? '');
+							if (!text) return [];
+							return [
+								{
+									text,
+									imageUrl:
+										String(
+											emote.imageUrl ??
+												(id
+													? `https://static-cdn.jtvnw.net/emoticons/v2/${encodeURIComponent(id)}/default/dark/2.0`
+													: ''),
+										) || undefined,
+								},
+							];
+						})
+					: [];
+				const tokens: VrmFallingEmote[] = [
+					...twitchEmotes,
+					...textEmojis.map((text) => ({ text })),
+				];
+				if (!tokens.length) break;
+				const settings = {
+					amount: action.amount,
+					radius: action.radius,
+					size: action.size,
+					gravity: action.gravity,
+					durationSeconds: action.durationSeconds,
+				};
+				for (const viewer of this.activeViewers) viewer.spawnEmojiRain(tokens, settings);
+				if (broadcast)
+					this.broadcastChannel?.postMessage({ type: 'emojiRain', emojis: tokens, ...settings });
+				break;
+			}
 			case 'slime':
 				if (this.slimeOffTimer) clearTimeout(this.slimeOffTimer);
 				this.slimeOffTimer = null;
@@ -376,22 +532,13 @@ export class VrmManager {
 
 	public handleAvatarTrigger(event: { trigger?: string; data?: Record<string, unknown> }): void {
 		const trigger = String(event.trigger ?? '');
-		const searchable = Object.values(event.data ?? {})
-			.filter((value): value is string => typeof value === 'string')
-			.map((value) => value.toLocaleLowerCase())
-			.join(' ');
 		const rewardId = String(event.data?.rewardId ?? '');
 		for (const rule of getVrmTriggerRules()) {
 			if (!rule.enabled || rule.trigger !== trigger) continue;
 			if (rule.trigger === 'channel_point_reward' && rule.rewardId && rule.rewardId !== rewardId)
 				continue;
-			if (
-				rule.trigger !== 'channel_point_reward' &&
-				rule.contains?.trim() &&
-				!searchable.includes(rule.contains.trim().toLocaleLowerCase())
-			)
-				continue;
-			this.executeTriggerAction(rule.action);
+			if (!matchesVrmTriggerFilter(rule, event.data ?? {})) continue;
+			this.executeTriggerAction(rule.action, true, event.data ?? {});
 		}
 	}
 
@@ -450,6 +597,8 @@ export class VrmManager {
 				}
 				break;
 			case 'emotion':
+				if (this.expressionOffTimer) clearTimeout(this.expressionOffTimer);
+				this.expressionOffTimer = null;
 				this.currentEmotion = msg.emotion;
 				this.currentIntensity = msg.intensity;
 				for (const viewer of this.activeViewers) {
@@ -457,12 +606,16 @@ export class VrmManager {
 				}
 				break;
 			case 'reset':
+				if (this.expressionOffTimer) clearTimeout(this.expressionOffTimer);
+				this.expressionOffTimer = null;
 				this.currentEmotion = 'neutral';
 				for (const viewer of this.activeViewers) {
 					viewer.resetExpressions();
 				}
 				break;
 			case 'idleSettings':
+				if (this.idleOffTimer) clearTimeout(this.idleOffTimer);
+				this.idleOffTimer = null;
 				this.currentIdleSettings = normalizeVrmIdleSettings(msg.settings, this.currentIdleSettings);
 				for (const viewer of this.activeViewers) {
 					viewer.setIdleSettings(this.currentIdleSettings);
@@ -488,8 +641,55 @@ export class VrmManager {
 				this.notifyBg(msg.state);
 				break;
 			case 'throwObject':
-				for (const viewer of this.activeViewers) viewer.spawnDropObject(msg.kind);
+				for (const viewer of this.activeViewers) viewer.spawnDropObject(msg.kind, msg.strength);
 				break;
+			case 'emojiRain':
+				for (const viewer of this.activeViewers)
+					viewer.spawnEmojiRain(msg.emojis, {
+						amount: msg.amount,
+						radius: msg.radius,
+						size: msg.size,
+						gravity: msg.gravity,
+						durationSeconds: msg.durationSeconds,
+					});
+				break;
+			case 'bonePose':
+				this.executeTriggerAction(
+					{
+						type: 'bone_pose',
+						bone: msg.bone,
+						rotation: msg.rotation,
+						durationSeconds: msg.durationSeconds,
+					},
+					false,
+				);
+				break;
+			case 'boneReset':
+				{
+					const timer = this.bonePoseTimers.get(msg.bone);
+					if (timer) clearTimeout(timer);
+					this.bonePoseTimers.delete(msg.bone);
+					for (const viewer of this.activeViewers) viewer.resetBonePose(msg.bone);
+				}
+				break;
+			case 'boneScale':
+				this.executeTriggerAction(
+					{
+						type: 'bone_scale',
+						bone: msg.bone,
+						scale: msg.scale,
+						durationSeconds: msg.durationSeconds,
+					},
+					false,
+				);
+				break;
+			case 'boneScaleReset': {
+				const timer = this.boneScaleTimers.get(msg.bone);
+				if (timer) clearTimeout(timer);
+				this.boneScaleTimers.delete(msg.bone);
+				for (const viewer of this.activeViewers) viewer.resetBoneScale(msg.bone);
+				break;
+			}
 			case 'slime':
 				this.currentSlimeActive = msg.enabled;
 				this.currentSlimeColor = msg.color ?? this.currentSlimeColor;
@@ -514,6 +714,10 @@ export class VrmManager {
 				});
 				break;
 			case 'fullState':
+				if (this.expressionOffTimer) clearTimeout(this.expressionOffTimer);
+				this.expressionOffTimer = null;
+				if (this.idleOffTimer) clearTimeout(this.idleOffTimer);
+				this.idleOffTimer = null;
 				this.currentEmotion = msg.emotion;
 				this.currentIntensity = msg.intensity;
 				if (msg.idleSettings) {

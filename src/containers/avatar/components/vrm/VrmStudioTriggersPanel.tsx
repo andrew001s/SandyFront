@@ -34,7 +34,7 @@ const TRIGGER_FILTER_DESCRIPTIONS: Record<
 	string
 > = {
 	chat_message:
-		'Compara el texto con el nombre del usuario y el mensaje. Puedes escribir una palabra o frase; no distingue mayúsculas. Déjalo vacío para aceptar cualquier mensaje del chat.',
+		'Compara el filtro de texto con el mensaje del chat. En «Más filtros» puedes exigir coincidencia exacta, distinguir mayúsculas o limitarlo a un usuario.',
 	follow:
 		'Compara el texto con el nombre de quien siguió el canal. Déjalo vacío para aceptar cualquier follow.',
 	subscribe:
@@ -44,7 +44,7 @@ const TRIGGER_FILTER_DESCRIPTIONS: Record<
 	sub_gift:
 		'Compara el texto con el nombre de quien regaló la suscripción. Déjalo vacío para aceptar cualquier regalo.',
 	cheer:
-		'Compara el texto con el nombre del usuario y su mensaje. La cantidad de bits no se filtra. Déjalo vacío para aceptar cualquier cheer.',
+		'Compara el filtro de texto con el mensaje del cheer. En «Más filtros» puedes limitar por usuario y por cantidad mínima o máxima de bits.',
 	raid: 'Compara el texto con el nombre del canal que hizo el raid. Déjalo vacío para aceptar cualquier raid.',
 };
 
@@ -82,8 +82,43 @@ export function VrmStudioTriggersPanel({ onClose }: Props) {
 	};
 
 	const updateAction = (id: string, action: VrmTriggerAction) => updateRule(id, { action });
+	const updateThrowAction = (
+		id: string,
+		action: VrmTriggerAction,
+		patch: Partial<Omit<Extract<VrmTriggerAction, { type: 'throw_object' }>, 'type'>>,
+	) => {
+		if (action.type === 'throw_object') updateAction(id, { ...action, ...patch });
+	};
+	const updateBoneAction = (
+		id: string,
+		action: VrmTriggerAction,
+		patch: Partial<Omit<Extract<VrmTriggerAction, { type: 'bone_pose' }>, 'type'>>,
+	) => {
+		if (action.type === 'bone_pose') updateAction(id, { ...action, ...patch });
+	};
+	const updateBoneScaleAction = (
+		id: string,
+		action: VrmTriggerAction,
+		patch: Partial<Omit<Extract<VrmTriggerAction, { type: 'bone_scale' }>, 'type'>>,
+	) => {
+		if (action.type === 'bone_scale') updateAction(id, { ...action, ...patch });
+	};
+	const updateEmojiRainAction = (
+		id: string,
+		action: VrmTriggerAction,
+		patch: Partial<Omit<Extract<VrmTriggerAction, { type: 'emoji_rain' }>, 'type'>>,
+	) => {
+		if (action.type === 'emoji_rain') updateAction(id, { ...action, ...patch });
+	};
+	const setActionDuration = (id: string, action: VrmTriggerAction, durationSeconds: number) => {
+		if (action.type === 'expression')
+			updateAction(id, { type: 'expression', expression: action.expression, durationSeconds });
+		if (action.type === 'idle')
+			updateAction(id, { type: 'idle', enabled: action.enabled, durationSeconds });
+	};
 	const setActionEnabled = (id: string, action: VrmTriggerAction, enabled: boolean) => {
-		if (action.type === 'idle') updateAction(id, { type: 'idle', enabled });
+		if (action.type === 'idle')
+			updateAction(id, { type: 'idle', enabled, durationSeconds: action.durationSeconds });
 		if (action.type === 'slime') {
 			updateAction(id, {
 				type: 'slime',
@@ -237,6 +272,78 @@ export function VrmStudioTriggersPanel({ onClose }: Props) {
 									</Tooltip>
 								</div>
 							)}
+							<details className='rounded-md border border-border/60 px-2 py-1.5'>
+								<summary className='cursor-pointer text-[11px] text-muted-foreground'>
+									Más filtros
+								</summary>
+								<div className='mt-2 grid grid-cols-2 gap-2'>
+									<input
+										aria-label='Filtrar por usuario'
+										className='col-span-2 h-8 min-w-0 rounded-md border border-border bg-background px-2 text-xs'
+										onChange={(event) => updateRule(rule.id, { userContains: event.target.value })}
+										placeholder='Usuario contiene…'
+										value={rule.userContains ?? ''}
+									/>
+									{rule.trigger !== 'channel_point_reward' && (
+										<select
+											aria-label='Tipo de coincidencia'
+											className='h-8 min-w-0 rounded-md border border-border bg-background px-2 text-xs'
+											onChange={(event) =>
+												updateRule(rule.id, {
+													matchMode: event.target.value as 'contains' | 'exact',
+												})
+											}
+											value={rule.matchMode ?? 'contains'}
+										>
+											<option value='contains'>Texto contiene</option>
+											<option value='exact'>Texto exacto</option>
+										</select>
+									)}
+									{rule.trigger !== 'channel_point_reward' && (
+										<label className='flex items-center gap-1.5 text-[11px] text-muted-foreground'>
+											<input
+												checked={rule.caseSensitive ?? false}
+												className='size-3.5 accent-primary'
+												onChange={(event) =>
+													updateRule(rule.id, { caseSensitive: event.target.checked })
+												}
+												type='checkbox'
+											/>
+											Distinguir mayúsculas
+										</label>
+									)}
+									{rule.trigger === 'cheer' && (
+										<>
+											<input
+												aria-label='Bits mínimos'
+												className='h-8 min-w-0 rounded-md border border-border bg-background px-2 text-xs'
+												min={0}
+												onChange={(event) =>
+													updateRule(rule.id, {
+														minAmount: event.target.value ? Number(event.target.value) : undefined,
+													})
+												}
+												placeholder='Bits mínimos'
+												type='number'
+												value={rule.minAmount ?? ''}
+											/>
+											<input
+												aria-label='Bits máximos'
+												className='h-8 min-w-0 rounded-md border border-border bg-background px-2 text-xs'
+												min={0}
+												onChange={(event) =>
+													updateRule(rule.id, {
+														maxAmount: event.target.value ? Number(event.target.value) : undefined,
+													})
+												}
+												placeholder='Bits máximos'
+												type='number'
+												value={rule.maxAmount ?? ''}
+											/>
+										</>
+									)}
+								</div>
+							</details>
 							{rule.trigger === 'channel_point_reward' &&
 								!channelRewardsLoading &&
 								!channelRewards.length && (
@@ -253,8 +360,13 @@ export function VrmStudioTriggersPanel({ onClose }: Props) {
 										onChange={(event) => {
 											const type = event.target.value;
 											if (type === 'expression')
-												updateAction(rule.id, { type, expression: 'surprised' });
-											else if (type === 'idle') updateAction(rule.id, { type, enabled: true });
+												updateAction(rule.id, {
+													type,
+													expression: 'surprised',
+													durationSeconds: 0,
+												});
+											else if (type === 'idle')
+												updateAction(rule.id, { type, enabled: true, durationSeconds: 0 });
 											else if (type === 'slime') {
 												updateAction(rule.id, {
 													type,
@@ -264,6 +376,29 @@ export function VrmStudioTriggersPanel({ onClose }: Props) {
 												});
 											} else if (type === 'throw_object') {
 												updateAction(rule.id, { type, kind: 'random' });
+											} else if (type === 'bone_pose') {
+												updateAction(rule.id, {
+													type,
+													bone: 'head',
+													rotation: 18,
+													durationSeconds: 3,
+												});
+											} else if (type === 'bone_scale') {
+												updateAction(rule.id, {
+													type,
+													bone: 'head',
+													scale: 1.15,
+													durationSeconds: 3,
+												});
+											} else if (type === 'emoji_rain') {
+												updateAction(rule.id, {
+													type,
+													amount: 16,
+													radius: 0.8,
+													size: 0.2,
+													gravity: 1.4,
+													durationSeconds: 6,
+												});
 											}
 										}}
 										value={rule.action.type}
@@ -272,6 +407,9 @@ export function VrmStudioTriggersPanel({ onClose }: Props) {
 										<option value='expression'>Activar expresión</option>
 										<option value='idle'>Activar idle</option>
 										<option value='slime'>Activar slime</option>
+										<option value='bone_pose'>Rotar hueso</option>
+										<option value='bone_scale'>Escalar hueso</option>
+										<option value='emoji_rain'>Lluvia de emotes</option>
 									</select>
 									<ChevronDown
 										aria-hidden='true'
@@ -280,7 +418,7 @@ export function VrmStudioTriggersPanel({ onClose }: Props) {
 								</div>
 							</div>
 							{rule.action.type === 'expression' && (
-								<div className='flex gap-2'>
+								<div className='space-y-2'>
 									<div className='relative min-w-0 flex-1'>
 										<select
 											aria-label='Expresión'
@@ -305,21 +443,65 @@ export function VrmStudioTriggersPanel({ onClose }: Props) {
 											className='-translate-y-1/2 pointer-events-none absolute top-1/2 right-2 size-3.5 text-muted-foreground'
 										/>
 									</div>
+									<label className='flex items-center justify-between gap-2 text-muted-foreground text-xs'>
+										<span>Volver a neutral (0 = manual)</span>
+										<input
+											aria-label='Segundos para volver la expresión a neutral'
+											className='h-8 w-20 rounded-md border border-border bg-background px-2 text-right text-foreground'
+											max={300}
+											min={0}
+											onChange={(event) => {
+												const durationSeconds = Number(event.target.value);
+												setActionDuration(
+													rule.id,
+													rule.action,
+													Number.isFinite(durationSeconds) ? durationSeconds : 0,
+												);
+											}}
+											step={1}
+											type='number'
+											value={rule.action.durationSeconds ?? 0}
+										/>
+									</label>
 								</div>
 							)}
 							{(rule.action.type === 'idle' || rule.action.type === 'slime') && (
-								<label className='flex items-center gap-2 text-muted-foreground text-xs'>
-									<input
-										aria-label='Activar acción'
-										checked={rule.action.enabled}
-										className='size-3.5 accent-primary'
-										onChange={(event) =>
-											setActionEnabled(rule.id, rule.action, event.target.checked)
-										}
-										type='checkbox'
-									/>
-									{rule.action.enabled ? 'Activar' : 'Desactivar'}
-								</label>
+								<div className='space-y-2'>
+									<label className='flex items-center gap-2 text-muted-foreground text-xs'>
+										<input
+											aria-label='Activar acción'
+											checked={rule.action.enabled}
+											className='size-3.5 accent-primary'
+											onChange={(event) =>
+												setActionEnabled(rule.id, rule.action, event.target.checked)
+											}
+											type='checkbox'
+										/>
+										{rule.action.enabled ? 'Activar' : 'Desactivar'}
+									</label>
+									{rule.action.type === 'idle' && rule.action.enabled && (
+										<label className='flex items-center justify-between gap-2 text-muted-foreground text-xs'>
+											<span>Apagar idle en (0 = manual)</span>
+											<input
+												aria-label='Segundos para apagar el idle'
+												className='h-8 w-20 rounded-md border border-border bg-background px-2 text-right text-foreground'
+												max={300}
+												min={0}
+												onChange={(event) => {
+													const durationSeconds = Number(event.target.value);
+													setActionDuration(
+														rule.id,
+														rule.action,
+														Number.isFinite(durationSeconds) ? durationSeconds : 0,
+													);
+												}}
+												step={1}
+												type='number'
+												value={rule.action.durationSeconds ?? 0}
+											/>
+										</label>
+									)}
+								</div>
 							)}
 							{rule.action.type === 'throw_object' && (
 								<label className='flex items-center gap-2 text-muted-foreground text-xs'>
@@ -329,8 +511,7 @@ export function VrmStudioTriggersPanel({ onClose }: Props) {
 											aria-label='Tipo de objeto 3D'
 											className='h-8 w-full appearance-none rounded-md border border-border bg-background py-1 pr-8 pl-2 text-foreground text-xs'
 											onChange={(event) =>
-												updateAction(rule.id, {
-													type: 'throw_object',
+												updateThrowAction(rule.id, rule.action, {
 													kind: event.target.value as VrmDropObjectKind,
 												})
 											}
@@ -351,6 +532,229 @@ export function VrmStudioTriggersPanel({ onClose }: Props) {
 										/>
 									</div>
 								</label>
+							)}
+							{rule.action.type === 'throw_object' && (
+								<label className='flex items-center justify-between gap-2 text-muted-foreground text-xs'>
+									Fuerza del lanzamiento
+									<input
+										aria-label='Fuerza del lanzamiento'
+										className='h-8 w-20 rounded-md border border-border bg-background px-2 text-right text-foreground'
+										max={2.5}
+										min={0.25}
+										onChange={(event) =>
+											updateThrowAction(rule.id, rule.action, {
+												strength: Number(event.target.value),
+											})
+										}
+										step={0.05}
+										type='number'
+										value={rule.action.strength ?? 1}
+									/>
+								</label>
+							)}
+							{rule.action.type === 'bone_pose' && (
+								<div className='grid grid-cols-2 gap-2'>
+									<select
+										aria-label='Hueso del avatar'
+										className='h-8 rounded-md border border-border bg-background px-2 text-xs'
+										onChange={(event) =>
+											updateBoneAction(rule.id, rule.action, { bone: event.target.value })
+										}
+										value={rule.action.bone}
+									>
+										{[
+											'head',
+											'neck',
+											'chest',
+											'spine',
+											'hips',
+											'leftUpperArm',
+											'leftLowerArm',
+											'rightUpperArm',
+											'rightLowerArm',
+										].map((bone) => (
+											<option key={bone}>{bone}</option>
+										))}
+									</select>
+									<label className='flex items-center gap-2 text-muted-foreground text-xs'>
+										Grados
+										<input
+											aria-label='Rotación del hueso en grados'
+											className='h-8 w-20 rounded-md border border-border bg-background px-2 text-foreground'
+											max={90}
+											min={-90}
+											onChange={(event) =>
+												updateBoneAction(rule.id, rule.action, {
+													rotation: Number(event.target.value),
+												})
+											}
+											type='number'
+											value={rule.action.rotation}
+										/>
+									</label>
+									<label className='col-span-2 flex items-center justify-between text-muted-foreground text-xs'>
+										Restablecer en (s)
+										<input
+											aria-label='Duración de pose del hueso'
+											className='h-8 w-20 rounded-md border border-border bg-background px-2 text-right text-foreground'
+											max={300}
+											min={1}
+											onChange={(event) =>
+												updateBoneAction(rule.id, rule.action, {
+													durationSeconds: Number(event.target.value),
+												})
+											}
+											type='number'
+											value={rule.action.durationSeconds}
+										/>
+									</label>
+								</div>
+							)}
+							{rule.action.type === 'bone_scale' && (
+								<div className='grid grid-cols-2 gap-2'>
+									<select
+										aria-label='Hueso a escalar'
+										className='h-8 rounded-md border border-border bg-background px-2 text-xs'
+										onChange={(event) =>
+											updateBoneScaleAction(rule.id, rule.action, { bone: event.target.value })
+										}
+										value={rule.action.bone}
+									>
+										{[
+											'head',
+											'neck',
+											'chest',
+											'spine',
+											'hips',
+											'leftUpperArm',
+											'leftLowerArm',
+											'rightUpperArm',
+											'rightLowerArm',
+										].map((bone) => (
+											<option key={bone}>{bone}</option>
+										))}
+									</select>
+									<label className='flex items-center gap-2 text-muted-foreground text-xs'>
+										Escala
+										<input
+											aria-label='Escala del hueso'
+											className='h-8 w-20 rounded-md border border-border bg-background px-2 text-foreground'
+											max={1.8}
+											min={0.5}
+											onChange={(event) =>
+												updateBoneScaleAction(rule.id, rule.action, {
+													scale: Number(event.target.value),
+												})
+											}
+											step={0.05}
+											type='number'
+											value={rule.action.scale}
+										/>
+									</label>
+									<label className='col-span-2 flex items-center justify-between text-muted-foreground text-xs'>
+										Restablecer en (s)
+										<input
+											aria-label='Duración de escala del hueso'
+											className='h-8 w-20 rounded-md border border-border bg-background px-2 text-right text-foreground'
+											max={300}
+											min={1}
+											onChange={(event) =>
+												updateBoneScaleAction(rule.id, rule.action, {
+													durationSeconds: Number(event.target.value),
+												})
+											}
+											type='number'
+											value={rule.action.durationSeconds}
+										/>
+									</label>
+								</div>
+							)}
+							{rule.action.type === 'emoji_rain' && (
+								<div className='grid grid-cols-2 gap-2'>
+									<label className='flex items-center justify-between gap-1 text-[11px] text-muted-foreground'>
+										Cantidad
+										<input
+											aria-label='Cantidad de emotes'
+											className='h-8 w-16 rounded-md border border-border bg-background px-1 text-foreground'
+											max={40}
+											min={1}
+											onChange={(event) =>
+												updateEmojiRainAction(rule.id, rule.action, {
+													amount: Number(event.target.value),
+												})
+											}
+											type='number'
+											value={rule.action.amount}
+										/>
+									</label>
+									<label className='flex items-center justify-between gap-1 text-[11px] text-muted-foreground'>
+										Tamaño
+										<input
+											aria-label='Tamaño de emotes'
+											className='h-8 w-16 rounded-md border border-border bg-background px-1 text-foreground'
+											max={0.5}
+											min={0.08}
+											onChange={(event) =>
+												updateEmojiRainAction(rule.id, rule.action, {
+													size: Number(event.target.value),
+												})
+											}
+											step={0.02}
+											type='number'
+											value={rule.action.size}
+										/>
+									</label>
+									<label className='flex items-center justify-between gap-1 text-[11px] text-muted-foreground'>
+										Radio
+										<input
+											aria-label='Radio de caída'
+											className='h-8 w-16 rounded-md border border-border bg-background px-1 text-foreground'
+											max={1.5}
+											min={0.15}
+											onChange={(event) =>
+												updateEmojiRainAction(rule.id, rule.action, {
+													radius: Number(event.target.value),
+												})
+											}
+											step={0.05}
+											type='number'
+											value={rule.action.radius}
+										/>
+									</label>
+									<label className='flex items-center justify-between gap-1 text-[11px] text-muted-foreground'>
+										Gravedad
+										<input
+											aria-label='Gravedad de emotes'
+											className='h-8 w-16 rounded-md border border-border bg-background px-1 text-foreground'
+											max={4}
+											min={0.2}
+											onChange={(event) =>
+												updateEmojiRainAction(rule.id, rule.action, {
+													gravity: Number(event.target.value),
+												})
+											}
+											step={0.1}
+											type='number'
+											value={rule.action.gravity}
+										/>
+									</label>
+									<label className='col-span-2 flex items-center justify-between text-[11px] text-muted-foreground'>
+										Duración al caer (s)
+										<input
+											aria-label='Duración de los emotes'
+											className='h-8 w-20 rounded-md border border-border bg-background px-2 text-right text-foreground'
+											max={20}
+											min={1}
+											onChange={(event) =>
+												updateEmojiRainAction(rule.id, rule.action, {
+													durationSeconds: Number(event.target.value),
+												})
+											}
+											type='number'
+											value={rule.action.durationSeconds}
+										/>
+									</label>
+								</div>
 							)}
 							{rule.action.type === 'slime' && (
 								<div className='space-y-2'>
@@ -404,7 +808,13 @@ export function VrmStudioTriggersPanel({ onClose }: Props) {
 							)}
 							<Button
 								className='w-full'
-								onClick={() => vrmManager.executeTriggerAction(rule.action)}
+								onClick={() =>
+									vrmManager.executeTriggerAction(
+										rule.action,
+										true,
+										rule.action.type === 'emoji_rain' ? { message: '🎉' } : {},
+									)
+								}
 								size='sm'
 								variant='secondary'
 							>
