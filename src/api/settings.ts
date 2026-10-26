@@ -1,5 +1,6 @@
 import { backendClient } from '@/api/backendClient';
 import type { AiProvider } from '@/lib/ai-provider';
+import type { VrmTriggerRule } from '@/lib/avatar/vrmTriggerGraph';
 import type { FeatureFlags } from '@/lib/feature-flags';
 import type { PersonaProfile } from '@/lib/persona-profile';
 
@@ -37,6 +38,7 @@ export type SettingsPayload = {
 	chat_trigger_mode?: 'batch' | 'command';
 	chat_command?: string;
 	onboarding_completed?: boolean;
+	vrm_trigger_rules?: VrmTriggerRule[];
 };
 
 /**

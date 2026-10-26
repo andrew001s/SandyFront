@@ -1,6 +1,6 @@
 'use client';
 
-import { CircleUserRound, LayoutDashboard, Plug, Settings2, ShieldCheck, Tv } from 'lucide-react';
+import { CircleUserRound, LayoutDashboard, Plug, Settings2, ShieldCheck } from 'lucide-react';
 import type { Tour } from 'nextstepjs';
 
 export const DASHBOARD_TOUR_STORAGE_KEY = 'sandy-dashboard-tour-seen';
@@ -67,22 +67,6 @@ export const dashboardTourSteps: Tour[] = [
 					<>Aquí puedes controlar filtros, bloqueos y reglas para mantener limpio el chat.</>
 				),
 				selector: '#sidebar-tour-moderacion',
-				side: 'right',
-				showControls: true,
-				showSkip: true,
-				pointerPadding: 10,
-				pointerRadius: 12,
-				selectorRetryAttempts: 8,
-			},
-			{
-				icon: <Tv className='size-4' />,
-				title: 'VTube Studio',
-				content: (
-					<>
-						Esta pestaña conecta el avatar con Sandy para mover boca y expresiones en tiempo real.
-					</>
-				),
-				selector: '#sidebar-tour-avatar',
 				side: 'right',
 				showControls: true,
 				showSkip: true,

@@ -1,11 +1,9 @@
-import { PageHeader } from '@/components/ui/page-header';
-
 export function AvatarHeader() {
 	return (
-		<PageHeader
-			tag='Control de Modelo · Live2D y VRM 3D'
-			title='Avatar de Emisión'
-			description='Vincula VTube Studio (2D) o carga tu avatar 3D VRM para controlar el lip sync, las expresiones y las poses de tu modelo en directo.'
-		/>
+		<header className='flex min-w-0 shrink-0 items-center'>
+			<h1 className='font-display font-semibold text-foreground text-lg tracking-tight sm:text-xl'>
+				Avatar de Emisión
+			</h1>
+		</header>
 	);
 }

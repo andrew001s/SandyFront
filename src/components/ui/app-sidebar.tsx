@@ -16,40 +16,15 @@ import {
 	SidebarMenuItem,
 	useSidebar,
 } from '@/components/ui/sidebar';
+import { dashboardNavigation } from '@/lib/dashboard-navigation';
 import { KOFI_URL } from '@/lib/links';
 import { cn } from '@/lib/utils';
 import { SignOutButton, useClerk, useUser } from '@clerk/nextjs';
-import {
-	CircleUserRound,
-	Coffee,
-	Gift,
-	LayoutDashboard,
-	LogIn,
-	LogOut,
-	Plug,
-	Settings2,
-	ShieldCheck,
-	Tv,
-} from 'lucide-react';
+import { Coffee, LogIn, LogOut } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-
-const navItems = [
-	{ href: '/home', label: 'Dashboard', icon: LayoutDashboard, tourId: 'sidebar-tour-dashboard' },
-	{ href: '/conexiones', label: 'Conexiones', icon: Plug, tourId: 'sidebar-tour-conexiones' },
-	{ href: '/recompensas', label: 'Recompensas', icon: Gift, tourId: 'sidebar-tour-recompensas' },
-	{
-		href: '/moderacion',
-		label: 'Moderación',
-		icon: ShieldCheck,
-		tourId: 'sidebar-tour-moderacion',
-	},
-	{ href: '/avatar', label: 'Avatar 2D/3D', icon: Tv, tourId: 'sidebar-tour-avatar' },
-	{ href: '/settings', label: 'Configuración', icon: Settings2, tourId: 'sidebar-tour-settings' },
-	{ href: '/account', label: 'Cuenta', icon: CircleUserRound, tourId: 'sidebar-tour-account' },
-];
 
 export function AppSidebar() {
 	const pathname = usePathname();
@@ -78,7 +53,7 @@ export function AppSidebar() {
 		<Sidebar collapsible='icon' className='border-r border-sidebar-border bg-sidebar'>
 			<SidebarHeader className='p-3'>
 				<Link
-					href='/home'
+					href='/avatar'
 					aria-label='Sandy Studio'
 					title='Sandy Studio'
 					className='flex w-full items-center justify-center rounded-lg p-2 transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary'
@@ -103,7 +78,7 @@ export function AppSidebar() {
 					</SidebarGroupLabel>
 					<SidebarGroupContent className='mt-1'>
 						<SidebarMenu className='gap-1'>
-							{navItems.map((item) => {
+							{dashboardNavigation.map((item) => {
 								const isActive = pathname === item.href;
 								return (
 									<SidebarMenuItem key={item.href}>
@@ -181,7 +156,7 @@ export function AppSidebar() {
 								type='button'
 								variant='outline'
 								size='sm'
-								onClick={() => void openSignIn({ fallbackRedirectUrl: '/home' })}
+								onClick={() => void openSignIn({ fallbackRedirectUrl: '/avatar' })}
 								className='h-8 w-full justify-start gap-2 rounded-lg border-border/70 bg-background px-2.5 font-sans font-medium text-muted-foreground text-xs shadow-none hover:bg-muted/50 hover:text-foreground group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0'
 							>
 								<LogIn className='size-3.5 shrink-0' />

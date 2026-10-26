@@ -114,38 +114,38 @@ export function SettingsPanel({ defaultTab }: { defaultTab?: string } = {}) {
 						onValueChange={(value) => setActiveTab(resolveTab(value))}
 						className='space-y-4'
 					>
-						<TabsList className='grid h-10 w-full grid-cols-5 gap-1 rounded-lg border border-border/70 bg-card p-1'>
+						<TabsList className='grid h-auto w-full grid-cols-3 gap-1.5 rounded-lg border border-border/70 bg-card p-1.5 lg:h-10 lg:grid-cols-5 lg:gap-1 lg:p-1'>
 							<TabsTrigger
 								value='sandy'
-								className='flex h-8 items-center justify-center gap-1.5 rounded-md px-2 font-medium font-sans text-xs transition-colors data-[state=active]:bg-primary/10 data-[state=active]:font-semibold data-[state=active]:text-primary'
+								className='flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-md px-1 py-1 font-medium font-sans text-xs transition-colors data-[state=active]:bg-primary/10 data-[state=active]:font-semibold data-[state=active]:text-primary lg:h-8 lg:min-h-0 lg:flex-row lg:gap-1.5 lg:px-2 lg:py-0'
 							>
 								<Cpu className='size-3.5 shrink-0 text-primary' />
 								<span>Personalidad</span>
 							</TabsTrigger>
 							<TabsTrigger
 								value='ai'
-								className='flex h-8 items-center justify-center gap-1.5 rounded-md px-2 font-medium font-sans text-xs transition-colors data-[state=active]:bg-primary/10 data-[state=active]:font-semibold data-[state=active]:text-primary'
+								className='flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-md px-1 py-1 font-medium font-sans text-xs transition-colors data-[state=active]:bg-primary/10 data-[state=active]:font-semibold data-[state=active]:text-primary lg:h-8 lg:min-h-0 lg:flex-row lg:gap-1.5 lg:px-2 lg:py-0'
 							>
 								<Bot className='size-3.5 shrink-0 text-primary' />
 								<span>Modelos IA</span>
 							</TabsTrigger>
 							<TabsTrigger
 								value='voice'
-								className='flex h-8 items-center justify-center gap-1.5 rounded-md px-2 font-medium font-sans text-xs transition-colors data-[state=active]:bg-primary/10 data-[state=active]:font-semibold data-[state=active]:text-primary'
+								className='flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-md px-1 py-1 font-medium font-sans text-xs transition-colors data-[state=active]:bg-primary/10 data-[state=active]:font-semibold data-[state=active]:text-primary lg:h-8 lg:min-h-0 lg:flex-row lg:gap-1.5 lg:px-2 lg:py-0'
 							>
 								<Volume2 className='size-3.5 shrink-0 text-primary' />
 								<span>Voz</span>
 							</TabsTrigger>
 							<TabsTrigger
 								value='speech'
-								className='flex h-8 items-center justify-center gap-1.5 rounded-md px-2 font-medium font-sans text-xs transition-colors data-[state=active]:bg-primary/10 data-[state=active]:font-semibold data-[state=active]:text-primary'
+								className='flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-md px-1 py-1 font-medium font-sans text-xs transition-colors data-[state=active]:bg-primary/10 data-[state=active]:font-semibold data-[state=active]:text-primary lg:h-8 lg:min-h-0 lg:flex-row lg:gap-1.5 lg:px-2 lg:py-0'
 							>
 								<Mic className='size-3.5 shrink-0 text-primary' />
 								<span>Micrófono</span>
 							</TabsTrigger>
 							<TabsTrigger
 								value='services'
-								className='flex h-8 items-center justify-center gap-1.5 rounded-md px-2 font-medium font-sans text-xs transition-colors data-[state=active]:bg-primary/10 data-[state=active]:font-semibold data-[state=active]:text-primary'
+								className='flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-md px-1 py-1 font-medium font-sans text-xs transition-colors data-[state=active]:bg-primary/10 data-[state=active]:font-semibold data-[state=active]:text-primary lg:h-8 lg:min-h-0 lg:flex-row lg:gap-1.5 lg:px-2 lg:py-0'
 							>
 								<Power className='size-3.5 shrink-0 text-primary' />
 								<span>Servicios</span>

@@ -38,34 +38,25 @@ export const AvatarContainer = () => {
 	const [showExternalVts, setShowExternalVts] = useState(false);
 
 	return (
-		<div className='mx-auto flex w-full max-w-6xl flex-1 flex-col space-y-6 px-4 py-8 md:px-6'>
-			{/* Encabezado */}
+		<div className='mx-auto flex min-h-0 w-full flex-1 flex-col gap-2 overflow-y-auto px-3 py-2 md:px-4'>
 			<motion.div
-				initial={{ opacity: 0, y: 20 }}
+				initial={{ opacity: 0, y: 8 }}
 				animate={{ opacity: 1, y: 0 }}
-				transition={{ duration: 0.4 }}
+				transition={{ duration: 0.25, ease: 'easeOut' }}
+				className='flex shrink-0 flex-col items-stretch gap-2 border-border/60 border-b pb-2 lg:flex-row lg:items-center lg:justify-between'
 			>
 				<AvatarHeader />
-			</motion.div>
-
-			{/* Selector de Software: Avatar 2D (Navegador) vs Avatar 3D (VRM) */}
-			<motion.div
-				initial={{ opacity: 0, y: 20 }}
-				animate={{ opacity: 1, y: 0 }}
-				transition={{ duration: 0.4, delay: 0.05 }}
-			>
 				<AvatarSoftwareSelector
 					selectedSoftware={activeSoftware}
 					connectedSoftware={connected ? activeSoftware : null}
-					isConnecting={connecting}
 					onSelect={setSoftware}
 				/>
 			</motion.div>
 
 			{activeSoftware === 'vrm' ? (
-				<div className='w-full'>
+				<div className='flex min-h-[min(26.25rem,max(16rem,calc(100dvh_-_14rem)))] w-full flex-1 flex-col'>
 					{/* Escenario 3D interactivo WebGL (Estilo VTube Studio / VNyan con Dock, Expresiones, Lip Sync y Fondo) */}
-					<VrmCanvas className='w-full' />
+					<VrmCanvas className='min-h-[min(26.25rem,max(16rem,calc(100dvh_-_14rem)))] w-full flex-1' />
 				</div>
 			) : is3D ? (
 				<div className='space-y-6'>
@@ -92,34 +83,36 @@ export const AvatarContainer = () => {
 					/>
 				</div>
 			) : activeSoftware === 'live2d' ? (
-				<div className='w-full space-y-6'>
+				<div className='flex min-h-[min(26.25rem,max(16rem,calc(100dvh_-_14rem)))] w-full flex-1 flex-col gap-2'>
 					{/* Escenario Live2D dedicado en Navegador */}
-					<Avatar2dCanvas mode='live2d' className='w-full' />
+					<Avatar2dCanvas
+						mode='live2d'
+						className='min-h-[min(26.25rem,max(16rem,calc(100dvh_-_14rem)))] flex-1'
+					/>
 
 					{/* Opción secundaria para streamers que usen VTube Studio Desktop por WebSocket */}
-					<div className='flex flex-col gap-3 rounded-2xl border border-border/70 bg-card/40 p-4'>
-						<div className='flex flex-wrap items-center justify-between gap-2'>
-							<div>
-								<h3 className='font-semibold text-foreground text-xs sm:text-sm'>
-									Conexión externa con VTube Studio App (Desktop)
-								</h3>
-								<p className='text-[11px] text-muted-foreground'>
-									Si ya tienes VTube Studio instalado en tu PC, puedes conectarte vía WebSocket
-									local opcionalmente.
-								</p>
-							</div>
+					<div className='flex shrink-0 flex-col gap-2 border-border/50 border-t px-1'>
+						<div className='flex min-h-9 items-center justify-between gap-3'>
+							<h3 className='truncate font-medium text-muted-foreground text-xs'>
+								VTube Studio para escritorio
+							</h3>
 							<Button
 								variant='outline'
 								size='sm'
 								onClick={() => setShowExternalVts(!showExternalVts)}
-								className='h-7.5 px-3 font-medium text-xs'
+								className='h-7 shrink-0 px-3 font-medium text-xs'
+								aria-expanded={showExternalVts}
+								aria-controls='external-vts-controls'
 							>
-								{showExternalVts ? 'Ocultar conexión VTS' : 'Abrir conexión VTS'}
+								{showExternalVts ? 'Ocultar conexión' : 'Conectar VTube Studio'}
 							</Button>
 						</div>
 
 						{showExternalVts && (
-							<div className='grid grid-cols-1 items-start gap-6 pt-3 lg:grid-cols-2'>
+							<div
+								id='external-vts-controls'
+								className='grid grid-cols-1 items-start gap-6 pt-3 lg:grid-cols-2'
+							>
 								<div className='space-y-6'>
 									<AvatarConnectionCard
 										connecting={connecting}
@@ -162,9 +155,12 @@ export const AvatarContainer = () => {
 					</div>
 				</div>
 			) : (
-				<div className='w-full space-y-6'>
+				<div className='flex min-h-[min(26.25rem,max(16rem,calc(100dvh_-_14rem)))] w-full flex-1 flex-col gap-2'>
 					{/* Escenario PNGTuber dedicado en Navegador */}
-					<Avatar2dCanvas mode='pngtuber' className='w-full' />
+					<Avatar2dCanvas
+						mode='pngtuber'
+						className='min-h-[min(26.25rem,max(16rem,calc(100dvh_-_14rem)))] flex-1'
+					/>
 				</div>
 			)}
 		</div>

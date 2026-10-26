@@ -8,7 +8,6 @@ describe('AvatarSoftwareSelector', () => {
 			<AvatarSoftwareSelector
 				selectedSoftware='pngtuber'
 				connectedSoftware={null}
-				isConnecting={false}
 				onSelect={vi.fn()}
 			/>,
 		);
@@ -24,7 +23,6 @@ describe('AvatarSoftwareSelector', () => {
 			<AvatarSoftwareSelector
 				selectedSoftware='pngtuber'
 				connectedSoftware={null}
-				isConnecting={false}
 				onSelect={onSelect}
 			/>,
 		);

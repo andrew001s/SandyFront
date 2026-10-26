@@ -73,7 +73,7 @@ export default function AuthPage() {
 									</div>
 									<div className='flex flex-wrap gap-3'>
 										<Button asChild>
-											<Link href='/home'>Ir al dashboard</Link>
+											<Link href='/avatar'>Ir al estudio</Link>
 										</Button>
 										<SignOutButton redirectUrl='/auth'>
 											<Button variant='outline'>Cerrar sesión</Button>

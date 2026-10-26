@@ -17,17 +17,17 @@ export function AuthAction({ action, children, ...props }: AuthActionProps) {
 	const handleClick = () => {
 		if (action === 'app') {
 			if (isSignedIn) {
-				router.push('/home');
+				router.push('/avatar');
 			} else {
-				void openSignIn({ fallbackRedirectUrl: '/home' });
+				void openSignIn({ fallbackRedirectUrl: '/avatar' });
 			}
 			return;
 		}
 		if (action === 'signup') {
-			void openSignUp({ fallbackRedirectUrl: '/home' });
+			void openSignUp({ fallbackRedirectUrl: '/avatar' });
 			return;
 		}
-		void openSignIn({ fallbackRedirectUrl: '/home' });
+		void openSignIn({ fallbackRedirectUrl: '/avatar' });
 	};
 
 	return (

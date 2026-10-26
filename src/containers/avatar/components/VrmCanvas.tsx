@@ -1,5 +1,9 @@
 'use client';
 
+import { getSettings, saveSettings } from '@/api/settings';
+import { FeatureFlagsPanel } from '@/components/FeatureFlags/FeatureFlagsPanel';
+import { MicrophoneTile } from '@/components/ServiceControl/MicrophoneTile';
+import { ServiceStartCard } from '@/components/ServiceControl/ServiceStartCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -24,7 +28,18 @@ import {
 	storeBackgroundState,
 } from '@/lib/avatar/vrmBackground';
 import { vrmManager } from '@/lib/avatar/vrmManager';
+import {
+	type VrmTriggerRule,
+	claimLegacyVrmTriggerRules,
+	clearLegacyVrmTriggerRules,
+	getLegacyVrmTriggerRules,
+	hasMigratedVrmTriggerRules,
+	markVrmTriggerRulesMigrated,
+	releaseLegacyVrmTriggerRules,
+	setVrmTriggerRules,
+} from '@/lib/avatar/vrmTriggerGraph';
 import { type VrmCameraPreset, VrmViewer } from '@/lib/avatar/vrmViewer';
+import { useAuth } from '@clerk/nextjs';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
 	Box,
@@ -65,9 +80,150 @@ export function VrmCanvas({ className = '' }: Props) {
 	const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 	const [isHudVisible, setIsHudVisible] = useState<boolean>(true);
 	const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
+	const { getToken, isLoaded: isAuthLoaded, isSignedIn, userId } = useAuth();
+	const [triggerRules, setTriggerRules] = useState<VrmTriggerRule[]>([]);
+	const [legacyRulesAvailable, setLegacyRulesAvailable] = useState(false);
+	const [triggerRulesStatus, setTriggerRulesStatus] = useState<'loading' | 'ready' | 'error'>(
+		'loading',
+	);
+	const [triggerRulesSaveStatus, setTriggerRulesSaveStatus] = useState<
+		'idle' | 'saving' | 'saved' | 'error'
+	>('idle');
+	const [triggerRulesReload, setTriggerRulesReload] = useState(0);
+	const triggerRulesDirty = useRef(false);
+	const legacyImportOwner = useRef<string | null>(null);
+	const currentUserId = useRef(userId);
+	currentUserId.current = userId;
 
 	// Estado avanzado del Fondo (Color sólido, Presets, Imagen propia)
 	const [bgState, setBgState] = useState<VrmBackgroundState>(DEFAULT_VRM_BACKGROUND_STATE);
+
+	useEffect(() => {
+		let cancelled = false;
+		if (legacyImportOwner.current && legacyImportOwner.current !== userId) {
+			releaseLegacyVrmTriggerRules(legacyImportOwner.current);
+			legacyImportOwner.current = null;
+		}
+		setTriggerRulesStatus('loading');
+		setVrmTriggerRules([]);
+		setTriggerRules([]);
+		setLegacyRulesAvailable(false);
+		triggerRulesDirty.current = false;
+		setTriggerRulesSaveStatus('idle');
+
+		if (!isAuthLoaded) return;
+		if (!isSignedIn || !userId) {
+			setTriggerRulesStatus('ready');
+			return;
+		}
+
+		void (async () => {
+			try {
+				const token = await getToken();
+				const response = await getSettings({ token });
+				if (cancelled) return;
+
+				let accountRules = response.settings?.vrm_trigger_rules;
+				const legacyRules = getLegacyVrmTriggerRules();
+				const canOfferLegacyImport = legacyRules.length > 0 && !hasMigratedVrmTriggerRules();
+				setLegacyRulesAvailable(canOfferLegacyImport);
+				if (!Array.isArray(accountRules)) {
+					accountRules = [];
+					if (!canOfferLegacyImport) {
+						await saveSettings({ vrm_trigger_rules: accountRules }, { token });
+					}
+				}
+
+				if (cancelled) return;
+				setVrmTriggerRules(accountRules);
+				setTriggerRules(accountRules);
+				setTriggerRulesStatus('ready');
+			} catch (error) {
+				if (cancelled) return;
+				console.error('No se pudieron cargar las reglas del avatar:', error);
+				setTriggerRulesStatus('error');
+			}
+		})();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [getToken, isAuthLoaded, isSignedIn, triggerRulesReload, userId]);
+
+	useEffect(() => {
+		if (!triggerRulesDirty.current || triggerRulesStatus !== 'ready' || !userId) return;
+
+		const accountId = userId;
+		const timeoutId = window.setTimeout(() => {
+			void (async () => {
+				if (currentUserId.current !== accountId) return;
+				triggerRulesDirty.current = false;
+				const claimedMigration = legacyImportOwner.current === accountId;
+				setTriggerRulesSaveStatus('saving');
+				try {
+					const token = await getToken();
+					if (currentUserId.current !== accountId) return;
+					await saveSettings({ vrm_trigger_rules: triggerRules }, { token });
+					if (claimedMigration) {
+						markVrmTriggerRulesMigrated();
+						clearLegacyVrmTriggerRules();
+						legacyImportOwner.current = null;
+						if (currentUserId.current === accountId) setLegacyRulesAvailable(false);
+					}
+					if (currentUserId.current === accountId) setTriggerRulesSaveStatus('saved');
+				} catch (error) {
+					console.error('No se pudieron guardar las reglas del avatar:', error);
+					if (claimedMigration) {
+						releaseLegacyVrmTriggerRules(accountId);
+						if (legacyImportOwner.current === accountId) legacyImportOwner.current = null;
+					}
+					if (currentUserId.current === accountId) setTriggerRulesSaveStatus('error');
+				}
+			})();
+		}, 450);
+
+		return () => window.clearTimeout(timeoutId);
+	}, [getToken, triggerRules, triggerRulesStatus, userId]);
+
+	const handleTriggerRulesChange = (nextRules: VrmTriggerRule[]) => {
+		triggerRulesDirty.current = true;
+		setVrmTriggerRules(nextRules);
+		setTriggerRules(nextRules);
+		setTriggerRulesSaveStatus('saving');
+	};
+
+	const retryTriggerRulesSave = () => {
+		triggerRulesDirty.current = true;
+		setTriggerRulesSaveStatus('saving');
+		setTriggerRules((rules) => [...rules]);
+	};
+
+	const importLegacyTriggerRules = () => {
+		if (!userId) return;
+		if (legacyImportOwner.current) return;
+		const legacyRules = getLegacyVrmTriggerRules();
+		if (!legacyRules.length) {
+			setLegacyRulesAvailable(false);
+			return;
+		}
+		if (!claimLegacyVrmTriggerRules(userId)) {
+			toast.error('Estas reglas ya están en proceso de importación a otra cuenta.');
+			return;
+		}
+		legacyImportOwner.current = userId;
+
+		const existingIds = new Set(triggerRules.map((rule) => rule.id));
+		const rulesToImport = legacyRules.filter((rule) => !existingIds.has(rule.id));
+		if (!rulesToImport.length) {
+			markVrmTriggerRulesMigrated();
+			clearLegacyVrmTriggerRules();
+			legacyImportOwner.current = null;
+			setLegacyRulesAvailable(false);
+			return;
+		}
+
+		handleTriggerRulesChange([...triggerRules, ...rulesToImport]);
+	};
 
 	// Cargar configuración guardada del fondo al montar y sincronizar con vrmManager
 	useEffect(() => {
@@ -301,7 +457,7 @@ export function VrmCanvas({ className = '' }: Props) {
 	return (
 		<Card
 			ref={containerRef}
-			className={`relative flex w-full flex-col overflow-hidden bg-card shadow-2xl ${
+			className={`relative flex min-h-[min(26.25rem,max(16rem,calc(100dvh_-_14rem)))] w-full flex-1 flex-col overflow-hidden bg-card shadow-2xl ${
 				isFullscreen
 					? 'fixed inset-0 z-50 h-screen w-screen rounded-none border-0'
 					: 'rounded-2xl border border-border/80 transition-shadow duration-300'
@@ -411,14 +567,16 @@ export function VrmCanvas({ className = '' }: Props) {
 
 			{/* Escenario 3D Interactivo con Dock y Paneles Flotantes (VTube Studio / VNyan Style) */}
 			<CardContent
-				className={`relative flex flex-col p-0 ${
+				className={`relative flex min-h-0 flex-1 flex-col p-0 ${
 					isFullscreen ? 'absolute inset-0 h-full w-full' : ''
 				}`}
 			>
 				<div
 					ref={viewportRef}
 					className={`relative w-full min-w-0 overflow-hidden ${
-						isFullscreen ? 'h-full flex-1' : 'h-[560px] md:h-[620px] lg:h-[660px]'
+						isFullscreen
+							? 'h-full flex-1'
+							: 'h-full min-h-[min(26.25rem,max(16rem,calc(100dvh_-_14rem)))] flex-1'
 					}`}
 				>
 					{/* Capa de Fondo (Presets / Color / Imagen) */}
@@ -451,7 +609,7 @@ export function VrmCanvas({ className = '' }: Props) {
 								animate={{ opacity: 1, x: 0, scale: 1 }}
 								exit={{ opacity: 0, x: 20, scale: 0.96 }}
 								transition={{ duration: 0.2, ease: 'easeOut' }}
-								className='absolute top-4 right-20 z-30 max-h-[calc(100%-2rem)] overflow-y-auto'
+								className='absolute right-3 bottom-20 left-3 z-30 max-h-[calc(100%-6rem)] overflow-y-auto md:top-4 md:right-20 md:bottom-auto md:left-auto md:max-h-[calc(100%-2rem)]'
 							>
 								{activeTool === 'expressions' && (
 									<VrmStudioExpressionsPanel onClose={() => setActiveTool(null)} />
@@ -490,7 +648,33 @@ export function VrmCanvas({ className = '' }: Props) {
 								)}
 
 								{activeTool === 'triggers' && (
-									<VrmStudioTriggersPanel onClose={() => setActiveTool(null)} />
+									<VrmStudioTriggersPanel
+										error={triggerRulesStatus === 'error'}
+										loading={triggerRulesStatus === 'loading'}
+										onChange={handleTriggerRulesChange}
+										onClose={() => setActiveTool(null)}
+										onImportLegacy={importLegacyTriggerRules}
+										onRetry={() => setTriggerRulesReload((value) => value + 1)}
+										onRetrySave={retryTriggerRulesSave}
+										legacyRulesAvailable={legacyRulesAvailable}
+										rules={triggerRules}
+										saveStatus={triggerRulesSaveStatus}
+									/>
+								)}
+								{activeTool === 'microphone' && (
+									<div className='w-full min-w-0 md:w-[340px]'>
+										<MicrophoneTile />
+									</div>
+								)}
+								{activeTool === 'services' && (
+									<div className='w-full min-w-0 md:w-[340px]'>
+										<ServiceStartCard />
+									</div>
+								)}
+								{activeTool === 'features' && (
+									<div className='w-full min-w-0 md:w-[420px]'>
+										<FeatureFlagsPanel />
+									</div>
 								)}
 							</motion.div>
 						)}

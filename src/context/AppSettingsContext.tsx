@@ -13,13 +13,15 @@ type AppSettingsContextValue = {
 const AppSettingsContext = createContext<AppSettingsContextValue | null>(null);
 
 export function AppSettingsProvider({ children }: { children: React.ReactNode }) {
-	const { getToken, isLoaded, isSignedIn } = useAuth();
+	const { getToken, isLoaded, isSignedIn, userId } = useAuth();
 	const [settings, setSettings] = useState<SettingsPayload | null>(null);
+	const [settingsOwnerId, setSettingsOwnerId] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 
 	const refreshSettings = useCallback(async () => {
-		if (!isLoaded || !isSignedIn) {
+		if (!isLoaded || !isSignedIn || !userId) {
 			setSettings(null);
+			setSettingsOwnerId(null);
 			setIsLoading(false);
 			return;
 		}
@@ -29,6 +31,7 @@ export function AppSettingsProvider({ children }: { children: React.ReactNode })
 			const token = await getToken();
 			const data = await getSettings({ token });
 			setSettings(data.settings);
+			setSettingsOwnerId(userId);
 		} catch (error) {
 			// Se conserva lo que ya estaba cargado: un fallo pasajero de red o una
 			// renovación de token no significa que el usuario haya perdido su
@@ -38,7 +41,7 @@ export function AppSettingsProvider({ children }: { children: React.ReactNode })
 		} finally {
 			setIsLoading(false);
 		}
-	}, [getToken, isLoaded, isSignedIn]);
+	}, [getToken, isLoaded, isSignedIn, userId]);
 
 	useEffect(() => {
 		void refreshSettings();
@@ -46,11 +49,11 @@ export function AppSettingsProvider({ children }: { children: React.ReactNode })
 
 	const value = useMemo(
 		() => ({
-			settings,
+			settings: settingsOwnerId === userId ? settings : null,
 			isLoading,
 			refreshSettings,
 		}),
-		[isLoading, refreshSettings, settings],
+		[isLoading, refreshSettings, settings, settingsOwnerId, userId],
 	);
 
 	return <AppSettingsContext.Provider value={value}>{children}</AppSettingsContext.Provider>;

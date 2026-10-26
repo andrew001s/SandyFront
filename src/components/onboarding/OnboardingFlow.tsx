@@ -24,7 +24,7 @@ export function OnboardingFlow() {
 		}
 
 		if (isOnboardingComplete(userId)) {
-			router.replace('/home');
+			router.replace('/avatar');
 			return;
 		}
 
@@ -37,7 +37,7 @@ export function OnboardingFlow() {
 				return;
 			}
 			markOnboardingComplete(userId);
-			router.replace('/home');
+			router.replace('/avatar');
 		})();
 
 		return () => {
@@ -54,7 +54,7 @@ export function OnboardingFlow() {
 			console.error('No se pudo marcar el onboarding en la cuenta:', error);
 		}
 		markOnboardingComplete(userId);
-		router.replace('/home');
+		router.replace('/avatar');
 	}, [router, userId, getToken]);
 
 	if (!isLoaded || !isSignedIn) {

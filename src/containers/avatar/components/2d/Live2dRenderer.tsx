@@ -963,7 +963,7 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 			onPointerMove={handlePointerMove}
 			onPointerUp={handlePointerUp}
 			onPointerCancel={handlePointerUp}
-			className={`relative h-full w-full touch-none select-none overflow-hidden overscroll-contain ${
+			className={`absolute inset-0 touch-none select-none overflow-hidden overscroll-contain ${
 				interactive ? 'cursor-grab active:cursor-grabbing' : ''
 			}`}
 		>

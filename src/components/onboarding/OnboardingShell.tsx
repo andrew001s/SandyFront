@@ -42,7 +42,7 @@ export function OnboardingShell() {
 
 	const handleDismiss = useCallback(() => {
 		markOnboardingDismissed(userId);
-		window.location.assign('/home');
+		window.location.assign('/avatar');
 	}, [userId]);
 
 	const handlePrevious = useCallback(() => {

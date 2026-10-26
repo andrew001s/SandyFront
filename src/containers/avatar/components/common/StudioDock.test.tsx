@@ -2,6 +2,14 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { StudioDock } from './StudioDock';
 
+vi.mock('@/hooks/useServiceStatus', () => ({
+	useServiceStatus: () => ({
+		serviceStatus: null,
+		hasLoaded: true,
+		hasError: false,
+	}),
+}));
+
 describe('StudioDock', () => {
 	it('StudioDock renders base dock container with common studio actions (expressions, lipsync, background, fullscreen, toggle HUD)', () => {
 		render(
@@ -20,6 +28,10 @@ describe('StudioDock', () => {
 
 		expect(screen.getByRole('button', { name: /expresiones/i })).toBeInTheDocument();
 		expect(screen.getByRole('button', { name: /lip sync/i })).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: /funciones del dashboard/i })).toBeInTheDocument();
+		expect(
+			screen.queryByRole('button', { name: /navegación de sandy studio/i }),
+		).not.toBeInTheDocument();
 		expect(screen.getByRole('button', { name: /fondo/i })).toBeInTheDocument();
 		expect(screen.getByRole('button', { name: /pantalla completa/i })).toBeInTheDocument();
 		expect(screen.getByRole('button', { name: /ocultar/i })).toBeInTheDocument();
@@ -121,6 +133,26 @@ describe('StudioDock', () => {
 
 		fireEvent.click(expressionsBtn);
 		expect(onToggleTool).toHaveBeenCalledWith(null);
+	});
+
+	it('StudioDock opens and closes dashboard feature controls', () => {
+		const onToggleTool = vi.fn();
+		render(
+			<StudioDock
+				mode='vrm'
+				activeTool={null}
+				onToggleTool={onToggleTool}
+				isPlayingAudio={false}
+				isFullscreen={false}
+				onToggleFullscreen={vi.fn()}
+				isHudVisible={true}
+				onToggleHud={vi.fn()}
+				hasCustomBackground={false}
+			/>,
+		);
+
+		fireEvent.click(screen.getByRole('button', { name: /funciones del dashboard/i }));
+		expect(onToggleTool).toHaveBeenCalledWith('features');
 	});
 
 	it('StudioDock renders only the discrete restore button when HUD is hidden and triggers onToggleHud on click', () => {

@@ -10,6 +10,10 @@ vi.mock('@/containers/avatar/components/2d/PngTuberRenderer', () => ({
 	PngTuberRenderer: () => <div data-testid='pngtuber-renderer' />,
 }));
 
+vi.mock('@/hooks/useServiceStatus', () => ({
+	useServiceStatus: () => ({ serviceStatus: null, hasLoaded: true, hasError: false }),
+}));
+
 describe('Avatar2dCanvas expressions routing', () => {
 	it('routes expressions tool to Live2dExpressionsPanel when in live2d mode', () => {
 		render(<Avatar2dCanvas mode='live2d' />);

@@ -35,7 +35,7 @@ export function CompletedStep() {
 		} finally {
 			markOnboardingComplete(userId);
 
-			window.location.replace('/home');
+			window.location.replace('/avatar');
 		}
 	};
 

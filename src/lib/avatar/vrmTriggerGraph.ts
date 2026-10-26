@@ -50,6 +50,8 @@ export interface VrmTriggerRule {
 }
 
 const STORAGE_KEY = 'sandy_vrm_trigger_graph_v1';
+const MIGRATED_STORAGE_KEY = 'sandy_vrm_trigger_graph_migrated_v1';
+let currentRules: VrmTriggerRule[] = [];
 
 export const VRM_TRIGGER_NAMES: Array<{ id: VrmTriggerName; label: string }> = [
 	{ id: 'chat_message', label: 'Mensaje del chat' },
@@ -63,6 +65,14 @@ export const VRM_TRIGGER_NAMES: Array<{ id: VrmTriggerName; label: string }> = [
 ];
 
 export function getVrmTriggerRules(): VrmTriggerRule[] {
+	return currentRules;
+}
+
+export function setVrmTriggerRules(rules: VrmTriggerRule[]): void {
+	currentRules = Array.isArray(rules) ? [...rules] : [];
+}
+
+export function getLegacyVrmTriggerRules(): VrmTriggerRule[] {
 	if (typeof window === 'undefined') return [];
 	try {
 		const value = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || '[]');
@@ -74,12 +84,53 @@ export function getVrmTriggerRules(): VrmTriggerRule[] {
 	}
 }
 
-export function saveVrmTriggerRules(rules: VrmTriggerRule[]): void {
+export function hasMigratedVrmTriggerRules(): boolean {
+	if (typeof window === 'undefined') return false;
+	try {
+		return window.localStorage.getItem(MIGRATED_STORAGE_KEY) === '1';
+	} catch {
+		return false;
+	}
+}
+
+export function claimLegacyVrmTriggerRules(userId: string): boolean {
+	if (typeof window === 'undefined') return false;
+	try {
+		const owner = window.localStorage.getItem(MIGRATED_STORAGE_KEY);
+		if (owner === '1' || (owner && owner !== userId)) return false;
+		window.localStorage.setItem(MIGRATED_STORAGE_KEY, userId);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+export function releaseLegacyVrmTriggerRules(userId: string): void {
 	if (typeof window === 'undefined') return;
 	try {
-		window.localStorage.setItem(STORAGE_KEY, JSON.stringify(rules));
+		if (window.localStorage.getItem(MIGRATED_STORAGE_KEY) === userId) {
+			window.localStorage.removeItem(MIGRATED_STORAGE_KEY);
+		}
 	} catch {
-		// Keep graph editing available if browser storage is full or disabled.
+		// Keep the local rules available for a later migration attempt.
+	}
+}
+
+export function markVrmTriggerRulesMigrated(): void {
+	if (typeof window === 'undefined') return;
+	try {
+		window.localStorage.setItem(MIGRATED_STORAGE_KEY, '1');
+	} catch {
+		// Account settings remain authoritative if local storage is unavailable.
+	}
+}
+
+export function clearLegacyVrmTriggerRules(): void {
+	if (typeof window === 'undefined') return;
+	try {
+		window.localStorage.removeItem(STORAGE_KEY);
+	} catch {
+		// The account copy remains authoritative if local storage is unavailable.
 	}
 }
 

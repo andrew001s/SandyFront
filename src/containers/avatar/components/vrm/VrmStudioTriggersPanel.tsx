@@ -19,14 +19,21 @@ import {
 	type VrmTriggerName,
 	type VrmTriggerRule,
 	addVrmTriggerRule,
-	getVrmTriggerRules,
-	saveVrmTriggerRules,
 } from '@/lib/avatar/vrmTriggerGraph';
 import { Check, ChevronDown, CircleHelp, Play, Plus, Radio, Search, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface Props {
+	error: boolean;
+	legacyRulesAvailable: boolean;
+	loading: boolean;
+	onChange: (rules: VrmTriggerRule[]) => void;
 	onClose: () => void;
+	onImportLegacy: () => void;
+	onRetry: () => void;
+	onRetrySave: () => void;
+	rules: VrmTriggerRule[];
+	saveStatus: 'idle' | 'saving' | 'saved' | 'error';
 }
 
 const TRIGGER_FILTER_DESCRIPTIONS: Record<
@@ -48,8 +55,18 @@ const TRIGGER_FILTER_DESCRIPTIONS: Record<
 	raid: 'Compara el texto con el nombre del canal que hizo el raid. Déjalo vacío para aceptar cualquier raid.',
 };
 
-export function VrmStudioTriggersPanel({ onClose }: Props) {
-	const [rules, setRules] = useState<VrmTriggerRule[]>(() => getVrmTriggerRules());
+export function VrmStudioTriggersPanel({
+	error,
+	legacyRulesAvailable,
+	loading,
+	onChange,
+	onClose,
+	onImportLegacy,
+	onRetry,
+	onRetrySave,
+	rules,
+	saveStatus,
+}: Props) {
 	const [channelRewards, setChannelRewards] = useState<RewardConfig[]>([]);
 	const [channelRewardsLoading, setChannelRewardsLoading] = useState(true);
 	const [rewardDialogRuleId, setRewardDialogRuleId] = useState<string | null>(null);
@@ -73,8 +90,7 @@ export function VrmStudioTriggersPanel({ onClose }: Props) {
 	}, []);
 
 	const update = (next: VrmTriggerRule[]) => {
-		setRules(next);
-		saveVrmTriggerRules(next);
+		onChange(next);
 	};
 
 	const updateRule = (id: string, patch: Partial<VrmTriggerRule>) => {
@@ -158,13 +174,68 @@ export function VrmStudioTriggersPanel({ onClose }: Props) {
 						<X className='size-3.5' />
 					</Button>
 				</header>
+				<div className='flex items-center justify-between gap-3 text-[11px]'>
+					<p className='text-muted-foreground leading-relaxed'>Reglas vinculadas a tu cuenta.</p>
+					<p aria-live='polite' className='shrink-0 text-muted-foreground'>
+						{loading
+							? 'Cargando…'
+							: error
+								? 'No se pudo cargar'
+								: saveStatus === 'saving'
+									? 'Guardando…'
+									: saveStatus === 'saved'
+										? 'Guardado'
+										: saveStatus === 'error'
+											? 'Error al guardar'
+											: 'Sin cambios'}
+					</p>
+				</div>
+				{error && (
+					<div className='flex items-center justify-between gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-2.5 text-xs'>
+						<p className='text-muted-foreground'>No se cargaron las reglas de esta cuenta.</p>
+						<Button onClick={onRetry} size='sm' variant='outline'>
+							Reintentar
+						</Button>
+					</div>
+				)}
+				{saveStatus === 'error' && (
+					<div
+						role='alert'
+						className='flex items-center justify-between gap-3 text-destructive text-xs'
+					>
+						<span>No se guardaron los cambios.</span>
+						<Button onClick={onRetrySave} size='sm' variant='outline'>
+							Reintentar
+						</Button>
+					</div>
+				)}
 				<p className='text-[11px] text-muted-foreground leading-relaxed'>
-					Las reglas quedan en este navegador. Activa los servicios de Twitch Chat y EventSub en
-					SandyCore para recibir sus eventos.
+					Activa los servicios de Twitch Chat y EventSub en SandyCore para recibir eventos.
 				</p>
+				{legacyRulesAvailable && !loading && !error && (
+					<div className='space-y-2 rounded-lg border border-primary/25 bg-primary/5 p-2.5'>
+						<p className='text-muted-foreground text-xs leading-relaxed'>
+							Encontramos reglas antiguas de este navegador. Importarlas las vincula a esta cuenta.
+						</p>
+						<Button
+							className='w-full'
+							disabled={saveStatus === 'saving'}
+							onClick={onImportLegacy}
+							size='sm'
+							variant='outline'
+						>
+							Importar reglas a esta cuenta
+						</Button>
+					</div>
+				)}
 
-				<div className='max-h-[55vh] space-y-2 overflow-y-auto pr-1'>
-					{rules.length === 0 && (
+				<div aria-busy={loading} className='max-h-[55vh] space-y-2 overflow-y-auto pr-1'>
+					{loading && (
+						<p className='rounded-lg border border-border/70 border-dashed p-3 text-muted-foreground text-xs'>
+							Cargando reglas de esta cuenta…
+						</p>
+					)}
+					{!loading && !error && rules.length === 0 && (
 						<p className='rounded-lg border border-border/70 border-dashed p-3 text-muted-foreground text-xs'>
 							Añade una regla para conectar un evento de Twitch con una acción.
 						</p>
@@ -826,6 +897,7 @@ export function VrmStudioTriggersPanel({ onClose }: Props) {
 
 				<Button
 					className='w-full'
+					disabled={loading || error}
 					onClick={() => update([...rules, addVrmTriggerRule()])}
 					size='sm'
 					variant='outline'

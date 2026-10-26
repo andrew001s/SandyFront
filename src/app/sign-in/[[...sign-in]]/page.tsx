@@ -7,7 +7,7 @@ export const metadata: Metadata = noIndexMetadata;
 export default function SignInPage() {
 	return (
 		<div className='flex min-h-screen items-center justify-center'>
-			<SignIn forceRedirectUrl='/home' fallbackRedirectUrl='/home' />
+			<SignIn forceRedirectUrl='/avatar' fallbackRedirectUrl='/avatar' />
 		</div>
 	);
 }

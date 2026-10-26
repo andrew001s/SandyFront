@@ -1,5 +1,8 @@
 'use client';
 
+import { FeatureFlagsPanel } from '@/components/FeatureFlags/FeatureFlagsPanel';
+import { MicrophoneTile } from '@/components/ServiceControl/MicrophoneTile';
+import { ServiceStartCard } from '@/components/ServiceControl/ServiceStartCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -28,7 +31,7 @@ import { live2dStore } from '@/lib/avatar2d/live2dStore';
 import { unpackLive2dZip } from '@/lib/avatar2d/live2dZipLoader';
 import type { Avatar2dMode, Avatar2dState } from '@/lib/avatar2d/types';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, Copy, Maximize2, Minimize2, Sparkles, Tv, Upload } from 'lucide-react';
+import { Check, Copy, Maximize2, Minimize2, Tv, Upload } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import AvatarFooter from '../AvatarFooter';
@@ -277,7 +280,7 @@ export function Avatar2dCanvas({ className = '', mode }: Props) {
 			className={`relative flex w-full flex-col overflow-hidden bg-card shadow-2xl ${
 				isFullscreen
 					? 'fixed inset-0 z-50 h-screen w-screen rounded-none border-0'
-					: 'rounded-2xl border border-border/80 transition-shadow duration-300'
+					: 'min-h-[min(26.25rem,max(16rem,calc(100dvh_-_14rem)))] flex-1 rounded-2xl border border-border/80 transition-shadow duration-300'
 			} ${className}`}
 			onDragOver={(e) => {
 				e.preventDefault();
@@ -296,13 +299,13 @@ export function Avatar2dCanvas({ className = '', mode }: Props) {
 					className={`z-20 backdrop-blur-xl transition-all ${
 						isFullscreen
 							? 'pointer-events-auto absolute top-3 right-20 left-4 rounded-2xl border border-border/80 bg-background/85 px-4 py-2 shadow-2xl'
-							: 'relative shrink-0 border-border/60 border-b bg-card/85 px-4 py-2.5 sm:px-5'
+							: 'relative shrink-0 border-border/60 border-b bg-card/85 px-3 py-2 sm:px-4'
 					}`}
 				>
 					<div className='flex flex-wrap items-center justify-between gap-3'>
 						<div className='flex items-center gap-3'>
-							<div className='flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-xs'>
-								<Tv className='size-5' />
+							<div className='flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary'>
+								<Tv className='size-4' />
 							</div>
 
 							<div>
@@ -320,15 +323,6 @@ export function Avatar2dCanvas({ className = '', mode }: Props) {
 											AUDIO ON
 										</Badge>
 									)}
-								</div>
-
-								<div className='mt-0.5 flex items-center gap-2 text-xs'>
-									<span className='flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground'>
-										<Sparkles className='size-3 text-primary' />
-										<span>
-											{currentMode === 'pngtuber' ? 'PNGTuber Reactiva' : 'Visor WebGL Live2D'}
-										</span>
-									</span>
 								</div>
 							</div>
 						</div>
@@ -369,12 +363,14 @@ export function Avatar2dCanvas({ className = '', mode }: Props) {
 			{/* Escenario 2D interactivo con Dock y Paneles */}
 			<CardContent
 				className={`relative flex flex-col p-0 ${
-					isFullscreen ? 'absolute inset-0 h-full w-full' : ''
+					isFullscreen ? 'absolute inset-0 h-full w-full' : 'min-h-0 flex-1'
 				}`}
 			>
 				<div
 					className={`relative w-full min-w-0 overflow-hidden ${
-						isFullscreen ? 'h-full flex-1' : 'h-[560px] md:h-[620px] lg:h-[660px]'
+						isFullscreen
+							? 'h-full flex-1'
+							: 'h-full min-h-[min(26.25rem,max(16rem,calc(100dvh_-_14rem)))] flex-1'
 					}`}
 				>
 					{/* Capa de fondo */}
@@ -430,7 +426,7 @@ export function Avatar2dCanvas({ className = '', mode }: Props) {
 										animate={{ opacity: 1, scale: 1, x: 0 }}
 										exit={{ opacity: 0, scale: 0.96, x: 20 }}
 										transition={{ duration: 0.2, ease: 'easeOut' }}
-										className='pointer-events-auto absolute top-4 right-20 z-30 max-h-[calc(100%-2rem)] overflow-y-auto'
+										className='pointer-events-auto absolute right-3 bottom-20 left-3 z-30 max-h-[calc(100%-6rem)] overflow-y-auto md:top-4 md:right-20 md:bottom-auto md:left-auto md:max-h-[calc(100%-2rem)]'
 									>
 										<VrmStudioBackgroundPanel
 											state={bgState}
@@ -450,6 +446,26 @@ export function Avatar2dCanvas({ className = '', mode }: Props) {
 
 								{activeTool === 'settings' && (
 									<Avatar2dSettingsPanel mode={currentMode} onClose={() => setActiveTool(null)} />
+								)}
+
+								{(activeTool === 'microphone' ||
+									activeTool === 'services' ||
+									activeTool === 'features') && (
+									<motion.div
+										initial={{ opacity: 0, scale: 0.96, x: 20 }}
+										animate={{ opacity: 1, scale: 1, x: 0 }}
+										exit={{ opacity: 0, scale: 0.96, x: 20 }}
+										transition={{ duration: 0.2, ease: 'easeOut' }}
+										className='pointer-events-auto absolute right-3 bottom-20 left-3 z-30 max-h-[calc(100%-6rem)] overflow-y-auto md:top-4 md:right-20 md:bottom-auto md:left-auto md:max-h-[calc(100%-2rem)] md:w-[420px]'
+									>
+										{activeTool === 'microphone' ? (
+											<MicrophoneTile />
+										) : activeTool === 'services' ? (
+											<ServiceStartCard />
+										) : (
+											<FeatureFlagsPanel />
+										)}
+									</motion.div>
 								)}
 							</>
 						)}
