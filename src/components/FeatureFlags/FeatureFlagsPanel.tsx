@@ -96,7 +96,7 @@ export function FeatureFlagsPanel() {
 		<div className='overflow-hidden rounded-xl border border-border bg-card shadow-xs transition-all'>
 			<div className='flex flex-col gap-3 border-border border-b bg-card/90 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5'>
 				<div className='flex items-center gap-2.5'>
-					<span className='flex size-8 items-center justify-center rounded-lg border border-border bg-background text-primary'>
+					<span className='flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-background text-primary'>
 						<Sliders size={15} />
 					</span>
 					<div>
