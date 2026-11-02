@@ -259,6 +259,16 @@ export function useAvatar() {
 				vrmManager.setEmotion(emotion, resolvedPayload.intensity ?? 1.0);
 				return true;
 			}
+			if (activeSoftware === 'pngtuber') {
+				const emotion = String(resolvedPayload.emotion ?? 'neutral').toLowerCase();
+				avatar2dManager.setEmotion(emotion);
+				return true;
+			}
+			if (activeSoftware === 'live2d') {
+				const expression = resolvedPayload.expression ?? resolvedPayload.emotion ?? null;
+				avatar2dManager.setLive2dExpression(expression ? String(expression) : null);
+				return true;
+			}
 			if (activeSoftware === 'vtubestudio') {
 				return vts.sendAvatarPayload(resolvedPayload);
 			}
