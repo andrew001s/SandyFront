@@ -101,7 +101,7 @@ export default function LandingPage() {
 							featureList: [
 								'VTuber con IA para Twitch, Kick y YouTube',
 								'Sincronización labial en tiempo real (Lip Sync 60 FPS)',
-								'Soporte para avatares 2D en VTube Studio y 3D en VNyan (VRM)',
+								'Soporte para avatares 2D en VTube Studio y 3D',
 								'Síntesis de voz natural y texto a voz (TTS)',
 								'Moderación automática de chat con Inteligencia Artificial',
 								'Interacción por micrófono en vivo',
@@ -129,7 +129,7 @@ export default function LandingPage() {
 									name: '¿Necesito experiencia técnica para usarlo?',
 									acceptedAnswer: {
 										'@type': 'Answer',
-										text: 'No. Conectas tu canal de Twitch, Kick o YouTube con OAuth, eliges el modelo de IA, la voz y el avatar (VTube Studio o VNyan) desde el panel visual de Sandy Studio con clics, sin necesidad de programar.',
+										text: 'No. Conectas tu canal de Twitch, Kick o YouTube con OAuth, eliges el modelo de IA, la voz y el avatar desde el panel visual de Sandy Studio con clics, sin necesidad de programar.',
 									},
 								},
 								{
@@ -137,7 +137,7 @@ export default function LandingPage() {
 									name: '¿Es compatible con avatares 2D y 3D?',
 									acceptedAnswer: {
 										'@type': 'Answer',
-										text: 'Sí. Sandy Studio es compatible con avatares 2D (Live2D a través de VTube Studio) y avatares 3D (formatos VRM y VRoid a través de VNyan usando WebSocket nativo).',
+										text: 'Sí. Sandy Studio es compatible con avatares 2D (Live2D a través de VTube Studio) y avatares 3D.',
 									},
 								},
 								{

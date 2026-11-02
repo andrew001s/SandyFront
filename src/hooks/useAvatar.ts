@@ -8,6 +8,7 @@ import {
 	AVATAR_SOFTWARE_STORAGE_KEY,
 	DEFAULT_SOFTWARE_CONFIGS,
 } from '@/lib/avatar/constants';
+import { getAutomaticReactionMapping } from '@/lib/avatar/reactionMappings';
 import { vnyanClient } from '@/lib/avatar/vnyanClient';
 import { createVrmLipSyncHandler } from '@/lib/avatar/vrmLipSync';
 import { vrmManager } from '@/lib/avatar/vrmManager';
@@ -33,6 +34,7 @@ export function useAvatar() {
 
 	const hasAutoConnectedRef = useRef(false);
 	const manualDisconnectedRef = useRef(false);
+	const activeVtsReactionRef = useRef<string | null>(null);
 
 	// Cargar configuración guardada al montar
 	useEffect(() => {
@@ -183,7 +185,14 @@ export function useAvatar() {
 				vrmManager.setEmotion(emotion, intensity);
 			} else if (is3D) {
 				await vnyanClient.setEmotion(emotion, intensity);
+			} else if (activeSoftware === 'pngtuber') {
+				avatar2dManager.setEmotion(emotion);
+			} else if (activeSoftware === 'live2d') {
+				avatar2dManager.setLive2dExpression(emotion);
 			} else {
+				if (activeSoftware === 'vtubestudio') {
+					activeVtsReactionRef.current = emotion;
+				}
 				await vts.activateExpression(emotion);
 			}
 		},
@@ -196,8 +205,15 @@ export function useAvatar() {
 			vrmManager.resetEmotions();
 		} else if (is3D) {
 			await vnyanClient.resetEmotions();
+		} else if (activeSoftware === 'pngtuber') {
+			avatar2dManager.setEmotion('neutral');
+		} else if (activeSoftware === 'live2d') {
+			avatar2dManager.setLive2dExpression(null);
+		} else if (activeSoftware === 'vtubestudio' && activeVtsReactionRef.current) {
+			await vts.setExpressionActive(activeVtsReactionRef.current, false);
+			activeVtsReactionRef.current = null;
 		}
-	}, [activeSoftware, is3D]);
+	}, [activeSoftware, is3D, vts]);
 
 	// Inyectar boca de forma unificada (2D y 3D)
 	const injectMouth = useCallback(
@@ -219,15 +235,34 @@ export function useAvatar() {
 	// Despacho unificado de payload (speech, reaction, emotion)
 	const sendAvatarPayload = useCallback(
 		async (payload: AvatarBackendPayload): Promise<boolean> => {
+			const selectedExpression =
+				payload.reaction && payload.emotion
+					? getAutomaticReactionMapping(payload.emotion)
+					: undefined;
+			const hasReactionDecision = typeof payload.reaction === 'boolean';
+			if (hasReactionDecision) {
+				console.error('[Reacción][Frontend]', {
+					decision: payload.reaction,
+					emotion: payload.emotion ?? null,
+					mappedExpression: selectedExpression ?? null,
+					software: activeSoftware,
+				});
+			}
+			const resolvedPayload = hasReactionDecision
+				? selectedExpression
+					? { ...payload, emotion: selectedExpression, expression: selectedExpression }
+					: { ...payload, emotion: undefined, expression: null }
+				: payload;
+
 			if (activeSoftware === 'vrm') {
-				const emotion = String(payload.emotion ?? 'neutral').toLowerCase();
-				vrmManager.setEmotion(emotion, payload.intensity ?? 1.0);
+				const emotion = String(resolvedPayload.emotion ?? 'neutral').toLowerCase();
+				vrmManager.setEmotion(emotion, resolvedPayload.intensity ?? 1.0);
 				return true;
 			}
 			if (activeSoftware === 'vtubestudio') {
-				return vts.sendAvatarPayload(payload);
+				return vts.sendAvatarPayload(resolvedPayload);
 			}
-			return vnyanClient.sendAvatarPayload(payload);
+			return vnyanClient.sendAvatarPayload(resolvedPayload);
 		},
 		[activeSoftware, vts],
 	);

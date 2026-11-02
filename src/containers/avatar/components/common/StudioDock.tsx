@@ -14,6 +14,7 @@ import {
 	Power,
 	SlidersHorizontal,
 	Smile,
+	Sparkles,
 	Waves,
 	Wind,
 	Zap,
@@ -24,6 +25,7 @@ export type StudioAvatarMode = 'vrm' | 'pngtuber' | 'live2d';
 
 export type StudioActiveTool =
 	| 'expressions'
+	| 'automaticReactions'
 	| 'emotions'
 	| 'lipsync'
 	| 'background'
@@ -127,6 +129,19 @@ export function StudioDock({
 						aria-label='Expresiones'
 					>
 						<Smile className='size-4.5' />
+					</button>
+				</DockTooltip>
+				<DockTooltip label='Reacciones automáticas' side={tooltipSide}>
+					<button
+						type='button'
+						onClick={() =>
+							onToggleTool(activeTool === 'automaticReactions' ? null : 'automaticReactions')
+						}
+						className={`flex size-11 shrink-0 items-center justify-center rounded-xl border transition-colors ${activeTool === 'automaticReactions' ? 'border-primary/50 bg-primary/20 text-primary' : 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'}`}
+						aria-label='Reacciones automáticas'
+						aria-pressed={activeTool === 'automaticReactions'}
+					>
+						<Sparkles className='size-4.5' />
 					</button>
 				</DockTooltip>
 

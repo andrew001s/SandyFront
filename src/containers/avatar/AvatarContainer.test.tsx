@@ -1,10 +1,52 @@
 import * as useAvatarModule from '@/hooks/useAvatar';
-import { render, screen } from '@testing-library/react';
+import { setAutomaticReactionMapping } from '@/lib/avatar/reactionMappings';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AvatarContainer } from './AvatarContainer';
 
+const { getSettingsMock, saveSettingsMock, useAuthMock } = vi.hoisted(() => ({
+	getSettingsMock: vi.fn(),
+	saveSettingsMock: vi.fn(),
+	useAuthMock: vi.fn(),
+}));
+let resolveNextAccountSettings = (_value: {
+	settings: { automatic_reaction_mappings: Record<string, string> };
+}) => {
+	void _value;
+};
+
+vi.mock('@/api/settings', () => ({
+	getSettings: getSettingsMock,
+	saveSettings: saveSettingsMock,
+}));
+
+vi.mock('@clerk/nextjs', () => ({
+	useAuth: useAuthMock,
+}));
+
 vi.mock('@/containers/avatar/components/VrmCanvas', () => ({
-	VrmCanvas: () => <div data-testid='vrm-canvas'>3D VRM Canvas</div>,
+	VrmCanvas: ({
+		automaticReactions,
+	}: {
+		automaticReactions?: {
+			mappings: Record<string, string>;
+			onMappingChange: (reaction: string, expressionId: string | null) => void;
+		};
+	}) => (
+		<div data-testid='vrm-canvas'>
+			<select
+				aria-label='Alegría'
+				value={automaticReactions?.mappings.happy ?? ''}
+				onChange={(event) =>
+					automaticReactions?.onMappingChange('happy', event.target.value || null)
+				}
+			>
+				<option value=''>Sin expresión</option>
+				<option value='smile'>Sonrisa</option>
+				<option value='frown'>Ceño fruncido</option>
+			</select>
+		</div>
+	),
 }));
 
 vi.mock('@/containers/avatar/components/2d/Avatar2dCanvas', () => ({
@@ -51,6 +93,96 @@ describe('AvatarContainer', () => {
 
 	beforeEach(() => {
 		vi.restoreAllMocks();
+		getSettingsMock.mockReset();
+		saveSettingsMock.mockReset();
+		useAuthMock.mockReturnValue({
+			getToken: vi.fn().mockResolvedValue('account-token'),
+			isLoaded: true,
+			isSignedIn: true,
+			userId: 'account-a',
+		});
+		getSettingsMock.mockResolvedValue({ settings: null });
+		setAutomaticReactionMapping('surprised', null);
+	});
+
+	it('restores the saved automatic reaction mappings for the signed-in account', async () => {
+		getSettingsMock.mockResolvedValue({
+			settings: { automatic_reaction_mappings: { happy: 'smile' } },
+		});
+		vi.spyOn(useAvatarModule, 'useAvatar').mockReturnValue({
+			...defaultMockAvatar,
+			activeSoftware: 'vrm',
+		} as unknown as ReturnType<typeof useAvatarModule.useAvatar>);
+
+		render(<AvatarContainer />);
+
+		await waitFor(() =>
+			expect(screen.getByRole('combobox', { name: 'Alegría' })).toHaveValue('smile'),
+		);
+		expect(getSettingsMock).toHaveBeenCalledWith({ token: 'account-token' });
+	});
+
+	it('saves changed automatic reaction mappings to the signed-in account', async () => {
+		vi.spyOn(useAvatarModule, 'useAvatar').mockReturnValue({
+			...defaultMockAvatar,
+			activeSoftware: 'vrm',
+		} as unknown as ReturnType<typeof useAvatarModule.useAvatar>);
+
+		render(<AvatarContainer />);
+		await waitFor(() => expect(getSettingsMock).toHaveBeenCalled());
+		fireEvent.change(screen.getByRole('combobox', { name: 'Alegría' }), {
+			target: { value: 'smile' },
+		});
+
+		await waitFor(() =>
+			expect(saveSettingsMock).toHaveBeenCalledWith(
+				{ automatic_reaction_mappings: { happy: 'smile' } },
+				{ token: 'account-token' },
+			),
+		);
+	});
+
+	it('does not show one account’s reaction mappings after switching accounts', async () => {
+		getSettingsMock
+			.mockResolvedValueOnce({ settings: { automatic_reaction_mappings: { happy: 'smile' } } })
+			.mockImplementationOnce(
+				() =>
+					new Promise((resolve) => {
+						resolveNextAccountSettings = resolve;
+					}),
+			);
+		vi.spyOn(useAvatarModule, 'useAvatar').mockReturnValue({
+			...defaultMockAvatar,
+			activeSoftware: 'vrm',
+		} as unknown as ReturnType<typeof useAvatarModule.useAvatar>);
+
+		const { rerender } = render(<AvatarContainer />);
+		const expressionSelector = await screen.findByRole('combobox', { name: 'Alegría' });
+		await waitFor(() => expect(expressionSelector).toHaveValue('smile'));
+
+		useAuthMock.mockReturnValue({
+			getToken: vi.fn().mockResolvedValue('account-b-token'),
+			isLoaded: true,
+			isSignedIn: true,
+			userId: 'account-b',
+		});
+		rerender(<AvatarContainer />);
+		await waitFor(() => expect(getSettingsMock).toHaveBeenCalledTimes(2));
+		expect(expressionSelector).toHaveValue('');
+
+		resolveNextAccountSettings({ settings: { automatic_reaction_mappings: { happy: 'frown' } } });
+		await waitFor(() => expect(expressionSelector).toHaveValue('frown'));
+	});
+
+	it('AvatarContainer keeps automatic reaction selectors inside the studio dock', () => {
+		vi.spyOn(useAvatarModule, 'useAvatar').mockReturnValue({
+			...defaultMockAvatar,
+			activeSoftware: 'pngtuber',
+		} as unknown as ReturnType<typeof useAvatarModule.useAvatar>);
+
+		render(<AvatarContainer />);
+
+		expect(screen.queryByRole('combobox', { name: 'Sorpresa' })).not.toBeInTheDocument();
 	});
 
 	it('AvatarContainer renders dedicated PNGTuber workspace and isolates it from Live2D', () => {

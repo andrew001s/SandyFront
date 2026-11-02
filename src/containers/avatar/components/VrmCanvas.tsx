@@ -8,6 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
+	type AutomaticReactionSelection,
+	AutomaticReactionsCard,
+} from '@/containers/avatar/components/AutomaticReactionsCard';
+import {
 	type StudioActiveTool,
 	StudioDock,
 } from '@/containers/avatar/components/common/StudioDock';
@@ -59,9 +63,10 @@ import AvatarFooter from './AvatarFooter';
 interface Props {
 	className?: string;
 	onEmotionSelect?: (emotion: string) => void;
+	automaticReactions?: AutomaticReactionSelection;
 }
 
-export function VrmCanvas({ className = '' }: Props) {
+export function VrmCanvas({ className = '', automaticReactions }: Props) {
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const viewportRef = useRef<HTMLDivElement | null>(null);
@@ -611,6 +616,13 @@ export function VrmCanvas({ className = '' }: Props) {
 								transition={{ duration: 0.2, ease: 'easeOut' }}
 								className='absolute right-3 bottom-20 left-3 z-30 max-h-[calc(100%-6rem)] overflow-y-auto md:top-4 md:right-20 md:bottom-auto md:left-auto md:max-h-[calc(100%-2rem)]'
 							>
+								{activeTool === 'automaticReactions' && automaticReactions && (
+									<AutomaticReactionsCard
+										{...automaticReactions}
+										onClose={() => setActiveTool(null)}
+									/>
+								)}
+
 								{activeTool === 'expressions' && (
 									<VrmStudioExpressionsPanel onClose={() => setActiveTool(null)} />
 								)}

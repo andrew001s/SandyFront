@@ -1,7 +1,7 @@
 import { type LocalAiConfig, streamLocalCompletion } from '@/api/localAi';
 import { fetchLocalAiContext } from '@/api/localAiContext';
 import { classifyLocalMessage, executeLocalOrder, fetchLocalStats } from '@/api/localOrders';
-import { streamResponseGemini } from '@/api/streamGemini';
+import { type AvatarReactionDecision, streamResponseGemini } from '@/api/streamGemini';
 import type { AiProvider } from '@/lib/ai-provider';
 
 export type AiStreamRequest = {
@@ -9,6 +9,7 @@ export type AiStreamRequest = {
 	message: string;
 	local?: LocalAiConfig;
 	signal?: AbortSignal;
+	onReaction?: (decision: AvatarReactionDecision) => void;
 };
 
 /**
@@ -66,5 +67,5 @@ export async function* streamAiResponse(request: AiStreamRequest): AsyncGenerato
 		return;
 	}
 
-	yield* streamResponseGemini(request.message, request.signal);
+	yield* streamResponseGemini(request.message, request.signal, request.onReaction);
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import StreamChat from '@/components/Chat/Chat';
 import { StarField } from '@/components/landing/StarField';
 import { NewsModal, openNewsModal } from '@/components/modals/NewsModal';
 import { AppSidebar } from '@/components/ui/app-sidebar';
@@ -42,6 +43,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 		<AppSettingsProvider>
 			<ShutdownOnExit />
 			<LocalAiRelay />
+			<StreamChat />
 			<SidebarProvider defaultOpen={true}>
 				<AppSidebar />
 				<SidebarInset

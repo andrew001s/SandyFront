@@ -1,9 +1,4 @@
-import {
-	type SettingsPayload,
-	type SettingsUpdate,
-	TTS_PROVIDER,
-	saveSettings,
-} from '@/api/settings';
+import { type SettingsPayload, type SettingsUpdate, saveSettings } from '@/api/settings';
 import type { BannedItem, BannedItemType } from '@/components/Moderation/moderation.types';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import {
@@ -52,8 +47,6 @@ export function useModerationPanel() {
 			const token = await getToken();
 			const payload: SettingsUpdate = {
 				...(settings ?? {}),
-				// Igual que en los flags: el spread no debe devolver el valor heredado.
-				tts_provider: TTS_PROVIDER,
 				...toBannedContentPayload(groupBannedItems(next)),
 			};
 			await saveSettings(payload, { token });

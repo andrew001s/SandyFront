@@ -1,6 +1,6 @@
 'use client';
 
-import { type SettingsUpdate, TTS_PROVIDER, saveSettings } from '@/api/settings';
+import { type SettingsUpdate, saveSettings } from '@/api/settings';
 import { FeatureFlagsSkeleton } from '@/components/loading/dashboard-skeletons';
 import { Button } from '@/components/ui/button';
 import { useAppSettings } from '@/context/AppSettingsContext';
@@ -73,7 +73,6 @@ export function FeatureFlagsPanel() {
 			const token = await getToken();
 			const payload: SettingsUpdate = {
 				...settings,
-				tts_provider: TTS_PROVIDER,
 				feature_flags: flags,
 			};
 			await saveSettings(payload, { token });

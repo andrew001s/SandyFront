@@ -6,10 +6,12 @@ import { VoiceSetupDialog } from '@/components/Speech/VoiceSetupDialog';
 import { Button } from '@/components/ui/button';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
+import { useAvatar } from '@/hooks/useAvatar';
 import { useServiceStatus } from '@/hooks/useServiceStatus';
 import { useVoiceErrorReporter } from '@/hooks/useVoiceErrorReporter';
 import { getAiErrorCode, getAiErrorMessage } from '@/lib/ai-errors';
 import { getStoredAiProvider } from '@/lib/ai-provider';
+import { getAutomaticReactionMapping } from '@/lib/avatar/reactionMappings';
 import { resolveLocalAiSettings } from '@/lib/local-ai-config';
 import { speakTextStream } from '@/lib/speechPipeline';
 import { getStoredSttProvider } from '@/lib/stt-provider';
@@ -35,6 +37,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 	const transcriptRef = useRef('');
 	const isSendingRef = useRef(false);
 	const { addMessage } = useMessages();
+	const { setEmotion, resetEmotions } = useAvatar();
 	const { settings, isLoading } = useAppSettings();
 	// El estado sale del backend, no de StatusContext: ese booleano vive en
 	// localStorage y lo escribe también la conexión de Twitch, así que estaba en
@@ -113,6 +116,8 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 
 		resetVoiceErrors();
 		const vtuberName = settings?.persona_profile?.name?.trim() || 'Sandy';
+		let reactionTriggered = false;
+		let reactionEmotionTask: Promise<void> | null = null;
 
 		try {
 			addMessage({
@@ -126,6 +131,12 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 				provider: getStoredAiProvider() ?? settings?.ai_provider ?? 'gemini',
 				message: pending,
 				local: { baseUrl: localAi.baseUrl, model: localAi.model },
+				onReaction: ({ reaction, emotion }) => {
+					if (reaction && emotion) {
+						reactionTriggered = true;
+						reactionEmotionTask = setEmotion(getAutomaticReactionMapping(emotion) ?? emotion);
+					}
+				},
 			});
 
 			if (settings?.feature_flags?.voice_replies === false) {
@@ -165,9 +176,27 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 			toast.error(getAiErrorMessage(error));
 			posthog.capture('ai_request_failed', { code: getAiErrorCode(error) });
 		} finally {
+			if (reactionTriggered) {
+				if (reactionEmotionTask) {
+					await reactionEmotionTask.catch((error) => {
+						console.error('No se pudo activar la expresión de reacción:', error);
+					});
+				}
+				await resetEmotions().catch((error) => {
+					console.error('No se pudo restablecer la expresión del avatar:', error);
+				});
+			}
 			isSendingRef.current = false;
 		}
-	}, [addMessage, resetTranscript, settings, reportVoiceError, resetVoiceErrors]);
+	}, [
+		addMessage,
+		resetTranscript,
+		settings,
+		reportVoiceError,
+		resetVoiceErrors,
+		setEmotion,
+		resetEmotions,
+	]);
 
 	// El handle vive en un ref, no en estado: resetSilenceTimer se dispara en
 	// cada palabra reconocida, mucho más rápido de lo que React re-renderiza.

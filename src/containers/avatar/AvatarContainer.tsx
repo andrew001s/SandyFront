@@ -1,8 +1,10 @@
 'use client';
 
+import { getSettings, saveSettings } from '@/api/settings';
 import { Button } from '@/components/ui/button';
 import { LipSyncTest } from '@/containers/avatar/LipSyncTest';
 import { Avatar2dCanvas } from '@/containers/avatar/components/2d/Avatar2dCanvas';
+import { extractLive2dExpressions } from '@/containers/avatar/components/2d/Live2dExpressionsPanel';
 import { Avatar3DEmotionsCard } from '@/containers/avatar/components/Avatar3DEmotionsCard';
 import { AvatarConnectionCard } from '@/containers/avatar/components/AvatarConnectionCard';
 import { AvatarHeader } from '@/containers/avatar/components/AvatarHeader';
@@ -11,10 +13,19 @@ import { AvatarSoftwareSelector } from '@/containers/avatar/components/AvatarSof
 import { AvatarStudioDeck } from '@/containers/avatar/components/AvatarStudioDeck';
 import { VrmCanvas } from '@/containers/avatar/components/VrmCanvas';
 import { useAvatar } from '@/hooks/useAvatar';
+import { VRM_EMOTIONS } from '@/lib/avatar/constants';
+import {
+	getAutomaticReactionMappings,
+	setAutomaticReactionMapping,
+} from '@/lib/avatar/reactionMappings';
+import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
+import { live2dStore } from '@/lib/avatar2d/live2dStore';
+import { useAuth } from '@clerk/nextjs';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export const AvatarContainer = () => {
+	const { getToken, isLoaded: isAuthLoaded, isSignedIn, userId } = useAuth();
 	const {
 		activeSoftware,
 		setSoftware,
@@ -36,6 +47,84 @@ export const AvatarContainer = () => {
 	} = useAvatar();
 
 	const [showExternalVts, setShowExternalVts] = useState(false);
+	const [avatar2dState, setAvatar2dState] = useState(() => avatar2dManager.getState());
+	const [live2dPackage, setLive2dPackage] = useState(() => live2dStore.getPackage());
+	const [reactionMappings, setReactionMappings] = useState(getAutomaticReactionMappings);
+
+	useEffect(() => {
+		let cancelled = false;
+		for (const reaction of Object.keys(getAutomaticReactionMappings())) {
+			setAutomaticReactionMapping(reaction, null);
+		}
+		setReactionMappings({});
+
+		if (!isAuthLoaded || !isSignedIn || !userId) return;
+
+		void (async () => {
+			try {
+				const token = await getToken();
+				const response = await getSettings({ token });
+				if (cancelled) return;
+				const accountMappings = response.settings?.automatic_reaction_mappings ?? {};
+				for (const [reaction, expressionId] of Object.entries(accountMappings)) {
+					setAutomaticReactionMapping(reaction, expressionId);
+				}
+				setReactionMappings(accountMappings);
+			} catch (error) {
+				if (!cancelled) console.error('No se pudieron cargar las reacciones automáticas:', error);
+			}
+		})();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [getToken, isAuthLoaded, isSignedIn, userId]);
+
+	useEffect(() => {
+		const unsubscribeAvatar = avatar2dManager.subscribe(setAvatar2dState);
+		const unsubscribeLive2d = live2dStore.subscribe(setLive2dPackage);
+		return () => {
+			unsubscribeAvatar();
+			unsubscribeLive2d();
+		};
+	}, []);
+
+	const reactionExpressions =
+		activeSoftware === 'pngtuber'
+			? avatar2dState.pngtuber.emotions.map(({ id, label }) => ({ id, label }))
+			: activeSoftware === 'live2d'
+				? extractLive2dExpressions(live2dPackage?.modelSettingsJson, live2dPackage?.fileMap)
+				: activeSoftware === 'vtubestudio'
+					? vts.expressions.map(({ file, name }) => ({ id: file, label: name }))
+					: VRM_EMOTIONS.filter(({ id }) => id !== 'neutral' && id !== 'blink').map(
+							({ id, name }) => ({
+								id,
+								label: name,
+							}),
+						);
+
+	const handleReactionMappingChange = (reaction: string, expressionId: string | null) => {
+		setAutomaticReactionMapping(reaction, expressionId);
+		const nextMappings = { ...reactionMappings };
+		if (expressionId) nextMappings[reaction] = expressionId;
+		else delete nextMappings[reaction];
+		setReactionMappings(nextMappings);
+
+		if (!isSignedIn || !userId) return;
+		void (async () => {
+			try {
+				const token = await getToken();
+				await saveSettings({ automatic_reaction_mappings: nextMappings }, { token });
+			} catch (error) {
+				console.error('No se pudieron guardar las reacciones automáticas:', error);
+			}
+		})();
+	};
+	const automaticReactions = {
+		expressions: reactionExpressions,
+		mappings: reactionMappings,
+		onMappingChange: handleReactionMappingChange,
+	};
 
 	return (
 		<div className='mx-auto flex min-h-0 w-full flex-1 flex-col gap-2 overflow-y-auto px-3 py-2 md:px-4'>
@@ -52,11 +141,13 @@ export const AvatarContainer = () => {
 					onSelect={setSoftware}
 				/>
 			</motion.div>
-
 			{activeSoftware === 'vrm' ? (
 				<div className='flex min-h-[min(26.25rem,max(16rem,calc(100dvh_-_14rem)))] w-full flex-1 flex-col'>
 					{/* Escenario 3D interactivo WebGL (Estilo VTube Studio / VNyan con Dock, Expresiones, Lip Sync y Fondo) */}
-					<VrmCanvas className='min-h-[min(26.25rem,max(16rem,calc(100dvh_-_14rem)))] w-full flex-1' />
+					<VrmCanvas
+						className='min-h-[min(26.25rem,max(16rem,calc(100dvh_-_14rem)))] w-full flex-1'
+						automaticReactions={automaticReactions}
+					/>
 				</div>
 			) : is3D ? (
 				<div className='space-y-6'>
@@ -87,6 +178,7 @@ export const AvatarContainer = () => {
 					{/* Escenario Live2D dedicado en Navegador */}
 					<Avatar2dCanvas
 						mode='live2d'
+						automaticReactions={automaticReactions}
 						className='min-h-[min(26.25rem,max(16rem,calc(100dvh_-_14rem)))] flex-1'
 					/>
 
@@ -159,6 +251,7 @@ export const AvatarContainer = () => {
 					{/* Escenario PNGTuber dedicado en Navegador */}
 					<Avatar2dCanvas
 						mode='pngtuber'
+						automaticReactions={automaticReactions}
 						className='min-h-[min(26.25rem,max(16rem,calc(100dvh_-_14rem)))] flex-1'
 					/>
 				</div>

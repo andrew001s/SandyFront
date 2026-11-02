@@ -3,6 +3,11 @@ import { type AiErrorPayload, AiResponseError } from '@/lib/ai-errors';
 
 type SseFrame = { event: string; data: Record<string, unknown> };
 
+export type AvatarReactionDecision = {
+	reaction: boolean;
+	emotion: string | null;
+};
+
 /** Un frame SSE: líneas `event:` y `data:` separadas del siguiente por una línea en blanco. */
 function parseFrame(frame: string): SseFrame | null {
 	let event = 'message';
@@ -52,6 +57,7 @@ async function payloadFromResponse(response: Response): Promise<AiErrorPayload> 
 export async function* streamResponseGemini(
 	message: string,
 	signal?: AbortSignal,
+	onReaction?: (decision: AvatarReactionDecision) => void,
 ): AsyncGenerator<string> {
 	const token = await getClerkSessionToken();
 	const response = await fetch(`${getBackendUrl()}/gemini/stream`, {
@@ -89,10 +95,17 @@ export async function* streamResponseGemini(
 
 				if (frame?.event === 'delta' && typeof frame.data.text === 'string') {
 					yield frame.data.text;
+				} else if (frame?.event === 'done' && typeof frame.data.reaction === 'boolean') {
+					onReaction?.({
+						reaction: frame.data.reaction,
+						emotion:
+							frame.data.reaction && typeof frame.data.emotion === 'string'
+								? frame.data.emotion
+								: null,
+					});
 				} else if (frame?.event === 'error') {
 					throw new AiResponseError(frame.data as AiErrorPayload);
 				}
-				// 'done' no aporta nada: su texto ya salió en los deltas.
 
 				separator = buffer.indexOf('\n\n');
 			}

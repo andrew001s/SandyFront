@@ -30,6 +30,7 @@ export interface AvatarMetadata {
 export interface AvatarBackendPayload {
 	id?: string;
 	type: AvatarMessageType | string;
+	reaction?: boolean;
 	text?: string;
 	emotion?: AvatarEmotion | string;
 	intensity?: number;

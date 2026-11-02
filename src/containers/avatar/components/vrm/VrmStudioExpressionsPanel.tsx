@@ -52,9 +52,7 @@ export function VrmStudioExpressionsPanel({ onClose }: Props) {
 						<h3 className='font-bold font-display text-foreground text-sm tracking-tight'>
 							Expresiones y Emociones
 						</h3>
-						<p className='text-[10px] text-muted-foreground'>
-							Control gestual en vivo (Estilo VNyan / VTS)
-						</p>
+						<p className='text-[10px] text-muted-foreground'>Control gestual en vivo</p>
 					</div>
 				</div>
 

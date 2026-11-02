@@ -14,6 +14,10 @@ import { Live2dExpressionsPanel } from '@/containers/avatar/components/2d/Live2d
 import { Live2dRenderer } from '@/containers/avatar/components/2d/Live2dRenderer';
 import { PngTuberRenderer } from '@/containers/avatar/components/2d/PngTuberRenderer';
 import {
+	type AutomaticReactionSelection,
+	AutomaticReactionsCard,
+} from '@/containers/avatar/components/AutomaticReactionsCard';
+import {
 	type StudioActiveTool,
 	StudioDock,
 } from '@/containers/avatar/components/common/StudioDock';
@@ -39,6 +43,7 @@ import AvatarFooter from '../AvatarFooter';
 interface Props {
 	className?: string;
 	mode?: Avatar2dMode;
+	automaticReactions?: AutomaticReactionSelection;
 }
 
 const fileToDataUrl = (file: File): Promise<string> => {
@@ -50,7 +55,7 @@ const fileToDataUrl = (file: File): Promise<string> => {
 	});
 };
 
-export function Avatar2dCanvas({ className = '', mode }: Props) {
+export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Props) {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<Avatar2dState>(avatar2dManager.getState());
 	const [activeTool, setActiveTool] = useState<StudioActiveTool>(null);
@@ -406,6 +411,21 @@ export function Avatar2dCanvas({ className = '', mode }: Props) {
 					<AnimatePresence>
 						{activeTool && isHudVisible && (
 							<>
+								{activeTool === 'automaticReactions' && automaticReactions && (
+									<motion.div
+										initial={{ opacity: 0, scale: 0.96, x: 20 }}
+										animate={{ opacity: 1, scale: 1, x: 0 }}
+										exit={{ opacity: 0, scale: 0.96, x: 20 }}
+										transition={{ duration: 0.2, ease: 'easeOut' }}
+										className='pointer-events-auto absolute right-3 bottom-20 left-3 z-30 max-h-[calc(100%-6rem)] overflow-y-auto md:top-4 md:right-20 md:bottom-auto md:left-auto md:max-h-[calc(100%-2rem)]'
+									>
+										<AutomaticReactionsCard
+											{...automaticReactions}
+											onClose={() => setActiveTool(null)}
+										/>
+									</motion.div>
+								)}
+
 								{(activeTool === 'emotions' || activeTool === 'expressions') &&
 									(currentMode === 'live2d' ? (
 										<Live2dExpressionsPanel
