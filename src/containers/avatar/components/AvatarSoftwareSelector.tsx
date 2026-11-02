@@ -50,7 +50,7 @@ export function AvatarSoftwareSelector({ selectedSoftware, connectedSoftware, on
 						<Box className='size-3.5 text-secondary' />
 						<span className='sm:hidden'>3D</span>
 						<span className='hidden sm:inline'>Avatar 3D</span>
-						{(connectedSoftware === 'vrm' || connectedSoftware === 'vnyan') && (
+						{connectedSoftware === 'vrm' && (
 							<span className='size-1.5 rounded-full bg-emerald-400' />
 						)}
 					</TabsTrigger>

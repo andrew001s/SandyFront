@@ -254,25 +254,28 @@ export function useAvatar() {
 					: { ...payload, emotion: undefined, expression: null }
 				: payload;
 
-			if (activeSoftware === 'vrm') {
-				const emotion = String(resolvedPayload.emotion ?? 'neutral').toLowerCase();
-				vrmManager.setEmotion(emotion, resolvedPayload.intensity ?? 1.0);
-				return true;
+			switch (activeSoftware) {
+				case 'vrm': {
+					const emotion = String(resolvedPayload.emotion ?? 'neutral').toLowerCase();
+					vrmManager.setEmotion(emotion, resolvedPayload.intensity ?? 1.0);
+					return true;
+				}
+				case 'pngtuber': {
+					const emotion = String(resolvedPayload.emotion ?? 'neutral').toLowerCase();
+					avatar2dManager.setEmotion(emotion);
+					return true;
+				}
+				case 'live2d': {
+					const expression = resolvedPayload.expression ?? resolvedPayload.emotion ?? null;
+					avatar2dManager.setLive2dExpression(expression ? String(expression) : null);
+					return true;
+				}
+				case 'vtubestudio':
+					return vts.sendAvatarPayload(resolvedPayload);
+				case 'vnyan':
+				case 'vseeface':
+					return false;
 			}
-			if (activeSoftware === 'pngtuber') {
-				const emotion = String(resolvedPayload.emotion ?? 'neutral').toLowerCase();
-				avatar2dManager.setEmotion(emotion);
-				return true;
-			}
-			if (activeSoftware === 'live2d') {
-				const expression = resolvedPayload.expression ?? resolvedPayload.emotion ?? null;
-				avatar2dManager.setLive2dExpression(expression ? String(expression) : null);
-				return true;
-			}
-			if (activeSoftware === 'vtubestudio') {
-				return vts.sendAvatarPayload(resolvedPayload);
-			}
-			return vnyanClient.sendAvatarPayload(resolvedPayload);
 		},
 		[activeSoftware, vts],
 	);
