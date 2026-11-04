@@ -103,6 +103,7 @@ export async function speakTextStream(
 	const localConfig = local ?? getStoredLocalTtsConfig();
 	const chunker = createSentenceChunker();
 	const queue = AudioQueueManager.getInstance();
+	queue.beginSpeechSession();
 	const limit = createLimiter(concurrency);
 
 	let fullText = '';
@@ -150,24 +151,28 @@ export async function speakTextStream(
 		});
 	};
 
-	for await (const delta of stream) {
-		if (signal?.aborted) break;
-		fullText += delta;
-		for (const segment of chunker.push(delta)) {
-			enqueueSegment(segment);
+	try {
+		for await (const delta of stream) {
+			if (signal?.aborted) break;
+			fullText += delta;
+			for (const segment of chunker.push(delta)) {
+				enqueueSegment(segment);
+			}
 		}
-	}
 
-	const tail = chunker.flush();
-	if (tail && !signal?.aborted) {
-		enqueueSegment(tail);
-	}
+		const tail = chunker.flush();
+		if (tail && !signal?.aborted) {
+			enqueueSegment(tail);
+		}
 
-	await chain;
-	if (fullText) {
-		speechDeduplicator.record(fullText);
+		await chain;
+		if (fullText) {
+			speechDeduplicator.record(fullText);
+		}
+		return fullText;
+	} finally {
+		queue.endSpeechSession();
 	}
-	return fullText;
 }
 
 /** Adaptador para proveedores que devuelven la respuesta completa de una vez. */

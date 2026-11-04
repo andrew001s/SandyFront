@@ -16,8 +16,11 @@ import { useAvatar } from '@/hooks/useAvatar';
 import { VRM_EMOTIONS } from '@/lib/avatar/constants';
 import {
 	getAutomaticReactionMappings,
+	setAutomaticReactionConfig,
 	setAutomaticReactionMapping,
 } from '@/lib/avatar/reactionMappings';
+import type { AutomaticReactionConfig } from '@/lib/avatar/reactionMappings';
+import { vrmManager } from '@/lib/avatar/vrmManager';
 import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
 import { live2dStore } from '@/lib/avatar2d/live2dStore';
 import { useAuth } from '@clerk/nextjs';
@@ -96,18 +99,20 @@ export const AvatarContainer = () => {
 				? extractLive2dExpressions(live2dPackage?.modelSettingsJson, live2dPackage?.fileMap)
 				: activeSoftware === 'vtubestudio'
 					? vts.expressions.map(({ file, name }) => ({ id: file, label: name }))
-					: VRM_EMOTIONS.filter(({ id }) => id !== 'neutral' && id !== 'blink').map(
-							({ id, name }) => ({
-								id,
-								label: name,
-							}),
-						);
+					: VRM_EMOTIONS.filter(({ id }) => id !== 'blink').map(({ id, name }) => ({
+							id,
+							label: name,
+						}));
 
-	const handleReactionMappingChange = (reaction: string, expressionId: string | null) => {
-		setAutomaticReactionMapping(reaction, expressionId);
-		const nextMappings = { ...reactionMappings };
-		if (expressionId) nextMappings[reaction] = expressionId;
-		else delete nextMappings[reaction];
+	const handleReactionMappingChange = (
+		reaction: string,
+		config: AutomaticReactionConfig | null,
+	) => {
+		setAutomaticReactionConfig(reaction, config, activeSoftware);
+		if (reaction === 'neutral') {
+			void resetEmotions();
+		}
+		const nextMappings = getAutomaticReactionMappings();
 		setReactionMappings(nextMappings);
 
 		if (!isSignedIn || !userId) return;
@@ -120,10 +125,24 @@ export const AvatarContainer = () => {
 			}
 		})();
 	};
+	const previewReaction = (_reaction: string, config: AutomaticReactionConfig) => {
+		if (activeSoftware === 'vrm') {
+			vrmManager.setEmotions(config.expressions, config.intensity);
+		} else if (activeSoftware === 'live2d') {
+			avatar2dManager.setLive2dExpressions(config.expressions);
+		} else if (activeSoftware === 'pngtuber') {
+			avatar2dManager.setEmotion(config.expressions[0] ?? 'neutral');
+		}
+	};
 	const automaticReactions = {
 		expressions: reactionExpressions,
 		mappings: reactionMappings,
+		scope: activeSoftware,
+		allowMultiple: activeSoftware === 'live2d' || activeSoftware === 'vrm',
+		showIntensity: activeSoftware === 'vrm',
 		onMappingChange: handleReactionMappingChange,
+		onPreview: previewReaction,
+		onPreviewEnd: resetEmotions,
 	};
 
 	return (

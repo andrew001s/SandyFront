@@ -1,5 +1,6 @@
 'use client';
 
+import { VRM_EMOTIONS } from '@/lib/avatar/constants';
 import { type VRM, type VRMHumanBoneName, VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -373,6 +374,10 @@ export class VrmViewer {
 	 * Activa una expresión facial (Alegría, Enojo, Tristeza, Sorpresa, etc.).
 	 */
 	public setExpression(name: string, intensity = 1.0): void {
+		if (VRM_EMOTIONS.some((preset) => preset.id === name)) {
+			this.setExpressions([name], intensity);
+			return;
+		}
 		if (!this.currentVrm?.expressionManager) return;
 		const mgr = this.currentVrm.expressionManager;
 
@@ -405,8 +410,53 @@ export class VrmViewer {
 		}
 	}
 
+	public setExpressions(names: string[], intensity = 1.0): void {
+		const mgr = this.currentVrm?.expressionManager;
+		if (!mgr) return;
+
+		const safeIntensity = Math.max(0, Math.min(1, intensity));
+		this.activeEmotion = names.join(',') || 'neutral';
+		this.activeEmotionIntensity = safeIntensity;
+		const channels = new Set<string>();
+		for (const preset of VRM_EMOTIONS) {
+			for (const name of Object.keys(preset.vrm0Blendshapes)) channels.add(name);
+			for (const name of Object.keys(preset.vrm1Blendshapes)) channels.add(name);
+		}
+
+		for (const channel of channels) {
+			try {
+				mgr.setValue(channel, 0);
+			} catch {
+				// El modelo puede no declarar los alias de la otra versión VRM.
+			}
+		}
+
+		const mixedValues = new Map<string, number>();
+		for (const name of names) {
+			const preset = VRM_EMOTIONS.find((item) => item.id === name);
+			if (!preset || preset.id === 'neutral') continue;
+			for (const [channel, weight] of Object.entries({
+				...preset.vrm0Blendshapes,
+				...preset.vrm1Blendshapes,
+			})) {
+				mixedValues.set(
+					channel,
+					Math.min(1, (mixedValues.get(channel) ?? 0) + weight * safeIntensity),
+				);
+			}
+		}
+
+		for (const [channel, value] of mixedValues) {
+			try {
+				mgr.setValue(channel, value);
+			} catch {
+				// El modelo puede no declarar los alias de la otra versión VRM.
+			}
+		}
+	}
+
 	public resetExpressions(): void {
-		this.setExpression('neutral', 0);
+		this.setExpressions(['neutral'], 0);
 	}
 
 	public setBoneRotation(boneName: string, degrees: number): void {

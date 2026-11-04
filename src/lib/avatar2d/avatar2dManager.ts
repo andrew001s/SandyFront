@@ -450,7 +450,12 @@ export class Avatar2dManager {
 	}
 
 	public setLive2dExpression(expression: string | null, broadcast = true): void {
-		const nextExpressions = expression ? [expression] : [];
+		this.setLive2dExpressions(expression ? [expression] : [], broadcast);
+	}
+
+	public setLive2dExpressions(expressions: string[], broadcast = true): void {
+		const nextExpressions = [...new Set(expressions.filter(Boolean))];
+		const expression = nextExpressions[nextExpressions.length - 1] ?? null;
 		if (
 			this.state.live2d.activeExpression === expression &&
 			JSON.stringify(this.state.live2d.activeExpressions || []) === JSON.stringify(nextExpressions)

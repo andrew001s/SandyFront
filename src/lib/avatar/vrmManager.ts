@@ -34,6 +34,7 @@ import type {
 export type VrmSyncMessage =
 	| { type: 'vowels'; vowels: { A?: number; I?: number; U?: number; E?: number; O?: number } }
 	| { type: 'emotion'; emotion: string; intensity: number }
+	| { type: 'emotionMix'; emotions: string[]; intensity: number }
 	| { type: 'idleSettings'; settings: VrmIdleSettings }
 	| { type: 'reset' }
 	| { type: 'modelUpdated' }
@@ -60,6 +61,7 @@ export type VrmSyncMessage =
 	| {
 			type: 'fullState';
 			emotion: string;
+			emotions?: string[];
 			intensity: number;
 			cameraPreset: VrmCameraPreset;
 			cameraTransform?: VrmCameraTransform;
@@ -84,6 +86,7 @@ export class VrmManager {
 
 	// Estado activo para sincronización espejo en tiempo real con OBS Overlay
 	private currentEmotion = 'neutral';
+	private currentEmotions = ['neutral'];
 	private currentIntensity = 1.0;
 	private currentIdleSettings: VrmIdleSettings = { ...DEFAULT_VRM_IDLE_SETTINGS };
 	private currentCameraPreset: VrmCameraPreset = 'face';
@@ -196,9 +199,7 @@ export class VrmManager {
 
 		const applyActiveState = () => {
 			viewer.setIdleSettings(this.currentIdleSettings);
-			if (this.currentEmotion !== 'neutral') {
-				viewer.setExpression(this.currentEmotion, this.currentIntensity);
-			}
+			viewer.setExpressions(this.currentEmotions, this.currentIntensity);
 			viewer.setSlimeActive(this.currentSlimeActive, this.currentSlimeColor);
 			if (this.currentCameraTransform) {
 				viewer.setCameraTransform(this.currentCameraTransform);
@@ -334,6 +335,7 @@ export class VrmManager {
 		if (this.expressionOffTimer) clearTimeout(this.expressionOffTimer);
 		this.expressionOffTimer = null;
 		this.currentEmotion = emotion;
+		this.currentEmotions = [emotion];
 		this.currentIntensity = intensity;
 		for (const viewer of this.activeViewers) {
 			viewer.setExpression(emotion, intensity);
@@ -341,10 +343,27 @@ export class VrmManager {
 		this.broadcastChannel?.postMessage({ type: 'emotion', emotion, intensity });
 	}
 
+	public setEmotions(emotions: string[], intensity = 1.0): void {
+		if (this.expressionOffTimer) clearTimeout(this.expressionOffTimer);
+		this.expressionOffTimer = null;
+		this.currentEmotions = [...new Set(emotions.filter(Boolean))];
+		this.currentEmotion = this.currentEmotions[0] ?? 'neutral';
+		this.currentIntensity = Math.min(1, Math.max(0, intensity));
+		for (const viewer of this.activeViewers) {
+			viewer.setExpressions(this.currentEmotions, this.currentIntensity);
+		}
+		this.broadcastChannel?.postMessage({
+			type: 'emotionMix',
+			emotions: this.currentEmotions,
+			intensity: this.currentIntensity,
+		});
+	}
+
 	public resetEmotions(): void {
 		if (this.expressionOffTimer) clearTimeout(this.expressionOffTimer);
 		this.expressionOffTimer = null;
 		this.currentEmotion = 'neutral';
+		this.currentEmotions = ['neutral'];
 		for (const viewer of this.activeViewers) {
 			viewer.resetExpressions();
 		}
@@ -600,15 +619,27 @@ export class VrmManager {
 				if (this.expressionOffTimer) clearTimeout(this.expressionOffTimer);
 				this.expressionOffTimer = null;
 				this.currentEmotion = msg.emotion;
+				this.currentEmotions = [msg.emotion];
 				this.currentIntensity = msg.intensity;
 				for (const viewer of this.activeViewers) {
 					viewer.setExpression(msg.emotion, msg.intensity);
+				}
+				break;
+			case 'emotionMix':
+				if (this.expressionOffTimer) clearTimeout(this.expressionOffTimer);
+				this.expressionOffTimer = null;
+				this.currentEmotions = [...new Set(msg.emotions.filter(Boolean))];
+				this.currentEmotion = this.currentEmotions[0] ?? 'neutral';
+				this.currentIntensity = msg.intensity;
+				for (const viewer of this.activeViewers) {
+					viewer.setExpressions(this.currentEmotions, msg.intensity);
 				}
 				break;
 			case 'reset':
 				if (this.expressionOffTimer) clearTimeout(this.expressionOffTimer);
 				this.expressionOffTimer = null;
 				this.currentEmotion = 'neutral';
+				this.currentEmotions = ['neutral'];
 				for (const viewer of this.activeViewers) {
 					viewer.resetExpressions();
 				}
@@ -704,6 +735,7 @@ export class VrmManager {
 				this.broadcastChannel?.postMessage({
 					type: 'fullState',
 					emotion: this.currentEmotion,
+					emotions: this.currentEmotions,
 					intensity: this.currentIntensity,
 					cameraPreset: this.currentCameraPreset,
 					cameraTransform: this.currentCameraTransform ?? undefined,
@@ -719,7 +751,11 @@ export class VrmManager {
 				if (this.idleOffTimer) clearTimeout(this.idleOffTimer);
 				this.idleOffTimer = null;
 				this.currentEmotion = msg.emotion;
+				this.currentEmotions = msg.emotions ?? [msg.emotion];
 				this.currentIntensity = msg.intensity;
+				for (const viewer of this.activeViewers) {
+					viewer.setExpressions(this.currentEmotions, this.currentIntensity);
+				}
 				if (msg.idleSettings) {
 					this.currentIdleSettings = normalizeVrmIdleSettings(
 						msg.idleSettings,

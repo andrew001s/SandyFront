@@ -1,12 +1,10 @@
-import { setAutomaticReactionMapping } from '@/lib/avatar/reactionMappings';
 import { act, render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Dictaphone from './Dictaphone.client';
 
 const mocks = vi.hoisted(() => ({
 	commands: [] as Array<{ callback: () => void }>,
-	setEmotion: vi.fn(async () => undefined),
-	resetEmotions: vi.fn(async () => undefined),
+	sendAvatarPayload: vi.fn(async () => true),
 	addMessage: vi.fn(),
 	decision: { reaction: true, emotion: 'surprised' } as {
 		reaction: boolean;
@@ -38,7 +36,7 @@ vi.mock('@/context/MessagesContext', () => ({
 	useMessages: () => ({ addMessage: mocks.addMessage }),
 }));
 vi.mock('@/hooks/useAvatar', () => ({
-	useAvatar: () => ({ setEmotion: mocks.setEmotion, resetEmotions: mocks.resetEmotions }),
+	useAvatar: () => ({ sendAvatarPayload: mocks.sendAvatarPayload }),
 }));
 vi.mock('@/hooks/useServiceStatus', () => ({
 	useServiceStatus: () => ({
@@ -75,12 +73,10 @@ vi.mock('thinking-orbs', () => ({ ThinkingOrb: () => null }));
 describe('Dictaphone avatar reactions', () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
-		setAutomaticReactionMapping('surprised', null);
 		vi.clearAllMocks();
 		mocks.decision = { reaction: true, emotion: 'surprised' };
 	});
-	it('maps an AI reaction to the selected avatar expression', async () => {
-		setAutomaticReactionMapping('surprised', 'custom_smile');
+	it('forwards the AI reaction to the shared avatar dispatcher', async () => {
 		render(<Dictaphone variant='tile' />);
 
 		act(() => mocks.commands[0]?.callback());
@@ -88,25 +84,16 @@ describe('Dictaphone avatar reactions', () => {
 			await vi.advanceTimersByTimeAsync(2000);
 		});
 
-		expect(mocks.setEmotion).toHaveBeenCalledWith('custom_smile');
-
-		vi.useRealTimers();
-	});
-
-	it('activates the emotion returned with an affirmative reaction', async () => {
-		render(<Dictaphone variant='tile' />);
-
-		act(() => mocks.commands[0]?.callback());
-		await act(async () => {
-			await vi.advanceTimersByTimeAsync(2000);
+		expect(mocks.sendAvatarPayload).toHaveBeenCalledWith({
+			type: 'reaction',
+			reaction: true,
+			emotion: 'surprised',
 		});
 
-		expect(mocks.setEmotion).toHaveBeenCalledWith('surprised');
-
 		vi.useRealTimers();
 	});
 
-	it('does not activate an expression for a no-reaction response', async () => {
+	it('forwards a no-reaction decision so the dispatcher can restore the base expression', async () => {
 		mocks.decision = { reaction: false, emotion: null };
 		render(<Dictaphone variant='tile' />);
 
@@ -115,12 +102,16 @@ describe('Dictaphone avatar reactions', () => {
 			await vi.advanceTimersByTimeAsync(2000);
 		});
 
-		expect(mocks.setEmotion).not.toHaveBeenCalled();
+		expect(mocks.sendAvatarPayload).toHaveBeenCalledWith({
+			type: 'reaction',
+			reaction: false,
+			emotion: undefined,
+		});
 
 		vi.useRealTimers();
 	});
 
-	it('resets an activated expression when response delivery ends', async () => {
+	it('does not force an immediate reset when response generation ends', async () => {
 		render(<Dictaphone variant='tile' />);
 
 		act(() => mocks.commands[0]?.callback());
@@ -128,8 +119,7 @@ describe('Dictaphone avatar reactions', () => {
 			await vi.advanceTimersByTimeAsync(2000);
 		});
 
-		expect(mocks.setEmotion).toHaveBeenCalledWith('surprised');
-		expect(mocks.resetEmotions).toHaveBeenCalledOnce();
+		expect(mocks.sendAvatarPayload).toHaveBeenCalledOnce();
 
 		vi.useRealTimers();
 	});

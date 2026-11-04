@@ -30,21 +30,25 @@ vi.mock('@/containers/avatar/components/VrmCanvas', () => ({
 	}: {
 		automaticReactions?: {
 			mappings: Record<string, string>;
-			onMappingChange: (reaction: string, expressionId: string | null) => void;
+			onMappingChange: (
+				reaction: string,
+				config: { expressions: string[]; intensity: number } | null,
+			) => void;
 		};
 	}) => (
 		<div data-testid='vrm-canvas'>
-			<select
-				aria-label='Alegría'
-				value={automaticReactions?.mappings.happy ?? ''}
-				onChange={(event) =>
-					automaticReactions?.onMappingChange('happy', event.target.value || null)
+			<output aria-label='Alegría'>{automaticReactions?.mappings.happy ?? ''}</output>
+			<button
+				type='button'
+				onClick={() =>
+					automaticReactions?.onMappingChange('happy', {
+						expressions: ['smile'],
+						intensity: 1,
+					})
 				}
 			>
-				<option value=''>Sin expresión</option>
-				<option value='smile'>Sonrisa</option>
-				<option value='frown'>Ceño fruncido</option>
-			</select>
+				Guardar alegría
+			</button>
 		</div>
 	),
 }));
@@ -116,9 +120,7 @@ describe('AvatarContainer', () => {
 
 		render(<AvatarContainer />);
 
-		await waitFor(() =>
-			expect(screen.getByRole('combobox', { name: 'Alegría' })).toHaveValue('smile'),
-		);
+		await waitFor(() => expect(screen.getByLabelText('Alegría')).toHaveTextContent('smile'));
 		expect(getSettingsMock).toHaveBeenCalledWith({ token: 'account-token' });
 	});
 
@@ -130,9 +132,7 @@ describe('AvatarContainer', () => {
 
 		render(<AvatarContainer />);
 		await waitFor(() => expect(getSettingsMock).toHaveBeenCalled());
-		fireEvent.change(screen.getByRole('combobox', { name: 'Alegría' }), {
-			target: { value: 'smile' },
-		});
+		fireEvent.click(screen.getByRole('button', { name: 'Guardar alegría' }));
 
 		await waitFor(() =>
 			expect(saveSettingsMock).toHaveBeenCalledWith(
@@ -157,8 +157,8 @@ describe('AvatarContainer', () => {
 		} as unknown as ReturnType<typeof useAvatarModule.useAvatar>);
 
 		const { rerender } = render(<AvatarContainer />);
-		const expressionSelector = await screen.findByRole('combobox', { name: 'Alegría' });
-		await waitFor(() => expect(expressionSelector).toHaveValue('smile'));
+		const expressionSelector = await screen.findByLabelText('Alegría');
+		await waitFor(() => expect(expressionSelector).toHaveTextContent('smile'));
 
 		useAuthMock.mockReturnValue({
 			getToken: vi.fn().mockResolvedValue('account-b-token'),
@@ -168,10 +168,10 @@ describe('AvatarContainer', () => {
 		});
 		rerender(<AvatarContainer />);
 		await waitFor(() => expect(getSettingsMock).toHaveBeenCalledTimes(2));
-		expect(expressionSelector).toHaveValue('');
+		expect(expressionSelector).toHaveTextContent('');
 
 		resolveNextAccountSettings({ settings: { automatic_reaction_mappings: { happy: 'frown' } } });
-		await waitFor(() => expect(expressionSelector).toHaveValue('frown'));
+		await waitFor(() => expect(expressionSelector).toHaveTextContent('frown'));
 	});
 
 	it('AvatarContainer keeps automatic reaction selectors inside the studio dock', () => {

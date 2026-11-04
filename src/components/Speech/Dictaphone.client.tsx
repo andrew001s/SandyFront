@@ -11,7 +11,6 @@ import { useServiceStatus } from '@/hooks/useServiceStatus';
 import { useVoiceErrorReporter } from '@/hooks/useVoiceErrorReporter';
 import { getAiErrorCode, getAiErrorMessage } from '@/lib/ai-errors';
 import { getStoredAiProvider } from '@/lib/ai-provider';
-import { getAutomaticReactionMapping } from '@/lib/avatar/reactionMappings';
 import { resolveLocalAiSettings } from '@/lib/local-ai-config';
 import { speakTextStream } from '@/lib/speechPipeline';
 import { getStoredSttProvider } from '@/lib/stt-provider';
@@ -37,7 +36,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 	const transcriptRef = useRef('');
 	const isSendingRef = useRef(false);
 	const { addMessage } = useMessages();
-	const { setEmotion, resetEmotions } = useAvatar();
+	const { sendAvatarPayload } = useAvatar();
 	const { settings, isLoading } = useAppSettings();
 	// El estado sale del backend, no de StatusContext: ese booleano vive en
 	// localStorage y lo escribe también la conexión de Twitch, así que estaba en
@@ -116,8 +115,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 
 		resetVoiceErrors();
 		const vtuberName = settings?.persona_profile?.name?.trim() || 'Sandy';
-		let reactionTriggered = false;
-		let reactionEmotionTask: Promise<void> | null = null;
+		let reactionEmotionTask: Promise<boolean> | null = null;
 
 		try {
 			addMessage({
@@ -132,10 +130,11 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 				message: pending,
 				local: { baseUrl: localAi.baseUrl, model: localAi.model },
 				onReaction: ({ reaction, emotion }) => {
-					if (reaction && emotion) {
-						reactionTriggered = true;
-						reactionEmotionTask = setEmotion(getAutomaticReactionMapping(emotion) ?? emotion);
-					}
+					reactionEmotionTask = sendAvatarPayload({
+						type: 'reaction',
+						reaction,
+						emotion: emotion ?? undefined,
+					});
 				},
 			});
 
@@ -176,14 +175,9 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 			toast.error(getAiErrorMessage(error));
 			posthog.capture('ai_request_failed', { code: getAiErrorCode(error) });
 		} finally {
-			if (reactionTriggered) {
-				if (reactionEmotionTask) {
-					await reactionEmotionTask.catch((error) => {
-						console.error('No se pudo activar la expresión de reacción:', error);
-					});
-				}
-				await resetEmotions().catch((error) => {
-					console.error('No se pudo restablecer la expresión del avatar:', error);
+			if (reactionEmotionTask) {
+				await reactionEmotionTask.catch((error) => {
+					console.error('No se pudo procesar la expresión de reacción:', error);
 				});
 			}
 			isSendingRef.current = false;
@@ -194,8 +188,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 		settings,
 		reportVoiceError,
 		resetVoiceErrors,
-		setEmotion,
-		resetEmotions,
+		sendAvatarPayload,
 	]);
 
 	// El handle vive en un ref, no en estado: resetSilenceTimer se dispara en
