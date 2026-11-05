@@ -175,9 +175,9 @@ export function AutomaticReactionsCard({
 			>
 				<DialogContent
 					overlayClassName='bg-black/15 backdrop-blur-none'
-					className='top-1/2 right-auto left-1/2 flex max-h-[82vh] w-[calc(100vw-2rem)] translate-x-[-50%] translate-y-[-50%] flex-col gap-0 overflow-hidden p-0 sm:w-[min(34vw,26rem)]'
+					className='top-1/2 right-auto left-1/2 flex h-[82vh] max-h-[82vh] w-[calc(100vw-2rem)] translate-x-[-50%] translate-y-[-50%] flex-col gap-0 overflow-hidden p-0 sm:w-[min(34vw,26rem)]'
 				>
-					<DialogHeader className='border-border/70 border-b px-5 py-4'>
+					<DialogHeader className='shrink-0 border-border/70 border-b px-5 py-4'>
 						<DialogTitle>
 							{REACTIONS.find(([key]) => key === editingReaction)?.[1] ?? 'Configurar reacción'}
 						</DialogTitle>
@@ -186,32 +186,35 @@ export function AutomaticReactionsCard({
 						</DialogDescription>
 					</DialogHeader>
 
-					<div className='min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4'>
-						<div className='grid gap-1.5 sm:grid-cols-2'>
+					<div className='min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4'>
+						<fieldset className='m-0 grid min-w-0 gap-1.5 border-0 p-0 sm:grid-cols-2'>
+							<legend className='sr-only'>Expresiones disponibles</legend>
 							{expressions.map((expression) => {
 								const selected = draft.expressions.includes(expression.id);
 								return (
 									<label
 										key={expression.id}
-										className={`flex min-h-11 cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-left text-sm transition-colors focus-within:outline-none focus-within:ring-2 focus-within:ring-ring ${selected ? 'border-primary/70 bg-primary/10 text-foreground' : 'border-border/70 bg-background hover:bg-muted/50'}`}
+										className={`flex min-h-11 min-w-0 cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-left text-sm outline-none transition-colors focus-within:ring-2 focus-within:ring-ring ${selected ? 'border-primary/70 bg-primary/10 text-foreground' : 'border-border/70 bg-background hover:bg-muted/50'}`}
 									>
-										<input
-											type='checkbox'
-											checked={selected}
-											onChange={() => toggleExpression(expression.id)}
-											className='sr-only'
-										/>
-										<span
-											aria-hidden='true'
-											className={`flex size-4 shrink-0 items-center justify-center rounded border ${selected ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/60'}`}
-										>
-											{selected && <Check className='size-3' />}
+										<span className='relative size-4 shrink-0'>
+											<input
+												type='checkbox'
+												checked={selected}
+												onChange={() => toggleExpression(expression.id)}
+												className='absolute inset-0 size-4 cursor-pointer appearance-none rounded border border-muted-foreground/60 bg-transparent checked:border-primary checked:bg-primary focus-visible:outline-none'
+											/>
+											{selected && (
+												<Check
+													aria-hidden='true'
+													className='pointer-events-none absolute inset-0 size-4 p-0.5 text-primary-foreground'
+												/>
+											)}
 										</span>
 										<span className='min-w-0 flex-1 truncate'>{expression.label}</span>
 									</label>
 								);
 							})}
-						</div>
+						</fieldset>
 
 						{showIntensity && (
 							<div className='space-y-2 border-border/70 border-t pt-4'>
@@ -243,7 +246,7 @@ export function AutomaticReactionsCard({
 						)}
 					</div>
 
-					<DialogFooter className='items-stretch border-border/70 border-t px-5 py-4 sm:flex-col sm:justify-start'>
+					<DialogFooter className='shrink-0 items-stretch border-border/70 border-t px-5 py-4 sm:flex-col sm:justify-start'>
 						<Button
 							type='button'
 							variant='outline'
