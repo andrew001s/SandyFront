@@ -1,14 +1,14 @@
 'use client';
 
 import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
+import { loadLive2dModel } from '@/lib/avatar2d/live2dModel';
 import { type Live2dPackage, live2dStore } from '@/lib/avatar2d/live2dStore';
-import { unpackLive2dZip } from '@/lib/avatar2d/live2dZipLoader';
 import type { Avatar2dTransform, Live2dConfig } from '@/lib/avatar2d/types';
 import { AlertCircle, Loader2, Sparkles, Upload } from 'lucide-react';
 import type { Cubism4ModelSettings } from 'pixi-live2d-display/cubism4';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { extractLive2dExpressions } from './Live2dExpressionsPanel';
+import { extractLive2dExpressions, formatLive2dExpressionLabel } from './Live2dExpressionsPanel';
 
 interface Props {
 	config: Live2dConfig;
@@ -144,16 +144,63 @@ export function applyLive2dFocusPoint(
  * Si se pasa un identificador de expresión, la activa.
  * Si se pasa null, resetea la expresión al estado neutral.
  */
+export function resolveLive2dExpressionId(
+	expressionId: string | null | undefined,
+	definitions?: readonly unknown[] | null,
+): string | null {
+	if (!expressionId?.trim()) return null;
+	if (!definitions?.length) return expressionId;
+
+	const normalize = (value: unknown): string => {
+		if (typeof value !== 'string') return '';
+		const basename = value.split(/[/\\]/).pop() ?? value;
+		return basename
+			.replace(/\.(exp3|exp)?\.json$/i, '')
+			.trim()
+			.toLowerCase();
+	};
+	const requested = normalize(expressionId);
+	const matchingDefinitions = definitions.filter((item) => {
+		if (!item || typeof item !== 'object') return false;
+		const definition = item as Record<string, unknown>;
+		const name = definition.Name ?? definition.name;
+		const file = definition.File ?? definition.file;
+		return (
+			normalize(name) === requested ||
+			normalize(file) === requested ||
+			(typeof name === 'string' && normalize(formatLive2dExpressionLabel(name)) === requested) ||
+			(typeof file === 'string' && normalize(formatLive2dExpressionLabel(file)) === requested)
+		);
+	});
+	if (matchingDefinitions.length !== 1) return null;
+
+	const definition = matchingDefinitions[0] as Record<string, unknown>;
+	const nativeName = definition.Name ?? definition.name;
+	if (typeof nativeName === 'string' && nativeName.trim()) return nativeName.trim();
+
+	const file = definition.File ?? definition.file;
+	if (typeof file !== 'string') return null;
+	return (
+		file
+			.split(/[/\\]/)
+			.pop()
+			?.replace(/\.(exp3|exp)?\.json$/i, '') ?? null
+	);
+}
+
 export function applyLive2dExpression(
 	// biome-ignore lint/suspicious/noExplicitAny: dynamic Live2D model instance
 	model: any, // eslint-disable-line @typescript-eslint/no-explicit-any -- pixi-live2d-display exposes runtime-specific model internals.
 	expressionId: string | null | undefined,
+	definitions?: readonly unknown[] | null,
 ): void {
 	if (!model) return;
 	try {
 		if (expressionId) {
 			if (typeof model.expression === 'function') {
-				const res = model.expression(expressionId);
+				const resolvedExpressionId = resolveLive2dExpressionId(expressionId, definitions);
+				if (!resolvedExpressionId) return;
+				const res = model.expression(resolvedExpressionId);
 				if (res && typeof res.catch === 'function') {
 					res.catch(() => {
 						// Ignorar fallo de expresión nativa si el modelo no la define
@@ -380,7 +427,11 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 			}
 
 			// Compatibilidad con motion manager nativo (última expresión activada)
-			applyLive2dExpression(model, activeIds[activeIds.length - 1]);
+			applyLive2dExpression(
+				model,
+				activeIds[activeIds.length - 1],
+				pkg?.modelSettingsJson.FileReferences?.Expressions,
+			);
 
 			// Consolidar parámetros de todas las expresiones activas
 			const consolidatedParams: Live2dExpressionParameter[] = [];
@@ -943,9 +994,11 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 
 		const toastId = toast.loading(`Desempaquetando ${file.name}...`);
 		try {
-			const loadedPackage = await unpackLive2dZip(file);
-			live2dStore.setPackage(loadedPackage);
-			avatar2dManager.setLive2dModel('loaded', loadedPackage.modelName);
+			const loadedPackage = await loadLive2dModel(file);
+			if (!loadedPackage) {
+				toast.dismiss(toastId);
+				return;
+			}
 			toast.success(`Modelo "${loadedPackage.modelName}" listo en WebGL`, { id: toastId });
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : 'Error al procesar el archivo .ZIP';

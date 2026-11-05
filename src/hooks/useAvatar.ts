@@ -67,7 +67,6 @@ export function useAvatar() {
 				}
 			}
 		}
-
 		try {
 			const storedConfigs = window.localStorage.getItem(AVATAR_CONFIGS_STORAGE_KEY);
 			if (storedConfigs) {
@@ -122,6 +121,25 @@ export function useAvatar() {
 				}
 				activeVtsReactionsRef.current = [];
 				for (const expression of baseConfig.expressions) {
+					void vts.activateExpression(expression);
+					activeVtsReactionsRef.current.push(expression);
+				}
+			}
+
+			const targetBaseConfig = getScopedAutomaticReactionConfig('neutral', targetSoftware);
+			if (targetSoftware === 'vrm') {
+				if (targetBaseConfig.expressions.length) {
+					vrmManager.setEmotions(targetBaseConfig.expressions, targetBaseConfig.intensity);
+				} else {
+					vrmManager.resetEmotions();
+				}
+			} else if (targetSoftware === 'pngtuber') {
+				avatar2dManager.setEmotion(targetBaseConfig.expressions[0] ?? 'neutral');
+			} else if (targetSoftware === 'live2d') {
+				avatar2dManager.setLive2dExpressions(targetBaseConfig.expressions);
+			} else if (targetSoftware === 'vtubestudio') {
+				activeVtsReactionsRef.current = [];
+				for (const expression of targetBaseConfig.expressions) {
 					void vts.activateExpression(expression);
 					activeVtsReactionsRef.current.push(expression);
 				}
@@ -254,6 +272,12 @@ export function useAvatar() {
 	}, [resetEmotions]);
 
 	useEffect(() => {
+		if (activeSoftware === 'pngtuber' || activeSoftware === 'live2d') {
+			void resetEmotionsRef.current();
+		}
+	}, [activeSoftware]);
+
+	useEffect(() => {
 		const audioQueue = AudioQueueManager.getInstance();
 		return audioQueue.subscribeSpeechState((active) => {
 			if (active) {
@@ -304,6 +328,13 @@ export function useAvatar() {
 					: { expressions: [], intensity: 1 };
 			const selectedExpressions = selectedConfig.expressions;
 			const selectedExpression = selectedExpressions[0];
+			const fallbackReactionExpression =
+				payload.reaction === true &&
+				(activeSoftware === 'pngtuber' || activeSoftware === 'live2d') &&
+				String(payload.expression ?? payload.emotion ?? '').toLowerCase() !== 'neutral'
+					? (payload.expression ?? payload.emotion ?? undefined)
+					: undefined;
+			const resolvedReactionExpression = selectedExpression ?? fallbackReactionExpression;
 			const hasReactionDecision = typeof payload.reaction === 'boolean';
 			if (hasReactionDecision) {
 				if (automaticReactionTimerRef.current) {
@@ -313,11 +344,15 @@ export function useAvatar() {
 				automaticReactionPendingRef.current = false;
 				automaticReactionHasSpeechRef.current = false;
 				await resetEmotions();
-				if (!payload.reaction || !selectedExpression) return true;
+				if (!payload.reaction || !resolvedReactionExpression) return true;
 			}
 			const resolvedPayload = hasReactionDecision
-				? selectedExpression
-					? { ...payload, emotion: selectedExpression, expression: selectedExpression }
+				? resolvedReactionExpression
+					? {
+							...payload,
+							emotion: resolvedReactionExpression,
+							expression: resolvedReactionExpression,
+						}
 					: { ...payload, emotion: undefined, expression: null }
 				: payload;
 			if (

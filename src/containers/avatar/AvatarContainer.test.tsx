@@ -1,5 +1,6 @@
 import * as useAvatarModule from '@/hooks/useAvatar';
 import { setAutomaticReactionMapping } from '@/lib/avatar/reactionMappings';
+import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AvatarContainer } from './AvatarContainer';
@@ -122,6 +123,23 @@ describe('AvatarContainer', () => {
 
 		await waitFor(() => expect(screen.getByLabelText('Alegría')).toHaveTextContent('smile'));
 		expect(getSettingsMock).toHaveBeenCalledWith({ token: 'account-token' });
+	});
+
+	it('applies the saved Live2D base expression after account mappings load', async () => {
+		getSettingsMock.mockResolvedValue({
+			settings: { automatic_reaction_mappings: { 'live2d:neutral': 'base-smile' } },
+		});
+		vi.spyOn(useAvatarModule, 'useAvatar').mockReturnValue({
+			...defaultMockAvatar,
+			activeSoftware: 'live2d',
+		} as unknown as ReturnType<typeof useAvatarModule.useAvatar>);
+
+		render(<AvatarContainer />);
+
+		await waitFor(() =>
+			expect(avatar2dManager.getState().live2d.activeExpressions).toEqual(['base-smile']),
+		);
+		avatar2dManager.setLive2dExpressions([]);
 	});
 
 	it('saves changed automatic reaction mappings to the signed-in account', async () => {

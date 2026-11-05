@@ -5,11 +5,13 @@ import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
 import { useAvatar } from '@/hooks/useAvatar';
 import { useVoiceErrorReporter } from '@/hooks/useVoiceErrorReporter';
+import { getAiErrorMessage } from '@/lib/ai-errors';
 import { vrmManager } from '@/lib/avatar/vrmManager';
 import { singleChunkStream, speakTextStream, speechDeduplicator } from '@/lib/speechPipeline';
 import type { AvatarBackendPayload } from '@/lib/vtsAvatarPayload';
 import { useAuth } from '@clerk/nextjs';
 import { type MutableRefObject, useCallback, useEffect, useRef } from 'react';
+import { toast } from 'sonner';
 
 type StreamEventPayload = AvatarBackendPayload & {
 	client_id?: number;
@@ -236,9 +238,25 @@ const StreamChat = () => {
 				if (normalizedType === 'system') {
 					processedMessages.current.add(messageKey);
 					trimProcessedMessages(processedMessages);
+					let message = reactionText || 'Evento del sistema recibido';
+					const aiError = parsedData.metadata?.error;
+					if (
+						parsedData.metadata?.source === 'ai_error' &&
+						aiError !== null &&
+						typeof aiError === 'object' &&
+						'code' in aiError &&
+						typeof aiError.code === 'string'
+					) {
+						const provider =
+							'provider' in aiError && typeof aiError.provider === 'string'
+								? aiError.provider
+								: null;
+						message = getAiErrorMessage({ payload: { code: aiError.code, provider } });
+						toast.error(message, { id: `ai-error-${provider ?? 'unknown'}-${aiError.code}` });
+					}
 					addMessageRef.current({
 						type: 'system',
-						content: reactionText || 'Evento del sistema recibido',
+						content: message,
 						timestamp: parsedData.timestamp || new Date().toISOString(),
 					});
 				}

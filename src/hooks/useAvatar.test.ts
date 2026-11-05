@@ -1,5 +1,8 @@
 import { AVATAR_SOFTWARE_STORAGE_KEY } from '@/lib/avatar/constants';
-import { setAutomaticReactionMapping } from '@/lib/avatar/reactionMappings';
+import {
+	setAutomaticReactionConfig,
+	setAutomaticReactionMapping,
+} from '@/lib/avatar/reactionMappings';
 import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -106,6 +109,62 @@ describe('useAvatar persistence and mode synchronization', () => {
 		}
 	});
 
+	it('uses the backend Live2D emotion when no custom reaction mapping exists', async () => {
+		window.localStorage.setItem(AVATAR_SOFTWARE_STORAGE_KEY, 'live2d');
+		setAutomaticReactionConfig('angry', { expressions: [], intensity: 1 }, 'live2d');
+		const { result, unmount } = renderHook(() => useAvatar());
+
+		await act(async () => {
+			await result.current.sendAvatarPayload({
+				type: 'reaction',
+				reaction: true,
+				emotion: 'angry',
+			});
+		});
+
+		expect(avatar2dManager.getState().live2d.activeExpressions).toEqual(['angry']);
+		unmount();
+	});
+
+	it('does not apply the backend emotion when the reaction decision is false', async () => {
+		window.localStorage.setItem(AVATAR_SOFTWARE_STORAGE_KEY, 'live2d');
+		const { result, unmount } = renderHook(() => useAvatar());
+
+		act(() => avatar2dManager.setLive2dExpression('base-smile'));
+		await act(async () => {
+			await result.current.sendAvatarPayload({
+				type: 'speech',
+				reaction: false,
+				emotion: 'angry',
+				expression: 'Angry',
+			});
+		});
+
+		expect(avatar2dManager.getState().live2d.activeExpressions).toEqual([]);
+		unmount();
+	});
+
+	it('prefers a configured Live2D reaction mapping over the backend emotion name', async () => {
+		window.localStorage.setItem(AVATAR_SOFTWARE_STORAGE_KEY, 'live2d');
+		setAutomaticReactionConfig(
+			'angry',
+			{ expressions: ['angry-expression-file'], intensity: 1 },
+			'live2d',
+		);
+		const { result, unmount } = renderHook(() => useAvatar());
+
+		await act(async () => {
+			await result.current.sendAvatarPayload({
+				type: 'reaction',
+				reaction: true,
+				emotion: 'angry',
+			});
+		});
+
+		expect(avatar2dManager.getState().live2d.activeExpressions).toEqual(['angry-expression-file']);
+		unmount();
+	});
+
 	it('useAvatar maps a Twitch speech reaction to the selected expression', async () => {
 		window.localStorage.setItem(AVATAR_SOFTWARE_STORAGE_KEY, 'vtubestudio');
 		setAutomaticReactionMapping('surprised', 'custom_vts_expression');
@@ -154,5 +213,40 @@ describe('useAvatar persistence and mode synchronization', () => {
 
 		expect(vtsMocks.activateExpression).toHaveBeenCalledWith('surprised');
 		expect(vtsMocks.setExpressionActive).toHaveBeenCalledWith('surprised', false);
+	});
+
+	it('applies the saved Live2D base expression when the studio starts in Live2D mode', () => {
+		avatar2dManager.setLive2dExpressions([]);
+		window.localStorage.setItem(AVATAR_SOFTWARE_STORAGE_KEY, 'live2d');
+		setAutomaticReactionConfig('neutral', { expressions: ['base-smile'], intensity: 1 }, 'live2d');
+
+		const { unmount } = renderHook(() => useAvatar());
+
+		expect(avatar2dManager.getState().live2d.activeExpressions).toEqual(['base-smile']);
+		unmount();
+	});
+
+	it('applies the target software base expression when switching to Live2D', () => {
+		avatar2dManager.setLive2dExpressions([]);
+		setAutomaticReactionConfig('neutral', { expressions: ['base-smile'], intensity: 1 }, 'live2d');
+		const { result, unmount } = renderHook(() => useAvatar());
+
+		act(() => result.current.setSoftware('live2d'));
+
+		expect(avatar2dManager.getState().live2d.activeExpressions).toEqual(['base-smile']);
+		unmount();
+	});
+
+	it('keeps an edited Live2D expression after an unrelated rerender', () => {
+		avatar2dManager.setLive2dExpressions([]);
+		window.localStorage.setItem(AVATAR_SOFTWARE_STORAGE_KEY, 'live2d');
+		setAutomaticReactionConfig('neutral', { expressions: ['base-smile'], intensity: 1 }, 'live2d');
+		const { rerender, unmount } = renderHook(() => useAvatar());
+
+		act(() => avatar2dManager.setLive2dExpression('edited-expression'));
+		rerender();
+
+		expect(avatar2dManager.getState().live2d.activeExpressions).toEqual(['edited-expression']);
+		unmount();
 	});
 });

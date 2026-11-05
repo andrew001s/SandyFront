@@ -9,6 +9,7 @@ import {
 	findExpressionUrlInFileMap,
 	parseLive2dExpressionParams,
 	resetLive2dExpressionParams,
+	resolveLive2dExpressionId,
 	stepLive2dFocusDecay,
 } from './Live2dRenderer';
 
@@ -201,5 +202,33 @@ describe('Live2dRenderer phonetic mouth parameter injection', () => {
 		expect(parseLive2dExpressionParams(cubism2Data)).toEqual([
 			{ Id: 'PARAM_CHEEK', Value: 0.8, Blend: 'Add' },
 		]);
+	});
+
+	it('resolves backend emotion and expression-file IDs to the model native expression name', () => {
+		const definitions = [
+			{ Name: 'AngryFace', File: 'Expressions/AngryFace.exp3.json' },
+			{ Name: 'HappyFace', File: 'Expressions/HappyFace.exp3.json' },
+		];
+
+		expect(resolveLive2dExpressionId('angryface', definitions)).toBe('AngryFace');
+		expect(resolveLive2dExpressionId('happyface.exp3.json', definitions)).toBe('HappyFace');
+		expect(
+			resolveLive2dExpressionId('angry', [
+				{ Name: 'F01_angry', File: 'Expressions/F01_angry.exp3.json' },
+			]),
+		).toBe('F01_angry');
+		expect(resolveLive2dExpressionId('not-in-model', definitions)).toBeNull();
+		expect(
+			resolveLive2dExpressionId('angry', [{ Name: 'F01_angry' }, { Name: 'F02_angry' }]),
+		).toBeNull();
+	});
+
+	it('applies the resolved native expression name to the Live2D model', () => {
+		const expressionSpy = vi.fn();
+		const model = { expression: expressionSpy };
+
+		applyLive2dExpression(model, 'angry', [{ Name: 'Angry', File: 'angry.exp3.json' }]);
+
+		expect(expressionSpy).toHaveBeenCalledWith('Angry');
 	});
 });

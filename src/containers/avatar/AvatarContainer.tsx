@@ -16,6 +16,7 @@ import { useAvatar } from '@/hooks/useAvatar';
 import { VRM_EMOTIONS } from '@/lib/avatar/constants';
 import {
 	getAutomaticReactionMappings,
+	getScopedAutomaticReactionConfig,
 	setAutomaticReactionConfig,
 	setAutomaticReactionMapping,
 } from '@/lib/avatar/reactionMappings';
@@ -73,6 +74,10 @@ export const AvatarContainer = () => {
 					setAutomaticReactionMapping(reaction, expressionId);
 				}
 				setReactionMappings(accountMappings);
+				if (activeSoftware === 'live2d') {
+					const base = getScopedAutomaticReactionConfig('neutral', 'live2d');
+					avatar2dManager.setLive2dExpressions(base.expressions);
+				}
 			} catch (error) {
 				if (!cancelled) console.error('No se pudieron cargar las reacciones automáticas:', error);
 			}
@@ -81,7 +86,7 @@ export const AvatarContainer = () => {
 		return () => {
 			cancelled = true;
 		};
-	}, [getToken, isAuthLoaded, isSignedIn, userId]);
+	}, [activeSoftware, getToken, isAuthLoaded, isSignedIn, userId]);
 
 	useEffect(() => {
 		const unsubscribeAvatar = avatar2dManager.subscribe(setAvatar2dState);

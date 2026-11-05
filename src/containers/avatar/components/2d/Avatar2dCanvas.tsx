@@ -31,8 +31,7 @@ import {
 	storeBackgroundState,
 } from '@/lib/avatar/vrmBackground';
 import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
-import { live2dStore } from '@/lib/avatar2d/live2dStore';
-import { unpackLive2dZip } from '@/lib/avatar2d/live2dZipLoader';
+import { loadLive2dModel, restoreSavedLive2dModel } from '@/lib/avatar2d/live2dModel';
 import type { Avatar2dMode, Avatar2dState } from '@/lib/avatar2d/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, Copy, Maximize2, Minimize2, Tv, Upload } from 'lucide-react';
@@ -94,6 +93,17 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 			document.removeEventListener('fullscreenchange', handleFullscreenChange);
 		};
 	}, []);
+
+	useEffect(() => {
+		if (currentMode !== 'live2d') return;
+		let cancelled = false;
+		void restoreSavedLive2dModel().catch((error) => {
+			if (!cancelled) console.error('No se pudo restaurar el modelo Live2D:', error);
+		});
+		return () => {
+			cancelled = true;
+		};
+	}, [currentMode]);
 
 	const handleToggleFullscreen = async () => {
 		try {
@@ -160,10 +170,11 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 		if (fileName.endsWith('.zip')) {
 			const toastId = toast.loading(`Desempaquetando modelo Live2D: ${file.name}...`);
 			try {
-				const loadedPackage = await unpackLive2dZip(file);
-				live2dStore.setPackage(loadedPackage);
-				avatar2dManager.setLive2dModel('loaded', loadedPackage.modelName);
-				avatar2dManager.setMode('live2d');
+				const loadedPackage = await loadLive2dModel(file);
+				if (!loadedPackage) {
+					toast.dismiss(toastId);
+					return;
+				}
 				toast.success(`¡Modelo Live2D "${loadedPackage.modelName}" cargado en el navegador!`, {
 					id: toastId,
 					description: 'Se ha cargado con físicas, seguimiento de cursor y sincronización de voz.',
