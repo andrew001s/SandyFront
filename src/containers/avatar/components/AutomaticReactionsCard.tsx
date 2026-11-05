@@ -175,7 +175,7 @@ export function AutomaticReactionsCard({
 			>
 				<DialogContent
 					overlayClassName='bg-black/15 backdrop-blur-none'
-					className='top-1/2 right-auto left-1/2 flex h-[82vh] max-h-[82vh] w-[calc(100vw-2rem)] translate-x-[-50%] translate-y-[-50%] flex-col gap-0 overflow-hidden p-0 sm:w-[min(34vw,26rem)]'
+					className='top-1/2 right-auto left-1/2 flex h-fit max-h-[min(90dvh,42rem)] w-[calc(100vw-2rem)] translate-x-[-50%] translate-y-[-50%] flex-col gap-0 overflow-hidden p-0 sm:w-[min(34vw,26rem)]'
 				>
 					<DialogHeader className='shrink-0 border-border/70 border-b px-5 py-4'>
 						<DialogTitle>
@@ -186,7 +186,7 @@ export function AutomaticReactionsCard({
 						</DialogDescription>
 					</DialogHeader>
 
-					<div className='min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4'>
+					<div className='max-h-[min(55dvh,28rem)] min-h-0 space-y-4 overflow-y-auto overscroll-contain px-5 py-4'>
 						<fieldset className='m-0 grid min-w-0 gap-1.5 border-0 p-0 sm:grid-cols-2'>
 							<legend className='sr-only'>Expresiones disponibles</legend>
 							{expressions.map((expression) => {

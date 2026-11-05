@@ -37,4 +37,18 @@ describe('AutomaticReactionsCard', () => {
 		});
 		expect(onPreviewEnd).toHaveBeenCalledOnce();
 	});
+
+	it('sizes the expression editor to its content within a viewport cap', () => {
+		render(
+			<AutomaticReactionsCard
+				expressions={[{ id: 'smile', label: 'Sonrisa' }]}
+				mappings={{}}
+				onMappingChange={vi.fn()}
+			/>,
+		);
+
+		fireEvent.click(screen.getByRole('button', { name: 'Expresión base: editar expresiones' }));
+
+		expect(screen.getByRole('dialog')).toHaveClass('h-fit', 'max-h-[min(90dvh,42rem)]');
+	});
 });
