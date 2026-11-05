@@ -86,13 +86,13 @@ export function StudioDock({
 	const { serviceStatus, hasLoaded, hasError } = useServiceStatus();
 	const posClass =
 		position === 'left'
-			? 'bottom-3 left-3 right-3 md:top-1/2 md:right-auto md:bottom-auto md:left-4 md:-translate-y-1/2'
-			: 'bottom-3 left-3 right-3 md:top-1/2 md:right-4 md:bottom-auto md:left-auto md:-translate-y-1/2';
+			? 'bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-3 right-3 md:top-4 md:right-auto md:bottom-4 md:left-4 md:my-auto'
+			: 'bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-3 right-3 md:top-4 md:right-4 md:bottom-4 md:left-auto md:my-auto';
 	const tooltipSide = position === 'left' ? 'right' : 'left';
 
 	if (!isHudVisible) {
 		return (
-			<div className={`pointer-events-auto absolute ${posClass} z-30 ${className}`}>
+			<div className={`pointer-events-auto absolute ${posClass} z-30 h-fit w-fit ${className}`}>
 				<DockTooltip label='Mostrar controles de estudio' side={tooltipSide}>
 					<button
 						type='button'
@@ -109,9 +109,9 @@ export function StudioDock({
 
 	return (
 		<div
-			className={`pointer-events-auto absolute ${posClass} z-30 flex select-none items-center gap-1.5 rounded-2xl border border-border/80 bg-background/90 p-1.5 shadow-2xl backdrop-blur-xl md:h-fit md:w-[4.25rem] md:flex-col md:justify-start md:gap-1.5 ${className}`}
+			className={`pointer-events-auto absolute ${posClass} z-30 flex min-h-0 select-none items-center gap-1 rounded-2xl border border-border/80 bg-background/90 p-1.5 shadow-2xl backdrop-blur-xl md:h-fit md:max-h-[calc(100%-2rem)] md:w-[4.25rem] md:flex-col [&_button:focus-visible]:outline-2 [&_button:focus-visible]:outline-primary [&_button:focus-visible]:outline-offset-[-2px] ${className}`}
 		>
-			<div className='flex min-w-0 max-w-full flex-1 flex-row items-center gap-1 overflow-x-auto overscroll-x-contain [scrollbar-width:none] md:max-h-[min(34.5rem,max(16rem,calc(100dvh_-_15.5rem)))] md:min-h-0 md:w-full md:flex-none md:flex-col md:gap-1.5 md:overflow-y-auto md:overflow-x-hidden md:overscroll-y-contain md:pr-1 md:[scrollbar-width:thin] md:[&::-webkit-scrollbar-thumb]:rounded-full md:[&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar]:hidden md:[&::-webkit-scrollbar]:w-1'>
+			<div className='flex min-h-0 min-w-0 max-w-full flex-1 flex-row items-center gap-1 overflow-x-auto overscroll-x-contain px-0.5 py-1 [scrollbar-color:var(--border)_transparent] [scrollbar-width:none] md:w-full md:flex-auto md:flex-col md:gap-1 md:overflow-y-auto md:overflow-x-hidden md:overscroll-y-contain md:[scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar]:size-1'>
 				{/* 1. Expresiones */}
 				<DockTooltip label='Expresiones' side={tooltipSide}>
 					<button
@@ -332,9 +332,11 @@ export function StudioDock({
 						</button>
 					</DockTooltip>
 				)}
+			</div>
 
-				<div className='mx-0.5 h-6 w-px shrink-0 bg-border/70 md:mx-0 md:my-0.5 md:h-px md:w-6' />
+			<div className='h-6 w-px shrink-0 bg-border/70 md:h-px md:w-6' />
 
+			<div className='flex shrink-0 items-center gap-1 md:flex-col'>
 				{/* Pantalla Completa */}
 				<DockTooltip
 					label={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
