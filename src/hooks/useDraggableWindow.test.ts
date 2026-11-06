@@ -48,7 +48,7 @@ describe('ReactUse window dragging', () => {
 		fireEvent.click(screen.getByRole('button', { name: 'Abrir ventana' }));
 		const dialog = screen.getByTestId('window');
 		const handle = screen.getByTestId('handle');
-		expect(dialog).toHaveStyle({ left: '362px', top: '284px' });
+		expect(dialog).toHaveStyle({ left: '362px', top: '284px', transition: 'none' });
 		fireEvent(
 			handle,
 			new MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 400, clientY: 300 }),

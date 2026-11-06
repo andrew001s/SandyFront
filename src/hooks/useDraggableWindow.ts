@@ -55,7 +55,7 @@ export function useDraggableWindow() {
 		});
 	};
 	return {
-		style: { left: x, top: y },
+		style: { left: x, top: y, transition: 'none' },
 		dialogRef: setElement,
 		isDragging,
 		reset,

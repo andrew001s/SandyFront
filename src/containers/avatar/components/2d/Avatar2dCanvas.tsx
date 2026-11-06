@@ -406,7 +406,7 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 										) : activeTool === 'services' ? (
 											<ServiceStartCard />
 										) : (
-											<FeatureFlagsPanel />
+											<FeatureFlagsPanel onClose={() => setActiveTool(null)} />
 										)}
 									</motion.div>
 								)}

@@ -540,7 +540,7 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 								)}
 								{activeTool === 'features' && (
 									<div className='w-full min-w-0 md:w-[420px]'>
-										<FeatureFlagsPanel />
+										<FeatureFlagsPanel onClose={() => setActiveTool(null)} />
 									</div>
 								)}
 							</motion.div>
