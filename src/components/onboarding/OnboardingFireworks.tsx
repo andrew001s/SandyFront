@@ -1,5 +1,6 @@
 'use client';
 
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { motion } from 'framer-motion';
 import { useMemo } from 'react';
 
@@ -53,6 +54,7 @@ function makeBurst(x: number, y: number, delay: number): Burst {
 }
 
 export function OnboardingFireworks({ className }: FireworksProps) {
+	const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 	const bursts = useMemo(
 		() => [
 			makeBurst(14, 16, 0),
@@ -64,6 +66,7 @@ export function OnboardingFireworks({ className }: FireworksProps) {
 		[],
 	);
 
+	if (reducedMotion) return null;
 	return (
 		<div className={className} aria-hidden='true'>
 			{bursts.map((burst, burstIndex) => (

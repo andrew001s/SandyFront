@@ -1,62 +1,54 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { ExternalLink } from 'lucide-react';
+import { ChevronDown, ExternalLink } from 'lucide-react';
 
-export type OnboardingOfficialDocLink = {
-	label: string;
-	href: string;
-	description: string;
-};
-
-type OnboardingOfficialDocsProps = {
-	title: string;
-	description?: string;
-	links: OnboardingOfficialDocLink[];
-	className?: string;
-};
+export type OnboardingOfficialDocLink = { label: string; href: string; description: string };
 
 export function OnboardingOfficialDocs({
 	title,
 	description,
 	links,
-	className,
-}: OnboardingOfficialDocsProps) {
+	className = '',
+}: {
+	title: string;
+	description?: string;
+	links: OnboardingOfficialDocLink[];
+	className?: string;
+}) {
+	if (!links.length) return null;
 	return (
-		<div className={className}>
-			<div className='space-y-1'>
-				<p className='text-muted-foreground text-xs uppercase tracking-[0.22em]'>{title}</p>
-				{description ? (
-					<p className='max-w-2xl text-muted-foreground text-sm leading-relaxed'>{description}</p>
-				) : null}
-			</div>
-
-			<div className='mt-4 grid grid-cols-1 gap-3'>
+		<details className={`group border-border border-t pt-3 ${className}`}>
+			<summary className='flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-md font-medium text-foreground text-sm hover:bg-muted/50 focus-visible:outline-2 focus-visible:outline-ring'>
+				<span>Ayuda: {title}</span>
+				<ChevronDown
+					aria-hidden='true'
+					className='size-4 shrink-0 text-muted-foreground group-open:rotate-180'
+				/>
+			</summary>
+			<div className='space-y-2 pb-2'>
+				{description && (
+					<p className='text-muted-foreground text-sm leading-relaxed'>{description}</p>
+				)}
 				{links.map((link) => (
-					<Button
+					<a
 						key={link.href}
-						asChild
-						variant='outline'
-						size='sm'
-						className='h-auto w-full justify-start rounded-2xl border-border/70 bg-background/70 px-4 py-3 text-left shadow-sm hover:bg-background/90'
+						href={link.href}
+						target='_blank'
+						rel='noreferrer noopener'
+						className='flex min-h-11 items-start gap-3 rounded-lg px-2 py-3 text-sm hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring'
 					>
-						<a
-							href={link.href}
-							target='_blank'
-							rel='noreferrer noopener'
-							className='flex w-full min-w-0 items-start gap-3'
-						>
-							<ExternalLink className='size-4' />
-							<span className='min-w-0 text-left'>
-								{link.label}
-								<span className='block text-muted-foreground text-xs leading-relaxed'>
-									{link.description}
-								</span>
-							</span>
-						</a>
-					</Button>
+						<ExternalLink
+							aria-hidden='true'
+							className='mt-0.5 size-4 shrink-0 text-muted-foreground'
+						/>
+						<span className='min-w-0'>
+							<span className='font-medium underline underline-offset-4'>{link.label}</span>
+							<span className='mt-1 block text-muted-foreground'>{link.description}</span>
+							<span className='sr-only'>Se abre en otra pestaña</span>
+						</span>
+					</a>
 				))}
 			</div>
-		</div>
+		</details>
 	);
 }

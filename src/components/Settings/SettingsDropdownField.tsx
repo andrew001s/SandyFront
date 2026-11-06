@@ -1,6 +1,10 @@
+'use client';
+
 import type { DropdownOption } from '@/components/Settings/settings.types';
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Check, ChevronDown } from 'lucide-react';
+import { Select } from 'radix-ui';
+import { useId } from 'react';
 import ReactCountryFlag from 'react-country-flag';
 
 type SettingsDropdownFieldProps = {
@@ -28,65 +32,69 @@ export function SettingsDropdownField({
 	className,
 	hideLabel,
 }: SettingsDropdownFieldProps) {
-	const selected = options.find((option) => option.value === value);
-	const selectedLabel = selected?.label ?? placeholder;
-
+	const id = useId();
 	return (
 		<div className={className}>
-			{hideLabel ? null : <Label className='mb-2 block'>{label}</Label>}
-			<div className='relative'>
-				<Button
-					type='button'
-					variant='outline'
-					onClick={() => setOpen(!open)}
-					className='h-9 w-full justify-between bg-card/80 text-left'
+			{!hideLabel && (
+				<Label htmlFor={id} className='mb-2 block'>
+					{label}
+				</Label>
+			)}
+			<Select.Root
+				value={value}
+				open={open}
+				onOpenChange={setOpen}
+				onValueChange={(next) => {
+					onChange(next);
+					onRefresh?.();
+				}}
+			>
+				<Select.Trigger
+					id={id}
+					aria-label={label}
+					className='flex min-h-11 w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-input bg-card px-3 py-2 text-left text-sm focus-visible:outline-2 focus-visible:outline-ring'
 				>
-					<span className='flex min-w-0 items-center gap-2'>
-						{selected?.flag ? (
-							<ReactCountryFlag
-								countryCode={selected.flag}
-								svg
-								className='size-5 shrink-0 rounded-full object-cover'
-							/>
-						) : null}
-						<span className='truncate'>{selectedLabel}</span>
+					<span className='min-w-0 truncate'>
+						<Select.Value placeholder={placeholder} />
 					</span>
-					<span className='text-muted-foreground'>⌄</span>
-				</Button>
-				{open ? (
-					<div className='absolute top-full right-0 left-0 z-20 mt-2 overflow-hidden rounded-2xl border border-border/60 bg-background/95 shadow-xl backdrop-blur-xl'>
-						{options.map((option) => (
-							<button
-								key={option.value}
-								type='button'
-								onClick={() => {
-									onChange(option.value);
-									setOpen(false);
-									onRefresh?.();
-								}}
-								className={[
-									'flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-colors',
-									option.value === value
-										? 'bg-violet-500/10 text-violet-700 dark:text-violet-300'
-										: 'text-foreground hover:bg-accent hover:text-accent-foreground',
-								].join(' ')}
-							>
-								<span className='flex min-w-0 items-center gap-2'>
-									{option.flag ? (
-										<ReactCountryFlag
-											countryCode={option.flag}
-											svg
-											className='size-5 shrink-0 rounded-full object-cover'
-										/>
-									) : null}
-									<span className='truncate'>{option.label}</span>
-								</span>
-								{option.value === value ? <span>●</span> : null}
-							</button>
-						))}
-					</div>
-				) : null}
-			</div>
+					<Select.Icon>
+						<ChevronDown aria-hidden='true' className='size-4 text-muted-foreground' />
+					</Select.Icon>
+				</Select.Trigger>
+				<Select.Portal>
+					<Select.Content
+						position='popper'
+						sideOffset={4}
+						collisionPadding={12}
+						className='z-[100] max-h-[min(20rem,var(--radix-select-content-available-height))] w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg border border-border bg-popover text-popover-foreground shadow-md'
+					>
+						<Select.Viewport className='max-h-80 p-1 [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]'>
+							{options
+								.filter((option) => option.value !== '')
+								.map((option) => (
+									<Select.Item
+										key={option.value}
+										value={option.value}
+										className='relative flex min-h-11 cursor-pointer items-center gap-2 rounded-md py-2 pr-8 pl-3 text-sm outline-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground'
+									>
+										{option.flag && (
+											<ReactCountryFlag
+												aria-hidden='true'
+												countryCode={option.flag}
+												svg
+												className='size-4 shrink-0'
+											/>
+										)}
+										<Select.ItemText>{option.label}</Select.ItemText>
+										<Select.ItemIndicator className='absolute right-2'>
+											<Check aria-hidden='true' className='size-4' />
+										</Select.ItemIndicator>
+									</Select.Item>
+								))}
+						</Select.Viewport>
+					</Select.Content>
+				</Select.Portal>
+			</Select.Root>
 		</div>
 	);
 }
