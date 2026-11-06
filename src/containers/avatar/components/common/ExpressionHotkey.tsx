@@ -8,12 +8,20 @@ export function ExpressionHotkey({
 	scope,
 	id,
 	label,
-}: { scope: string; id: string; label: string }) {
+	value,
+	onChange,
+}: {
+	scope: string;
+	id: string;
+	label: string;
+	value?: string | null;
+	onChange?: (value: string | null) => void;
+}) {
 	const context = useExpressionHotkeysContext();
 	const [recording, setRecording] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	if (!context) return null;
-	const chord = context.bindings[`${scope}:${id}`];
+	const chord = onChange ? value : context.bindings[`${scope}:${id}`];
 	return (
 		<div className='min-w-0'>
 			<button
@@ -47,6 +55,11 @@ export function ExpressionHotkey({
 						setError('Usa otra tecla o combinación.');
 						return;
 					}
+					if (onChange) {
+						onChange(value);
+						setRecording(false);
+						return;
+					}
 					const failure = context.setBinding(scope, id, value);
 					setError(failure);
 					if (!failure) setRecording(false);
@@ -70,31 +83,38 @@ export function ExpressionHotkey({
 	);
 }
 
-export function ExpressionHotkeyStatus() {
+export function ExpressionHotkeyStatus({
+	compact = false,
+	showSaved = true,
+}: { compact?: boolean; showSaved?: boolean }) {
 	const context = useExpressionHotkeysContext();
 	if (!context) return null;
+	if (compact && (context.status === 'ready' || context.status === 'saving')) return null;
 	return (
 		<div className='border-border border-t pt-2 text-muted-foreground text-xs'>
-			<p>
-				Los atajos funcionan mientras el estudio tiene el foco. Para quitar uno, asígnalo y pulsa
-				Suprimir.
-			</p>
-			<output className='mt-1 block'>
-				{context.status === 'loading' ? (
-					'Cargando atajos de tu cuenta…'
-				) : context.status === 'saving' ? (
-					'Guardando atajos…'
-				) : context.status === 'error' ? (
-					<>
-						No se pudieron guardar o cargar los atajos.{' '}
-						<button type='button' onClick={context.retry} className='underline underline-offset-2'>
-							Reintentar
-						</button>
-					</>
-				) : (
-					'Atajos guardados en tu cuenta.'
-				)}
-			</output>
+			{!compact && <p>Los atajos funcionan mientras el estudio tiene el foco.</p>}
+			{(showSaved || context.status !== 'ready') && (
+				<output className='mt-1 block'>
+					{context.status === 'loading' ? (
+						'Cargando atajos de tu cuenta…'
+					) : context.status === 'saving' ? (
+						'Guardando atajos…'
+					) : context.status === 'error' ? (
+						<>
+							No se pudieron guardar o cargar los atajos.{' '}
+							<button
+								type='button'
+								onClick={context.retry}
+								className='underline underline-offset-2'
+							>
+								Reintentar
+							</button>
+						</>
+					) : (
+						'Atajos guardados en tu cuenta.'
+					)}
+				</output>
+			)}
 		</div>
 	);
 }

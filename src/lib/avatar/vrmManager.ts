@@ -29,10 +29,11 @@ import type {
 	VrmFallingEmote,
 	VrmViewer,
 } from '@/lib/avatar/vrmViewer';
+import { expressionWeights, normalizeExpressionIntensity } from './expressionIntensities';
 export type VrmSyncMessage =
 	| { type: 'vowels'; vowels: { A?: number; I?: number; U?: number; E?: number; O?: number } }
 	| { type: 'emotion'; emotion: string; intensity: number }
-	| { type: 'emotionMix'; emotions: string[]; intensity: number }
+	| { type: 'emotionMix'; emotions: string[]; intensity: number; weights?: Record<string, number> }
 	| { type: 'idleSettings'; settings: VrmIdleSettings }
 	| { type: 'reset' }
 	| { type: 'modelUpdated' }
@@ -60,6 +61,7 @@ export type VrmSyncMessage =
 			type: 'fullState';
 			emotion: string;
 			emotions?: string[];
+			weights?: Record<string, number>;
 			intensity: number;
 			cameraPreset: VrmCameraPreset;
 			cameraTransform?: VrmCameraTransform;
@@ -83,6 +85,8 @@ export class VrmManager {
 	private currentEmotion = 'neutral';
 	private currentEmotions: string[] = [];
 	private currentIntensity = 1.0;
+	private currentExpressionWeights: Record<string, number> = {};
+	private configuredExpressionIntensities: Record<string, number> = {};
 	private currentIdleSettings: VrmIdleSettings = { ...DEFAULT_VRM_IDLE_SETTINGS };
 	private currentCameraPreset: VrmCameraPreset = 'face';
 	private currentCameraTransform: VrmCameraTransform | null = null;
@@ -184,7 +188,11 @@ export class VrmManager {
 		this.activeViewers.add(viewer);
 		const applyActiveState = () => {
 			viewer.setIdleSettings(this.currentIdleSettings);
-			viewer.setExpressions(this.currentEmotions, this.currentIntensity);
+			viewer.setExpressions(
+				this.currentEmotions,
+				this.currentIntensity,
+				this.currentExpressionWeights,
+			);
 			viewer.setSlimeActive(this.currentSlimeActive, this.currentSlimeColor);
 			if (this.currentCameraTransform) {
 				viewer.setCameraTransform(this.currentCameraTransform);
@@ -302,12 +310,31 @@ export class VrmManager {
 	public getActiveExpressions(): string[] {
 		return this.currentEmotions;
 	}
-	public toggleExpression(id: string): void {
+	public getActiveExpressionWeights(): Record<string, number> {
+		return this.currentExpressionWeights;
+	}
+	public setConfiguredExpressionIntensities(intensities: Record<string, number>): void {
+		this.configuredExpressionIntensities = Object.fromEntries(
+			Object.entries(intensities).map(([id, value]) => [id, normalizeExpressionIntensity(value)]),
+		);
+	}
+	public setExpressionIntensity(id: string, intensity: number): void {
+		if (!this.currentEmotions.includes(id)) return;
+		this.setEmotions(this.currentEmotions, this.currentIntensity, {
+			...this.currentExpressionWeights,
+			[id]: normalizeExpressionIntensity(intensity),
+		});
+	}
+	public toggleExpression(
+		id: string,
+		intensity = this.configuredExpressionIntensities?.[id] ?? 1,
+	): void {
 		this.setEmotions(
 			this.currentEmotions.includes(id)
 				? this.currentEmotions.filter((name) => name !== id)
 				: [...this.currentEmotions, id],
 			this.currentIntensity,
+			{ ...this.currentExpressionWeights, [id]: normalizeExpressionIntensity(intensity) },
 		);
 	}
 	public setEmotion(emotion: string, intensity = 1.0): void {
@@ -316,25 +343,50 @@ export class VrmManager {
 		this.currentEmotion = emotion;
 		this.currentEmotions = [emotion];
 		this.currentIntensity = intensity;
+		const expressionIntensity =
+			normalizeExpressionIntensity(intensity) *
+			normalizeExpressionIntensity(this.configuredExpressionIntensities?.[emotion]);
+		this.currentExpressionWeights = { [emotion]: expressionIntensity };
 		for (const viewer of this.activeViewers) {
-			viewer.setExpression(emotion, intensity);
+			viewer.setExpression(emotion, expressionIntensity);
 		}
-		this.broadcastChannel?.postMessage({ type: 'emotion', emotion, intensity });
+		this.broadcastChannel?.postMessage({
+			type: 'emotion',
+			emotion,
+			intensity: expressionIntensity,
+		});
 		this.notify();
 	}
-	public setEmotions(emotions: string[], intensity = 1.0): void {
+	public setEmotions(emotions: string[], intensity = 1.0, weights?: Record<string, number>): void {
 		if (this.expressionOffTimer) clearTimeout(this.expressionOffTimer);
 		this.expressionOffTimer = null;
 		this.currentEmotions = [...new Set(emotions.filter(Boolean))];
 		this.currentEmotion = this.currentEmotions[0] ?? 'neutral';
 		this.currentIntensity = Math.min(1, Math.max(0, intensity));
+		this.currentExpressionWeights = expressionWeights(
+			this.currentEmotions,
+			this.currentIntensity,
+			weights ??
+				Object.fromEntries(
+					this.currentEmotions.map((id) => [
+						id,
+						this.currentIntensity *
+							normalizeExpressionIntensity(this.configuredExpressionIntensities?.[id]),
+					]),
+				),
+		);
 		for (const viewer of this.activeViewers) {
-			viewer.setExpressions(this.currentEmotions, this.currentIntensity);
+			viewer.setExpressions(
+				this.currentEmotions,
+				this.currentIntensity,
+				this.currentExpressionWeights,
+			);
 		}
 		this.broadcastChannel?.postMessage({
 			type: 'emotionMix',
 			emotions: this.currentEmotions,
 			intensity: this.currentIntensity,
+			weights: this.currentExpressionWeights,
 		});
 		this.notify();
 	}
@@ -343,6 +395,7 @@ export class VrmManager {
 		this.expressionOffTimer = null;
 		this.currentEmotion = 'neutral';
 		this.currentEmotions = [];
+		this.currentExpressionWeights = {};
 		for (const viewer of this.activeViewers) {
 			viewer.resetExpressions();
 		}
@@ -593,6 +646,7 @@ export class VrmManager {
 				this.currentEmotion = msg.emotion;
 				this.currentEmotions = [msg.emotion];
 				this.currentIntensity = msg.intensity;
+				this.currentExpressionWeights = expressionWeights(this.currentEmotions, msg.intensity);
 				for (const viewer of this.activeViewers) {
 					viewer.setExpression(msg.emotion, msg.intensity);
 				}
@@ -604,8 +658,13 @@ export class VrmManager {
 				this.currentEmotions = [...new Set(msg.emotions.filter(Boolean))];
 				this.currentEmotion = this.currentEmotions[0] ?? 'neutral';
 				this.currentIntensity = msg.intensity;
+				this.currentExpressionWeights = expressionWeights(
+					this.currentEmotions,
+					msg.intensity,
+					msg.weights,
+				);
 				for (const viewer of this.activeViewers) {
-					viewer.setExpressions(this.currentEmotions, msg.intensity);
+					viewer.setExpressions(this.currentEmotions, msg.intensity, this.currentExpressionWeights);
 				}
 				this.notify();
 				break;
@@ -614,6 +673,7 @@ export class VrmManager {
 				this.expressionOffTimer = null;
 				this.currentEmotion = 'neutral';
 				this.currentEmotions = [];
+				this.currentExpressionWeights = {};
 				for (const viewer of this.activeViewers) {
 					viewer.resetExpressions();
 				}
@@ -711,6 +771,7 @@ export class VrmManager {
 					type: 'fullState',
 					emotion: this.currentEmotion,
 					emotions: this.currentEmotions,
+					weights: this.currentExpressionWeights,
 					intensity: this.currentIntensity,
 					cameraPreset: this.currentCameraPreset,
 					cameraTransform: this.currentCameraTransform ?? undefined,
@@ -728,8 +789,17 @@ export class VrmManager {
 				this.currentEmotion = msg.emotion;
 				this.currentEmotions = msg.emotions ?? [msg.emotion];
 				this.currentIntensity = msg.intensity;
+				this.currentExpressionWeights = expressionWeights(
+					this.currentEmotions,
+					msg.intensity,
+					msg.weights,
+				);
 				for (const viewer of this.activeViewers) {
-					viewer.setExpressions(this.currentEmotions, this.currentIntensity);
+					viewer.setExpressions(
+						this.currentEmotions,
+						this.currentIntensity,
+						this.currentExpressionWeights,
+					);
 				}
 				if (msg.idleSettings) {
 					this.currentIdleSettings = normalizeVrmIdleSettings(

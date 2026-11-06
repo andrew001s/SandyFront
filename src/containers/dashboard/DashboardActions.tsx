@@ -2,7 +2,7 @@
 
 import { openNewsModal } from '@/components/modals/NewsModal';
 import { KOFI_URL } from '@/lib/links';
-import { Coffee, HelpCircle, Moon, Newspaper, Sun } from 'lucide-react';
+import { Coffee, HelpCircle, Moon, Star, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useNextStep } from 'nextstepjs';
 import { useEffect, useState } from 'react';
@@ -33,7 +33,7 @@ export function DashboardActions({ studio = false }: { studio?: boolean }) {
 				title='Novedades'
 				className='inline-flex size-8 items-center justify-center gap-2 rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:size-9 sm:w-auto sm:px-3'
 			>
-				<Newspaper className='size-4' />
+				<Star className='size-4' />
 				<span className='hidden text-xs xl:inline'>Novedades</span>
 			</button>
 			{studio && (

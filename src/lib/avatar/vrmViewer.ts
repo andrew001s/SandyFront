@@ -377,7 +377,7 @@ export class VrmViewer {
 		this.setExpressions([name], intensity);
 	}
 
-	public setExpressions(names: string[], intensity = 1.0): void {
+	public setExpressions(names: string[], intensity = 1.0, weights?: Record<string, number>): void {
 		const mgr = this.currentVrm?.expressionManager;
 		if (!mgr) return;
 
@@ -402,8 +402,12 @@ export class VrmViewer {
 
 		const mixedValues = new Map<string, number>();
 		for (const name of names) {
+			const expressionIntensity =
+				weights?.[name] !== undefined && Number.isFinite(weights[name])
+					? Math.min(1, Math.max(0, weights[name]))
+					: safeIntensity;
 			if (mgr.expressions.some((expression) => expression.expressionName === name)) {
-				mixedValues.set(name, safeIntensity);
+				mixedValues.set(name, expressionIntensity);
 				continue;
 			}
 			const preset = VRM_EMOTIONS.find((item) => item.id === name);
@@ -414,7 +418,7 @@ export class VrmViewer {
 			})) {
 				mixedValues.set(
 					channel,
-					Math.min(1, (mixedValues.get(channel) ?? 0) + weight * safeIntensity),
+					Math.min(1, (mixedValues.get(channel) ?? 0) + weight * expressionIntensity),
 				);
 			}
 		}

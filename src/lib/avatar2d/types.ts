@@ -41,6 +41,7 @@ export interface Live2dConfig {
 	breath: boolean;
 	activeExpression?: string | null;
 	activeExpressions?: string[];
+	expressionIntensities?: Record<string, number>;
 }
 
 export interface Avatar2dState {
@@ -68,6 +69,7 @@ export type Avatar2dSyncMessage =
 	| { type: 'sprites'; sprites: Record<PngTuberSpriteKey, string> }
 	| { type: 'live2dModel'; modelUrl: string | null; modelName?: string }
 	| { type: 'live2dExpression'; expression: string | null; expressions?: string[] }
+	| { type: 'live2dExpressionIntensities'; intensities: Record<string, number> }
 	| { type: 'mouth'; mouthOpenY: number; mouthForm: number }
 	| { type: 'eyeTracking'; enabled: boolean }
 	| { type: 'requestState' }

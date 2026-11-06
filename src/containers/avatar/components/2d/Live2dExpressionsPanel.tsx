@@ -6,7 +6,8 @@ import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { Box, Smile, Sparkles, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { ExpressionHotkey, ExpressionHotkeyStatus } from '../common/ExpressionHotkey';
+import { ExpressionConfiguration } from '../common/ExpressionConfiguration';
+import { ExpressionHotkeyStatus } from '../common/ExpressionHotkey';
 interface Props {
 	onClose: () => void;
 	onOpenModelSelect?: () => void;
@@ -205,11 +206,11 @@ export function Live2dExpressionsPanel({ onClose, onOpenModelSelect }: Props) {
 							)}
 						</div>
 						{expressions.length > 0 ? (
-							<div className='grid grid-cols-2 gap-1.5'>
+							<div className='grid gap-1.5'>
 								{expressions.map((exp) => {
 									const isActive = activeExpressions.includes(exp.id);
 									return (
-										<div key={exp.id} className='min-w-0'>
+										<div key={exp.id} className='flex min-w-0 items-center gap-2'>
 											<button
 												type='button'
 												role='switch'
@@ -253,7 +254,18 @@ export function Live2dExpressionsPanel({ onClose, onOpenModelSelect }: Props) {
 													/>
 												</div>
 											</button>
-											<ExpressionHotkey scope='live2d' id={exp.id} label={exp.label} />
+											<ExpressionConfiguration
+												scope='live2d'
+												id={exp.id}
+												label={exp.label}
+												supportsIntensity
+												onIntensityChange={(value) =>
+													avatar2dManager.setLive2dExpressionIntensities({
+														...avatar2dManager.getState().live2d.expressionIntensities,
+														[exp.id]: value,
+													})
+												}
+											/>
 										</div>
 									);
 								})}
@@ -270,7 +282,7 @@ export function Live2dExpressionsPanel({ onClose, onOpenModelSelect }: Props) {
 						)}
 					</div>
 				)}
-				<ExpressionHotkeyStatus />
+				<ExpressionHotkeyStatus compact />
 			</div>
 		</motion.div>
 	);

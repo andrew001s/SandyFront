@@ -14,7 +14,8 @@ import { motion } from 'framer-motion';
 import { Mic, Pencil, Plus, RotateCcw, Smile, Trash2, Upload, Volume2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { ExpressionHotkey, ExpressionHotkeyStatus } from '../common/ExpressionHotkey';
+import { ExpressionConfiguration } from '../common/ExpressionConfiguration';
+import { ExpressionHotkeyStatus } from '../common/ExpressionHotkey';
 interface Props {
 	onClose: () => void;
 }
@@ -434,7 +435,7 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 										{isSelected && <span className='size-1.5 shrink-0 rounded-full bg-primary' />}
 									</div>
 									<div className='shrink-0'>
-										<ExpressionHotkey scope='pngtuber' id={em.id} label={em.label} />
+										<ExpressionConfiguration scope='pngtuber' id={em.id} label={em.label} />
 									</div>
 								</div>
 							);
@@ -451,7 +452,7 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 					<RotateCcw className='size-3' />
 					Restablecer a Neutral
 				</Button>
-				<ExpressionHotkeyStatus />
+				<ExpressionHotkeyStatus compact />
 			</div>
 			{/* Confirmación accesible de eliminación con Dialog */}
 			<Dialog

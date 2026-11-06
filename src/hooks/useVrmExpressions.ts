@@ -12,3 +12,9 @@ const getActiveSnapshot = () => vrmManager.getActiveExpressions();
 export function useVrmActiveExpressions() {
 	return useSyncExternalStore(subscribe, getActiveSnapshot, getServerSnapshot);
 }
+
+const emptyWeights: Record<string, number> = {};
+const getWeightSnapshot = () => vrmManager.getActiveExpressionWeights();
+export function useVrmExpressionWeights() {
+	return useSyncExternalStore(subscribe, getWeightSnapshot, () => emptyWeights);
+}

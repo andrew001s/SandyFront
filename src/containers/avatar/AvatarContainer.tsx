@@ -12,10 +12,12 @@ import { AvatarModelDeck } from '@/containers/avatar/components/AvatarModelDeck'
 
 import { AvatarStudioDeck } from '@/containers/avatar/components/AvatarStudioDeck';
 import { VrmCanvas } from '@/containers/avatar/components/VrmCanvas';
+import { useExpressionHotkeysContext } from '@/context/ExpressionHotkeysContext';
 import { useAvatar } from '@/hooks/useAvatar';
 import { useExpressionHotkeys } from '@/hooks/useExpressionHotkeys';
 import { useVrmExpressions } from '@/hooks/useVrmExpressions';
 import { VRM_EMOTIONS } from '@/lib/avatar/constants';
+import { scopedExpressionIntensities } from '@/lib/avatar/expressionIntensities';
 import {
 	getAutomaticReactionMappings,
 	getScopedAutomaticReactionConfig,
@@ -30,6 +32,18 @@ import { useAuth } from '@clerk/nextjs';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 export const AvatarContainer = () => {
+	const expressionPreferences = useExpressionHotkeysContext();
+	const expressionIntensities = expressionPreferences?.intensities;
+	useEffect(() => {
+		if (expressionIntensities) {
+			avatar2dManager.setLive2dExpressionIntensities(
+				scopedExpressionIntensities(expressionIntensities, 'live2d'),
+			);
+			vrmManager.setConfiguredExpressionIntensities(
+				scopedExpressionIntensities(expressionIntensities, 'vrm'),
+			);
+		}
+	}, [expressionIntensities]);
 	const { getToken, isLoaded: isAuthLoaded, isSignedIn, userId } = useAuth();
 	const {
 		activeSoftware,
@@ -115,7 +129,8 @@ export const AvatarContainer = () => {
 							label: VRM_EMOTIONS.find((preset) => preset.id === id)?.name ?? id,
 						}));
 	useExpressionHotkeys(activeSoftware, reactionExpressions, (id) => {
-		if (activeSoftware === 'vrm') vrmManager.toggleExpression(id);
+		if (activeSoftware === 'vrm')
+			vrmManager.toggleExpression(id, expressionPreferences?.intensities[`vrm:${id}`] ?? 1);
 		else if (activeSoftware === 'live2d') avatar2dManager.toggleLive2dExpression(id);
 		else if (activeSoftware === 'pngtuber')
 			avatar2dManager.setEmotion(

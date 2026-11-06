@@ -150,6 +150,21 @@ describe('Live2dRenderer phonetic mouth parameter injection', () => {
 		expect(setParamSpy).toHaveBeenCalledWith('FangedSmile', 1.0);
 	});
 
+	it('passes each expression weight to the Cubism Add, Multiply and Overwrite operations', () => {
+		const core = {
+			addParameterValueById: vi.fn(),
+			multiplyParameterValueById: vi.fn(),
+			setParameterValueById: vi.fn(),
+		};
+		applyLive2dExpressionParams(core, [
+			{ Id: 'Blush', Value: 1, Blend: 'Add', Weight: 0.2 },
+			{ Id: 'EyeScale', Value: 2, Blend: 'Multiply', Weight: 0.6 },
+			{ Id: 'FangedSmile', Value: 1, Blend: 'Overwrite', Weight: 0.85 },
+		]);
+		expect(core.addParameterValueById).toHaveBeenCalledWith('Blush', 1, 0.2);
+		expect(core.multiplyParameterValueById).toHaveBeenCalledWith('EyeScale', 2, 0.6);
+		expect(core.setParameterValueById).toHaveBeenCalledWith('FangedSmile', 1, 0.85);
+	});
 	it('finds expression blob url in fileMap by matching basename, filename, or id', () => {
 		const fileMap = {
 			'RetrynowMiku/VTS Model File/Blush.exp3.json': 'blob:http://localhost/blush-full',

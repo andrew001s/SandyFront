@@ -15,6 +15,9 @@ describe('VrmViewer', () => {
 		viewer.setExpressions(['catMouth', 'earsUp'], 0.6);
 		expect(values.get('catMouth')).toBe(0.6);
 		expect(values.get('earsUp')).toBe(0.6);
+		viewer.setExpressions(['catMouth', 'earsUp'], 1, { catMouth: 0.25, earsUp: 0.85 });
+		expect(values.get('catMouth')).toBe(0.25);
+		expect(values.get('earsUp')).toBe(0.85);
 		viewer.setExpression('happy', 0.8);
 		expect(values.get('catMouth')).toBe(0);
 		expect(values.get('earsUp')).toBe(0);

@@ -1,5 +1,6 @@
 'use client';
 
+import { normalizeExpressionIntensity } from '@/lib/avatar/expressionIntensities';
 import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
 import { loadLive2dModel } from '@/lib/avatar2d/live2dModel';
 import { type Live2dPackage, live2dStore } from '@/lib/avatar2d/live2dStore';
@@ -221,6 +222,7 @@ export interface Live2dExpressionParameter {
 	Id: string;
 	Value: number;
 	Blend?: 'Add' | 'Multiply' | 'Overwrite' | string;
+	Weight?: number;
 }
 
 /**
@@ -324,11 +326,14 @@ export function applyLive2dExpressionParams(
 	for (const p of params) {
 		try {
 			if (p.Blend === 'Add' && typeof core.addParameterValueById === 'function') {
-				core.addParameterValueById(p.Id, p.Value);
+				if (p.Weight === undefined) core.addParameterValueById(p.Id, p.Value);
+				else core.addParameterValueById(p.Id, p.Value, normalizeExpressionIntensity(p.Weight));
 			} else if (p.Blend === 'Multiply' && typeof core.multiplyParameterValueById === 'function') {
-				core.multiplyParameterValueById(p.Id, p.Value);
+				if (p.Weight === undefined) core.multiplyParameterValueById(p.Id, p.Value);
+				else core.multiplyParameterValueById(p.Id, p.Value, normalizeExpressionIntensity(p.Weight));
 			} else if (typeof core.setParameterValueById === 'function') {
-				core.setParameterValueById(p.Id, p.Value);
+				if (p.Weight === undefined) core.setParameterValueById(p.Id, p.Value);
+				else core.setParameterValueById(p.Id, p.Value, normalizeExpressionIntensity(p.Weight));
 			}
 		} catch {
 			// Ignorar si el modelo no tiene este parámetro específico
@@ -409,7 +414,10 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 	const previouslyAppliedParamsRef = useRef<Live2dExpressionParameter[]>([]);
 
 	const syncExpressions = useCallback(
-		(activeIds: string[]) => {
+		(
+			activeIds: string[],
+			intensities = avatar2dManager.getState().live2d.expressionIntensities ?? {},
+		) => {
 			const model = modelRef.current;
 			if (!model) return;
 
@@ -426,20 +434,18 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				return;
 			}
 
-			// Compatibilidad con motion manager nativo (última expresión activada)
-			applyLive2dExpression(
-				model,
-				activeIds[activeIds.length - 1],
-				pkg?.modelSettingsJson.FileReferences?.Expressions,
-			);
-
 			// Consolidar parámetros de todas las expresiones activas
 			const consolidatedParams: Live2dExpressionParameter[] = [];
 
 			for (const id of activeIds) {
 				const cached = expressionParamsCacheRef.current.get(id);
 				if (cached) {
-					consolidatedParams.push(...cached);
+					consolidatedParams.push(
+						...cached.map((parameter) => ({
+							...parameter,
+							Weight: normalizeExpressionIntensity(intensities[id]),
+						})),
+					);
 				} else if (pkg?.fileMap) {
 					const targetUrl = findExpressionUrlInFileMap(pkg.fileMap, id);
 					if (targetUrl) {
@@ -461,6 +467,19 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				}
 			}
 
+			// El gestor nativo aplicaría la última expresión al 100 % sobre la mezcla ponderada.
+			const allParametersAvailable = activeIds.every((id) =>
+				expressionParamsCacheRef.current.has(id),
+			);
+			const hasIndividualIntensity = activeIds.some(
+				(id) => normalizeExpressionIntensity(intensities[id]) !== 1,
+			);
+			applyLive2dExpression(
+				model,
+				allParametersAvailable || hasIndividualIntensity ? null : activeIds[activeIds.length - 1],
+				pkg?.modelSettingsJson.FileReferences?.Expressions,
+			);
+
 			// Resetear parámetros que ya no están en ninguna expresión activa
 			const activeParamIds = new Set(consolidatedParams.map((p) => p.Id));
 			const paramsToReset = previouslyAppliedParamsRef.current.filter(
@@ -472,13 +491,8 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 
 			previouslyAppliedParamsRef.current = consolidatedParams;
 			activeExpressionParamsRef.current = consolidatedParams;
-
-			// Inyección inmediata sobre el coreModel
-			if (consolidatedParams.length > 0 && model.internalModel?.coreModel) {
-				applyLive2dExpressionParams(model.internalModel.coreModel, consolidatedParams);
-			}
 		},
-		[pkg?.fileMap],
+		[pkg?.fileMap, pkg?.modelSettingsJson.FileReferences?.Expressions],
 	);
 
 	useEffect(() => {
@@ -487,15 +501,20 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 			(config.activeExpression ? [config.activeExpression] : undefined) ??
 			avatar2dManager.getState().live2d.activeExpressions ??
 			[];
-		syncExpressions(currentExpressions);
-	}, [config.activeExpressions, config.activeExpression, syncExpressions]);
+		syncExpressions(currentExpressions, config.expressionIntensities);
+	}, [
+		config.activeExpressions,
+		config.activeExpression,
+		config.expressionIntensities,
+		syncExpressions,
+	]);
 
 	useEffect(() => {
 		const unsub = avatar2dManager.subscribe((state) => {
 			const expressions =
 				state.live2d.activeExpressions ??
 				(state.live2d.activeExpression ? [state.live2d.activeExpression] : []);
-			syncExpressions(expressions);
+			syncExpressions(expressions, state.live2d.expressionIntensities);
 		});
 		return () => unsub();
 	}, [syncExpressions]);
@@ -779,7 +798,7 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				// Aplicar transformación inicial centrada
 				applyModelTransform(dragPosition.x, dragPosition.y, scale);
 
-				// Inyectar parámetros de expresiones en beforeModelUpdate en cada tick
+				// Cubism guarda la base antes de este evento; inyectar fuera de él acumularía los pesos.
 				const onBeforeModelUpdate = () => {
 					if (activeExpressionParamsRef.current.length > 0 && model.internalModel?.coreModel) {
 						applyLive2dExpressionParams(
@@ -878,14 +897,6 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				currentFocusRef.current = nextFocus;
 
 				applyLive2dFocusPoint(model, nextFocus);
-
-				// 3. Modulación gestual de expresión activa directamente en el coreModel
-				if (activeExpressionParamsRef.current.length > 0 && model.internalModel?.coreModel) {
-					applyLive2dExpressionParams(
-						model.internalModel.coreModel,
-						activeExpressionParamsRef.current,
-					);
-				}
 			}
 			frameId = requestAnimationFrame(animateFrame);
 		};

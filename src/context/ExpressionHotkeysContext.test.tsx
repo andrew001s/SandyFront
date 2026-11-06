@@ -1,3 +1,4 @@
+import { ExpressionConfiguration } from '@/containers/avatar/components/common/ExpressionConfiguration';
 import {
 	ExpressionHotkey,
 	ExpressionHotkeyStatus,
@@ -12,6 +13,7 @@ const mocks = vi.hoisted(() => ({
 	save: vi.fn(),
 	token: vi.fn(async () => 'token-a'),
 	toggle: vi.fn(),
+	applyIntensity: vi.fn(),
 	account: 'account-a',
 }));
 vi.mock('@/api/settings', () => ({ getSettings: mocks.get, saveSettings: mocks.save }));
@@ -31,6 +33,13 @@ function Controls({ scope = 'vrm' }: { scope?: string }) {
 			<ExpressionHotkey scope={scope} id='sad' label='Tristeza' />
 			<input aria-label='Mensaje' />
 			<ExpressionHotkeyStatus />
+			<ExpressionConfiguration
+				scope={scope}
+				id='happy'
+				label='Alegría'
+				supportsIntensity
+				onIntensityChange={mocks.applyIntensity}
+			/>
 		</>
 	);
 }
@@ -65,7 +74,7 @@ describe('expression hotkeys', () => {
 		record('Alegría', 'h', 'KeyH');
 		await waitFor(() =>
 			expect(mocks.save).toHaveBeenCalledWith(
-				{ expression_hotkeys: { 'vrm:happy': 'KeyH' } },
+				{ expression_hotkeys: { 'vrm:happy': 'KeyH' }, expression_intensities: {} },
 				{ token: 'token-a' },
 			),
 		);
@@ -82,6 +91,55 @@ describe('expression hotkeys', () => {
 		fireEvent.keyDown(screen.getByRole('textbox', { name: 'Mensaje' }), { key: 'h', code: 'KeyH' });
 		fireEvent.keyDown(window, { key: 'h', code: 'KeyH', repeat: true });
 		expect(mocks.toggle).toHaveBeenCalledTimes(1);
+	});
+	it('saves intensity and shortcut together, keeps other expressions and reloads the configured value', async () => {
+		const saved = {
+			expression_hotkeys: { 'vrm:sad': 'KeyS' },
+			expression_intensities: { 'vrm:happy': 0.4, 'vrm:sad': 0.8 },
+		};
+		mocks.get.mockImplementation(async () => ({ settings: saved }));
+		mocks.save.mockImplementation(async (payload) => {
+			Object.assign(saved, payload);
+			return { settings: saved };
+		});
+		const current = render(view());
+		await screen.findByText('Atajos guardados en tu cuenta.');
+		fireEvent.click(screen.getByRole('button', { name: 'Configurar Alegría' }));
+		expect(screen.getByRole('slider', { name: 'Intensidad' })).toHaveValue('0.4');
+		fireEvent.change(screen.getByRole('slider', { name: 'Intensidad' }), {
+			target: { value: '0.25' },
+		});
+		record('Alegría', 'F8', 'F8');
+		fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+		await waitFor(() =>
+			expect(mocks.save).toHaveBeenCalledWith(
+				{
+					expression_hotkeys: { 'vrm:happy': 'F8', 'vrm:sad': 'KeyS' },
+					expression_intensities: { 'vrm:happy': 0.25, 'vrm:sad': 0.8 },
+				},
+				{ token: 'token-a' },
+			),
+		);
+		expect(mocks.applyIntensity).toHaveBeenCalledWith(0.25);
+		current.unmount();
+		render(view());
+		await screen.findByText('Atajos guardados en tu cuenta.');
+		fireEvent.click(screen.getByRole('button', { name: 'Configurar Alegría' }));
+		expect(screen.getByRole('slider', { name: 'Intensidad' })).toHaveValue('0.25');
+	});
+	it('discards unfinished configuration without changing the active expression or stored values', async () => {
+		mocks.get.mockResolvedValue({ settings: { expression_intensities: { 'vrm:happy': 0.4 } } });
+		render(view());
+		await screen.findByText('Atajos guardados en tu cuenta.');
+		fireEvent.click(screen.getByRole('button', { name: 'Configurar Alegría' }));
+		fireEvent.change(screen.getByRole('slider', { name: 'Intensidad' }), {
+			target: { value: '0.9' },
+		});
+		fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+		expect(mocks.save).not.toHaveBeenCalled();
+		expect(mocks.applyIntensity).not.toHaveBeenCalled();
+		fireEvent.click(screen.getByRole('button', { name: 'Configurar Alegría' }));
+		expect(screen.getByRole('slider', { name: 'Intensidad' })).toHaveValue('0.4');
 	});
 	it('discards a late response from the previous account', async () => {
 		let finishOldRead: (value: {
@@ -122,7 +180,7 @@ describe('expression hotkeys', () => {
 		record('Alegría', 'Delete', 'Delete');
 		await waitFor(() =>
 			expect(mocks.save).toHaveBeenCalledWith(
-				{ expression_hotkeys: { 'live2d:happy': 'KeyH' } },
+				{ expression_hotkeys: { 'live2d:happy': 'KeyH' }, expression_intensities: {} },
 				{ token: 'token-a' },
 			),
 		);
@@ -149,7 +207,10 @@ describe('expression hotkeys', () => {
 		fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
 		await screen.findByText('Atajos guardados en tu cuenta.');
 		expect(mocks.save).toHaveBeenLastCalledWith(
-			{ expression_hotkeys: { 'vrm:happy': 'KeyH', 'vrm:sad': 'KeyS' } },
+			{
+				expression_hotkeys: { 'vrm:happy': 'KeyH', 'vrm:sad': 'KeyS' },
+				expression_intensities: {},
+			},
 			{ token: 'token-a' },
 		);
 	});
