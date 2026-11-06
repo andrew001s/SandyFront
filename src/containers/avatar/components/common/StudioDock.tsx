@@ -52,6 +52,7 @@ export interface StudioDockProps {
 	hasCustomBackground: boolean;
 	position?: 'left' | 'right';
 	className?: string;
+	serviceControlsOnly?: boolean;
 }
 
 type Tool = { id: NonNullable<StudioActiveTool>; label: string; icon: LucideIcon };
@@ -81,6 +82,7 @@ export function StudioDock({
 	hasCustomBackground,
 	position = 'right',
 	className = '',
+	serviceControlsOnly = false,
 }: StudioDockProps) {
 	const { serviceStatus } = useServiceStatus();
 	const isMobile = useMediaQuery('(max-width: 767px)');
@@ -194,65 +196,71 @@ export function StudioDock({
 				))}
 			</div>
 			<div className='flex min-h-0 min-w-0 flex-1 items-center gap-1 overflow-x-auto overscroll-contain [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin] md:w-full md:flex-auto md:flex-col md:overflow-y-auto md:overflow-x-hidden [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar]:size-1'>
-				{groups.map((group) => (
-					<DropdownMenu.Root key={group.label} modal={false}>
-						<DockTooltip label={group.label} side={side}>
-							<DropdownMenu.Trigger asChild>
-								<button
-									id={group.tourId}
-									type='button'
-									aria-label={group.label}
-									className={buttonClass(
-										group.tools.some((tool) => activeTool === tool.id) ||
-											(group.label === 'Avatar' && activeTool === 'emotions'),
-									)}
-								>
-									<group.icon className='size-4.5' />
-									{group.indicator && (
-										<span
-											aria-hidden='true'
-											className={`absolute top-1 right-1 size-2 rounded-full ${group.indicator}`}
-										/>
-									)}
-								</button>
-							</DropdownMenu.Trigger>
-						</DockTooltip>
-						<DropdownMenu.Portal>
-							<DropdownMenu.Content
-								side={side}
-								sideOffset={12}
-								collisionPadding={12}
-								className='z-50 min-w-52 rounded-xl border border-border bg-popover p-1.5 text-popover-foreground shadow-lg'
-							>
-								<DropdownMenu.Label className='px-3 py-2 font-semibold text-sm'>
-									{group.label}
-								</DropdownMenu.Label>
-								{group.tools.map((tool) => (
-									<DropdownMenu.Item
-										key={tool.id}
-										onSelect={() => toggle(tool.id)}
-										className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm outline-none focus:bg-muted ${activeTool === tool.id ? 'bg-primary/10 text-primary' : ''}`}
+				{groups
+					.filter((group) => !serviceControlsOnly || group.tourId === 'studio-tour-controls')
+					.map((group) => (
+						<DropdownMenu.Root key={group.label} modal={false}>
+							<DockTooltip label={group.label} side={side}>
+								<DropdownMenu.Trigger asChild>
+									<button
+										id={group.tourId}
+										type='button'
+										aria-label={group.label}
+										className={buttonClass(
+											group.tools.some((tool) => activeTool === tool.id) ||
+												(group.label === 'Avatar' && activeTool === 'emotions'),
+										)}
 									>
-										<tool.icon className='size-4' />
-										<span>{tool.label}</span>
-									</DropdownMenu.Item>
-								))}
-							</DropdownMenu.Content>
-						</DropdownMenu.Portal>
-					</DropdownMenu.Root>
-				))}
-				<DockTooltip label='Reacciones automáticas' side={side}>
-					<button
-						id='studio-tour-reactions'
-						type='button'
-						onClick={() => toggle('automaticReactions')}
-						aria-label='Reacciones automáticas'
-						aria-pressed={activeTool === 'automaticReactions'}
-						className={buttonClass(activeTool === 'automaticReactions')}
-					>
-						<Sparkles className='size-4.5' />
-					</button>
-				</DockTooltip>
+										<group.icon className='size-4.5' />
+										{group.indicator && (
+											<span
+												aria-hidden='true'
+												className={`absolute top-1 right-1 size-2 rounded-full ${group.indicator}`}
+											/>
+										)}
+									</button>
+								</DropdownMenu.Trigger>
+							</DockTooltip>
+							<DropdownMenu.Portal>
+								<DropdownMenu.Content
+									side={side}
+									sideOffset={12}
+									collisionPadding={12}
+									className='z-50 min-w-52 rounded-xl border border-border bg-popover p-1.5 text-popover-foreground shadow-lg'
+								>
+									<DropdownMenu.Label className='px-3 py-2 font-semibold text-sm'>
+										{group.label}
+									</DropdownMenu.Label>
+									{group.tools
+										.filter((tool) => !serviceControlsOnly || tool.id === 'features')
+										.map((tool) => (
+											<DropdownMenu.Item
+												key={tool.id}
+												onSelect={() => toggle(tool.id)}
+												className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm outline-none focus:bg-muted ${activeTool === tool.id ? 'bg-primary/10 text-primary' : ''}`}
+											>
+												<tool.icon className='size-4' />
+												<span>{tool.label}</span>
+											</DropdownMenu.Item>
+										))}
+								</DropdownMenu.Content>
+							</DropdownMenu.Portal>
+						</DropdownMenu.Root>
+					))}
+				{!serviceControlsOnly && (
+					<DockTooltip label='Reacciones automáticas' side={side}>
+						<button
+							id='studio-tour-reactions'
+							type='button'
+							onClick={() => toggle('automaticReactions')}
+							aria-label='Reacciones automáticas'
+							aria-pressed={activeTool === 'automaticReactions'}
+							className={buttonClass(activeTool === 'automaticReactions')}
+						>
+							<Sparkles className='size-4.5' />
+						</button>
+					</DockTooltip>
+				)}
 			</div>
 			<div className='h-6 w-px shrink-0 bg-border/70 md:h-px md:w-6' />
 			<div className='flex shrink-0 items-center gap-1 md:flex-col'>

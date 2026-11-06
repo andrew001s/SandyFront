@@ -33,13 +33,14 @@ import { loadLive2dModel, restoreSavedLive2dModel } from '@/lib/avatar2d/live2dM
 import type { Avatar2dMode, Avatar2dState } from '@/lib/avatar2d/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, Copy, Upload } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import AvatarFooter from '../AvatarFooter';
 interface Props {
 	className?: string;
 	mode?: Avatar2dMode;
 	automaticReactions?: AutomaticReactionSelection;
+	externalContent?: ReactNode;
 }
 const fileToDataUrl = (file: File): Promise<string> => {
 	return new Promise((resolve, reject) => {
@@ -49,7 +50,12 @@ const fileToDataUrl = (file: File): Promise<string> => {
 		reader.readAsDataURL(file);
 	});
 };
-export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Props) {
+export function Avatar2dCanvas({
+	className = '',
+	mode,
+	automaticReactions,
+	externalContent,
+}: Props) {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<Avatar2dState>(avatar2dManager.getState());
 	const [activeTool, setActiveTool] = useState<StudioActiveTool>(null);
@@ -60,6 +66,7 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 	const [bgState, setBgState] = useState<VrmBackgroundState>(DEFAULT_VRM_BACKGROUND_STATE);
 	const [isDragging, setIsDragging] = useState(false);
 	const currentMode = mode ?? state.mode;
+	const externalAvatar = Boolean(externalContent);
 	useEffect(() => {
 		if (mode && mode !== avatar2dManager.getState().mode) {
 			avatar2dManager.setMode(mode);
@@ -83,7 +90,7 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 		};
 	}, []);
 	useEffect(() => {
-		if (currentMode !== 'live2d') return;
+		if (currentMode !== 'live2d' || externalAvatar) return;
 		let cancelled = false;
 		void restoreSavedLive2dModel().catch((error) => {
 			if (!cancelled) console.error('No se pudo restaurar el modelo Live2D:', error);
@@ -91,7 +98,7 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 		return () => {
 			cancelled = true;
 		};
-	}, [currentMode]);
+	}, [currentMode, externalAvatar]);
 	const handleToggleFullscreen = async () => {
 		try {
 			const target = containerRef.current;
@@ -268,6 +275,7 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 					: 'min-h-0 flex-1 rounded-2xl border border-border/80 transition-shadow duration-300'
 			} ${className}`}
 			onDragOver={(e) => {
+				if (externalAvatar) return;
 				e.preventDefault();
 				setIsDragging(true);
 			}}
@@ -276,10 +284,10 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 					setIsDragging(false);
 				}
 			}}
-			onDrop={handleDrop}
+			onDrop={externalAvatar ? undefined : handleDrop}
 		>
 			{/* Encabezado HUD superior del Estudio 2D (Flotante en fullscreen para no redimensionar el canvas) */}
-			{isHudVisible && (
+			{isHudVisible && !externalAvatar && (
 				<div className='pointer-events-none absolute top-2 right-3 left-3 z-20 flex min-h-8 items-center justify-between gap-3 md:right-20'>
 					<div className='flex min-w-0 items-center gap-2 rounded-md bg-background/85 px-2 py-1'>
 						<span className='truncate font-medium text-foreground text-xs'>
@@ -311,9 +319,13 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 					}`}
 				>
 					{/* Capa de fondo */}
-					{renderBackgroundLayer()}
+					{!externalAvatar && renderBackgroundLayer()}
 					{/* Renderizador activo: PNGTuber o Live2D */}
-					{currentMode === 'pngtuber' ? (
+					{externalAvatar ? (
+						<div className='h-full overflow-y-auto overscroll-contain p-3 pb-24 md:pr-24 md:pb-3'>
+							{externalContent}
+						</div>
+					) : currentMode === 'pngtuber' ? (
 						<PngTuberRenderer
 							config={state.pngtuber}
 							onTransformChange={(transform) => avatar2dManager.setTransform(transform, 'pngtuber')}
@@ -326,6 +338,7 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 					)}
 					{/* Dock Lateral Vertical Unificado (Lado derecho homologado) */}
 					<StudioDock
+						serviceControlsOnly={externalAvatar}
 						mode={currentMode}
 						activeTool={activeTool}
 						onToggleTool={(tool) => setActiveTool(tool)}
@@ -338,80 +351,82 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 					/>
 					{/* Paneles Flotantes Modulares dentro del Escenario */}
 					<AnimatePresence>
-						{activeTool && isHudVisible && (
-							<>
-								{activeTool === 'automaticReactions' && automaticReactions && (
-									<motion.div
-										initial={{ opacity: 0, scale: 0.96, x: 20 }}
-										animate={{ opacity: 1, scale: 1, x: 0 }}
-										exit={{ opacity: 0, scale: 0.96, x: 20 }}
-										transition={{ duration: 0.2, ease: 'easeOut' }}
-										className='pointer-events-auto absolute right-3 bottom-20 left-3 z-30 max-h-[calc(100%-6rem)] overflow-y-auto [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin] md:top-4 md:right-20 md:bottom-auto md:left-auto md:max-h-[calc(100%-2rem)] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar]:size-1'
-									>
-										<AutomaticReactionsCard
-											{...automaticReactions}
-											onClose={() => setActiveTool(null)}
-										/>
-									</motion.div>
-								)}
-								{(activeTool === 'emotions' || activeTool === 'expressions') &&
-									(currentMode === 'live2d' ? (
-										<Live2dExpressionsPanel
-											onClose={() => setActiveTool(null)}
-											onOpenModelSelect={() => setActiveTool('model')}
-										/>
-									) : (
-										<Avatar2dExpressionsPanel onClose={() => setActiveTool(null)} />
-									))}
-								{activeTool === 'lipsync' && (
-									<Avatar2dLipSyncPanel onClose={() => setActiveTool(null)} />
-								)}
-								{activeTool === 'background' && (
-									<motion.div
-										initial={{ opacity: 0, scale: 0.96, x: 20 }}
-										animate={{ opacity: 1, scale: 1, x: 0 }}
-										exit={{ opacity: 0, scale: 0.96, x: 20 }}
-										transition={{ duration: 0.2, ease: 'easeOut' }}
-										className='pointer-events-auto absolute right-3 bottom-20 left-3 z-30 max-h-[calc(100%-6rem)] overflow-y-auto md:top-4 md:right-20 md:bottom-auto md:left-auto md:max-h-[calc(100%-2rem)]'
-									>
-										<VrmStudioBackgroundPanel
-											state={bgState}
-											onChange={handleBackgroundChange}
-											onClose={() => setActiveTool(null)}
-										/>
-									</motion.div>
-								)}
-								{activeTool === 'camera' && (
-									<Avatar2dCameraPanel
-										mode={currentMode}
-										containerHeight={containerRef.current?.clientHeight || 600}
-										onClose={() => setActiveTool(null)}
-									/>
-								)}
-								{activeTool === 'settings' && (
-									<Avatar2dSettingsPanel mode={currentMode} onClose={() => setActiveTool(null)} />
-								)}
-								{(activeTool === 'microphone' ||
-									activeTool === 'services' ||
-									activeTool === 'features') && (
-									<motion.div
-										initial={{ opacity: 0, scale: 0.96, x: 20 }}
-										animate={{ opacity: 1, scale: 1, x: 0 }}
-										exit={{ opacity: 0, scale: 0.96, x: 20 }}
-										transition={{ duration: 0.2, ease: 'easeOut' }}
-										className='pointer-events-auto absolute right-3 bottom-20 left-3 z-30 max-h-[calc(100%-6rem)] overflow-y-auto md:top-4 md:right-20 md:bottom-auto md:left-auto md:max-h-[calc(100%-2rem)] md:w-[420px]'
-									>
-										{activeTool === 'microphone' ? (
-											<MicrophoneTile />
-										) : activeTool === 'services' ? (
-											<ServiceStartCard />
+						{activeTool &&
+							isHudVisible &&
+							(!externalAvatar || ['microphone', 'services', 'features'].includes(activeTool)) && (
+								<>
+									{activeTool === 'automaticReactions' && automaticReactions && (
+										<motion.div
+											initial={{ opacity: 0, scale: 0.96, x: 20 }}
+											animate={{ opacity: 1, scale: 1, x: 0 }}
+											exit={{ opacity: 0, scale: 0.96, x: 20 }}
+											transition={{ duration: 0.2, ease: 'easeOut' }}
+											className='pointer-events-auto absolute right-3 bottom-20 left-3 z-30 max-h-[calc(100%-6rem)] overflow-y-auto [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin] md:top-4 md:right-20 md:bottom-auto md:left-auto md:max-h-[calc(100%-2rem)] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar]:size-1'
+										>
+											<AutomaticReactionsCard
+												{...automaticReactions}
+												onClose={() => setActiveTool(null)}
+											/>
+										</motion.div>
+									)}
+									{(activeTool === 'emotions' || activeTool === 'expressions') &&
+										(currentMode === 'live2d' ? (
+											<Live2dExpressionsPanel
+												onClose={() => setActiveTool(null)}
+												onOpenModelSelect={() => setActiveTool('model')}
+											/>
 										) : (
-											<FeatureFlagsPanel onClose={() => setActiveTool(null)} />
-										)}
-									</motion.div>
-								)}
-							</>
-						)}
+											<Avatar2dExpressionsPanel onClose={() => setActiveTool(null)} />
+										))}
+									{activeTool === 'lipsync' && (
+										<Avatar2dLipSyncPanel onClose={() => setActiveTool(null)} />
+									)}
+									{activeTool === 'background' && (
+										<motion.div
+											initial={{ opacity: 0, scale: 0.96, x: 20 }}
+											animate={{ opacity: 1, scale: 1, x: 0 }}
+											exit={{ opacity: 0, scale: 0.96, x: 20 }}
+											transition={{ duration: 0.2, ease: 'easeOut' }}
+											className='pointer-events-auto absolute right-3 bottom-20 left-3 z-30 max-h-[calc(100%-6rem)] overflow-y-auto md:top-4 md:right-20 md:bottom-auto md:left-auto md:max-h-[calc(100%-2rem)]'
+										>
+											<VrmStudioBackgroundPanel
+												state={bgState}
+												onChange={handleBackgroundChange}
+												onClose={() => setActiveTool(null)}
+											/>
+										</motion.div>
+									)}
+									{activeTool === 'camera' && (
+										<Avatar2dCameraPanel
+											mode={currentMode}
+											containerHeight={containerRef.current?.clientHeight || 600}
+											onClose={() => setActiveTool(null)}
+										/>
+									)}
+									{activeTool === 'settings' && (
+										<Avatar2dSettingsPanel mode={currentMode} onClose={() => setActiveTool(null)} />
+									)}
+									{(activeTool === 'microphone' ||
+										activeTool === 'services' ||
+										activeTool === 'features') && (
+										<motion.div
+											initial={{ opacity: 0, scale: 0.96, x: 20 }}
+											animate={{ opacity: 1, scale: 1, x: 0 }}
+											exit={{ opacity: 0, scale: 0.96, x: 20 }}
+											transition={{ duration: 0.2, ease: 'easeOut' }}
+											className='pointer-events-auto absolute right-3 bottom-20 left-3 z-30 max-h-[calc(100%-6rem)] overflow-y-auto md:top-4 md:right-20 md:bottom-auto md:left-auto md:max-h-[calc(100%-2rem)] md:w-[420px]'
+										>
+											{activeTool === 'microphone' ? (
+												<MicrophoneTile />
+											) : activeTool === 'services' ? (
+												<ServiceStartCard />
+											) : (
+												<FeatureFlagsPanel onClose={() => setActiveTool(null)} />
+											)}
+										</motion.div>
+									)}
+								</>
+							)}
 					</AnimatePresence>
 					{/* Zona de Drop visual mientras se arrastra un archivo */}
 					<AnimatePresence>
@@ -437,7 +452,9 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 						)}
 					</AnimatePresence>
 				</div>
-				<AvatarFooter isHudVisible={isHudVisible} isFullscreen={isFullscreen} />
+				{!externalAvatar && (
+					<AvatarFooter isHudVisible={isHudVisible} isFullscreen={isFullscreen} />
+				)}
 			</CardContent>
 		</Card>
 	);

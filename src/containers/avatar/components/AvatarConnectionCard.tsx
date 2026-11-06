@@ -1,15 +1,13 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import type { VTSStats } from '@/hooks/useVTubeStudio';
 import { AVATAR_SOFTWARE_LIST } from '@/lib/avatar/constants';
 import type { AvatarConnectionStats, AvatarSoftware, SoftwareConfig } from '@/types/avatar';
-import { Box, HelpCircle, RefreshCw, Tv, WifiOff } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
+import { CheckCircle2, HelpCircle, LoaderCircle, RefreshCw, WifiOff } from 'lucide-react';
+import { useEffect, useId, useState } from 'react';
 
 type AvatarConnectionCardProps = {
 	connecting: boolean;
@@ -36,210 +34,158 @@ export function AvatarConnectionCard({
 	onRefreshModels,
 	onUpdateConfig,
 }: AvatarConnectionCardProps) {
-	const currentMeta =
-		AVATAR_SOFTWARE_LIST.find((s) => s.id === software) ?? AVATAR_SOFTWARE_LIST[0];
-
-	const [port, setPort] = useState(String(config?.port ?? currentMeta.defaultPort));
-	const [host, setHost] = useState(config?.host ?? '127.0.0.1');
-	const [showTips, setShowTips] = useState(false);
-
-	useEffect(() => {
-		const targetPort = config?.port ?? currentMeta.defaultPort;
-		setPort(String(targetPort));
-		setHost(config?.host ?? '127.0.0.1');
-	}, [config, currentMeta]);
-
-	const handlePortChange = (val: string) => {
-		setPort(val);
-		const num = Number(val);
-		if (num > 0) {
-			onUpdateConfig?.({ port: num });
-		}
-	};
-
-	const handleHostChange = (val: string) => {
-		setHost(val);
-		onUpdateConfig?.({ host: val });
-	};
-
+	const meta = AVATAR_SOFTWARE_LIST.find((item) => item.id === software) ?? AVATAR_SOFTWARE_LIST[0];
 	const is3D = software === 'vnyan' || software === 'vseeface';
+	const configPort = config?.port ?? (is3D ? 8000 : 8001);
+	const configHost = config?.host ?? '127.0.0.1';
+	const [port, setPort] = useState(String(configPort));
+	const [host, setHost] = useState(configHost);
+	const [showTips, setShowTips] = useState(false);
+	const id = useId();
+	const validPort = Number.isInteger(Number(port)) && Number(port) > 0 && Number(port) <= 65535;
+	useEffect(() => {
+		setPort(String(configPort));
+		setHost(configHost);
+	}, [configPort, configHost]);
 
 	return (
-		<Card className='h-fit rounded-xl border-border/60 bg-card'>
-			<CardHeader className='pb-4'>
-				<div className='flex items-center justify-between'>
-					<div className='flex items-center gap-3'>
-						<div
-							className={`rounded-lg p-2.5 ${
-								is3D ? 'bg-cyan-500/10 text-cyan-400' : 'bg-primary/10 text-primary'
-							}`}
-						>
-							{is3D ? <Box className='size-5' /> : <Tv className='size-5' />}
-						</div>
-						<div>
-							<CardTitle className='flex items-center gap-2 font-display font-semibold text-base text-foreground'>
-								Conexión: {currentMeta.name}
-							</CardTitle>
-							<CardDescription className='text-xs'>
-								{is3D
-									? 'Conexión WebSocket nativa para VRM (puerto por defecto: 8000)'
-									: 'Conexión WebSocket API para Live2D (puerto por defecto: 8001)'}
-							</CardDescription>
-						</div>
+		<Card className='gap-0 rounded-xl border-border bg-card py-0 shadow-none'>
+			<CardContent className='space-y-4 p-4 sm:p-5'>
+				<div className='flex flex-wrap items-start justify-between gap-3'>
+					<div className='min-w-0 space-y-1'>
+						<h3 className='font-semibold text-base'>Conexión con {meta.name}</h3>
+						<output className='flex items-center gap-2 text-muted-foreground text-sm'>
+							{connecting ? (
+								<LoaderCircle aria-hidden className='size-4 motion-safe:animate-spin' />
+							) : connected ? (
+								<CheckCircle2
+									aria-hidden
+									className='size-4 text-emerald-700 dark:text-emerald-400'
+								/>
+							) : (
+								<WifiOff aria-hidden className='size-4' />
+							)}
+							{connecting
+								? 'Conectando y autorizando…'
+								: connected
+									? 'Conectado a la aplicación'
+									: 'Desconectado'}
+							{connected && stats && 'framerate' in stats && (
+								<span className='font-mono text-xs'>{stats.framerate.toFixed(0)} FPS</span>
+							)}
+						</output>
 					</div>
-
 					<Button
+						type='button'
 						variant='ghost'
 						size='sm'
 						onClick={() => setShowTips(!showTips)}
-						className='gap-1 text-muted-foreground text-xs hover:text-foreground'
+						aria-expanded={showTips}
+						aria-controls={`${id}-guide`}
+						className='min-h-9 gap-2 text-muted-foreground text-xs'
 					>
-						<HelpCircle className='size-3.5' /> Guía
+						<HelpCircle aria-hidden className='size-4' /> Cómo conectar
 					</Button>
 				</div>
-			</CardHeader>
-
-			<CardContent className='space-y-4'>
-				{showTips && (
-					<div className='fade-in animate-in space-y-1.5 rounded-xl border border-primary/20 bg-primary/5 p-3.5 text-xs duration-200'>
-						<div className='flex items-center gap-1.5 font-semibold text-primary'>
-							{is3D
-								? 'Configuración de VNyan (3D VRM)'
-								: 'Configuración de VTube Studio (2D Live2D)'}
-						</div>
-						<p className='text-muted-foreground leading-relaxed'>
-							{is3D
-								? "En VNyan: Abre Settings ➔ pestaña Misc ➔ WebSockets ➔ activa 'Start Receiver' (puerto 8000, o usa 8008 si tu backend Python ya ocupa el 8000). Sandy transmitirá fonemas de boca (A, Joy) y expresiones VRM automáticamente vía WebSocket."
-								: 'En VTS: Abre Configuración ⚙️ ➔ baja a "Plugin API" ➔ activa "Start API" y acepta la solicitud de SandyIA.'}
-						</p>
-					</div>
+				{!connected && !connecting && (
+					<p className='max-w-prose text-muted-foreground text-sm'>
+						Abre {meta.name}, activa su API de plugins y conecta desde aquí. Esta conexión es
+						independiente del avatar del navegador.
+					</p>
 				)}
-
+				{showTips && (
+					<ol
+						id={`${id}-guide`}
+						className='list-decimal space-y-1 border-border border-t pt-3 pl-5 text-muted-foreground text-sm'
+					>
+						{is3D ? (
+							<li>En VNyan, abre Settings → Misc → WebSockets y activa Start Receiver.</li>
+						) : (
+							<li>En VTube Studio, abre Configuración → Plugin API y activa Start API.</li>
+						)}
+						<li>Usa el mismo puerto que aparece en la aplicación y pulsa Conectar.</li>
+						<li>Acepta la solicitud de SandyIA en la aplicación.</li>
+					</ol>
+				)}
 				<div className='flex flex-wrap items-end gap-3'>
 					{is3D && (
-						<div className='w-28 space-y-1.5'>
-							<label htmlFor='avatar-host' className='font-medium text-muted-foreground text-xs'>
+						<div className='w-36 space-y-1'>
+							<label htmlFor={`${id}-host`} className='text-muted-foreground text-xs'>
 								Host
 							</label>
 							<Input
-								id='avatar-host'
-								type='text'
+								id={`${id}-host`}
 								value={host}
-								onChange={(event) => handleHostChange(event.target.value)}
 								disabled={connected || connecting}
-								className='h-9 text-xs'
+								onChange={(event) => {
+									setHost(event.target.value);
+									onUpdateConfig?.({ host: event.target.value });
+								}}
 							/>
 						</div>
 					)}
-
-					<div className='w-24 space-y-1.5'>
-						<label htmlFor='avatar-port' className='font-medium text-muted-foreground text-xs'>
-							Puerto WS
+					<div className='w-28 space-y-1'>
+						<label htmlFor={`${id}-port`} className='text-muted-foreground text-xs'>
+							Puerto API
 						</label>
 						<Input
-							id='avatar-port'
+							id={`${id}-port`}
 							type='number'
+							min={1}
+							max={65535}
 							value={port}
-							onChange={(event) => handlePortChange(event.target.value)}
+							aria-invalid={!validPort}
+							aria-describedby={!validPort ? `${id}-port-error` : undefined}
 							disabled={connected || connecting}
-							className='h-9 font-mono text-xs'
+							onChange={(event) => {
+								setPort(event.target.value);
+								const value = Number(event.target.value);
+								if (Number.isInteger(value) && value > 0 && value <= 65535)
+									onUpdateConfig?.({ port: value });
+							}}
+							className='h-10 font-mono text-sm'
 						/>
 					</div>
-
-					<div className='flex items-center gap-2'>
-						{connected ? (
-							<>
-								<Button
-									onClick={() => {
-										void onDisconnect();
-									}}
-									variant='outline'
-									className='h-9 border-destructive/40 text-destructive text-xs hover:bg-destructive/10'
-								>
-									Desconectar
-								</Button>
-							</>
-						) : (
-							<Button
-								onClick={() => {
-									void onConnect({
-										port: Number(port) || currentMeta.defaultPort,
-										host,
-									});
-								}}
-								disabled={connecting}
-								className='h-9 font-medium text-xs'
-							>
-								{connecting ? 'Conectando...' : `Conectar a ${currentMeta.shortName}`}
-							</Button>
-						)}
-
-						{connected && onRefreshModels && !is3D && (
-							<Button
-								onClick={() => {
-									void onRefreshModels();
-								}}
-								variant='ghost'
-								size='icon'
-								className='h-9 w-9'
-								title='Refrescar Modelos'
-							>
-								<RefreshCw className='size-4' />
-							</Button>
-						)}
-					</div>
+					{connected || connecting ? (
+						<Button
+							type='button'
+							variant='outline'
+							onClick={() => void onDisconnect()}
+							className='h-10 text-destructive hover:bg-destructive/10 hover:text-destructive'
+						>
+							{connecting ? 'Cancelar conexión' : 'Desconectar'}
+						</Button>
+					) : (
+						<Button
+							type='button'
+							disabled={!validPort}
+							onClick={() => void onConnect({ port: Number(port), host })}
+							className='h-10'
+						>
+							Conectar a {meta.shortName}
+						</Button>
+					)}
+					{connected && onRefreshModels && (
+						<Button
+							type='button'
+							variant='ghost'
+							onClick={() => void onRefreshModels()}
+							className='h-10 gap-2 text-sm'
+						>
+							<RefreshCw aria-hidden className='size-4' /> Actualizar modelos
+						</Button>
+					)}
+					<code className='pb-2 text-muted-foreground text-xs'>{`ws://${is3D ? host : 'localhost'}:${port}`}</code>
 				</div>
-
-				<div className='flex flex-wrap items-center justify-between gap-2 border-border/40 border-t pt-2 text-xs'>
-					<div className='flex items-center gap-2'>
-						{connected ? (
-							<span className='flex items-center gap-1.5 font-medium text-emerald-400'>
-								<FiCheckCircle size={14} />
-								Conectado ({currentMeta.name})
-							</span>
-						) : connecting ? (
-							<span className='flex items-center gap-1.5 font-medium text-amber-400'>
-								<span className='size-2.5 animate-pulse rounded-full bg-amber-400' />
-								Conectando...
-							</span>
-						) : (
-							<span className='flex items-center gap-1.5 text-muted-foreground'>
-								<WifiOff size={14} />
-								Desconectado
-							</span>
-						)}
-
-						{stats && connected && 'framerate' in stats && (
-							<span className='font-mono text-muted-foreground'>
-								{stats.framerate.toFixed(0)} FPS
-								{'uptime' in stats && ` · ${Math.floor(stats.uptime / 60)}m`}
-							</span>
-						)}
-
-						{stats && connected && 'packetsSent' in stats && (
-							<span className='font-mono text-muted-foreground'>
-								{stats.packetsSent} mensajes WS
-							</span>
-						)}
-					</div>
-
-					<div className='flex items-center gap-1.5'>
-						{stats && connected && 'vTubeStudioVersion' in stats && stats.vTubeStudioVersion && (
-							<span className='hidden font-mono text-[10px] text-muted-foreground sm:inline'>
-								v{stats.vTubeStudioVersion}
-							</span>
-						)}
-						<Badge variant='outline' className='font-mono text-[10px] text-muted-foreground'>
-							{is3D ? `ws://${host}:${port}/vnyan` : `ws://${host}:${port}`}
-						</Badge>
-					</div>
-				</div>
-
+				{!validPort && (
+					<p id={`${id}-port-error`} className='text-destructive text-sm'>
+						Usa un puerto entre 1 y 65535.
+					</p>
+				)}
 				{error && (
-					<div className='fade-in flex animate-in items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/5 p-3'>
-						<FiAlertCircle size={16} className='mt-0.5 shrink-0 text-destructive' />
-						<p className='text-destructive text-xs leading-relaxed'>{error}</p>
-					</div>
+					<p role='alert' className='border-border border-t pt-3 text-destructive text-sm'>
+						{error}
+					</p>
 				)}
 			</CardContent>
 		</Card>

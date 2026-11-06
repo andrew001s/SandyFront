@@ -34,6 +34,18 @@ vi.mock('@/hooks/useServiceStatus', () => ({
 }));
 
 describe('Avatar2dCanvas expressions routing', () => {
+	it('unmounts the local renderer in external mode and keeps service and microphone controls', () => {
+		const { rerender } = render(<Avatar2dCanvas mode='live2d' />);
+		expect(screen.getByTestId('live2d-renderer')).toBeInTheDocument();
+		rerender(<Avatar2dCanvas mode='live2d' externalContent={<div>Conexión externa</div>} />);
+		expect(screen.queryByTestId('live2d-renderer')).not.toBeInTheDocument();
+		expect(screen.getByText('Conexión externa')).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: 'Servicio de emisión' })).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: 'Hablar con la VTuber' })).toBeInTheDocument();
+		expect(screen.queryByRole('button', { name: 'Avatar' })).not.toBeInTheDocument();
+		rerender(<Avatar2dCanvas mode='live2d' />);
+		expect(screen.getByTestId('live2d-renderer')).toBeInTheDocument();
+	});
 	it.each(['live2d', 'pngtuber'] as const)('closes the modules panel in %s mode', async (mode) => {
 		render(<Avatar2dCanvas mode={mode} />);
 		fireEvent.keyDown(screen.getByRole('button', { name: 'Opciones avanzadas' }), {

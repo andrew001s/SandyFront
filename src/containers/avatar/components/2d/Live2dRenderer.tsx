@@ -742,7 +742,7 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				});
 
 				if (!isMounted) {
-					model.destroy();
+					model.destroy({ children: true, texture: true, baseTexture: true });
 					return;
 				}
 
@@ -835,6 +835,14 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 			isMounted = false;
 			if (modelRef.current?.internalModel?.off) {
 				modelRef.current.internalModel.off('beforeModelUpdate');
+			}
+			const app = appRef.current;
+			appRef.current = null;
+			modelRef.current = null;
+			visualBoundsRef.current = null;
+			if (app) {
+				app.stop();
+				app.destroy(false, { children: true, texture: true, baseTexture: true });
 			}
 		};
 	}, [pkg]);

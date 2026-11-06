@@ -495,7 +495,7 @@ export function useAvatar() {
 					await vrmHandler.prepare(blob);
 				} else if (activeSoftware === 'pngtuber') {
 					await avatar2dHandler.prepare(blob);
-				} else if (activeSoftware === 'live2d') {
+				} else if (activeSoftware === 'live2d' && !vtsConnected) {
 					await live2dHandler.prepare(blob);
 				}
 			},
@@ -507,7 +507,8 @@ export function useAvatar() {
 				} else if (activeSoftware === 'pngtuber') {
 					await avatar2dHandler.start(blob, clock);
 				} else if (activeSoftware === 'live2d') {
-					await live2dHandler.start(blob, clock);
+					if (vtsConnected) await vtsHandler(blob, clock);
+					else await live2dHandler.start(blob, clock);
 				}
 			},
 			stop: () => {
@@ -519,6 +520,7 @@ export function useAvatar() {
 					avatar2dHandler.stop();
 				} else if (activeSoftware === 'live2d') {
 					live2dHandler.stop();
+					if (vtsConnected) stopVtsLipSync();
 				}
 			},
 		});
@@ -557,6 +559,11 @@ export function useAvatar() {
 
 		// Propiedades específicas de 2D VTube Studio
 		vts: {
+			connected: vts.connected,
+			connecting: vts.connecting,
+			error: vts.error,
+			connect: vts.connect,
+			disconnect: vts.disconnect,
 			stats: vts.stats,
 			models: vts.models,
 			currentModel: vts.currentModel,

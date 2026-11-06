@@ -127,6 +127,9 @@ let sharedConnecting = false;
 let sharedParametersReady = false;
 let sharedConnectPromise: Promise<void> | null = null;
 let sharedAutoConnectTried = false;
+let sharedConnectionId = 0;
+let sharedPort = 8001;
+let sharedError: string | null = null;
 // Reconexión tras una caída inesperada: VTS reiniciado, el equipo despertando
 // de suspensión o un corte de red. Sin esto la conexión quedaba muerta hasta que
 // el usuario recargaba, y el modelo se quedaba sin recibir parámetros.
@@ -169,7 +172,7 @@ const injectSharedParameters = async (params: { id: string; value: number }[]) =
 const attachLipSync = () => {
 	if (typeof window !== 'undefined') {
 		const sw = window.localStorage.getItem('sandy_avatar_software');
-		if (sw === 'vseeface') return;
+		if (sw !== 'vtubestudio') return;
 	}
 	AudioQueueManager.getInstance().setLipSyncHandler(
 		createVtsLipSyncHandler(injectSharedParameters),
@@ -177,7 +180,12 @@ const attachLipSync = () => {
 };
 
 const detachLipSync = () => {
-	AudioQueueManager.getInstance().setLipSyncHandler(null);
+	if (
+		typeof window !== 'undefined' &&
+		localStorage.getItem('sandy_avatar_software') === 'vtubestudio'
+	) {
+		AudioQueueManager.getInstance().setLipSyncHandler(null);
+	}
 	stopVtsLipSync();
 };
 
@@ -199,6 +207,9 @@ export function useVTubeStudio(): UseVTSReturn {
 
 	const handleError = useCallback((e: unknown) => {
 		if (e instanceof VTubeStudioError) {
+			if (e.data.errorID === -100 && /timed out/i.test(e.data.message)) {
+				return 'No se pudo conectar con VTube Studio. Abre la aplicación, activa Plugin API y comprueba el puerto.';
+			}
 			return `VTS Error [${e.data.errorID}]: ${e.data.message}`;
 		}
 		if (e instanceof Error) return e.message;
@@ -218,6 +229,7 @@ export function useVTubeStudio(): UseVTSReturn {
 						client.vtsFolderInfo(),
 					]);
 
+				if (client !== sharedClient) return;
 				setStats(statsResp);
 				setModels(modelsResp.availableModels);
 				setCurrentModel(modelResp.modelLoaded ? modelResp : null);
@@ -225,7 +237,7 @@ export function useVTubeStudio(): UseVTSReturn {
 				setExpressions(expressionsResp.expressions);
 				setFolderInfo(folderInfoResp);
 			} catch (e) {
-				setError(handleError(e));
+				if (client === sharedClient) setError(handleError(e));
 			}
 		},
 		[handleError],
@@ -240,12 +252,13 @@ export function useVTubeStudio(): UseVTSReturn {
 					client.hotkeysInCurrentModel({}),
 					client.expressionState({ details: true }),
 				]);
+				if (client !== sharedClient) return;
 				setModels(modelsResp.availableModels);
 				setCurrentModel(modelResp.modelLoaded ? modelResp : null);
 				setHotkeys(hotkeysResp.availableHotkeys);
 				setExpressions(expressionsResp.expressions);
 			} catch (e) {
-				setError(handleError(e));
+				if (client === sharedClient) setError(handleError(e));
 			}
 		},
 		[handleError],
@@ -265,6 +278,7 @@ export function useVTubeStudio(): UseVTSReturn {
 			if (availableHotkeys.length === 0) {
 				try {
 					const hotkeysResp = await client.hotkeysInCurrentModel({});
+					if (client !== sharedClient) return false;
 					availableHotkeys = hotkeysResp.availableHotkeys;
 					setHotkeys(availableHotkeys);
 				} catch {
@@ -295,6 +309,7 @@ export function useVTubeStudio(): UseVTSReturn {
 			if (availableExpressions.length === 0) {
 				try {
 					const expressionsResp = await client.expressionState({ details: true });
+					if (client !== sharedClient) return false;
 					availableExpressions = expressionsResp.expressions;
 					setExpressions(availableExpressions);
 				} catch {
@@ -316,6 +331,7 @@ export function useVTubeStudio(): UseVTSReturn {
 				active,
 				fadeTime: 0.25,
 			});
+			if (client !== sharedClient) return false;
 
 			setExpressions((prev) =>
 				prev.map((item) => (item.file === expression.file ? { ...item, active } : item)),
@@ -352,6 +368,7 @@ export function useVTubeStudio(): UseVTSReturn {
 			});
 
 			const modelResp = await client.currentModel();
+			if (client !== sharedClient) return;
 			if (modelResp.modelLoaded) {
 				setCurrentModel(modelResp);
 			}
@@ -410,6 +427,15 @@ export function useVTubeStudio(): UseVTSReturn {
 			clientRef.current = sharedClient;
 			setConnected(sharedConnected);
 			setConnecting(sharedConnecting);
+			setError(sharedError);
+			if (!sharedClient) {
+				setStats(null);
+				setModels([]);
+				setCurrentModel(null);
+				setHotkeys([]);
+				setExpressions([]);
+				setFolderInfo(null);
+			}
 		};
 
 		syncFromShared();
@@ -446,19 +472,23 @@ export function useVTubeStudio(): UseVTSReturn {
 		sharedReconnectAttempt += 1;
 		sharedReconnectTimer = setTimeout(() => {
 			sharedReconnectTimer = null;
-			void connectRef.current?.(8001, { silent: true });
+			if (!sharedManualDisconnect) void connectRef.current?.(sharedPort, { silent: true });
 		}, delay);
 	}, []);
 
 	const connect = useCallback(
 		async (port = 8001, options: { silent?: boolean } = {}) => {
+			if (!Number.isInteger(port) || port < 1 || port > 65535) {
+				setError('Usa un puerto entre 1 y 65535. El puerto habitual de VTube Studio es 8001.');
+				return;
+			}
 			// Una sola conexión en vuelo para toda la app: si dos componentes piden
 			// conectar a la vez, el segundo espera a la misma promesa en lugar de
 			// abrir un cliente paralelo o seguir sin conexión.
 			sharedManualDisconnect = false;
 
 			if (sharedConnectPromise) {
-				await sharedConnectPromise;
+				await sharedConnectPromise.catch(() => undefined);
 				return;
 			}
 
@@ -471,6 +501,10 @@ export function useVTubeStudio(): UseVTSReturn {
 			}
 
 			setError(null);
+			sharedError = null;
+			const connectionId = ++sharedConnectionId;
+			sharedPort = port;
+			if (!options.silent) cancelReconnect();
 			sharedConnecting = true;
 			notifySharedState();
 
@@ -482,6 +516,7 @@ export function useVTubeStudio(): UseVTSReturn {
 						// Ignore stale client teardown errors.
 					}
 				}
+				if (connectionId !== sharedConnectionId) return;
 
 				const client = new ApiClient({
 					pluginName: PLUGIN_NAME,
@@ -496,29 +531,50 @@ export function useVTubeStudio(): UseVTSReturn {
 
 				sharedClient = client;
 				sharedParametersReady = false;
+				notifySharedState();
+				const assertCurrent = () => {
+					if (
+						client !== sharedClient ||
+						connectionId !== sharedConnectionId ||
+						sharedManualDisconnect
+					) {
+						throw new Error('Conexión cancelada');
+					}
+				};
 
 				client.on('connect', () => {
-					sharedConnected = true;
+					if (client !== sharedClient || sharedManualDisconnect) {
+						void client.disconnect().catch(() => undefined);
+						return;
+					}
 					cancelReconnect();
-					posthog.capture('vtube_studio_connected');
-					notifySharedState();
-					void client.events.modelLoaded.subscribe(() => {
-						void syncModelState(client);
-					}, {});
+					void client.events.modelLoaded
+						.subscribe(() => {
+							void syncModelState(client);
+						}, {})
+						.catch(() => undefined);
 				});
 				client.on('disconnect', () => {
+					if (client !== sharedClient) return;
 					sharedConnected = false;
+					sharedConnecting = false;
 					sharedParametersReady = false;
 					sharedClient = null;
+					// Only our retry timer may replace this socket.
+					void client.disconnect().catch(() => undefined);
 					detachLipSync();
 					notifySharedState();
 					scheduleReconnect();
 				});
 				client.on('error', (err) => {
-					setError(handleError(err));
+					if (client === sharedClient && !options.silent) {
+						sharedError = handleError(err);
+						notifySharedState();
+					}
 				});
 
 				const apiState = await client.apiState();
+				assertCurrent();
 				if (!apiState.active) {
 					throw new Error(
 						'API de VTube Studio no activa. Activá "Allow Plugin API access" en VTS.',
@@ -532,6 +588,7 @@ export function useVTubeStudio(): UseVTSReturn {
 							pluginName: PLUGIN_NAME,
 							pluginDeveloper: PLUGIN_DEVELOPER,
 						});
+						assertCurrent();
 						token = tokenResp.authenticationToken;
 						localStorage.setItem(VTS_TOKEN_KEY, token);
 					}
@@ -541,6 +598,7 @@ export function useVTubeStudio(): UseVTSReturn {
 						pluginDeveloper: PLUGIN_DEVELOPER,
 						authenticationToken: token,
 					});
+					assertCurrent();
 
 					if (!authResp.authenticated) {
 						throw new Error(`Autenticación rechazada: ${authResp.reason}`);
@@ -548,6 +606,7 @@ export function useVTubeStudio(): UseVTSReturn {
 				}
 
 				for (const param of LIPSYNC_INPUTS) {
+					assertCurrent();
 					try {
 						await client.parameterCreation({
 							parameterName: param.parameterName,
@@ -571,7 +630,10 @@ export function useVTubeStudio(): UseVTSReturn {
 				// 'connect' quedaba activo durante la autenticación (que la primera vez
 				// espera al popup de VTS) y antes de que existieran los parámetros
 				// custom, así que toda inyección de esa ventana se perdía.
+				assertCurrent();
 				sharedParametersReady = true;
+				sharedConnected = true;
+				posthog.capture('vtube_studio_connected');
 				attachLipSync();
 
 				await syncClientState(client);
@@ -582,15 +644,24 @@ export function useVTubeStudio(): UseVTSReturn {
 			try {
 				await sharedConnectPromise;
 			} catch (e) {
+				if (connectionId !== sharedConnectionId) return;
+				const failedClient = sharedClient;
+				sharedClient = null;
+				sharedConnected = false;
+				sharedParametersReady = false;
+				detachLipSync();
+				void failedClient?.disconnect().catch(() => undefined);
 				// El reintento automático tras recargar no debe pintar un error si
 				// VTS simplemente no está abierto: el usuario no pidió conectar.
 				if (!options.silent) {
-					setError(handleError(e));
+					sharedError = handleError(e);
 				}
 			} finally {
-				sharedConnectPromise = null;
-				sharedConnecting = false;
-				notifySharedState();
+				if (connectionId === sharedConnectionId) {
+					sharedConnectPromise = null;
+					sharedConnecting = false;
+					notifySharedState();
+				}
 			}
 		},
 		[handleError, scheduleReconnect, syncClientState, syncModelState],
@@ -600,7 +671,12 @@ export function useVTubeStudio(): UseVTSReturn {
 	// token guardado) se reconecta solo: la autenticación es silenciosa y no
 	// dispara el popup de VTS. Una sola vez por carga, la dispare quien la dispare.
 	useEffect(() => {
-		if (sharedAutoConnectTried || sharedClient || typeof window === 'undefined') {
+		if (
+			sharedManualDisconnect ||
+			sharedAutoConnectTried ||
+			sharedClient ||
+			typeof window === 'undefined'
+		) {
 			return;
 		}
 		if (!window.localStorage.getItem(VTS_TOKEN_KEY)) {
@@ -617,8 +693,13 @@ export function useVTubeStudio(): UseVTSReturn {
 
 	const disconnect = useCallback(async () => {
 		sharedManualDisconnect = true;
+		sharedAutoConnectTried = true;
+		sharedConnectionId += 1;
 		cancelReconnect();
-		await sharedClient?.disconnect();
+		const client = sharedClient;
+		sharedConnectPromise = null;
+		sharedConnecting = false;
+		sharedError = null;
 		posthog.capture('vtube_studio_disconnected');
 		sharedConnected = false;
 		sharedParametersReady = false;
@@ -629,6 +710,7 @@ export function useVTubeStudio(): UseVTSReturn {
 		setModels([]);
 		setCurrentModel(null);
 		setError(null);
+		await client?.disconnect().catch(() => undefined);
 	}, []);
 
 	const loadModel = useCallback(
@@ -642,16 +724,20 @@ export function useVTubeStudio(): UseVTSReturn {
 				);
 
 				await client.modelLoad({ modelID });
+				if (client !== sharedClient) return;
 				posthog.capture('vtube_studio_model_loaded');
 
 				let modelResp = await client.currentModel();
+				if (client !== sharedClient) return;
 				for (
 					let attempt = 0;
 					attempt < 20 && !(modelResp.modelLoaded && modelResp.modelID === modelID);
 					attempt++
 				) {
 					await new Promise((resolve) => setTimeout(resolve, 150));
+					if (client !== sharedClient) return;
 					modelResp = await client.currentModel();
+					if (client !== sharedClient) return;
 				}
 				if (modelResp.modelLoaded) {
 					setCurrentModel(modelResp);
@@ -662,29 +748,30 @@ export function useVTubeStudio(): UseVTSReturn {
 					client.hotkeysInCurrentModel({}),
 					client.expressionState({ details: true }),
 				]);
+				if (client !== sharedClient) return;
 				setModels(modelsResp.availableModels);
 				setHotkeys(hotkeysResp.availableHotkeys);
 				setExpressions(expressionsResp.expressions);
 			} catch (e) {
-				setError(handleError(e));
+				if (client === sharedClient) setError(handleError(e));
 			}
 		},
 		[handleError],
 	);
 
 	const refreshModels = useCallback(async () => {
-		if (!clientRef.current) return;
+		const client = clientRef.current;
+		if (!client) return;
 		try {
 			const [modelsResp, modelResp] = await Promise.all([
-				clientRef.current.availableModels(),
-				clientRef.current.currentModel(),
+				client.availableModels(),
+				client.currentModel(),
 			]);
+			if (client !== sharedClient) return;
 			setModels(modelsResp.availableModels);
-			if (modelResp.modelLoaded) {
-				setCurrentModel(modelResp);
-			}
+			setCurrentModel(modelResp.modelLoaded ? modelResp : null);
 		} catch (e) {
-			setError(handleError(e));
+			if (client === sharedClient) setError(handleError(e));
 		}
 	}, [handleError]);
 

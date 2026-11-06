@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { VTSExpression, VTSHotkey, VTSModelInfo } from '@/hooks/useVTubeStudio';
 import { cn } from '@/lib/utils';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FiCheck, FiLayers, FiMove, FiRotateCcw, FiSliders, FiSmile, FiZap } from 'react-icons/fi';
+import { FiCheck, FiLayers, FiMove, FiRotateCcw, FiSmile, FiZap } from 'react-icons/fi';
 
 type PositionState = {
 	positionX: number;
@@ -168,16 +168,13 @@ export function AvatarStudioDeck({
 	const disabled = !connected || !currentModel;
 
 	return (
-		<Card className='rounded-xl border-border/60 bg-card'>
-			<CardHeader className='pb-3'>
-				<div className='flex items-center justify-between'>
+		<Card className='min-w-0 gap-4 rounded-xl border-border bg-card py-5 shadow-none'>
+			<CardHeader className='px-4 sm:px-5'>
+				<div className='flex flex-wrap items-center justify-between gap-2'>
 					<div className='flex items-center gap-3'>
-						<div className='rounded-lg bg-primary/10 p-2 text-primary'>
-							<FiSliders className='size-5' />
-						</div>
 						<div>
 							<CardTitle className='font-display font-semibold text-base text-foreground'>
-								Controles en Vivo del Modelo
+								Controles del modelo
 							</CardTitle>
 							<CardDescription className='font-sans text-muted-foreground text-xs'>
 								Expresiones faciales, atajos de teclado y calibración espacial
@@ -193,7 +190,7 @@ export function AvatarStudioDeck({
 				</div>
 			</CardHeader>
 
-			<CardContent className='space-y-4'>
+			<CardContent className='space-y-4 px-4 sm:px-5'>
 				{!connected ? (
 					<div className='flex flex-col items-center justify-center rounded-xl border border-border/60 border-dashed bg-background/30 p-8 text-center'>
 						<div className='mb-3 flex size-10 items-center justify-center rounded-full bg-muted/60 text-muted-foreground'>
@@ -227,29 +224,29 @@ export function AvatarStudioDeck({
 								value='expressions'
 								className='flex items-center justify-center gap-1.5 text-xs'
 							>
-								<FiSmile size={13} />
+								<FiSmile size={13} className='hidden sm:block' />
 								<span>Expresiones</span>
-								<Badge variant='secondary' className='h-4 px-1 text-[9px]'>
+								<span className='hidden text-muted-foreground tabular-nums sm:inline'>
 									{expressions.length}
-								</Badge>
+								</span>
 							</TabsTrigger>
 
 							<TabsTrigger
 								value='hotkeys'
 								className='flex items-center justify-center gap-1.5 text-xs'
 							>
-								<FiZap size={13} />
+								<FiZap size={13} className='hidden sm:block' />
 								<span>Atajos</span>
-								<Badge variant='secondary' className='h-4 px-1 text-[9px]'>
+								<span className='hidden text-muted-foreground tabular-nums sm:inline'>
 									{hotkeys.length}
-								</Badge>
+								</span>
 							</TabsTrigger>
 
 							<TabsTrigger
 								value='position'
 								className='flex items-center justify-center gap-1.5 text-xs'
 							>
-								<FiMove size={13} />
+								<FiMove size={13} className='hidden sm:block' />
 								<span>Posición</span>
 							</TabsTrigger>
 						</TabsList>
@@ -267,6 +264,7 @@ export function AvatarStudioDeck({
 											key={expression.file}
 											size='sm'
 											variant={expression.active ? 'default' : 'outline'}
+											aria-pressed={expression.active}
 											onClick={() => {
 												void onSetExpression(expression.file, !expression.active);
 											}}

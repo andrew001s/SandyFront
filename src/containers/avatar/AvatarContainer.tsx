@@ -8,9 +8,7 @@ import { Avatar3DEmotionsCard } from '@/containers/avatar/components/Avatar3DEmo
 import { AvatarConnectionCard } from '@/containers/avatar/components/AvatarConnectionCard';
 import { StudioToolbar } from '@/containers/avatar/components/StudioToolbar';
 
-import { AvatarModelDeck } from '@/containers/avatar/components/AvatarModelDeck';
-
-import { AvatarStudioDeck } from '@/containers/avatar/components/AvatarStudioDeck';
+import { VTubeStudioPanel } from '@/containers/avatar/components/VTubeStudioPanel';
 import { VrmCanvas } from '@/containers/avatar/components/VrmCanvas';
 import { useExpressionHotkeysContext } from '@/context/ExpressionHotkeysContext';
 import { useAvatar } from '@/hooks/useAvatar';
@@ -49,6 +47,7 @@ export const AvatarContainer = () => {
 		activeSoftware,
 		setSoftware,
 		activeConfig,
+		configs,
 		updateConfig,
 		is3D,
 		connecting,
@@ -229,67 +228,58 @@ export const AvatarContainer = () => {
 							mode='live2d'
 							automaticReactions={automaticReactions}
 							className='min-h-0 flex-1'
+							externalContent={
+								vts.connected ? (
+									<div className='space-y-3'>
+										<p className='text-muted-foreground text-sm'>
+											VTube Studio controla tu avatar. El modelo del navegador está pausado para
+											ahorrar recursos.
+										</p>
+										<VTubeStudioPanel
+											connection={vts}
+											config={configs.vtubestudio}
+											onUpdateConfig={(updates) => updateConfig('vtubestudio', updates)}
+										/>
+									</div>
+								) : undefined
+							}
 						/>
 						{/* Opción secundaria para streamers que usen VTube Studio Desktop por WebSocket */}
-						<div className='flex shrink-0 flex-col gap-2 border-border/50 border-t px-1'>
-							<div className='flex min-h-9 items-center justify-between gap-3'>
-								<h3 className='truncate font-medium text-muted-foreground text-xs'>
-									VTube Studio para escritorio
-								</h3>
-								<Button
-									variant='outline'
-									size='sm'
-									onClick={() => setShowExternalVts(!showExternalVts)}
-									className='h-7 shrink-0 px-3 font-medium text-xs'
-									aria-expanded={showExternalVts}
-									aria-controls='external-vts-controls'
-								>
-									{showExternalVts ? 'Ocultar conexión' : 'Conectar VTube Studio'}
-								</Button>
-							</div>
-							{showExternalVts && (
-								<div
-									id='external-vts-controls'
-									className='grid grid-cols-1 items-start gap-6 pt-3 lg:grid-cols-2'
-								>
-									<div className='space-y-6'>
-										<AvatarConnectionCard
-											connecting={connecting}
-											connected={connected}
-											error={error}
-											stats={stats}
-											software={activeSoftware}
-											config={activeConfig}
-											onConnect={connect}
-											onDisconnect={disconnect}
-											onRefreshModels={vts.refreshModels}
-											onUpdateConfig={(updates) => updateConfig(activeSoftware, updates)}
-										/>
-										<AvatarModelDeck
-											connected={connected}
-											models={vts.models}
-											currentModel={vts.currentModel}
-											currentModelId={vts.currentModel?.modelID ?? null}
-											modelsFolderPath={vts.folderInfo?.models}
-											onLoadModel={vts.loadModel}
-										/>
-									</div>
-									<div className='space-y-6'>
-										<LipSyncTest connected={connected} software={activeSoftware} />
-										<AvatarStudioDeck
-											connected={connected}
-											currentModel={vts.currentModel}
-											expressions={vts.expressions}
-											hotkeys={vts.hotkeys}
-											onSetExpression={vts.setExpressionActive}
-											onTriggerHotkey={vts.triggerHotkey}
-											onMoveModel={vts.moveModel}
-										/>
-									</div>
+						{!vts.connected && (
+							<div className='flex shrink-0 flex-col gap-2 border-border/50 border-t px-1'>
+								<div className='flex min-h-9 items-center justify-between gap-3'>
+									<h3 className='truncate font-medium text-muted-foreground text-xs'>
+										VTube Studio para escritorio
+									</h3>
+									<Button
+										variant='outline'
+										size='sm'
+										onClick={() => setShowExternalVts(!showExternalVts)}
+										className='min-h-9 shrink-0 px-3 font-medium text-xs'
+										aria-expanded={showExternalVts}
+										aria-controls='external-vts-controls'
+									>
+										{showExternalVts ? 'Ocultar conexión' : 'Conectar VTube Studio'}
+									</Button>
 								</div>
-							)}
-						</div>
+								{showExternalVts && (
+									<div id='external-vts-controls' className='pb-2'>
+										<VTubeStudioPanel
+											connection={vts}
+											config={configs.vtubestudio}
+											onUpdateConfig={(updates) => updateConfig('vtubestudio', updates)}
+										/>
+									</div>
+								)}
+							</div>
+						)}
 					</div>
+				) : activeSoftware === 'vtubestudio' ? (
+					<VTubeStudioPanel
+						connection={vts}
+						config={configs.vtubestudio}
+						onUpdateConfig={(updates) => updateConfig('vtubestudio', updates)}
+					/>
 				) : (
 					<div className='flex min-h-0 w-full flex-1 flex-col gap-2'>
 						{/* Escenario PNGTuber dedicado en Navegador */}

@@ -39,9 +39,10 @@ import { toast } from 'sonner';
 interface Props {
 	connected: boolean;
 	software?: AvatarSoftware;
+	embedded?: boolean;
 }
 
-export function LipSyncTest({ connected, software = 'vnyan' }: Props) {
+export function LipSyncTest({ connected, software = 'vnyan', embedded = false }: Props) {
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [activeManualVowel, setActiveManualVowel] = useState<string | null>(null);
 	const [customText, setCustomText] = useState(
@@ -202,38 +203,51 @@ export function LipSyncTest({ connected, software = 'vnyan' }: Props) {
 	const currentVoiceObj = EDGE_VOICE_PRESETS.find((v) => v.id === selectedVoice);
 
 	return (
-		<Card className='rounded-xl border-border/60 bg-card'>
-			<CardHeader>
-				<div className='flex items-center justify-between'>
-					<div className='flex items-center gap-3'>
-						<div className='rounded-lg bg-primary/10 p-2.5 text-primary'>
-							<FiMusic className='size-5' />
-						</div>
-						<div>
-							<div className='flex items-center gap-2'>
-								<CardTitle className='font-display font-semibold text-base text-foreground'>
-									Prueba de Lip Sync
-								</CardTitle>
-								<Badge
-									variant='outline'
-									className={
-										connected
-											? 'rounded-md border-emerald-500/30 bg-emerald-500/10 font-mono text-[10px] text-emerald-400'
-											: 'rounded-md border-border/70 font-mono text-[10px] text-muted-foreground'
-									}
-								>
-									{connected ? 'Conectado' : 'Desconectado'}
-								</Badge>
+		<Card
+			className={
+				embedded
+					? 'gap-0 rounded-none border-0 bg-transparent py-0 shadow-none'
+					: 'rounded-xl border-border/60 bg-card'
+			}
+		>
+			{!embedded && (
+				<CardHeader>
+					<div className='flex items-center justify-between'>
+						<div className='flex items-center gap-3'>
+							<div className='rounded-lg bg-primary/10 p-2.5 text-primary'>
+								<FiMusic className='size-5' />
 							</div>
-							<CardDescription className='font-sans text-muted-foreground text-xs'>
-								Voz en tiempo real con Microsoft Edge TTS y FFT a 60 FPS
-							</CardDescription>
+							<div>
+								<div className='flex items-center gap-2'>
+									<CardTitle className='font-display font-semibold text-base text-foreground'>
+										Prueba de Lip Sync
+									</CardTitle>
+									<Badge
+										variant='outline'
+										className={
+											connected
+												? 'rounded-md border-emerald-500/30 bg-emerald-500/10 font-mono text-[10px] text-emerald-400'
+												: 'rounded-md border-border/70 font-mono text-[10px] text-muted-foreground'
+										}
+									>
+										{connected ? 'Conectado' : 'Desconectado'}
+									</Badge>
+								</div>
+								<CardDescription className='font-sans text-muted-foreground text-xs'>
+									Voz en tiempo real con Microsoft Edge TTS y FFT a 60 FPS
+								</CardDescription>
+							</div>
 						</div>
 					</div>
-				</div>
-			</CardHeader>
+				</CardHeader>
+			)}
 
-			<CardContent className='space-y-4'>
+			<CardContent className={embedded ? 'space-y-4 px-0' : 'space-y-4'}>
+				{embedded && (
+					<p className='text-muted-foreground text-sm'>
+						Comprueba el movimiento de la boca con una voz de prueba de Microsoft Edge TTS.
+					</p>
+				)}
 				{/* Selector de Voz Edge TTS */}
 				<div className='space-y-1.5 rounded-xl border border-border/60 bg-background/50 p-2.5'>
 					<div className='flex items-center justify-between text-xs'>
@@ -298,16 +312,17 @@ export function LipSyncTest({ connected, software = 'vnyan' }: Props) {
 				<div className='flex flex-col gap-2 sm:flex-row'>
 					<Button
 						onClick={handleTestVowels}
-						disabled={isProcessing}
-						className='h-9 flex-1 gap-2 rounded-lg font-sans font-semibold text-xs shadow-xs'
+						disabled={!connected || isProcessing}
+						variant='outline'
+						className='h-10 flex-1 gap-2 rounded-lg font-sans text-sm'
 					>
-						<FiPlay className='size-3.5 text-emerald-300' />
+						<FiPlay className='size-3.5' />
 						<span className='truncate'>Vocales continuas</span>
 					</Button>
 
 					<Button
 						onClick={handleTestSentence}
-						disabled={isProcessing}
+						disabled={!connected || isProcessing}
 						variant='outline'
 						className='h-9 flex-1 gap-2 rounded-lg border-border font-sans font-semibold text-xs'
 					>
@@ -332,7 +347,7 @@ export function LipSyncTest({ connected, software = 'vnyan' }: Props) {
 							value={customText}
 							onChange={(e) => setCustomText(e.target.value)}
 							onKeyDown={(e) => {
-								if (e.key === 'Enter') {
+								if (e.key === 'Enter' && connected && !isProcessing) {
 									void handleTestSentence();
 								}
 							}}
@@ -343,7 +358,7 @@ export function LipSyncTest({ connected, software = 'vnyan' }: Props) {
 							size='sm'
 							variant='outline'
 							onClick={handleTestSentence}
-							disabled={isProcessing || !customText.trim()}
+							disabled={!connected || isProcessing || !customText.trim()}
 							className='h-9 shrink-0 gap-1.5 rounded-lg border-border font-sans text-xs'
 						>
 							<FiActivity className='size-3.5 text-primary' />
