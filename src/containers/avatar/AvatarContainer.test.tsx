@@ -1,7 +1,7 @@
 import * as useAvatarModule from '@/hooks/useAvatar';
 import { setAutomaticReactionMapping } from '@/lib/avatar/reactionMappings';
 import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AvatarContainer } from './AvatarContainer';
 
@@ -110,6 +110,38 @@ describe('AvatarContainer', () => {
 		setAutomaticReactionMapping('surprised', null);
 	});
 
+	it('keeps the latest format when an earlier format save finishes late', async () => {
+		let software = 'vrm';
+		const server = { automatic_reaction_scope: 'pngtuber' };
+		let finishOldWrite: () => void = () => undefined;
+		const oldWrite = new Promise<void>((resolve) => {
+			finishOldWrite = resolve;
+		});
+		getSettingsMock.mockImplementation(async () => ({ settings: { ...server } }));
+		saveSettingsMock.mockImplementation(async (payload) => {
+			if (payload.automatic_reaction_scope === 'vrm') await oldWrite;
+			Object.assign(server, payload);
+			return { settings: { ...server } };
+		});
+		vi.spyOn(useAvatarModule, 'useAvatar').mockImplementation(
+			() =>
+				({
+					...defaultMockAvatar,
+					activeSoftware: software,
+				}) as unknown as ReturnType<typeof useAvatarModule.useAvatar>,
+		);
+		const { rerender } = render(<AvatarContainer />);
+		await waitFor(() => expect(saveSettingsMock).toHaveBeenCalledTimes(1));
+		software = 'pngtuber';
+		rerender(<AvatarContainer />);
+		await act(async () => {
+			finishOldWrite();
+			await oldWrite;
+		});
+		await waitFor(() => expect(getSettingsMock).toHaveBeenCalledTimes(2));
+		await waitFor(() => expect(server.automatic_reaction_scope).toBe('pngtuber'));
+	});
+
 	it('restores the saved automatic reaction mappings for the signed-in account', async () => {
 		getSettingsMock.mockResolvedValue({
 			settings: { automatic_reaction_mappings: { happy: 'smile' } },
@@ -154,7 +186,7 @@ describe('AvatarContainer', () => {
 
 		await waitFor(() =>
 			expect(saveSettingsMock).toHaveBeenCalledWith(
-				{ automatic_reaction_mappings: { happy: 'smile' } },
+				{ automatic_reaction_mappings: { 'vrm:happy': 'smile' }, automatic_reaction_scope: 'vrm' },
 				{ token: 'account-token' },
 			),
 		);

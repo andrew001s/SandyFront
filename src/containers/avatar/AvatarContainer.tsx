@@ -26,7 +26,8 @@ import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
 import { live2dStore } from '@/lib/avatar2d/live2dStore';
 import { useAuth } from '@clerk/nextjs';
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 export const AvatarContainer = () => {
 	const { getToken, isLoaded: isAuthLoaded, isSignedIn, userId } = useAuth();
@@ -54,9 +55,16 @@ export const AvatarContainer = () => {
 	const [avatar2dState, setAvatar2dState] = useState(() => avatar2dManager.getState());
 	const [live2dPackage, setLive2dPackage] = useState(() => live2dStore.getPackage());
 	const [reactionMappings, setReactionMappings] = useState(getAutomaticReactionMappings);
+	const [reactionSettingsReady, setReactionSettingsReady] = useState(false);
+	const reactionWrites = useRef<Promise<void>>(Promise.resolve());
+	const settingsOwner = useRef(userId);
+	settingsOwner.current = userId;
+	const reactionScope =
+		activeSoftware === 'vnyan' || activeSoftware === 'vseeface' ? 'vrm' : activeSoftware;
 
 	useEffect(() => {
 		let cancelled = false;
+		setReactionSettingsReady(false);
 		for (const reaction of Object.keys(getAutomaticReactionMappings())) {
 			setAutomaticReactionMapping(reaction, null);
 		}
@@ -64,29 +72,36 @@ export const AvatarContainer = () => {
 
 		if (!isAuthLoaded || !isSignedIn || !userId) return;
 
-		void (async () => {
-			try {
-				const token = await getToken();
-				const response = await getSettings({ token });
+		reactionWrites.current = reactionWrites.current
+			.catch(() => undefined)
+			.then(async () => {
 				if (cancelled) return;
-				const accountMappings = response.settings?.automatic_reaction_mappings ?? {};
-				for (const [reaction, expressionId] of Object.entries(accountMappings)) {
-					setAutomaticReactionMapping(reaction, expressionId);
+				try {
+					const token = await getToken();
+					const response = await getSettings({ token });
+					if (cancelled) return;
+					const accountMappings = response.settings?.automatic_reaction_mappings ?? {};
+					for (const [reaction, expressionId] of Object.entries(accountMappings)) {
+						setAutomaticReactionMapping(reaction, expressionId);
+					}
+					setReactionMappings(accountMappings);
+					setReactionSettingsReady(true);
+					if (activeSoftware === 'live2d') {
+						const base = getScopedAutomaticReactionConfig('neutral', 'live2d');
+						avatar2dManager.setLive2dExpressions(base.expressions);
+					}
+					if (response.settings?.automatic_reaction_scope !== reactionScope) {
+						await saveSettings({ automatic_reaction_scope: reactionScope }, { token });
+					}
+				} catch (error) {
+					if (!cancelled) console.error('No se pudieron cargar las reacciones automáticas:', error);
 				}
-				setReactionMappings(accountMappings);
-				if (activeSoftware === 'live2d') {
-					const base = getScopedAutomaticReactionConfig('neutral', 'live2d');
-					avatar2dManager.setLive2dExpressions(base.expressions);
-				}
-			} catch (error) {
-				if (!cancelled) console.error('No se pudieron cargar las reacciones automáticas:', error);
-			}
-		})();
+			});
 
 		return () => {
 			cancelled = true;
 		};
-	}, [activeSoftware, getToken, isAuthLoaded, isSignedIn, userId]);
+	}, [activeSoftware, reactionScope, getToken, isAuthLoaded, isSignedIn, userId]);
 
 	useEffect(() => {
 		const unsubscribeAvatar = avatar2dManager.subscribe(setAvatar2dState);
@@ -114,21 +129,34 @@ export const AvatarContainer = () => {
 		config: AutomaticReactionConfig | null,
 	) => {
 		setAutomaticReactionConfig(reaction, config, activeSoftware);
-		if (reaction === 'neutral') {
+		if (reaction === 'neutral' || config?.enabled === false) {
 			void resetEmotions();
 		}
 		const nextMappings = getAutomaticReactionMappings();
 		setReactionMappings(nextMappings);
 
 		if (!isSignedIn || !userId) return;
-		void (async () => {
-			try {
-				const token = await getToken();
-				await saveSettings({ automatic_reaction_mappings: nextMappings }, { token });
-			} catch (error) {
-				console.error('No se pudieron guardar las reacciones automáticas:', error);
-			}
-		})();
+		reactionWrites.current = reactionWrites.current
+			.catch(() => undefined)
+			.then(async () => {
+				try {
+					if (settingsOwner.current !== userId) return;
+					const token = await getToken();
+					if (settingsOwner.current !== userId) return;
+					await saveSettings(
+						{
+							automatic_reaction_mappings: nextMappings,
+							automatic_reaction_scope: reactionScope,
+						},
+						{ token },
+					);
+				} catch (error) {
+					console.error('No se pudieron guardar las reacciones automáticas:', error);
+					toast.error(
+						'No se guardó la configuración de emociones. Revisa la conexión e inténtalo de nuevo.',
+					);
+				}
+			});
 	};
 	const previewReaction = (_reaction: string, config: AutomaticReactionConfig) => {
 		if (activeSoftware === 'vrm') {
@@ -140,6 +168,7 @@ export const AvatarContainer = () => {
 		}
 	};
 	const automaticReactions = {
+		disabled: !reactionSettingsReady,
 		expressions: reactionExpressions,
 		mappings: reactionMappings,
 		scope: activeSoftware,

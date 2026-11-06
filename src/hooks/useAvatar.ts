@@ -322,6 +322,11 @@ export function useAvatar() {
 	// Despacho unificado de payload (speech, reaction, emotion)
 	const sendAvatarPayload = useCallback(
 		async (payload: AvatarBackendPayload): Promise<boolean> => {
+			const emotion = String(payload.emotion ?? payload.expression ?? '').toLowerCase();
+			if (emotion && getScopedAutomaticReactionConfig(emotion, activeSoftware).enabled === false) {
+				await resetEmotions();
+				return true;
+			}
 			const selectedConfig =
 				payload.reaction && payload.emotion
 					? getScopedAutomaticReactionConfig(payload.emotion, activeSoftware)

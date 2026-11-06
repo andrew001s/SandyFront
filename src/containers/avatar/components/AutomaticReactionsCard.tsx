@@ -9,10 +9,11 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
 import { parseAutomaticReactionConfig } from '@/lib/avatar/reactionMappings';
 import type { AutomaticReactionConfig } from '@/lib/avatar/reactionMappings';
-import { Check, Eye, Sparkles, X } from 'lucide-react';
-import { useState } from 'react';
+import { Check, Eye, X } from 'lucide-react';
+import { useId, useState } from 'react';
 
 const REACTIONS = [
 	['neutral', 'Expresión base'],
@@ -30,6 +31,7 @@ const REACTIONS = [
 type ExpressionOption = { id: string; label: string };
 
 export type AutomaticReactionSelection = {
+	disabled?: boolean;
 	expressions: ExpressionOption[];
 	mappings: Record<string, string>;
 	scope?: string;
@@ -41,6 +43,7 @@ export type AutomaticReactionSelection = {
 };
 
 export function AutomaticReactionsCard({
+	disabled = false,
 	expressions,
 	mappings,
 	scope = '',
@@ -51,6 +54,7 @@ export function AutomaticReactionsCard({
 	onPreviewEnd,
 	onClose,
 }: AutomaticReactionSelection & { onClose?: () => void }) {
+	const toggleIdPrefix = useId();
 	const [editingReaction, setEditingReaction] = useState<string | null>(null);
 	const [draft, setDraft] = useState<AutomaticReactionConfig>({ expressions: [], intensity: 1 });
 	const [isPreviewing, setIsPreviewing] = useState(false);
@@ -107,18 +111,13 @@ export function AutomaticReactionsCard({
 	const reopenEditor = () => setIsMinimized(false);
 
 	return (
-		<div className='w-full rounded-xl border border-border/80 bg-background/95 text-foreground shadow-xl md:w-[22rem]'>
+		<div className='w-full rounded-xl border border-border/80 bg-background text-foreground shadow-lg md:w-[22rem]'>
 			<div className='flex items-center justify-between border-border/70 border-b px-4 py-3'>
-				<div className='flex items-center gap-2.5'>
-					<span className='flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary'>
-						<Sparkles className='size-4' aria-hidden='true' />
-					</span>
-					<div>
-						<h2 className='font-semibold text-sm'>Reacciones de IA</h2>
-						<p className='text-muted-foreground text-xs'>
-							Configura una o varias expresiones por reacción.
-						</p>
-					</div>
+				<div className='min-w-0 space-y-1'>
+					<h2 className='font-semibold text-sm'>Reacciones de IA</h2>
+					<p aria-live='polite' className='text-muted-foreground text-xs'>
+						{disabled ? 'Cargando tus emociones…' : 'Elige qué emociones puede usar la IA.'}
+					</p>
 				</div>
 				{onClose && (
 					<Button
@@ -131,37 +130,60 @@ export function AutomaticReactionsCard({
 					</Button>
 				)}
 			</div>
-			{expressions.length === 0 && (
+			{!disabled && expressions.length === 0 && (
 				<output className='border-border/70 border-b px-4 py-2 text-muted-foreground text-xs'>
-					No hay expresiones disponibles para este avatar.
+					Este avatar no tiene expresiones disponibles. Carga uno con expresiones para
+					configurarlas.
 				</output>
 			)}
-			<div className='grid max-h-[min(55vh,28rem)] gap-1 overflow-y-auto p-3'>
+			<div className='divide-y divide-border/50 px-2 py-1'>
 				{REACTIONS.map(([reaction, label]) => {
 					const config = parseAutomaticReactionConfig(
 						mappings[`${scope}:${reaction}`] ?? mappings[reaction],
 					);
 					const count = config.expressions.length;
+					const enabled = config.enabled !== false;
 					return (
-						<div
-							key={reaction}
-							className='grid grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-2 rounded-md px-1 py-1 text-sm'
-						>
-							<span className='font-medium text-xs'>{label}</span>
+						<div key={reaction} className='flex items-center gap-2 py-1'>
 							<button
 								type='button'
 								aria-label={`${label}: editar expresiones`}
-								disabled={expressions.length === 0}
+								disabled={disabled || !enabled || expressions.length === 0}
 								onClick={() => openEditor(reaction)}
-								className='flex h-9 min-w-0 items-center justify-between gap-2 rounded-md border border-input bg-background px-2.5 text-left text-xs outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
+								className='group flex min-h-14 min-w-0 flex-1 flex-col items-start justify-center gap-1 rounded-md px-1 py-2 text-left outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:hover:bg-transparent'
 							>
-								<span className='truncate'>
-									{count === 0
-										? 'Sin expresión'
-										: `${count} ${count === 1 ? 'expresión' : 'expresiones'}`}
+								<span className='font-medium text-foreground text-sm'>{label}</span>
+								<span className='flex max-w-full flex-wrap items-center gap-x-2 gap-y-0.5 text-xs'>
+									<span className='text-muted-foreground'>
+										{count === 0
+											? 'Sin expresión'
+											: `${count} ${count === 1 ? 'expresión' : 'expresiones'}`}
+									</span>
+									{enabled && expressions.length > 0 && (
+										<span className='text-muted-foreground underline decoration-border underline-offset-2 group-hover:text-foreground group-hover:decoration-current'>
+											Editar
+										</span>
+									)}
 								</span>
-								<span className='shrink-0 text-muted-foreground'>Editar</span>
 							</button>
+							<label
+								htmlFor={`${toggleIdPrefix}-${reaction}`}
+								className={`flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-1 outline-none transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring ${disabled ? 'cursor-wait opacity-50' : 'cursor-pointer hover:bg-muted/50'}`}
+							>
+								<Switch
+									id={`${toggleIdPrefix}-${reaction}`}
+									disabled={disabled}
+									aria-label={`Activar ${label.toLowerCase()}`}
+									checked={enabled}
+									className='h-6 w-10 shadow-none focus-visible:ring-0 data-[state=unchecked]:border-muted-foreground/70 data-[state=unchecked]:bg-muted-foreground dark:data-[state=unchecked]:bg-muted [&_[data-slot=switch-thumb]]:size-5 [&_[data-slot=switch-thumb]]:bg-white! [&_[data-slot=switch-thumb]]:transition-transform [&_[data-slot=switch-thumb]]:motion-reduce:transition-none'
+									onCheckedChange={(checked) =>
+										onMappingChange(reaction, { ...config, enabled: checked })
+									}
+								/>
+								<span className='w-12 text-muted-foreground text-xs'>
+									{enabled ? 'Activa' : 'Apagada'}
+								</span>
+							</label>
 						</div>
 					);
 				})}

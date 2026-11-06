@@ -3,6 +3,7 @@ import {
 	setAutomaticReactionConfig,
 	setAutomaticReactionMapping,
 } from '@/lib/avatar/reactionMappings';
+import { vrmManager } from '@/lib/avatar/vrmManager';
 import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -39,6 +40,38 @@ vi.mock('@/hooks/useVTubeStudio', () => ({
 }));
 
 describe('useAvatar persistence and mode synchronization', () => {
+	it.each(['pngtuber', 'live2d', 'vrm'] as const)(
+		'rejects a disabled emotion in %s even with a backend expression fallback',
+		async (software) => {
+			window.localStorage.setItem(AVATAR_SOFTWARE_STORAGE_KEY, software);
+			setAutomaticReactionConfig(
+				'angry',
+				{ expressions: ['blocked-expression'], intensity: 1, enabled: false },
+				software,
+			);
+			const setVrmEmotions = vi.spyOn(vrmManager, 'setEmotions');
+			const setVrmEmotion = vi.spyOn(vrmManager, 'setEmotion');
+			const { result, unmount } = renderHook(() => useAvatar());
+			await act(async () => {
+				await result.current.sendAvatarPayload({
+					type: 'speech',
+					reaction: true,
+					emotion: 'angry',
+					expression: 'fallback-expression',
+				});
+			});
+			if (software === 'pngtuber')
+				expect(avatar2dManager.getState().pngtuber.activeEmotion).toBe('neutral');
+			if (software === 'live2d')
+				expect(avatar2dManager.getState().live2d.activeExpressions).not.toContain(
+					'blocked-expression',
+				);
+			expect(setVrmEmotions).not.toHaveBeenCalledWith(['blocked-expression'], 1);
+			expect(setVrmEmotion).not.toHaveBeenCalledWith('angry', expect.anything());
+			unmount();
+			setAutomaticReactionMapping(`${software}:angry`, null);
+		},
+	);
 	beforeEach(() => {
 		window.localStorage.clear();
 		vi.restoreAllMocks();
@@ -197,9 +230,7 @@ describe('useAvatar persistence and mode synchronization', () => {
 			});
 		});
 
-		expect(vtsMocks.sendAvatarPayload).toHaveBeenCalledWith(
-			expect.objectContaining({ emotion: undefined, expression: null }),
-		);
+		expect(vtsMocks.sendAvatarPayload).not.toHaveBeenCalled();
 	});
 
 	it('useAvatar deactivates the VTube Studio reaction expression', async () => {

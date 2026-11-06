@@ -3,6 +3,7 @@ const automaticReactionMappings: Record<string, string> = {};
 export type AutomaticReactionConfig = {
 	expressions: string[];
 	intensity: number;
+	enabled?: boolean;
 };
 
 export function getAutomaticReactionMappings(): Record<string, string> {
@@ -16,6 +17,7 @@ export function parseAutomaticReactionConfig(stored: string | undefined): Automa
 		const parsed = JSON.parse(stored) as Partial<AutomaticReactionConfig>;
 		if (Array.isArray(parsed.expressions)) {
 			return {
+				...(parsed.enabled === false ? { enabled: false } : {}),
 				expressions: parsed.expressions.filter((item): item is string => typeof item === 'string'),
 				intensity:
 					typeof parsed.intensity === 'number' ? Math.min(1, Math.max(0, parsed.intensity)) : 1,
@@ -36,9 +38,10 @@ export function getScopedAutomaticReactionConfig(
 	reaction: string,
 	scope: string,
 ): AutomaticReactionConfig {
-	return parseAutomaticReactionConfig(
+	const config = parseAutomaticReactionConfig(
 		automaticReactionMappings[`${scope}:${reaction}`] ?? automaticReactionMappings[reaction],
 	);
+	return config.enabled === false ? { ...config, expressions: [] } : config;
 }
 
 export function getAutomaticReactionMapping(reaction: string): string | undefined {
@@ -68,6 +71,14 @@ export function setAutomaticReactionConfig(
 
 	const key = scope ? `${scope}:${reaction}` : reaction;
 	const expressions = config?.expressions.filter(Boolean) ?? [];
+	if (config?.enabled === false) {
+		automaticReactionMappings[key] = JSON.stringify({
+			expressions,
+			intensity: Math.min(1, Math.max(0, config.intensity)),
+			enabled: false,
+		});
+		return;
+	}
 	if (expressions.length === 0) {
 		if (scope) {
 			automaticReactionMappings[key] = JSON.stringify({ expressions: [], intensity: 1 });

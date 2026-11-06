@@ -428,7 +428,7 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 										animate={{ opacity: 1, scale: 1, x: 0 }}
 										exit={{ opacity: 0, scale: 0.96, x: 20 }}
 										transition={{ duration: 0.2, ease: 'easeOut' }}
-										className='pointer-events-auto absolute right-3 bottom-20 left-3 z-30 max-h-[calc(100%-6rem)] overflow-y-auto md:top-4 md:right-20 md:bottom-auto md:left-auto md:max-h-[calc(100%-2rem)]'
+										className='pointer-events-auto absolute right-3 bottom-20 left-3 z-30 max-h-[calc(100%-6rem)] overflow-y-auto [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin] md:top-4 md:right-20 md:bottom-auto md:left-auto md:max-h-[calc(100%-2rem)] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar]:size-1'
 									>
 										<AutomaticReactionsCard
 											{...automaticReactions}

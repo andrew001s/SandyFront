@@ -40,6 +40,7 @@ export type SettingsPayload = {
 	onboarding_completed?: boolean;
 	vrm_trigger_rules?: VrmTriggerRule[];
 	automatic_reaction_mappings?: Record<string, string>;
+	automatic_reaction_scope?: 'pngtuber' | 'live2d' | 'vrm' | 'vtubestudio';
 };
 
 /**

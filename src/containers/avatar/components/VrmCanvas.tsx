@@ -614,7 +614,7 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 								animate={{ opacity: 1, x: 0, scale: 1 }}
 								exit={{ opacity: 0, x: 20, scale: 0.96 }}
 								transition={{ duration: 0.2, ease: 'easeOut' }}
-								className='absolute right-3 bottom-20 left-3 z-30 max-h-[calc(100%-6rem)] overflow-y-auto md:top-4 md:right-20 md:bottom-auto md:left-auto md:max-h-[calc(100%-2rem)]'
+								className='absolute right-3 bottom-20 left-3 z-30 max-h-[calc(100%-6rem)] overflow-y-auto [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin] md:top-4 md:right-20 md:bottom-auto md:left-auto md:max-h-[calc(100%-2rem)] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar]:size-1'
 							>
 								{activeTool === 'automaticReactions' && automaticReactions && (
 									<AutomaticReactionsCard
