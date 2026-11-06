@@ -1,5 +1,4 @@
 'use client';
-
 import {
 	DEFAULT_VRM_BACKGROUND_STATE,
 	type VrmBackgroundState,
@@ -30,7 +29,6 @@ import type {
 	VrmFallingEmote,
 	VrmViewer,
 } from '@/lib/avatar/vrmViewer';
-
 export type VrmSyncMessage =
 	| { type: 'vowels'; vowels: { A?: number; I?: number; U?: number; E?: number; O?: number } }
 	| { type: 'emotion'; emotion: string; intensity: number }
@@ -70,11 +68,9 @@ export type VrmSyncMessage =
 			slimeColor?: string;
 			idleSettings?: VrmIdleSettings;
 	  };
-
 const CAMERA_STORAGE_KEY = 'sandy_vrm_camera_transform';
 const PRESET_STORAGE_KEY = 'sandy_vrm_camera_preset';
 const IDLE_STORAGE_KEY = 'sandy_vrm_idle_settings';
-
 export class VrmManager {
 	private static instance: VrmManager;
 	private activeViewers = new Set<VrmViewer>();
@@ -83,10 +79,9 @@ export class VrmManager {
 	private currentBuffer: ArrayBuffer | null = null;
 	private listeners = new Set<() => void>();
 	private bgListeners = new Set<(state: VrmBackgroundState) => void>();
-
 	// Estado activo para sincronización espejo en tiempo real con OBS Overlay
 	private currentEmotion = 'neutral';
-	private currentEmotions = ['neutral'];
+	private currentEmotions: string[] = [];
 	private currentIntensity = 1.0;
 	private currentIdleSettings: VrmIdleSettings = { ...DEFAULT_VRM_IDLE_SETTINGS };
 	private currentCameraPreset: VrmCameraPreset = 'face';
@@ -100,7 +95,6 @@ export class VrmManager {
 	private idleOffTimer: ReturnType<typeof setTimeout> | null = null;
 	private bonePoseTimers = new Map<string, ReturnType<typeof setTimeout>>();
 	private boneScaleTimers = new Map<string, ReturnType<typeof setTimeout>>();
-
 	private constructor() {
 		if (typeof window !== 'undefined') {
 			try {
@@ -120,7 +114,6 @@ export class VrmManager {
 			} catch {
 				// Ignorar errores de lectura inicial
 			}
-
 			if ('BroadcastChannel' in window) {
 				this.broadcastChannel = new BroadcastChannel('sandy_vrm_sync');
 				this.broadcastChannel.onmessage = (event: MessageEvent<VrmSyncMessage>) => {
@@ -131,7 +124,6 @@ export class VrmManager {
 					this.broadcastChannel?.postMessage({ type: 'requestState' });
 				}, 100);
 			}
-
 			// Escuchar cambios de localStorage entre diferentes pestañas/ventanas y fuentes de OBS
 			window.addEventListener('storage', (event) => {
 				if (
@@ -161,19 +153,16 @@ export class VrmManager {
 			});
 		}
 	}
-
 	static getInstance(): VrmManager {
 		if (!VrmManager.instance) {
 			VrmManager.instance = new VrmManager();
 		}
 		return VrmManager.instance;
 	}
-
 	public subscribe(listener: () => void): () => void {
 		this.listeners.add(listener);
 		return () => this.listeners.delete(listener);
 	}
-
 	public subscribeBackground(listener: (state: VrmBackgroundState) => void): () => void {
 		this.bgListeners.add(listener);
 		if (this.currentBackground) {
@@ -181,22 +170,18 @@ export class VrmManager {
 		}
 		return () => this.bgListeners.delete(listener);
 	}
-
 	private notify(): void {
 		for (const listener of this.listeners) {
 			listener();
 		}
 	}
-
 	private notifyBg(state: VrmBackgroundState): void {
 		for (const listener of this.bgListeners) {
 			listener(state);
 		}
 	}
-
 	public registerViewer(viewer: VrmViewer): () => void {
 		this.activeViewers.add(viewer);
-
 		const applyActiveState = () => {
 			viewer.setIdleSettings(this.currentIdleSettings);
 			viewer.setExpressions(this.currentEmotions, this.currentIntensity);
@@ -207,13 +192,11 @@ export class VrmManager {
 				viewer.setCameraPreset(this.currentCameraPreset);
 			}
 		};
-
 		const unregisterModelLoaded = viewer.onModelLoaded(() => {
 			this.availableExpressions = viewer.getAvailableExpressions();
 			applyActiveState();
 			this.notify();
 		});
-
 		if (this.currentBuffer) {
 			void viewer.loadModel(this.currentBuffer.slice(0)).then(() => {
 				applyActiveState();
@@ -227,13 +210,11 @@ export class VrmManager {
 				}
 			});
 		}
-
 		return () => {
 			unregisterModelLoaded();
 			this.activeViewers.delete(viewer);
 		};
 	}
-
 	public async restoreSavedModel(): Promise<boolean> {
 		if (this.currentBuffer) return true;
 		const saved = await loadSavedVrmModel();
@@ -245,18 +226,15 @@ export class VrmManager {
 		}
 		return false;
 	}
-
 	public getMeta(): VrmModelMeta | null {
 		return this.currentMeta;
 	}
-
 	public getBackground(): VrmBackgroundState {
 		if (!this.currentBackground && typeof window !== 'undefined') {
 			this.currentBackground = getStoredBackgroundState();
 		}
 		return this.currentBackground || DEFAULT_VRM_BACKGROUND_STATE;
 	}
-
 	public async loadModelFile(file: File): Promise<void> {
 		const buffer = await file.arrayBuffer();
 		const meta: VrmModelMeta = {
@@ -264,13 +242,10 @@ export class VrmManager {
 			size: file.size,
 			updatedAt: new Date().toISOString(),
 		};
-
 		this.currentBuffer = buffer;
 		this.currentMeta = meta;
-
 		// Guardar en IndexedDB
 		await saveVrmModel(buffer.slice(0), meta);
-
 		// Cargar en los viewers activos
 		for (const viewer of this.activeViewers) {
 			await viewer.loadModel(buffer.slice(0));
@@ -280,20 +255,16 @@ export class VrmManager {
 				viewer.setCameraPreset(this.currentCameraPreset);
 			}
 		}
-
 		// Notificar a otras pestañas (como overlay OBS)
 		this.broadcastChannel?.postMessage({ type: 'modelUpdated' });
 		this.notify();
 	}
-
 	public getAvailableExpressions(): string[] {
 		return this.availableExpressions;
 	}
-
 	public getIdleSettings(): VrmIdleSettings {
 		return { ...this.currentIdleSettings };
 	}
-
 	public setIdleSettings(settings: Partial<VrmIdleSettings>): void {
 		if (settings.enabled === false && this.idleOffTimer) {
 			clearTimeout(this.idleOffTimer);
@@ -314,7 +285,6 @@ export class VrmManager {
 		});
 		this.notify();
 	}
-
 	public async removeModel(): Promise<void> {
 		this.currentBuffer = null;
 		this.currentMeta = null;
@@ -323,14 +293,23 @@ export class VrmManager {
 		this.notify();
 		this.broadcastChannel?.postMessage({ type: 'modelUpdated' });
 	}
-
 	public setVowels(vowels: { A?: number; I?: number; U?: number; E?: number; O?: number }): void {
 		for (const viewer of this.activeViewers) {
 			viewer.setVowels(vowels);
 		}
 		this.broadcastChannel?.postMessage({ type: 'vowels', vowels });
 	}
-
+	public getActiveExpressions(): string[] {
+		return this.currentEmotions;
+	}
+	public toggleExpression(id: string): void {
+		this.setEmotions(
+			this.currentEmotions.includes(id)
+				? this.currentEmotions.filter((name) => name !== id)
+				: [...this.currentEmotions, id],
+			this.currentIntensity,
+		);
+	}
 	public setEmotion(emotion: string, intensity = 1.0): void {
 		if (this.expressionOffTimer) clearTimeout(this.expressionOffTimer);
 		this.expressionOffTimer = null;
@@ -341,8 +320,8 @@ export class VrmManager {
 			viewer.setExpression(emotion, intensity);
 		}
 		this.broadcastChannel?.postMessage({ type: 'emotion', emotion, intensity });
+		this.notify();
 	}
-
 	public setEmotions(emotions: string[], intensity = 1.0): void {
 		if (this.expressionOffTimer) clearTimeout(this.expressionOffTimer);
 		this.expressionOffTimer = null;
@@ -357,19 +336,19 @@ export class VrmManager {
 			emotions: this.currentEmotions,
 			intensity: this.currentIntensity,
 		});
+		this.notify();
 	}
-
 	public resetEmotions(): void {
 		if (this.expressionOffTimer) clearTimeout(this.expressionOffTimer);
 		this.expressionOffTimer = null;
 		this.currentEmotion = 'neutral';
-		this.currentEmotions = ['neutral'];
+		this.currentEmotions = [];
 		for (const viewer of this.activeViewers) {
 			viewer.resetExpressions();
 		}
 		this.broadcastChannel?.postMessage({ type: 'reset' });
+		this.notify();
 	}
-
 	public executeTriggerAction(
 		action: VrmTriggerAction,
 		broadcast = true,
@@ -541,14 +520,12 @@ export class VrmManager {
 				break;
 		}
 	}
-
 	public setSlimeColor(color: string, broadcast = true): void {
 		if (!/^#[\da-f]{6}$/i.test(color)) return;
 		this.currentSlimeColor = color;
 		for (const viewer of this.activeViewers) viewer.setSlimeColor(color);
 		if (broadcast) this.broadcastChannel?.postMessage({ type: 'slimeColor', color });
 	}
-
 	public handleAvatarTrigger(event: { trigger?: string; data?: Record<string, unknown> }): void {
 		const trigger = String(event.trigger ?? '');
 		const rewardId = String(event.data?.rewardId ?? '');
@@ -560,7 +537,6 @@ export class VrmManager {
 			this.executeTriggerAction(rule.action, true, event.data ?? {});
 		}
 	}
-
 	public setCameraPreset(preset: VrmCameraPreset): void {
 		this.currentCameraPreset = preset;
 		this.currentCameraTransform = null;
@@ -577,7 +553,6 @@ export class VrmManager {
 		}
 		this.broadcastChannel?.postMessage({ type: 'cameraPreset', preset });
 	}
-
 	public setCameraTransform(transform: VrmCameraTransform, broadcast = true): void {
 		this.currentCameraTransform = transform;
 		if (typeof window !== 'undefined') {
@@ -594,20 +569,17 @@ export class VrmManager {
 			this.broadcastChannel?.postMessage({ type: 'cameraTransform', transform });
 		}
 	}
-
 	public setBackground(state: VrmBackgroundState): void {
 		this.currentBackground = state;
 		storeBackgroundState(state);
 		this.notifyBg(state);
 		this.broadcastChannel?.postMessage({ type: 'background', state });
 	}
-
 	public requestSync(): void {
 		if (this.broadcastChannel) {
 			this.broadcastChannel.postMessage({ type: 'requestState' });
 		}
 	}
-
 	private handleSyncMessage(msg: VrmSyncMessage): void {
 		switch (msg.type) {
 			case 'vowels':
@@ -624,6 +596,7 @@ export class VrmManager {
 				for (const viewer of this.activeViewers) {
 					viewer.setExpression(msg.emotion, msg.intensity);
 				}
+				this.notify();
 				break;
 			case 'emotionMix':
 				if (this.expressionOffTimer) clearTimeout(this.expressionOffTimer);
@@ -634,15 +607,17 @@ export class VrmManager {
 				for (const viewer of this.activeViewers) {
 					viewer.setExpressions(this.currentEmotions, msg.intensity);
 				}
+				this.notify();
 				break;
 			case 'reset':
 				if (this.expressionOffTimer) clearTimeout(this.expressionOffTimer);
 				this.expressionOffTimer = null;
 				this.currentEmotion = 'neutral';
-				this.currentEmotions = ['neutral'];
+				this.currentEmotions = [];
 				for (const viewer of this.activeViewers) {
 					viewer.resetExpressions();
 				}
+				this.notify();
 				break;
 			case 'idleSettings':
 				if (this.idleOffTimer) clearTimeout(this.idleOffTimer);
@@ -804,5 +779,4 @@ export class VrmManager {
 		}
 	}
 }
-
 export const vrmManager = VrmManager.getInstance();

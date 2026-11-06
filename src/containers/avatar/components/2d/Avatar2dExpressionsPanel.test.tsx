@@ -51,7 +51,7 @@ describe('Avatar2dExpressionsPanel custom expressions', () => {
 		fireEvent.click(screen.getByRole('button', { name: /guardar expresión/i }));
 
 		// The new expression button must be rendered in the expressions list
-		expect(await screen.findByRole('button', { name: /^guiño sorpresa/i })).toBeInTheDocument();
+		expect(await screen.findByRole('switch', { name: /^guiño sorpresa/i })).toBeInTheDocument();
 
 		readAsDataURLSpy.mockRestore();
 	});
@@ -61,11 +61,15 @@ describe('Avatar2dExpressionsPanel custom expressions', () => {
 		render(<Avatar2dExpressionsPanel onClose={vi.fn()} />);
 
 		// Click on an expression button (e.g., "Feliz / Radiante")
-		const happyBtn = screen.getByRole('button', { name: /^feliz/i });
+		const happyBtn = screen.getByRole('switch', { name: /^feliz/i });
 		fireEvent.click(happyBtn);
 
 		expect(setEmotionSpy).toHaveBeenCalledWith('happy');
 		expect(avatar2dManager.getState().pngtuber.activeEmotion).toBe('happy');
+		expect(happyBtn).toBeChecked();
+		fireEvent.click(happyBtn);
+		expect(happyBtn).not.toBeChecked();
+		expect(avatar2dManager.getState().pngtuber.activeEmotion).toBe('neutral');
 	});
 
 	it('resets active expression back to neutral when reset button is clicked', () => {
@@ -114,7 +118,7 @@ describe('Avatar2dExpressionsPanel custom expressions', () => {
 				label: 'Super Alegre',
 			}),
 		);
-		expect(await screen.findByRole('button', { name: /^super alegre/i })).toBeInTheDocument();
+		expect(await screen.findByRole('switch', { name: /^super alegre/i })).toBeInTheDocument();
 	});
 
 	it('opens edit form with current expression values, saves updated image and label, and updates list', async () => {
@@ -165,8 +169,8 @@ describe('Avatar2dExpressionsPanel custom expressions', () => {
 		);
 
 		// Verify updated expression appears in list and old label is gone
-		expect(await screen.findByRole('button', { name: /^guiño actualizado/i })).toBeInTheDocument();
-		expect(screen.queryByRole('button', { name: /^guiño antiguo/i })).not.toBeInTheDocument();
+		expect(await screen.findByRole('switch', { name: /^guiño actualizado/i })).toBeInTheDocument();
+		expect(screen.queryByRole('switch', { name: /^guiño antiguo/i })).not.toBeInTheDocument();
 
 		readAsDataURLSpy.mockRestore();
 	});
@@ -219,7 +223,7 @@ describe('Avatar2dExpressionsPanel custom expressions', () => {
 		expect(deleteSpy).toHaveBeenCalledWith(created.id);
 
 		// Verify expression is removed from the list
-		expect(screen.queryByRole('button', { name: /^expresión efímera/i })).not.toBeInTheDocument();
+		expect(screen.queryByRole('switch', { name: /^expresión efímera/i })).not.toBeInTheDocument();
 
 		// Verify fallback activeEmotion switched
 		expect(avatar2dManager.getState().pngtuber.activeEmotion).not.toBe(created.id);

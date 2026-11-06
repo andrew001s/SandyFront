@@ -43,7 +43,7 @@ class FakeEventSource {
 	onopen: (() => void) | null = null;
 	onerror: (() => void) | null = null;
 
-	constructor(_url: string) {
+	constructor() {
 		FakeEventSource.instance = this;
 	}
 
@@ -67,7 +67,8 @@ describe('StreamChat AI errors', () => {
 	afterEach(() => vi.unstubAllGlobals());
 
 	it('notifies the user of a provider error while leaving ordinary system events as messages', async () => {
-		render(<StreamChat />);
+		const { container } = render(<StreamChat />);
+		expect(container).toBeEmptyDOMElement();
 		await waitFor(() => expect(FakeEventSource.instance?.listeners.has('system')).toBe(true));
 
 		act(() => {

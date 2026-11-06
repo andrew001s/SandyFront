@@ -1,12 +1,10 @@
 'use client';
-
 import { getSettings, saveSettings } from '@/api/settings';
 import { FeatureFlagsPanel } from '@/components/FeatureFlags/FeatureFlagsPanel';
 import { MicrophoneTile } from '@/components/ServiceControl/MicrophoneTile';
 import { ServiceStartCard } from '@/components/ServiceControl/ServiceStartCard';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
 	type AutomaticReactionSelection,
 	AutomaticReactionsCard,
@@ -45,41 +43,27 @@ import {
 import { type VrmCameraPreset, VrmViewer } from '@/lib/avatar/vrmViewer';
 import { useAuth } from '@clerk/nextjs';
 import { AnimatePresence, motion } from 'framer-motion';
-import {
-	Box,
-	Check,
-	Copy,
-	Maximize2,
-	Minimize2,
-	RefreshCw,
-	Sparkles,
-	Upload,
-	User,
-} from 'lucide-react';
+import { Check, Copy, RefreshCw, Upload, User } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import AvatarFooter from './AvatarFooter';
-
 interface Props {
 	className?: string;
 	onEmotionSelect?: (emotion: string) => void;
 	automaticReactions?: AutomaticReactionSelection;
 }
-
 export function VrmCanvas({ className = '', automaticReactions }: Props) {
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const viewportRef = useRef<HTMLDivElement | null>(null);
 	const viewerRef = useRef<VrmViewer | null>(null);
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
-
 	const [fps, setFps] = useState<number>(60);
 	const [modelMeta, setModelMeta] = useState(vrmManager.getMeta());
 	const [isDragging, setIsDragging] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 	const [cameraPreset, setCameraPreset] = useState<VrmCameraPreset>('face');
 	const [copied, setCopied] = useState(false);
-
 	// Estado de la suite VTube Studio / VNyan
 	const [activeTool, setActiveTool] = useState<StudioActiveTool>(null);
 	const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
@@ -99,10 +83,8 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 	const legacyImportOwner = useRef<string | null>(null);
 	const currentUserId = useRef(userId);
 	currentUserId.current = userId;
-
 	// Estado avanzado del Fondo (Color sólido, Presets, Imagen propia)
 	const [bgState, setBgState] = useState<VrmBackgroundState>(DEFAULT_VRM_BACKGROUND_STATE);
-
 	useEffect(() => {
 		let cancelled = false;
 		if (legacyImportOwner.current && legacyImportOwner.current !== userId) {
@@ -115,19 +97,16 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 		setLegacyRulesAvailable(false);
 		triggerRulesDirty.current = false;
 		setTriggerRulesSaveStatus('idle');
-
 		if (!isAuthLoaded) return;
 		if (!isSignedIn || !userId) {
 			setTriggerRulesStatus('ready');
 			return;
 		}
-
 		void (async () => {
 			try {
 				const token = await getToken();
 				const response = await getSettings({ token });
 				if (cancelled) return;
-
 				let accountRules = response.settings?.vrm_trigger_rules;
 				const legacyRules = getLegacyVrmTriggerRules();
 				const canOfferLegacyImport = legacyRules.length > 0 && !hasMigratedVrmTriggerRules();
@@ -138,7 +117,6 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 						await saveSettings({ vrm_trigger_rules: accountRules }, { token });
 					}
 				}
-
 				if (cancelled) return;
 				setVrmTriggerRules(accountRules);
 				setTriggerRules(accountRules);
@@ -149,15 +127,12 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 				setTriggerRulesStatus('error');
 			}
 		})();
-
 		return () => {
 			cancelled = true;
 		};
 	}, [getToken, isAuthLoaded, isSignedIn, triggerRulesReload, userId]);
-
 	useEffect(() => {
 		if (!triggerRulesDirty.current || triggerRulesStatus !== 'ready' || !userId) return;
-
 		const accountId = userId;
 		const timeoutId = window.setTimeout(() => {
 			void (async () => {
@@ -186,23 +161,19 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 				}
 			})();
 		}, 450);
-
 		return () => window.clearTimeout(timeoutId);
 	}, [getToken, triggerRules, triggerRulesStatus, userId]);
-
 	const handleTriggerRulesChange = (nextRules: VrmTriggerRule[]) => {
 		triggerRulesDirty.current = true;
 		setVrmTriggerRules(nextRules);
 		setTriggerRules(nextRules);
 		setTriggerRulesSaveStatus('saving');
 	};
-
 	const retryTriggerRulesSave = () => {
 		triggerRulesDirty.current = true;
 		setTriggerRulesSaveStatus('saving');
 		setTriggerRules((rules) => [...rules]);
 	};
-
 	const importLegacyTriggerRules = () => {
 		if (!userId) return;
 		if (legacyImportOwner.current) return;
@@ -216,7 +187,6 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 			return;
 		}
 		legacyImportOwner.current = userId;
-
 		const existingIds = new Set(triggerRules.map((rule) => rule.id));
 		const rulesToImport = legacyRules.filter((rule) => !existingIds.has(rule.id));
 		if (!rulesToImport.length) {
@@ -226,22 +196,18 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 			setLegacyRulesAvailable(false);
 			return;
 		}
-
 		handleTriggerRulesChange([...triggerRules, ...rulesToImport]);
 	};
-
 	// Cargar configuración guardada del fondo al montar y sincronizar con vrmManager
 	useEffect(() => {
 		const stored = getStoredBackgroundState();
 		setBgState(stored);
 		vrmManager.setBackground(stored);
-
 		const unregisterBg = vrmManager.subscribeBackground((next) => {
 			setBgState(next);
 		});
 		return () => unregisterBg();
 	}, []);
-
 	// Suscribirse al reproductor de audio global
 	useEffect(() => {
 		const manager = AudioQueueManager.getInstance();
@@ -250,28 +216,23 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 		});
 		return () => unsubscribe();
 	}, []);
-
 	// Montar y gestionar el renderizador WebGL
 	useEffect(() => {
 		const canvas = canvasRef.current;
 		if (!canvas) return;
-
 		const viewer = new VrmViewer({
 			canvas,
 			transparent: true,
 		});
 		viewerRef.current = viewer;
-
 		const unregisterFps = viewer.onFpsUpdate((val) => setFps(val));
 		const unregisterViewer = vrmManager.registerViewer(viewer);
 		const unregisterCamera = viewer.onCameraChange((transform) => {
 			vrmManager.setCameraTransform(transform);
 		});
-
 		const unsubscribeMeta = vrmManager.subscribe(() => {
 			setModelMeta(vrmManager.getMeta());
 		});
-
 		return () => {
 			unregisterFps();
 			unregisterViewer();
@@ -281,31 +242,25 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 			viewerRef.current = null;
 		};
 	}, []);
-
 	// Observador de dimensiones exactas del viewport (elimina cualquier estiramiento en fullscreen o al ocultar HUD)
 	useEffect(() => {
 		const viewport = viewportRef.current;
 		if (!viewport) return;
-
 		const handleResize = (width: number, height: number) => {
 			if (width > 0 && height > 0 && viewerRef.current) {
 				viewerRef.current.resize(width, height);
 			}
 		};
-
 		const ro = new ResizeObserver((entries) => {
 			for (const entry of entries) {
 				const { width, height } = entry.contentRect;
 				handleResize(width, height);
 			}
 		});
-
 		ro.observe(viewport);
 		handleResize(viewport.clientWidth, viewport.clientHeight);
-
 		return () => ro.disconnect();
 	}, []);
-
 	// Escuchar cambios de pantalla completa del navegador (incluyendo tecla Escape)
 	useEffect(() => {
 		const handleFullscreenChange = () => {
@@ -318,16 +273,13 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 				}
 			}, 50);
 		};
-
 		document.addEventListener('fullscreenchange', handleFullscreenChange);
 		return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
 	}, []);
-
 	const handleToggleFullscreen = async () => {
 		try {
 			const target = containerRef.current;
 			if (!target) return;
-
 			if (!document.fullscreenElement) {
 				if (target.requestFullscreen) {
 					await target.requestFullscreen();
@@ -339,13 +291,11 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 			toast.error('No se pudo alternar pantalla completa');
 		}
 	};
-
 	const handleBackgroundChange = (next: VrmBackgroundState) => {
 		setBgState(next);
 		storeBackgroundState(next);
 		vrmManager.setBackground(next);
 	};
-
 	const handleFileUpload = async (file: File) => {
 		// Detección inteligente: archivo .vrm o imagen de fondo
 		if (file.name.toLowerCase().endsWith('.vrm')) {
@@ -362,7 +312,6 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 			}
 			return;
 		}
-
 		if (file.type.startsWith('image/')) {
 			try {
 				toast.loading('Cargando imagen como fondo del estudio...', { id: 'drop-bg' });
@@ -381,10 +330,8 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 			}
 			return;
 		}
-
 		toast.error('Formato no compatible. Arrastra un modelo .vrm o una imagen .png/.jpg');
 	};
-
 	const handleDrop = (e: React.DragEvent) => {
 		e.preventDefault();
 		setIsDragging(false);
@@ -393,12 +340,10 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 			void handleFileUpload(file);
 		}
 	};
-
 	const handleCameraChange = (preset: VrmCameraPreset) => {
 		setCameraPreset(preset);
 		vrmManager.setCameraPreset(preset);
 	};
-
 	const copyOverlayUrl = () => {
 		if (typeof window === 'undefined') return;
 		const url = `${window.location.origin}/overlay/avatar`;
@@ -407,7 +352,6 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 		setTimeout(() => setCopied(false), 2000);
 		toast.success(`URL de OBS copiada: ${url}`);
 	};
-
 	// Generar estilos visuales del fondo
 	const renderBackgroundLayer = () => {
 		if (bgState.mode === 'color') {
@@ -418,7 +362,6 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 				/>
 			);
 		}
-
 		if (bgState.mode === 'image' && bgState.imageUrl) {
 			return (
 				<>
@@ -442,11 +385,9 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 				</>
 			);
 		}
-
 		// Presets
 		const match =
 			VRM_BACKGROUND_PRESETS.find((p) => p.id === bgState.presetId) || VRM_BACKGROUND_PRESETS[0];
-
 		if (match.backgroundColor) {
 			return (
 				<div
@@ -455,14 +396,12 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 				/>
 			);
 		}
-
 		return <div className={`absolute inset-0 transition-all duration-300 ${match.styleClass}`} />;
 	};
-
 	return (
 		<Card
 			ref={containerRef}
-			className={`relative flex min-h-[min(26.25rem,max(16rem,calc(100dvh_-_14rem)))] w-full flex-1 flex-col overflow-hidden bg-card shadow-2xl ${
+			className={`relative flex min-h-0 w-full flex-1 flex-col gap-0 overflow-hidden bg-card p-0 shadow-none ${
 				isFullscreen
 					? 'fixed inset-0 z-50 h-screen w-screen rounded-none border-0'
 					: 'rounded-2xl border border-border/80 transition-shadow duration-300'
@@ -476,100 +415,28 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 		>
 			{/* Encabezado HUD superior (Flotante en fullscreen para no redimensionar el canvas) */}
 			{isHudVisible && (
-				<CardHeader
-					className={`z-20 backdrop-blur-xl transition-all ${
-						isFullscreen
-							? 'pointer-events-auto absolute top-3 right-20 left-4 rounded-2xl border border-border/80 bg-background/85 px-4 py-2 shadow-2xl'
-							: 'relative shrink-0 border-border/60 border-b bg-card/85 px-4 py-2.5 sm:px-5'
-					}`}
-				>
-					<div className='flex flex-wrap items-center justify-between gap-3'>
-						{/* Estado del Modelo y Branding */}
-						<div className='flex min-w-0 items-center gap-3'>
-							<button
-								type='button'
-								onClick={() => setActiveTool(activeTool === 'model' ? null : 'model')}
-								className='flex size-9 items-center justify-center rounded-xl bg-secondary/15 text-secondary shadow-xs transition-transform hover:scale-105'
-								title='Ver detalles del avatar'
-							>
-								<Box className='size-5' />
-							</button>
-
-							<div className='min-w-0'>
-								<div className='flex flex-wrap items-center gap-2'>
-									<span className='font-bold font-display text-foreground text-sm tracking-tight sm:text-base'>
-										Sandy Studio 3D (VRM)
-									</span>
-									<Badge
-										variant='outline'
-										className='h-5 border-emerald-500/30 bg-emerald-500/10 px-2 font-mono text-[10px] text-emerald-400'
-									>
-										<span className='mr-1.5 size-1.5 animate-pulse rounded-full bg-emerald-400' />
-										{fps} FPS
-									</Badge>
-									{isPlayingAudio && (
-										<Badge
-											variant='outline'
-											className='h-5 border-primary/40 bg-primary/10 px-2 font-mono text-[10px] text-primary'
-										>
-											<span className='mr-1.5 size-1.5 animate-ping rounded-full bg-primary' />
-											AUDIO ON
-										</Badge>
-									)}
-								</div>
-
-								<div className='mt-0.5 flex items-center gap-2 text-xs'>
-									{modelMeta ? (
-										<span
-											className='flex max-w-[240px] items-center gap-1.5 truncate font-mono text-[11px] text-muted-foreground sm:max-w-md'
-											title={modelMeta.name}
-										>
-											<Sparkles className='size-3 shrink-0 text-secondary' />
-											<span className='truncate font-medium text-foreground'>{modelMeta.name}</span>
-											<span className='text-muted-foreground/60'>· VRM en memoria</span>
-										</span>
-									) : (
-										<span className='font-sans text-[11px] text-muted-foreground'>
-											Sin avatar cargado · Arrastra tu archivo .vrm
-										</span>
-									)}
-								</div>
-							</div>
-						</div>
-
-						{/* Botones de acción directos superiores */}
-						<div className='flex items-center gap-2'>
-							{/* Botón Overlay OBS */}
-							<Button
-								variant='outline'
-								size='sm'
-								onClick={copyOverlayUrl}
-								className='h-8 gap-1.5 border-border/70 px-3 font-medium font-sans text-xs shadow-xs hover:border-primary/50'
-								title='Copiar enlace de Navegador para OBS Studio'
-							>
-								{copied ? (
-									<Check className='size-3.5 text-emerald-400' />
-								) : (
-									<Copy className='size-3.5 text-primary' />
-								)}
-								<span className='hidden sm:inline'>Overlay OBS</span>
-							</Button>
-
-							{/* Botón Pantalla Completa */}
-							<Button
-								variant='ghost'
-								size='icon'
-								onClick={handleToggleFullscreen}
-								className='size-8 text-muted-foreground hover:text-foreground'
-								title={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
-							>
-								{isFullscreen ? <Minimize2 className='size-4' /> : <Maximize2 className='size-4' />}
-							</Button>
-						</div>
+				<div className='pointer-events-none absolute top-2 right-3 left-3 z-20 flex min-h-8 items-center justify-between gap-3 md:right-20'>
+					<div className='flex min-w-0 items-center gap-2 rounded-md bg-background/85 px-2 py-1'>
+						<span className='truncate font-medium text-foreground text-xs'>
+							{modelMeta?.name ?? 'Carga un avatar VRM'}
+						</span>
+						<span className='font-mono text-[10px] text-muted-foreground tabular-nums'>
+							{fps} FPS
+						</span>
+						{isPlayingAudio && <span className='text-secondary text-xs'>Voz activa</span>}
 					</div>
-				</CardHeader>
+					<Button
+						variant='ghost'
+						size='sm'
+						onClick={copyOverlayUrl}
+						className='pointer-events-auto h-8 shrink-0 gap-1.5 bg-background/85 px-2 text-xs'
+						aria-label='Copiar enlace del overlay para OBS'
+					>
+						{copied ? <Check className='size-3.5' /> : <Copy className='size-3.5' />}
+						<span>Overlay OBS</span>
+					</Button>
+				</div>
 			)}
-
 			{/* Escenario 3D Interactivo con Dock y Paneles Flotantes (VTube Studio / VNyan Style) */}
 			<CardContent
 				className={`relative flex min-h-0 flex-1 flex-col p-0 ${
@@ -579,20 +446,16 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 				<div
 					ref={viewportRef}
 					className={`relative w-full min-w-0 overflow-hidden ${
-						isFullscreen
-							? 'h-full flex-1'
-							: 'h-full min-h-[min(26.25rem,max(16rem,calc(100dvh_-_14rem)))] flex-1'
+						isFullscreen ? 'h-full flex-1' : 'h-full min-h-0 flex-1'
 					}`}
 				>
 					{/* Capa de Fondo (Presets / Color / Imagen) */}
 					{renderBackgroundLayer()}
-
 					{/* Canvas WebGL Three.js a 60 FPS */}
 					<canvas
 						ref={canvasRef}
 						className='relative z-10 block h-full w-full cursor-grab active:cursor-grabbing'
 					/>
-
 					{/* Dock Lateral Vertical (Estilo VTube Studio / VNyan) */}
 					<StudioDock
 						mode='vrm'
@@ -605,7 +468,6 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 						onToggleHud={() => setIsHudVisible(!isHudVisible)}
 						hasCustomBackground={bgState.mode !== 'preset' || bgState.presetId !== 'studio'}
 					/>
-
 					{/* Paneles Flotantes Modulares dentro del Escenario */}
 					<AnimatePresence>
 						{activeTool && isHudVisible && (
@@ -622,19 +484,15 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 										onClose={() => setActiveTool(null)}
 									/>
 								)}
-
 								{activeTool === 'expressions' && (
 									<VrmStudioExpressionsPanel onClose={() => setActiveTool(null)} />
 								)}
-
 								{activeTool === 'idle' && (
 									<VrmStudioIdlePanel onClose={() => setActiveTool(null)} />
 								)}
-
 								{activeTool === 'lipsync' && (
 									<VrmStudioLipSyncPanel onClose={() => setActiveTool(null)} />
 								)}
-
 								{activeTool === 'background' && (
 									<VrmStudioBackgroundPanel
 										state={bgState}
@@ -642,7 +500,6 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 										onClose={() => setActiveTool(null)}
 									/>
 								)}
-
 								{activeTool === 'camera' && (
 									<VrmStudioCameraPanel
 										currentPreset={cameraPreset}
@@ -650,7 +507,6 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 										onClose={() => setActiveTool(null)}
 									/>
 								)}
-
 								{activeTool === 'model' && (
 									<VrmStudioModelPanel
 										modelMeta={modelMeta}
@@ -658,7 +514,6 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 										onClose={() => setActiveTool(null)}
 									/>
 								)}
-
 								{activeTool === 'triggers' && (
 									<VrmStudioTriggersPanel
 										error={triggerRulesStatus === 'error'}
@@ -691,7 +546,6 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 							</motion.div>
 						)}
 					</AnimatePresence>
-
 					{/* Zona de Drop / Carga cuando no hay modelo o mientras se arrastra */}
 					{(!modelMeta || isDragging) && (
 						<button
@@ -734,7 +588,6 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 							</span>
 						</button>
 					)}
-
 					<input
 						ref={fileInputRef}
 						type='file'
@@ -751,5 +604,4 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 		</Card>
 	);
 }
-
 export default VrmCanvas;

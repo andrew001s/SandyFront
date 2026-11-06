@@ -2,6 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { Avatar2dCanvas } from './Avatar2dCanvas';
 
+vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: () => false }));
+
 vi.mock('@/containers/avatar/components/2d/Live2dRenderer', () => ({
 	Live2dRenderer: () => <div data-testid='live2d-renderer' />,
 }));
@@ -18,9 +20,8 @@ describe('Avatar2dCanvas expressions routing', () => {
 	it('routes expressions tool to Live2dExpressionsPanel when in live2d mode', () => {
 		render(<Avatar2dCanvas mode='live2d' />);
 
-		// Click expressions button in dock
-		const expressionsBtn = screen.getByRole('button', { name: /expresiones/i });
-		fireEvent.click(expressionsBtn);
+		fireEvent.keyDown(screen.getByRole('button', { name: 'Avatar' }), { key: 'ArrowDown' });
+		fireEvent.click(screen.getByRole('menuitem', { name: /expresiones manuales/i }));
 
 		// Live2D dedicated panel header must be visible
 		expect(screen.getByText(/expresiones live2d/i)).toBeInTheDocument();
@@ -32,9 +33,8 @@ describe('Avatar2dCanvas expressions routing', () => {
 	it('routes expressions tool to Avatar2dExpressionsPanel when in pngtuber mode', () => {
 		render(<Avatar2dCanvas mode='pngtuber' />);
 
-		// Click expressions button in dock
-		const expressionsBtn = screen.getByRole('button', { name: /expresiones/i });
-		fireEvent.click(expressionsBtn);
+		fireEvent.keyDown(screen.getByRole('button', { name: 'Avatar' }), { key: 'ArrowDown' });
+		fireEvent.click(screen.getByRole('menuitem', { name: /expresiones manuales/i }));
 
 		// PNGTuber panel header must be visible
 		expect(screen.getByText(/expresiones y gestos 2d/i)).toBeInTheDocument();

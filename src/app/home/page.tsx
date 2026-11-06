@@ -1,14 +1,5 @@
-import { DashboardShell } from '@/containers/dashboard/DashboardShell';
-import { HomeContainer } from '@/containers/home/HomeContainer';
-import { noIndexMetadata } from '@/lib/seo';
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = noIndexMetadata;
+import { permanentRedirect } from 'next/navigation';
 
 export default function Page() {
-	return (
-		<DashboardShell>
-			<HomeContainer />
-		</DashboardShell>
-	);
+	permanentRedirect('/avatar');
 }

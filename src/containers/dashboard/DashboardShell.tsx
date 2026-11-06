@@ -1,19 +1,15 @@
 'use client';
-
 import StreamChat from '@/components/Chat/Chat';
 import { StarField } from '@/components/landing/StarField';
-import { NewsModal, openNewsModal } from '@/components/modals/NewsModal';
+import { NewsModal } from '@/components/modals/NewsModal';
 import { AppSidebar } from '@/components/ui/app-sidebar';
 import { Footer } from '@/components/ui/footer';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSettingsProvider } from '@/context/AppSettingsContext';
 import { useLocalAiRelay } from '@/hooks/useLocalAiRelay';
 import { useShutdownOnExit } from '@/hooks/useShutdownOnExit';
-import { Moon, Sparkles, Sun } from 'lucide-react';
-import { useTheme } from 'next-themes';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
-
+import { DashboardActions } from './DashboardActions';
 /**
  * Atiende las peticiones de inferencia del backend cuando el proveedor es local.
  */
@@ -21,7 +17,6 @@ function LocalAiRelay() {
 	useLocalAiRelay();
 	return null;
 }
-
 /**
  * Apaga los servicios del usuario si cierra o recarga la página, para que no
  * quede el bot consumiendo tokens sin nadie delante.
@@ -30,59 +25,29 @@ function ShutdownOnExit() {
 	useShutdownOnExit();
 	return null;
 }
-
 export function DashboardShell({ children }: { children: React.ReactNode }) {
-	const { theme, setTheme } = useTheme();
 	const pathname = usePathname();
 	const isAvatarStudio = pathname?.startsWith('/avatar') ?? false;
-	const [mounted, setMounted] = useState(false);
-
-	useEffect(() => setMounted(true), []);
-
 	return (
 		<AppSettingsProvider>
 			<ShutdownOnExit />
 			<LocalAiRelay />
 			<StreamChat />
-			<SidebarProvider defaultOpen={true}>
+			<SidebarProvider
+				defaultOpen={true}
+				className={isAvatarStudio ? 'h-dvh min-h-0 overflow-hidden' : undefined}
+			>
 				<AppSidebar />
 				<SidebarInset
 					className={isAvatarStudio ? 'h-dvh min-h-0 w-full bg-background' : 'bg-background'}
 				>
 					{!isAvatarStudio && (
-						<header className='sticky top-0 z-20 flex h-14 items-center justify-between border-border border-b bg-card/80 px-4 backdrop-blur-md'>
-							<div className='flex items-center gap-2'>
-								<SidebarTrigger className='text-muted-foreground hover:text-foreground' />
-							</div>
-							{mounted && (
-								<div className='flex items-center gap-2'>
-									<button
-										type='button'
-										onClick={() => openNewsModal()}
-										className='flex h-8 items-center gap-1.5 rounded-lg border border-border bg-background/80 px-3 font-medium font-sans text-muted-foreground text-xs transition-colors hover:bg-muted/50 hover:text-foreground'
-										aria-label='Ver novedades'
-									>
-										<Sparkles className='size-3.5 text-primary' />
-										<span>Novedades</span>
-									</button>
-									<button
-										type='button'
-										onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-										className='flex size-8 items-center justify-center rounded-lg border border-border bg-background/80 text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground'
-										aria-label='Cambiar tema'
-									>
-										{theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-									</button>
-								</div>
-							)}
+						<header className='flex h-14 shrink-0 items-center justify-between border-border border-b bg-card px-3'>
+							<SidebarTrigger />
+							<DashboardActions />
 						</header>
 					)}
 					<NewsModal />
-					{isAvatarStudio && (
-						<div className='absolute top-3 left-3 z-40 md:hidden'>
-							<SidebarTrigger className='border border-border bg-card shadow-sm' />
-						</div>
-					)}
 					<div
 						className={
 							isAvatarStudio

@@ -10,6 +10,7 @@ import {
 	DialogTitle,
 } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
+import { useDraggableWindow } from '@/hooks/useDraggableWindow';
 import { parseAutomaticReactionConfig } from '@/lib/avatar/reactionMappings';
 import type { AutomaticReactionConfig } from '@/lib/avatar/reactionMappings';
 import { Check, Eye, X } from 'lucide-react';
@@ -55,12 +56,14 @@ export function AutomaticReactionsCard({
 	onClose,
 }: AutomaticReactionSelection & { onClose?: () => void }) {
 	const toggleIdPrefix = useId();
+	const editorWindow = useDraggableWindow();
 	const [editingReaction, setEditingReaction] = useState<string | null>(null);
 	const [draft, setDraft] = useState<AutomaticReactionConfig>({ expressions: [], intensity: 1 });
 	const [isPreviewing, setIsPreviewing] = useState(false);
 	const [isMinimized, setIsMinimized] = useState(false);
 
 	const openEditor = (reaction: string) => {
+		editorWindow.reset();
 		setEditingReaction(reaction);
 		setDraft(parseAutomaticReactionConfig(mappings[`${scope}:${reaction}`] ?? mappings[reaction]));
 		setIsPreviewing(false);
@@ -196,10 +199,18 @@ export function AutomaticReactionsCard({
 				}}
 			>
 				<DialogContent
+					ref={editorWindow.dialogRef}
+					style={editorWindow.style}
 					overlayClassName='bg-black/15 backdrop-blur-none'
-					className='top-1/2 right-auto left-1/2 flex h-fit max-h-[min(90dvh,42rem)] w-[calc(100vw-2rem)] translate-x-[-50%] translate-y-[-50%] flex-col gap-0 overflow-hidden p-0 sm:w-[min(34vw,26rem)]'
+					className='right-auto flex h-fit max-h-[min(90dvh,42rem)] w-[calc(100vw-2rem)] translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden p-0 data-[state=closed]:animate-none data-[state=open]:animate-none sm:w-[min(26rem,calc(100vw-2rem))]'
 				>
-					<DialogHeader className='shrink-0 border-border/70 border-b px-5 py-4'>
+					<DialogHeader
+						{...editorWindow.handleProps}
+						role='toolbar'
+						tabIndex={0}
+						aria-label='Mover ventana de expresión: arrastra o usa las flechas. Inicio la centra.'
+						className='shrink-0 cursor-grab touch-none select-none border-border/70 border-b px-5 py-4 pr-12 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset active:cursor-grabbing'
+					>
 						<DialogTitle>
 							{REACTIONS.find(([key]) => key === editingReaction)?.[1] ?? 'Configurar reacción'}
 						</DialogTitle>
@@ -208,7 +219,7 @@ export function AutomaticReactionsCard({
 						</DialogDescription>
 					</DialogHeader>
 
-					<div className='max-h-[min(55dvh,28rem)] min-h-0 space-y-4 overflow-y-auto overscroll-contain px-5 py-4'>
+					<div className='max-h-[min(55dvh,28rem)] min-h-0 space-y-4 overflow-y-auto overscroll-contain px-5 py-4 [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar]:size-1'>
 						<fieldset className='m-0 grid min-w-0 gap-1.5 border-0 p-0 sm:grid-cols-2'>
 							<legend className='sr-only'>Expresiones disponibles</legend>
 							{expressions.map((expression) => {

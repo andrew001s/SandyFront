@@ -1,5 +1,4 @@
 'use client';
-
 import { GlobalAudioPlayer } from '@/components/audio/GlobalAudioPlayer';
 import { DashboardTourCard } from '@/components/tour/DashboardTourCard';
 import { DASHBOARD_TOUR_STORAGE_KEY, dashboardTourSteps } from '@/components/tour/dashboardTour';
@@ -12,14 +11,11 @@ import { usePathname } from 'next/navigation';
 import { NextStep, NextStepProvider, useNextStep } from 'nextstepjs';
 import posthog from 'posthog-js';
 import { type ReactNode, useEffect, useRef } from 'react';
-
 function PostHogUserIdentification() {
 	const { isLoaded, isSignedIn, user } = useUser();
 	const identifiedUserId = useRef<string | null>(null);
-
 	useEffect(() => {
 		if (!isLoaded) return;
-
 		if (!isSignedIn || !user) {
 			if (identifiedUserId.current) {
 				posthog.reset();
@@ -27,11 +23,9 @@ function PostHogUserIdentification() {
 			}
 			return;
 		}
-
 		if (identifiedUserId.current && identifiedUserId.current !== user.id) {
 			posthog.reset();
 		}
-
 		if (identifiedUserId.current !== user.id) {
 			posthog.identify(user.id, {
 				...(user.primaryEmailAddress?.emailAddress
@@ -42,52 +36,40 @@ function PostHogUserIdentification() {
 			identifiedUserId.current = user.id;
 		}
 	}, [isLoaded, isSignedIn, user]);
-
 	return null;
 }
-
 function DashboardTourLauncher() {
 	const pathname = usePathname();
 	const { isLoaded, isSignedIn, user } = useUser();
 	const { startNextStep, closeNextStep } = useNextStep();
 	const startedForUser = useRef<string | null>(null);
-
 	useEffect(() => {
-		if (!isLoaded || !isSignedIn || pathname !== '/home' || !user?.id) {
+		if (!isLoaded || !isSignedIn || pathname !== '/avatar' || !user?.id) {
 			return;
 		}
-
 		if (typeof window === 'undefined') {
 			return;
 		}
-
 		const storageKey = `${DASHBOARD_TOUR_STORAGE_KEY}:${user.id}`;
-
 		if (window.localStorage.getItem(storageKey) === '1' || startedForUser.current === user.id) {
 			return;
 		}
-
-		startedForUser.current = user.id;
 		const timer = window.setTimeout(() => {
+			startedForUser.current = user.id;
 			startNextStep('dashboard-tour');
 		}, 700);
-
 		return () => {
 			window.clearTimeout(timer);
 		};
 	}, [isLoaded, isSignedIn, pathname, startNextStep, user?.id]);
-
 	useEffect(() => {
-		if (pathname === '/home') {
+		if (pathname === '/avatar') {
 			return;
 		}
-
 		closeNextStep();
 	}, [closeNextStep, pathname]);
-
 	return null;
 }
-
 export function AppProviders({ children }: { children: ReactNode }) {
 	const pathname = usePathname();
 	const isAppRoute = pathname !== '/';
@@ -95,7 +77,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
 	const { resolvedTheme, theme } = useTheme();
 	const activeTheme = resolvedTheme ?? theme ?? 'dark';
 	const isLightTheme = activeTheme === 'light';
-
 	return (
 		<>
 			<PostHogUserIdentification />
@@ -103,6 +84,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
 				<NextStepProvider>
 					<NextStep
 						steps={dashboardTourSteps}
+						displayArrow={false}
+						scrollToTop={false}
+						noInViewScroll
+						cardTransition={{ duration: 0.15, ease: 'easeOut' }}
 						cardComponent={DashboardTourCard}
 						shadowRgb={isLightTheme ? '109, 91, 208' : '3, 6, 23'}
 						shadowOpacity={isLightTheme ? '0.18' : '0.62'}

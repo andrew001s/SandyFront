@@ -33,7 +33,7 @@ const script: ChatLine[] = [
 	{ kind: 'sandy', text: '¡Muchísimas gracias por el apoyo al canal!' },
 	{ kind: 'chat', user: 'ByBoxi', color: '#FF75A0', text: 'Sandy, ¿puedes hacer un bailecito?' },
 	{ kind: 'thinking' },
-	{ kind: 'sandy', text: '¡Claro que sí! Movimiento enviado a VTube Studio' },
+	{ kind: 'sandy', text: '¡Claro que sí! Expresión aplicada en el estudio' },
 ];
 
 function TwitchBadge({ badge }: { badge: NonNullable<ChatLine['badge']> }) {
@@ -225,8 +225,8 @@ const integrations = [
 	{ name: 'Twitch', icon: <SiTwitch size={13} className='text-[#9146FF]' /> },
 	{ name: 'Kick', icon: <SiKick size={13} className='text-[#53FC18]' /> },
 	{ name: 'YouTube', icon: <SiYoutube size={13} className='text-[#FF0000]' /> },
-	{ name: 'VTube Studio (Live2D)', icon: null },
-	{ name: 'VNyan (VRM 3D)', icon: null },
+	{ name: 'PNGTuber y Live2D', icon: null },
+	{ name: 'VRM en el navegador', icon: null },
 ];
 
 export function Hero() {
@@ -265,23 +265,9 @@ export function Hero() {
 						transition={{ duration: 0.6, delay: 0.15 }}
 						className='font-bold font-display text-4xl text-foreground leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl'
 					>
-						Sandy Studio
+						Tu VTuber con IA,
 						<br />
-						tu chat conversa con una{' '}
-						<span className='bg-gradient-to-r from-primary via-[#B8AAFF] to-[#F28BD8] bg-clip-text text-transparent'>
-							VTuber IA
-						</span>{' '}
-						<motion.span
-							animate={{ rotate: [0, 18, -10, 0], scale: [1, 1.2, 1] }}
-							transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY }}
-							className='inline-block align-[-0.08em]'
-						>
-							<Star
-								size={28}
-								className='fill-amber-400 text-amber-400 drop-shadow-[0_0_12px_rgba(253,230,138,0.9)] dark:fill-[#FDE68A] dark:text-[#FDE68A]'
-							/>
-						</motion.span>
-						.
+						en tu navegador.
 					</motion.h1>
 
 					<motion.p
@@ -290,9 +276,9 @@ export function Hero() {
 						transition={{ duration: 0.6, delay: 0.25 }}
 						className='mt-6 max-w-xl font-sans text-base text-muted-foreground leading-relaxed sm:text-lg'
 					>
-						Una co-animadora inteligente que lee el chat de Twitch, Kick y YouTube, responde con su
-						propia voz sintetizada, sincroniza labios en VTube Studio y VNyan, y comprende lo que
-						dices por tu micrófono.
+						Carga tu PNGTuber, Live2D o VRM en Sandy Studio. Dale voz, elige qué emociones puede
+						usar y conversa con el chat de Twitch, Kick y YouTube. Prepara tu escena y llévala a
+						OBS.
 					</motion.p>
 
 					<motion.div
@@ -305,7 +291,7 @@ export function Hero() {
 							action={isSignedIn ? 'app' : 'signup'}
 							className='group h-11 rounded-lg bg-primary px-6 font-sans font-semibold text-primary-foreground shadow-[0_1px_2px_rgba(0,0,0,0.2),0_4px_16px_rgba(140,124,255,0.25)] transition-all hover:bg-primary/90'
 						>
-							<span>{isSignedIn ? 'Ir a la consola' : 'Empezar gratis'}</span>
+							<span>{isSignedIn ? 'Abrir el estudio' : 'Empezar gratis'}</span>
 							<ArrowRight size={16} className='transition-transform group-hover:translate-x-1' />
 						</AuthAction>
 					</motion.div>

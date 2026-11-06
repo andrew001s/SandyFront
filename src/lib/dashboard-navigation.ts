@@ -1,7 +1,7 @@
 import { CircleUserRound, Gift, Plug, Settings2, ShieldCheck, Tv } from 'lucide-react';
 
 export const dashboardNavigation = [
-	{ href: '/avatar', label: 'Estudio', icon: Tv, tourId: 'sidebar-tour-dashboard' },
+	{ href: '/avatar', label: 'Estudio', icon: Tv, tourId: 'sidebar-tour-studio' },
 	{ href: '/conexiones', label: 'Conexiones', icon: Plug, tourId: 'sidebar-tour-conexiones' },
 	{ href: '/recompensas', label: 'Recompensas', icon: Gift, tourId: 'sidebar-tour-recompensas' },
 	{

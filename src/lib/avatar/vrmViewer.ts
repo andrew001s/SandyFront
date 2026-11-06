@@ -374,40 +374,7 @@ export class VrmViewer {
 	 * Activa una expresión facial (Alegría, Enojo, Tristeza, Sorpresa, etc.).
 	 */
 	public setExpression(name: string, intensity = 1.0): void {
-		if (VRM_EMOTIONS.some((preset) => preset.id === name)) {
-			this.setExpressions([name], intensity);
-			return;
-		}
-		if (!this.currentVrm?.expressionManager) return;
-		const mgr = this.currentVrm.expressionManager;
-
-		this.activeEmotion = name;
-		this.activeEmotionIntensity = intensity;
-
-		// Limpiar expresiones previas excepto neutro
-		const expressions = ['happy', 'joy', 'angry', 'sad', 'sorrow', 'surprised', 'relaxed', 'fun'];
-		for (const expr of expressions) {
-			try {
-				mgr.setValue(expr, 0);
-			} catch {
-				// Ignorar
-			}
-		}
-
-		if (name === 'neutral') return;
-
-		const mappedName =
-			name === 'joy' ? 'happy' : name === 'sorrow' ? 'sad' : name === 'fun' ? 'relaxed' : name;
-
-		try {
-			mgr.setValue(mappedName, Math.max(0, Math.min(1, intensity)));
-		} catch {
-			try {
-				mgr.setValue(name, Math.max(0, Math.min(1, intensity)));
-			} catch {
-				// Ignorar si el modelo no tiene el blendshape
-			}
-		}
+		this.setExpressions([name], intensity);
 	}
 
 	public setExpressions(names: string[], intensity = 1.0): void {
@@ -417,7 +384,9 @@ export class VrmViewer {
 		const safeIntensity = Math.max(0, Math.min(1, intensity));
 		this.activeEmotion = names.join(',') || 'neutral';
 		this.activeEmotionIntensity = safeIntensity;
-		const channels = new Set<string>();
+		const channels = new Set<string>(
+			mgr.expressions.map((expression) => expression.expressionName),
+		);
 		for (const preset of VRM_EMOTIONS) {
 			for (const name of Object.keys(preset.vrm0Blendshapes)) channels.add(name);
 			for (const name of Object.keys(preset.vrm1Blendshapes)) channels.add(name);
@@ -433,6 +402,10 @@ export class VrmViewer {
 
 		const mixedValues = new Map<string, number>();
 		for (const name of names) {
+			if (mgr.expressions.some((expression) => expression.expressionName === name)) {
+				mixedValues.set(name, safeIntensity);
+				continue;
+			}
 			const preset = VRM_EMOTIONS.find((item) => item.id === name);
 			if (!preset || preset.id === 'neutral') continue;
 			for (const [channel, weight] of Object.entries({
@@ -456,7 +429,7 @@ export class VrmViewer {
 	}
 
 	public resetExpressions(): void {
-		this.setExpressions(['neutral'], 0);
+		this.setExpressions([], 0);
 	}
 
 	public setBoneRotation(boneName: string, degrees: number): void {

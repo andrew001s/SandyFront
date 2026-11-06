@@ -12,7 +12,7 @@ interface Props {
 
 export function AvatarSoftwareSelector({ selectedSoftware, connectedSoftware, onSelect }: Props) {
 	return (
-		<div className='flex w-full min-w-0 lg:flex-1 lg:justify-end'>
+		<div id='studio-tour-formats' className='flex w-full min-w-0 lg:flex-1 lg:justify-end'>
 			<Tabs
 				value={selectedSoftware}
 				onValueChange={(val) => onSelect(val as AvatarSoftware)}
@@ -32,6 +32,7 @@ export function AvatarSoftwareSelector({ selectedSoftware, connectedSoftware, on
 					</TabsTrigger>
 					<TabsTrigger
 						value='live2d'
+						aria-label='Avatar 2D (Live2D)'
 						onClick={() => onSelect('live2d')}
 						className='flex h-8 min-w-0 items-center justify-center gap-1 rounded-md px-1.5 font-medium font-sans text-[11px] transition-colors data-[state=active]:bg-cyan-500/10 data-[state=active]:font-semibold data-[state=active]:text-cyan-500 sm:gap-1.5 sm:px-2.5 sm:text-xs'
 					>
@@ -44,6 +45,7 @@ export function AvatarSoftwareSelector({ selectedSoftware, connectedSoftware, on
 					</TabsTrigger>
 					<TabsTrigger
 						value='vrm'
+						aria-label='Avatar 3D (VRM)'
 						onClick={() => onSelect('vrm')}
 						className='flex h-8 min-w-0 items-center justify-center gap-1 rounded-md px-1.5 font-medium font-sans text-[11px] transition-colors data-[state=active]:bg-secondary/10 data-[state=active]:font-semibold data-[state=active]:text-secondary sm:gap-1.5 sm:px-2.5 sm:text-xs'
 					>

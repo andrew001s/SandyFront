@@ -23,9 +23,9 @@ const steps = [
 	{
 		number: '03',
 		icon: <Mic size={18} />,
-		title: 'Vincula tu avatar',
+		title: 'Carga tu avatar',
 		description:
-			'Conecta tu modelo Live2D en VTube Studio o tu avatar VRM 3D en VNyan a través de WebSocket.',
+			'Carga imágenes PNG, tu modelo Live2D o un archivo VRM en el estudio. Ajusta sus expresiones, su cámara y el fondo.',
 	},
 	{
 		number: '04',

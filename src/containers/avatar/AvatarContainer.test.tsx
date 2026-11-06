@@ -16,6 +16,11 @@ let resolveNextAccountSettings = (_value: {
 	void _value;
 };
 
+vi.mock('@/components/ui/sidebar', () => ({
+	SidebarTrigger: () => <button type='button'>Menú</button>,
+}));
+vi.mock('@/containers/dashboard/DashboardActions', () => ({ DashboardActions: () => null }));
+
 vi.mock('@/api/settings', () => ({
 	getSettings: getSettingsMock,
 	saveSettings: saveSettingsMock,

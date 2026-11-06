@@ -1,9 +1,9 @@
 export function AvatarHeader() {
 	return (
-		<header className='flex min-w-0 shrink-0 items-center'>
+		<div id='studio-tour-header' className='flex min-w-0 shrink-0 items-center'>
 			<h1 className='font-display font-semibold text-foreground text-lg tracking-tight sm:text-xl'>
-				Avatar de Emisión
+				Estudio
 			</h1>
-		</header>
+		</div>
 	);
 }

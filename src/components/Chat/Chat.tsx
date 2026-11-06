@@ -359,7 +359,7 @@ const StreamChat = () => {
 		};
 	}, [getToken, isLoaded, isSignedIn, pushSystemMessage]);
 
-	return <div className='mx-auto space-y-4 p-4' />;
+	return null;
 };
 
 export default StreamChat;

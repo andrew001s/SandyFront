@@ -1,11 +1,9 @@
 'use client';
-
 import { FeatureFlagsPanel } from '@/components/FeatureFlags/FeatureFlagsPanel';
 import { MicrophoneTile } from '@/components/ServiceControl/MicrophoneTile';
 import { ServiceStartCard } from '@/components/ServiceControl/ServiceStartCard';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Avatar2dCameraPanel } from '@/containers/avatar/components/2d/Avatar2dCameraPanel';
 import { Avatar2dExpressionsPanel } from '@/containers/avatar/components/2d/Avatar2dExpressionsPanel';
 import { Avatar2dLipSyncPanel } from '@/containers/avatar/components/2d/Avatar2dLipSyncPanel';
@@ -34,17 +32,15 @@ import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
 import { loadLive2dModel, restoreSavedLive2dModel } from '@/lib/avatar2d/live2dModel';
 import type { Avatar2dMode, Avatar2dState } from '@/lib/avatar2d/types';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, Copy, Maximize2, Minimize2, Tv, Upload } from 'lucide-react';
+import { Check, Copy, Upload } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import AvatarFooter from '../AvatarFooter';
-
 interface Props {
 	className?: string;
 	mode?: Avatar2dMode;
 	automaticReactions?: AutomaticReactionSelection;
 }
-
 const fileToDataUrl = (file: File): Promise<string> => {
 	return new Promise((resolve, reject) => {
 		const reader = new FileReader();
@@ -53,7 +49,6 @@ const fileToDataUrl = (file: File): Promise<string> => {
 		reader.readAsDataURL(file);
 	});
 };
-
 export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Props) {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<Avatar2dState>(avatar2dManager.getState());
@@ -64,36 +59,29 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 	const [copied, setCopied] = useState(false);
 	const [bgState, setBgState] = useState<VrmBackgroundState>(DEFAULT_VRM_BACKGROUND_STATE);
 	const [isDragging, setIsDragging] = useState(false);
-
 	const currentMode = mode ?? state.mode;
-
 	useEffect(() => {
 		if (mode && mode !== avatar2dManager.getState().mode) {
 			avatar2dManager.setMode(mode);
 		}
 	}, [mode]);
-
 	useEffect(() => {
 		const unsubState = avatar2dManager.subscribe((next) => setState(next));
 		const storedBg = getStoredBackgroundState();
 		setBgState(storedBg);
-
 		const unsubAudio = AudioQueueManager.getInstance().subscribe((playing) => {
 			setIsPlayingAudio(playing);
 		});
-
 		const handleFullscreenChange = () => {
 			setIsFullscreen(Boolean(document.fullscreenElement));
 		};
 		document.addEventListener('fullscreenchange', handleFullscreenChange);
-
 		return () => {
 			unsubState();
 			unsubAudio();
 			document.removeEventListener('fullscreenchange', handleFullscreenChange);
 		};
 	}, []);
-
 	useEffect(() => {
 		if (currentMode !== 'live2d') return;
 		let cancelled = false;
@@ -104,12 +92,10 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 			cancelled = true;
 		};
 	}, [currentMode]);
-
 	const handleToggleFullscreen = async () => {
 		try {
 			const target = containerRef.current;
 			if (!target) return;
-
 			if (!document.fullscreenElement) {
 				if (target.requestFullscreen) {
 					await target.requestFullscreen();
@@ -121,7 +107,6 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 			toast.error('No se pudo alternar pantalla completa');
 		}
 	};
-
 	const copyOverlayUrl = async () => {
 		const overlayUrl = `${window.location.origin}/overlay/avatar2d`;
 		try {
@@ -137,15 +122,12 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 			});
 		}
 	};
-
 	const handleBackgroundChange = (next: VrmBackgroundState) => {
 		setBgState(next);
 		storeBackgroundState(next);
 	};
-
 	const handleFileUpload = async (file: File) => {
 		const fileName = file.name.toLowerCase();
-
 		// 1. Imagen para fondo o sprite PNGTuber
 		if (file.type.startsWith('image/')) {
 			try {
@@ -165,7 +147,6 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 			}
 			return;
 		}
-
 		// 2. Archivo ZIP de modelo Live2D (ej. RetrynowMiku.zip, huohuo2.zip)
 		if (fileName.endsWith('.zip')) {
 			const toastId = toast.loading(`Desempaquetando modelo Live2D: ${file.name}...`);
@@ -189,7 +170,6 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 			}
 			return;
 		}
-
 		// 3. Archivo .model3.json de Live2D
 		if (fileName.endsWith('.model3.json') || fileName.endsWith('.moc3')) {
 			toast.info(`Modelo Live2D detectado: "${file.name}"`, {
@@ -199,7 +179,6 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 			});
 			return;
 		}
-
 		// 4. Archivo VRM (3D)
 		if (fileName.endsWith('.vrm')) {
 			toast.info(`Detectado avatar 3D: "${file.name}"`, {
@@ -209,7 +188,6 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 			});
 			return;
 		}
-
 		// 5. Archivo MMD (.pmx / .pmd)
 		if (fileName.endsWith('.pmx') || fileName.endsWith('.pmd')) {
 			toast.error(`Modelo MMD 3D detectado: "${file.name}"`, {
@@ -219,12 +197,10 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 			});
 			return;
 		}
-
 		toast.error(
 			'Formato no reconocido. Arrastra una imagen (.png, .jpg), un modelo Live2D descomprimido o .vrm.',
 		);
 	};
-
 	const handleDrop = (e: React.DragEvent) => {
 		e.preventDefault();
 		setIsDragging(false);
@@ -233,7 +209,6 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 			void handleFileUpload(file);
 		}
 	};
-
 	// Capa de fondo configurable idéntica a la del 3D
 	const renderBackgroundLayer = () => {
 		if (bgState.mode === 'preset' && bgState.presetId === 'checker') {
@@ -241,7 +216,6 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 				<div className='pointer-events-none absolute inset-0 bg-[repeating-conic-gradient(#27272a_0%_25%,#18181b_0%_50%)] bg-[size:24px_24px] opacity-70' />
 			);
 		}
-
 		if (bgState.mode === 'color') {
 			return (
 				<div
@@ -250,7 +224,6 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 				/>
 			);
 		}
-
 		if (bgState.mode === 'image' && bgState.imageUrl) {
 			return (
 				<>
@@ -274,10 +247,8 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 				</>
 			);
 		}
-
 		const match =
 			VRM_BACKGROUND_PRESETS.find((p) => p.id === bgState.presetId) || VRM_BACKGROUND_PRESETS[0];
-
 		if (match.backgroundColor) {
 			return (
 				<div
@@ -286,17 +257,15 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 				/>
 			);
 		}
-
 		return <div className={`absolute inset-0 transition-all duration-300 ${match.styleClass}`} />;
 	};
-
 	return (
 		<Card
 			ref={containerRef}
-			className={`relative flex w-full flex-col overflow-hidden bg-card shadow-2xl ${
+			className={`relative flex w-full flex-col gap-0 overflow-hidden bg-card p-0 shadow-none ${
 				isFullscreen
 					? 'fixed inset-0 z-50 h-screen w-screen rounded-none border-0'
-					: 'min-h-[min(26.25rem,max(16rem,calc(100dvh_-_14rem)))] flex-1 rounded-2xl border border-border/80 transition-shadow duration-300'
+					: 'min-h-0 flex-1 rounded-2xl border border-border/80 transition-shadow duration-300'
 			} ${className}`}
 			onDragOver={(e) => {
 				e.preventDefault();
@@ -311,71 +280,25 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 		>
 			{/* Encabezado HUD superior del Estudio 2D (Flotante en fullscreen para no redimensionar el canvas) */}
 			{isHudVisible && (
-				<CardHeader
-					className={`z-20 backdrop-blur-xl transition-all ${
-						isFullscreen
-							? 'pointer-events-auto absolute top-3 right-20 left-4 rounded-2xl border border-border/80 bg-background/85 px-4 py-2 shadow-2xl'
-							: 'relative shrink-0 border-border/60 border-b bg-card/85 px-3 py-2 sm:px-4'
-					}`}
-				>
-					<div className='flex flex-wrap items-center justify-between gap-3'>
-						<div className='flex items-center gap-3'>
-							<div className='flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary'>
-								<Tv className='size-4' />
-							</div>
-
-							<div>
-								<div className='flex items-center gap-2'>
-									<h2 className='font-bold font-display text-foreground text-sm tracking-tight sm:text-base'>
-										{currentMode === 'pngtuber' ? 'Sandy Studio PNGTuber' : 'Sandy Studio 2D'}
-									</h2>
-
-									{isPlayingAudio && (
-										<Badge
-											variant='outline'
-											className='h-5 border-emerald-500/40 bg-emerald-500/10 font-mono text-[10px] text-emerald-400'
-										>
-											<span className='mr-1 size-1.5 animate-pulse rounded-full bg-emerald-400' />
-											AUDIO ON
-										</Badge>
-									)}
-								</div>
-							</div>
-						</div>
-
-						{/* Botones de acción directos */}
-						<div className='flex items-center gap-2'>
-							{/* Botón Overlay OBS */}
-							<Button
-								variant='outline'
-								size='sm'
-								onClick={copyOverlayUrl}
-								className='h-8 gap-1.5 border-border/70 px-3 font-medium font-sans text-xs shadow-xs hover:border-primary/50'
-								title='Copiar enlace de Navegador para OBS Studio'
-							>
-								{copied ? (
-									<Check className='size-3.5 text-emerald-400' />
-								) : (
-									<Copy className='size-3.5 text-primary' />
-								)}
-								<span className='hidden sm:inline'>Overlay OBS 2D</span>
-							</Button>
-
-							{/* Botón Pantalla Completa */}
-							<Button
-								variant='ghost'
-								size='icon'
-								onClick={handleToggleFullscreen}
-								className='size-8 text-muted-foreground hover:text-foreground'
-								title={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
-							>
-								{isFullscreen ? <Minimize2 className='size-4' /> : <Maximize2 className='size-4' />}
-							</Button>
-						</div>
+				<div className='pointer-events-none absolute top-2 right-3 left-3 z-20 flex min-h-8 items-center justify-between gap-3 md:right-20'>
+					<div className='flex min-w-0 items-center gap-2 rounded-md bg-background/85 px-2 py-1'>
+						<span className='truncate font-medium text-foreground text-xs'>
+							{currentMode === 'pngtuber' ? 'PNGTuber' : 'Live2D'}
+						</span>
+						{isPlayingAudio && <span className='text-secondary text-xs'>Voz activa</span>}
 					</div>
-				</CardHeader>
+					<Button
+						variant='ghost'
+						size='sm'
+						onClick={copyOverlayUrl}
+						className='pointer-events-auto h-8 shrink-0 gap-1.5 bg-background/85 px-2 text-xs'
+						aria-label='Copiar enlace del overlay para OBS'
+					>
+						{copied ? <Check className='size-3.5' /> : <Copy className='size-3.5' />}
+						<span>Overlay OBS</span>
+					</Button>
+				</div>
 			)}
-
 			{/* Escenario 2D interactivo con Dock y Paneles */}
 			<CardContent
 				className={`relative flex flex-col p-0 ${
@@ -384,14 +307,11 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 			>
 				<div
 					className={`relative w-full min-w-0 overflow-hidden ${
-						isFullscreen
-							? 'h-full flex-1'
-							: 'h-full min-h-[min(26.25rem,max(16rem,calc(100dvh_-_14rem)))] flex-1'
+						isFullscreen ? 'h-full flex-1' : 'h-full min-h-0 flex-1'
 					}`}
 				>
 					{/* Capa de fondo */}
 					{renderBackgroundLayer()}
-
 					{/* Renderizador activo: PNGTuber o Live2D */}
 					{currentMode === 'pngtuber' ? (
 						<PngTuberRenderer
@@ -404,7 +324,6 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 							onTransformChange={(transform) => avatar2dManager.setTransform(transform, 'live2d')}
 						/>
 					)}
-
 					{/* Dock Lateral Vertical Unificado (Lado derecho homologado) */}
 					<StudioDock
 						mode={currentMode}
@@ -417,7 +336,6 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 						onToggleHud={() => setIsHudVisible(!isHudVisible)}
 						hasCustomBackground={bgState.mode !== 'preset' || bgState.presetId !== 'studio'}
 					/>
-
 					{/* Paneles Flotantes Modulares dentro del Escenario */}
 					<AnimatePresence>
 						{activeTool && isHudVisible && (
@@ -436,7 +354,6 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 										/>
 									</motion.div>
 								)}
-
 								{(activeTool === 'emotions' || activeTool === 'expressions') &&
 									(currentMode === 'live2d' ? (
 										<Live2dExpressionsPanel
@@ -446,11 +363,9 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 									) : (
 										<Avatar2dExpressionsPanel onClose={() => setActiveTool(null)} />
 									))}
-
 								{activeTool === 'lipsync' && (
 									<Avatar2dLipSyncPanel onClose={() => setActiveTool(null)} />
 								)}
-
 								{activeTool === 'background' && (
 									<motion.div
 										initial={{ opacity: 0, scale: 0.96, x: 20 }}
@@ -466,7 +381,6 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 										/>
 									</motion.div>
 								)}
-
 								{activeTool === 'camera' && (
 									<Avatar2dCameraPanel
 										mode={currentMode}
@@ -474,11 +388,9 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 										onClose={() => setActiveTool(null)}
 									/>
 								)}
-
 								{activeTool === 'settings' && (
 									<Avatar2dSettingsPanel mode={currentMode} onClose={() => setActiveTool(null)} />
 								)}
-
 								{(activeTool === 'microphone' ||
 									activeTool === 'services' ||
 									activeTool === 'features') && (
@@ -501,7 +413,6 @@ export function Avatar2dCanvas({ className = '', mode, automaticReactions }: Pro
 							</>
 						)}
 					</AnimatePresence>
-
 					{/* Zona de Drop visual mientras se arrastra un archivo */}
 					<AnimatePresence>
 						{isDragging && (

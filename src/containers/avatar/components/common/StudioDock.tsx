@@ -1,12 +1,14 @@
 'use client';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useServiceStatus } from '@/hooks/useServiceStatus';
 import {
 	Box,
 	Camera,
 	Eye,
 	EyeOff,
+	type LucideIcon,
 	Maximize2,
 	Mic,
 	Minimize2,
@@ -19,10 +21,10 @@ import {
 	Wind,
 	Zap,
 } from 'lucide-react';
+import { DropdownMenu } from 'radix-ui';
 import type { ReactElement } from 'react';
 
 export type StudioAvatarMode = 'vrm' | 'pngtuber' | 'live2d';
-
 export type StudioActiveTool =
 	| 'expressions'
 	| 'automaticReactions'
@@ -38,7 +40,6 @@ export type StudioActiveTool =
 	| 'services'
 	| 'features'
 	| null;
-
 export interface StudioDockProps {
 	mode: StudioAvatarMode;
 	activeTool: string | null;
@@ -53,19 +54,18 @@ export interface StudioDockProps {
 	className?: string;
 }
 
+type Tool = { id: NonNullable<StudioActiveTool>; label: string; icon: LucideIcon };
 function DockTooltip({
 	label,
 	side,
 	children,
-}: {
-	label: string;
-	side: 'left' | 'right';
-	children: ReactElement;
-}) {
+}: { label: string; side: 'left' | 'right' | 'top'; children: ReactElement }) {
 	return (
 		<Tooltip>
 			<TooltipTrigger asChild>{children}</TooltipTrigger>
-			<TooltipContent side={side}>{label}</TooltipContent>
+			<TooltipContent side={side} className='pointer-events-none'>
+				{label}
+			</TooltipContent>
 		</Tooltip>
 	);
 }
@@ -74,7 +74,6 @@ export function StudioDock({
 	mode,
 	activeTool,
 	onToggleTool,
-	isPlayingAudio,
 	isFullscreen,
 	onToggleFullscreen,
 	isHudVisible,
@@ -83,21 +82,68 @@ export function StudioDock({
 	position = 'right',
 	className = '',
 }: StudioDockProps) {
-	const { serviceStatus, hasLoaded, hasError } = useServiceStatus();
+	const { serviceStatus } = useServiceStatus();
+	const isMobile = useMediaQuery('(max-width: 767px)');
+	const side = isMobile ? 'top' : position === 'left' ? 'right' : 'left';
 	const posClass =
 		position === 'left'
 			? 'bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-3 right-3 md:top-4 md:right-auto md:bottom-4 md:left-4 md:my-auto'
 			: 'bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-3 right-3 md:top-4 md:right-4 md:bottom-4 md:left-auto md:my-auto';
-	const tooltipSide = position === 'left' ? 'right' : 'left';
-
-	if (!isHudVisible) {
+	const buttonClass = (active: boolean) =>
+		`relative flex size-11 shrink-0 items-center justify-center rounded-xl border transition-colors focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-[-2px] ${active ? 'border-primary/50 bg-primary/15 text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:text-foreground'}`;
+	const toggle = (tool: NonNullable<StudioActiveTool>) =>
+		onToggleTool(
+			activeTool === tool || (tool === 'expressions' && activeTool === 'emotions') ? null : tool,
+		);
+	const avatarTools: Tool[] = [{ id: 'expressions', label: 'Expresiones manuales', icon: Smile }];
+	if (mode === 'vrm')
+		avatarTools.push(
+			{ id: 'model', label: 'Avatar VRM', icon: Box },
+			{ id: 'idle', label: 'Idle del avatar', icon: Wind },
+			{ id: 'triggers', label: 'Nodos activables', icon: Zap },
+		);
+	else
+		avatarTools.push({
+			id: 'settings',
+			label: mode === 'pngtuber' ? 'Ajustes PNGTuber' : 'Ajustes Live2D',
+			icon: Box,
+		});
+	const groups: {
+		label: string;
+		tourId: string;
+		icon: LucideIcon;
+		tools: Tool[];
+		indicator?: string;
+	}[] = [
+		{ label: 'Avatar', tourId: 'studio-tour-avatar', icon: Smile, tools: avatarTools },
+		{
+			label: 'Escenario',
+			tourId: 'studio-tour-scene',
+			icon: Palette,
+			tools: [
+				{ id: 'background', label: 'Fondo y Escenario', icon: Palette },
+				{ id: 'camera', label: 'Cámara y Encuadre', icon: Camera },
+			],
+			indicator: hasCustomBackground ? 'bg-primary' : undefined,
+		},
+		{
+			label: 'Opciones avanzadas',
+			tourId: 'studio-tour-controls',
+			icon: SlidersHorizontal,
+			tools: [
+				{ id: 'lipsync', label: 'Prueba de lip sync y voz', icon: Waves },
+				{ id: 'features', label: 'Funciones del dashboard', icon: SlidersHorizontal },
+			],
+		},
+	];
+	if (!isHudVisible)
 		return (
 			<div className={`pointer-events-auto absolute ${posClass} z-30 h-fit w-fit ${className}`}>
-				<DockTooltip label='Mostrar controles de estudio' side={tooltipSide}>
+				<DockTooltip label='Mostrar controles de estudio' side={side}>
 					<button
 						type='button'
 						onClick={onToggleHud}
-						className='flex size-11 items-center justify-center rounded-full border border-border/70 bg-background/80 text-muted-foreground shadow-lg backdrop-blur-md transition-all hover:bg-card hover:text-foreground'
+						className={`${buttonClass(false)} border-border bg-background`}
 						aria-label='Mostrar controles de estudio'
 					>
 						<Eye className='size-4' />
@@ -105,264 +151,130 @@ export function StudioDock({
 				</DockTooltip>
 			</div>
 		);
-	}
-
 	return (
 		<div
-			className={`pointer-events-auto absolute ${posClass} z-30 flex min-h-0 select-none items-center gap-1 rounded-2xl border border-border/80 bg-background/90 p-1.5 shadow-2xl backdrop-blur-xl md:h-fit md:max-h-[calc(100%-2rem)] md:w-[4.25rem] md:flex-col [&_button:focus-visible]:outline-2 [&_button:focus-visible]:outline-primary [&_button:focus-visible]:outline-offset-[-2px] ${className}`}
+			id='studio-tour-dock'
+			className={`pointer-events-auto absolute ${posClass} z-30 flex min-h-0 select-none items-center gap-1 rounded-2xl border border-border/80 bg-background p-1.5 shadow-lg md:h-fit md:max-h-[calc(100%-2rem)] md:w-[4.25rem] md:flex-col ${className}`}
 		>
-			<div className='flex min-h-0 min-w-0 max-w-full flex-1 flex-row items-center gap-1 overflow-x-auto overscroll-x-contain px-0.5 py-1 [scrollbar-color:var(--border)_transparent] [scrollbar-width:none] md:w-full md:flex-auto md:flex-col md:gap-1 md:overflow-y-auto md:overflow-x-hidden md:overscroll-y-contain md:[scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar]:size-1'>
-				{/* 1. Expresiones */}
-				<DockTooltip label='Expresiones' side={tooltipSide}>
+			<div className='flex shrink-0 items-center gap-1 md:w-full md:flex-col'>
+				{(
+					[
+						{
+							id: 'services',
+							label: 'Servicio de emisión',
+							icon: Power,
+							tourId: 'studio-tour-services',
+						},
+						{
+							id: 'microphone',
+							label: 'Hablar con la VTuber',
+							icon: Mic,
+							tourId: 'studio-tour-voice',
+						},
+					] as const
+				).map((tool) => (
+					<DockTooltip key={tool.id} label={tool.label} side={side}>
+						<button
+							id={tool.tourId}
+							type='button'
+							aria-label={tool.label}
+							aria-pressed={activeTool === tool.id}
+							onClick={() => toggle(tool.id)}
+							className={buttonClass(activeTool === tool.id)}
+						>
+							<tool.icon className='size-4.5' />
+							{tool.id === 'services' && serviceStatus?.running && (
+								<span
+									aria-hidden='true'
+									className={`absolute top-1 right-1 size-2 rounded-full ${tool.id === 'services' ? 'bg-emerald-400' : 'bg-secondary'}`}
+								/>
+							)}
+						</button>
+					</DockTooltip>
+				))}
+			</div>
+			<div className='flex min-h-0 min-w-0 flex-1 items-center gap-1 overflow-x-auto overscroll-contain [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin] md:w-full md:flex-auto md:flex-col md:overflow-y-auto md:overflow-x-hidden [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar]:size-1'>
+				{groups.map((group) => (
+					<DropdownMenu.Root key={group.label} modal={false}>
+						<DockTooltip label={group.label} side={side}>
+							<DropdownMenu.Trigger asChild>
+								<button
+									id={group.tourId}
+									type='button'
+									aria-label={group.label}
+									className={buttonClass(
+										group.tools.some((tool) => activeTool === tool.id) ||
+											(group.label === 'Avatar' && activeTool === 'emotions'),
+									)}
+								>
+									<group.icon className='size-4.5' />
+									{group.indicator && (
+										<span
+											aria-hidden='true'
+											className={`absolute top-1 right-1 size-2 rounded-full ${group.indicator}`}
+										/>
+									)}
+								</button>
+							</DropdownMenu.Trigger>
+						</DockTooltip>
+						<DropdownMenu.Portal>
+							<DropdownMenu.Content
+								side={side}
+								sideOffset={12}
+								collisionPadding={12}
+								className='z-50 min-w-52 rounded-xl border border-border bg-popover p-1.5 text-popover-foreground shadow-lg'
+							>
+								<DropdownMenu.Label className='px-3 py-2 font-semibold text-sm'>
+									{group.label}
+								</DropdownMenu.Label>
+								{group.tools.map((tool) => (
+									<DropdownMenu.Item
+										key={tool.id}
+										onSelect={() => toggle(tool.id)}
+										className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm outline-none focus:bg-muted ${activeTool === tool.id ? 'bg-primary/10 text-primary' : ''}`}
+									>
+										<tool.icon className='size-4' />
+										<span>{tool.label}</span>
+									</DropdownMenu.Item>
+								))}
+							</DropdownMenu.Content>
+						</DropdownMenu.Portal>
+					</DropdownMenu.Root>
+				))}
+				<DockTooltip label='Reacciones automáticas' side={side}>
 					<button
+						id='studio-tour-reactions'
 						type='button'
-						onClick={() =>
-							onToggleTool(
-								activeTool === 'expressions' || activeTool === 'emotions' ? null : 'expressions',
-							)
-						}
-						className={`relative flex size-11 shrink-0 items-center justify-center rounded-xl border transition-all ${
-							activeTool === 'expressions' || activeTool === 'emotions'
-								? 'scale-105 border-secondary/50 bg-secondary/20 text-secondary shadow-md ring-1 ring-border/50'
-								: 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'
-						}`}
-						aria-label='Expresiones'
-					>
-						<Smile className='size-4.5' />
-					</button>
-				</DockTooltip>
-				<DockTooltip label='Reacciones automáticas' side={tooltipSide}>
-					<button
-						type='button'
-						onClick={() =>
-							onToggleTool(activeTool === 'automaticReactions' ? null : 'automaticReactions')
-						}
-						className={`flex size-11 shrink-0 items-center justify-center rounded-xl border transition-colors ${activeTool === 'automaticReactions' ? 'border-primary/50 bg-primary/20 text-primary' : 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'}`}
+						onClick={() => toggle('automaticReactions')}
 						aria-label='Reacciones automáticas'
 						aria-pressed={activeTool === 'automaticReactions'}
+						className={buttonClass(activeTool === 'automaticReactions')}
 					>
 						<Sparkles className='size-4.5' />
 					</button>
 				</DockTooltip>
-
-				{/* 2. Ajustes de Lip Sync */}
-				<DockTooltip label='Ajustes de lip sync y voz' side={tooltipSide}>
-					<button
-						type='button'
-						onClick={() => onToggleTool(activeTool === 'lipsync' ? null : 'lipsync')}
-						className={`relative flex size-11 shrink-0 items-center justify-center rounded-xl border transition-all ${
-							activeTool === 'lipsync'
-								? 'scale-105 border-primary/50 bg-primary/20 text-primary shadow-md ring-1 ring-border/50'
-								: 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'
-						}`}
-						aria-label='Lip Sync & Voz'
-					>
-						<Waves className='size-4.5' />
-						{isPlayingAudio && (
-							<span className='-top-0.5 -right-0.5 absolute flex size-2.5'>
-								<span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75' />
-								<span className='relative inline-flex size-2.5 rounded-full bg-primary' />
-							</span>
-						)}
-					</button>
-				</DockTooltip>
-				<DockTooltip label='Abrir control del micrófono' side={tooltipSide}>
-					<button
-						type='button'
-						onClick={() => onToggleTool(activeTool === 'microphone' ? null : 'microphone')}
-						className={`flex size-11 shrink-0 items-center justify-center rounded-xl border transition-colors ${activeTool === 'microphone' ? 'border-secondary/50 bg-secondary/20 text-secondary' : 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'}`}
-						aria-label='Abrir control del micrófono'
-						aria-pressed={activeTool === 'microphone'}
-					>
-						<Mic className='size-4.5' />
-					</button>
-				</DockTooltip>
-				<DockTooltip label='Funciones del dashboard' side={tooltipSide}>
-					<button
-						type='button'
-						onClick={() => onToggleTool(activeTool === 'features' ? null : 'features')}
-						className={`flex size-11 shrink-0 items-center justify-center rounded-xl border transition-colors ${activeTool === 'features' ? 'border-primary/50 bg-primary/20 text-primary' : 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'}`}
-						aria-label='Funciones del dashboard'
-						aria-pressed={activeTool === 'features'}
-					>
-						<SlidersHorizontal className='size-4.5' />
-					</button>
-				</DockTooltip>
-				<DockTooltip
-					label={
-						!hasLoaded
-							? 'Verificando servicios'
-							: hasError
-								? 'Estado de servicios no disponible'
-								: serviceStatus?.running
-									? 'Servicios activos'
-									: 'Servicios pausados'
-					}
-					side={tooltipSide}
-				>
-					<button
-						type='button'
-						onClick={() => onToggleTool(activeTool === 'services' ? null : 'services')}
-						className={`relative flex size-11 shrink-0 items-center justify-center rounded-xl border transition-colors ${activeTool === 'services' ? 'border-primary/50 bg-primary/20 text-primary' : 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'}`}
-						aria-label={`Control de servicios, ${!hasLoaded ? 'verificando estado' : hasError ? 'estado no disponible' : serviceStatus?.running ? 'activos' : 'pausados'}`}
-						aria-pressed={activeTool === 'services'}
-					>
-						<Power className='size-4.5' />
-						<span
-							aria-hidden='true'
-							className={`absolute top-1.5 right-1.5 size-2 rounded-full ${!hasLoaded || hasError ? 'bg-amber-400' : serviceStatus?.running ? 'bg-emerald-400' : 'bg-muted-foreground/60'}`}
-						/>
-					</button>
-				</DockTooltip>
-
-				{/* 3. Fondo */}
-				<DockTooltip label='Fondo y escenario' side={tooltipSide}>
-					<button
-						type='button'
-						onClick={() => onToggleTool(activeTool === 'background' ? null : 'background')}
-						className={`relative flex size-11 shrink-0 items-center justify-center rounded-xl border transition-all ${
-							activeTool === 'background'
-								? 'scale-105 border-emerald-500/50 bg-emerald-500/20 text-emerald-400 shadow-md ring-1 ring-border/50'
-								: 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'
-						}`}
-						aria-label='Fondo y Escenario'
-					>
-						<Palette className='size-4.5' />
-						{hasCustomBackground && (
-							<span className='-top-0.5 -right-0.5 absolute size-2 rounded-full bg-emerald-400' />
-						)}
-					</button>
-				</DockTooltip>
-
-				{mode === 'vrm' && (
-					<DockTooltip label='Nodos activables' side={tooltipSide}>
-						<button
-							aria-label='Nodos activables'
-							className={`flex size-11 shrink-0 items-center justify-center rounded-xl border transition-all ${activeTool === 'triggers' ? 'border-primary/50 bg-primary/20 text-primary' : 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'}`}
-							onClick={() => onToggleTool(activeTool === 'triggers' ? null : 'triggers')}
-							type='button'
-						>
-							<Zap className='size-4' />
-						</button>
-					</DockTooltip>
-				)}
-
-				{/* 4. Cámara y Encuadre (Disponible en 3D, PNGTuber y Live2D) */}
-				<DockTooltip label='Cámara y encuadre' side={tooltipSide}>
-					<button
-						type='button'
-						onClick={() => onToggleTool(activeTool === 'camera' ? null : 'camera')}
-						className={`relative flex size-11 shrink-0 items-center justify-center rounded-xl border transition-all ${
-							activeTool === 'camera'
-								? 'scale-105 border-amber-500/50 bg-amber-500/20 text-amber-400 shadow-md ring-1 ring-border/50'
-								: 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'
-						}`}
-						aria-label='Cámara y Encuadre'
-					>
-						<Camera className='size-4.5' />
-					</button>
-				</DockTooltip>
-
-				{/* Herramientas específicas 3D VRM */}
-				{mode === 'vrm' && (
-					<>
-						<DockTooltip label='Avatar VRM' side={tooltipSide}>
-							<button
-								type='button'
-								onClick={() => onToggleTool(activeTool === 'model' ? null : 'model')}
-								className={`relative flex size-11 shrink-0 items-center justify-center rounded-xl border transition-all ${
-									activeTool === 'model'
-										? 'scale-105 border-cyan-500/50 bg-cyan-500/20 text-cyan-400 shadow-md ring-1 ring-border/50'
-										: 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'
-								}`}
-								aria-label='Avatar VRM'
-							>
-								<Box className='size-4.5' />
-							</button>
-						</DockTooltip>
-						<DockTooltip label='Idle del avatar' side={tooltipSide}>
-							<button
-								type='button'
-								onClick={() => onToggleTool(activeTool === 'idle' ? null : 'idle')}
-								className={`relative flex size-11 shrink-0 items-center justify-center rounded-xl border transition-all ${
-									activeTool === 'idle'
-										? 'border-primary/50 bg-primary/20 text-primary ring-1 ring-border/50'
-										: 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'
-								}`}
-								aria-label='Ajustes de idle del avatar'
-							>
-								<Wind className='size-4.5' />
-							</button>
-						</DockTooltip>
-					</>
-				)}
-
-				{/* Herramientas específicas PNGTuber */}
-				{mode === 'pngtuber' && (
-					<DockTooltip label='Ajustes PNGTuber' side={tooltipSide}>
-						<button
-							type='button'
-							onClick={() => onToggleTool(activeTool === 'settings' ? null : 'settings')}
-							className={`relative flex size-11 shrink-0 items-center justify-center rounded-xl border transition-all ${
-								activeTool === 'settings'
-									? 'scale-105 border-primary/50 bg-primary/20 text-primary shadow-md ring-1 ring-border/50'
-									: 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'
-							}`}
-							aria-label='Ajustes PNGTuber'
-						>
-							<Box className='size-4.5' />
-						</button>
-					</DockTooltip>
-				)}
-
-				{/* Herramientas específicas Live2D */}
-				{mode === 'live2d' && (
-					<DockTooltip label='Ajustes Live2D' side={tooltipSide}>
-						<button
-							type='button'
-							onClick={() => onToggleTool(activeTool === 'settings' ? null : 'settings')}
-							className={`relative flex size-11 shrink-0 items-center justify-center rounded-xl border transition-all ${
-								activeTool === 'settings'
-									? 'scale-105 border-cyan-500/50 bg-cyan-500/20 text-cyan-400 shadow-md ring-1 ring-border/50'
-									: 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'
-							}`}
-							aria-label='Ajustes Live2D'
-						>
-							<Box className='size-4.5' />
-						</button>
-					</DockTooltip>
-				)}
 			</div>
-
 			<div className='h-6 w-px shrink-0 bg-border/70 md:h-px md:w-6' />
-
 			<div className='flex shrink-0 items-center gap-1 md:flex-col'>
-				{/* Pantalla Completa */}
 				<DockTooltip
 					label={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
-					side={tooltipSide}
+					side={side}
 				>
 					<button
 						type='button'
 						onClick={onToggleFullscreen}
-						className={`flex size-11 shrink-0 items-center justify-center rounded-xl border transition-all ${
-							isFullscreen
-								? 'border-primary/50 bg-primary/20 text-primary shadow-xs'
-								: 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'
-						}`}
 						aria-label={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
+						className={buttonClass(isFullscreen)}
 					>
 						{isFullscreen ? <Minimize2 className='size-4' /> : <Maximize2 className='size-4' />}
 					</button>
 				</DockTooltip>
-
-				{/* Ocultar interfaz */}
-				<DockTooltip label='Ocultar interfaz gráfica' side={tooltipSide}>
+				<DockTooltip label='Ocultar interfaz gráfica' side={side}>
 					<button
 						type='button'
 						onClick={onToggleHud}
-						className='flex size-11 shrink-0 items-center justify-center rounded-xl border border-transparent text-muted-foreground transition-all hover:border-border/60 hover:bg-card/70 hover:text-foreground'
 						aria-label='Ocultar interfaz gráfica'
+						className={buttonClass(false)}
 					>
 						<EyeOff className='size-4' />
 					</button>

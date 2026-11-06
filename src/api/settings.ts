@@ -39,6 +39,7 @@ export type SettingsPayload = {
 	chat_command?: string;
 	onboarding_completed?: boolean;
 	vrm_trigger_rules?: VrmTriggerRule[];
+	expression_hotkeys?: Record<string, string>;
 	automatic_reaction_mappings?: Record<string, string>;
 	automatic_reaction_scope?: 'pngtuber' | 'live2d' | 'vrm' | 'vtubestudio';
 };

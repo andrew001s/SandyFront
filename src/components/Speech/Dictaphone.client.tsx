@@ -176,7 +176,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 			posthog.capture('ai_request_failed', { code: getAiErrorCode(error) });
 		} finally {
 			if (reactionEmotionTask) {
-				await reactionEmotionTask.catch((error) => {
+				await Promise.resolve(reactionEmotionTask).catch((error) => {
 					console.error('No se pudo procesar la expresión de reacción:', error);
 				});
 			}
