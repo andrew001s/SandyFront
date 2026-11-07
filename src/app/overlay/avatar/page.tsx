@@ -1,5 +1,7 @@
 'use client';
 
+import { SupportWatermark } from '@/containers/avatar/components/common/SupportWatermark';
+
 import {
 	DEFAULT_VRM_BACKGROUND_STATE,
 	VRM_BACKGROUND_PRESETS,
@@ -113,7 +115,7 @@ export default function AvatarOverlayPage() {
 	};
 
 	return (
-		<main className='fixed inset-0 m-0 h-screen w-screen overflow-hidden bg-transparent p-0'>
+		<main className='@container fixed inset-0 m-0 h-screen w-screen overflow-hidden bg-transparent p-0'>
 			{/* Capa de fondo sincronizada en tiempo real con el estudio */}
 			{renderBackgroundLayer()}
 
@@ -123,6 +125,7 @@ export default function AvatarOverlayPage() {
 				className='relative z-10 block h-full w-full'
 				style={{ background: 'transparent' }}
 			/>
+			<SupportWatermark />
 		</main>
 	);
 }

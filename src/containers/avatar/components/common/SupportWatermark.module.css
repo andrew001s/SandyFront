@@ -1,0 +1,147 @@
+.root {
+	position: absolute;
+	z-index: 20;
+	bottom: 12px;
+	left: 12px;
+	width: min(352px, calc(100% - 24px));
+	pointer-events: none;
+}
+
+.visit {
+	display: flex;
+	align-items: flex-end;
+	gap: 4px;
+	color: #16182e;
+	text-decoration: none;
+	animation: support-visit 10s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.visit:focus-visible {
+	border-radius: 12px;
+	outline: 2px solid #8c7cff;
+	outline-offset: 4px;
+}
+
+.visit:focus-within {
+	opacity: 1;
+	transform: none;
+	animation: none;
+}
+
+.mascot {
+	display: block;
+	width: 112px;
+	height: 112px;
+	flex-shrink: 0;
+	pointer-events: auto;
+}
+
+.mascot img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+.bubble {
+	position: relative;
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	flex-direction: column;
+	gap: 5px;
+	margin-bottom: 20px;
+	border: 1px solid #d8d4ec;
+	border-radius: 16px 16px 16px 4px;
+	padding: 12px 14px;
+	background: #fff;
+	pointer-events: auto;
+}
+
+.bubble::before {
+	position: absolute;
+	bottom: 12px;
+	left: -6px;
+	width: 10px;
+	height: 10px;
+	border-bottom: 1px solid #d8d4ec;
+	border-left: 1px solid #d8d4ec;
+	background: #fff;
+	content: "";
+	transform: rotate(45deg);
+}
+
+.title {
+	font-size: 14px;
+	font-weight: 700;
+	line-height: 1.25;
+}
+
+.message {
+	font-size: 12px;
+	line-height: 1.4;
+}
+
+.link {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	color: #5142b5;
+	font-size: 12px;
+	font-weight: 700;
+	line-height: 1.4;
+}
+
+@keyframes support-visit {
+	0%,
+	100% {
+		opacity: 0;
+		transform: translateY(24px);
+	}
+	2.6%,
+	97.4% {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@container (max-width: 480px) {
+	.mascot {
+		width: 80px;
+		height: 96px;
+	}
+	.bubble {
+		gap: 4px;
+		padding: 10px;
+	}
+	.title {
+		font-size: 13px;
+	}
+}
+
+@media (max-width: 767px) {
+	.withDock {
+		bottom: 84px;
+	}
+}
+
+@media (min-width: 768px) {
+	.withDock {
+		max-width: calc(100% - 108px);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.visit {
+		animation-name: support-visit-still;
+	}
+	@keyframes support-visit-still {
+		0%,
+		100% {
+			opacity: 0;
+		}
+		2.6%,
+		97.4% {
+			opacity: 1;
+		}
+	}
+}

@@ -19,6 +19,7 @@ import {
 	type StudioActiveTool,
 	StudioDock,
 } from '@/containers/avatar/components/common/StudioDock';
+import { SupportWatermark } from '@/containers/avatar/components/common/SupportWatermark';
 import { VrmStudioBackgroundPanel } from '@/containers/avatar/components/vrm/VrmStudioBackgroundPanel';
 import { AudioQueueManager } from '@/lib/audioQueueSingleton';
 import {
@@ -314,7 +315,7 @@ export function Avatar2dCanvas({
 				}`}
 			>
 				<div
-					className={`relative w-full min-w-0 overflow-hidden ${
+					className={`@container relative w-full min-w-0 overflow-hidden ${
 						isFullscreen ? 'h-full flex-1' : 'h-full min-h-0 flex-1'
 					}`}
 				>
@@ -337,6 +338,7 @@ export function Avatar2dCanvas({
 						/>
 					)}
 					{/* Dock Lateral Vertical Unificado (Lado derecho homologado) */}
+					{!externalAvatar && <SupportWatermark dockVisible={isHudVisible} />}
 					<StudioDock
 						serviceControlsOnly={externalAvatar}
 						mode={currentMode}

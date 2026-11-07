@@ -47,6 +47,7 @@ import { Check, Copy, RefreshCw, Upload, User } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import AvatarFooter from './AvatarFooter';
+import { SupportWatermark } from './common/SupportWatermark';
 interface Props {
 	className?: string;
 	onEmotionSelect?: (emotion: string) => void;
@@ -445,7 +446,7 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 			>
 				<div
 					ref={viewportRef}
-					className={`relative w-full min-w-0 overflow-hidden ${
+					className={`@container relative w-full min-w-0 overflow-hidden ${
 						isFullscreen ? 'h-full flex-1' : 'h-full min-h-0 flex-1'
 					}`}
 				>
@@ -457,6 +458,7 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 						className='relative z-10 block h-full w-full cursor-grab active:cursor-grabbing'
 					/>
 					{/* Dock Lateral Vertical (Estilo VTube Studio / VNyan) */}
+					<SupportWatermark dockVisible={isHudVisible} />
 					<StudioDock
 						mode='vrm'
 						activeTool={activeTool}
