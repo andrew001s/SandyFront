@@ -4,6 +4,7 @@ import {
 	type SupportStatus,
 	createSupportOverlayKey,
 	getSupportStatus,
+	redeemSupportLicenseCode,
 	startSupportCheckout,
 } from '@/api/support';
 import { useAuth } from '@clerk/nextjs';
@@ -27,6 +28,7 @@ type PurchaseContext = {
 	error: string | null;
 	refresh: () => Promise<SupportStatus | undefined>;
 	checkout: () => Promise<Awaited<ReturnType<typeof startSupportCheckout>>>;
+	redeem: (code: string) => Promise<void>;
 	createOverlayUrl: (path: OverlayPath) => Promise<string>;
 	rotateOverlayKey: () => Promise<void>;
 };
@@ -124,6 +126,13 @@ export function SupportPurchaseProvider({ children }: { children: ReactNode }) {
 			if (owner.current !== expectedOwner) throw new Error('La sesión cambió.');
 			await refresh();
 			return result;
+		},
+		redeem: async (code) => {
+			const { token, expectedOwner } = await authenticated();
+			const result = await redeemSupportLicenseCode(token, code);
+			if (owner.current !== expectedOwner) throw new Error('La sesión cambió.');
+			sequence.current++;
+			setRecord({ owner: expectedOwner, status: result, error: null, loading: false });
 		},
 		createOverlayUrl: async (path) => {
 			if (!['/overlay/avatar', '/overlay/avatar2d'].includes(path))

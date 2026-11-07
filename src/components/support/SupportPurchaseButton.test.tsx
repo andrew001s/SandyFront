@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
 		error: null,
 		status: { available: true, watermark_free: false, state: 'free' },
 		checkout: vi.fn(),
+		redeem: vi.fn(),
 		refresh: vi.fn(),
 		rotateOverlayKey: vi.fn(),
 	},
@@ -28,7 +29,7 @@ describe('support purchase dialog', () => {
 	afterEach(cleanup);
 	const open = () => fireEvent.click(screen.getByRole('button', { name: /Apoyar Sandy Studio/ }));
 
-	it('shows the fixed price and verified email before leaving for payment', async () => {
+	it('shows the fixed price and code input before leaving for payment', async () => {
 		render(<SupportPurchaseButton />);
 		open();
 		fireEvent.click(screen.getByRole('button', { name: 'Preparar compra de US$3' }));
@@ -39,6 +40,7 @@ describe('support purchase dialog', () => {
 			'href',
 			'https://ko-fi.com/s/product001',
 		);
+		expect(screen.getByLabelText('Código de Sandy Studio Plus')).toBeInTheDocument();
 		expect(screen.queryByText('Beneficio sin marca activo')).not.toBeInTheDocument();
 	});
 

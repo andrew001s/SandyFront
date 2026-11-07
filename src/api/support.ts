@@ -35,6 +35,11 @@ export const getSupportStatus = async (
 	(await backendClient.get('/support/status', options(token, signal))).data;
 export const startSupportCheckout = async (token: string): Promise<SupportCheckout> =>
 	(await backendClient.post('/support/checkout', {}, options(token))).data;
+export const redeemSupportLicenseCode = async (
+	token: string,
+	code: string,
+): Promise<SupportStatus> =>
+	(await backendClient.post('/support/redeem', { code }, options(token))).data;
 export const createSupportOverlayKey = async (token: string, rotate = false): Promise<string> =>
 	(await backendClient.post('/support/overlay-key', { rotate }, options(token))).data.token;
 export const getOverlaySupportStatus = async (

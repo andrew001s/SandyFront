@@ -21,6 +21,7 @@ function PurchasePanel({
 	purchase,
 }: { purchase: NonNullable<ReturnType<typeof useSupportPurchase>> }) {
 	const [checkout, setCheckout] = useState<SupportCheckout | null>(null);
+	const [code, setCode] = useState('');
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [notice, setNotice] = useState<string | null>(null);
@@ -90,14 +91,8 @@ function PurchasePanel({
 					) : checkout?.checkout_url ? (
 						<div className='space-y-3'>
 							<p className='text-muted-foreground text-xs'>
-								Usa exactamente este correo verificado en el pago de Ko-fi:
+								Ko-fi enviará tu código de Sandy Studio Plus al correo que uses en el pago.
 							</p>
-							<Input
-								id='support-checkout-email'
-								value={checkout.checkout_email ?? ''}
-								readOnly
-								aria-label='Correo verificado para el pago de Ko-fi'
-							/>
 							<a
 								href={checkout.checkout_url}
 								target='_blank'
@@ -106,6 +101,29 @@ function PurchasePanel({
 							>
 								Pagar US$3 en Ko-fi <ExternalLink aria-hidden className='size-4' />
 							</a>
+							<label htmlFor='support-license-code' className='block font-medium text-sm'>
+								Código de Sandy Studio Plus
+							</label>
+							<Input
+								id='support-license-code'
+								value={code}
+								placeholder='SANDY-XXXX-XXXX-XXXX-XXXX'
+								onChange={(event) => setCode(event.target.value.toUpperCase())}
+								autoComplete='one-time-code'
+								maxLength={27}
+							/>
+							<Button
+								variant='outline'
+								disabled={busy || code.trim().length < 11}
+								onClick={() =>
+									void action(async () => {
+										await purchase.redeem(code);
+										setCode('');
+									})
+								}
+							>
+								Activar Sandy Studio Plus
+							</Button>
 						</div>
 					) : (
 						<Button
