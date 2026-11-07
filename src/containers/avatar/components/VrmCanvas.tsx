@@ -20,6 +20,7 @@ import { VrmStudioIdlePanel } from '@/containers/avatar/components/vrm/VrmStudio
 import { VrmStudioLipSyncPanel } from '@/containers/avatar/components/vrm/VrmStudioLipSyncPanel';
 import { VrmStudioModelPanel } from '@/containers/avatar/components/vrm/VrmStudioModelPanel';
 import { VrmStudioTriggersPanel } from '@/containers/avatar/components/vrm/VrmStudioTriggersPanel';
+import { useSupportPurchase } from '@/context/SupportPurchaseContext';
 import { AudioQueueManager } from '@/lib/audioQueueSingleton';
 import {
 	DEFAULT_VRM_BACKGROUND_STATE,
@@ -54,6 +55,7 @@ interface Props {
 	automaticReactions?: AutomaticReactionSelection;
 }
 export function VrmCanvas({ className = '', automaticReactions }: Props) {
+	const supportPurchase = useSupportPurchase();
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const viewportRef = useRef<HTMLDivElement | null>(null);
@@ -345,13 +347,21 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 		setCameraPreset(preset);
 		vrmManager.setCameraPreset(preset);
 	};
-	const copyOverlayUrl = () => {
+	const copyOverlayUrl = async () => {
 		if (typeof window === 'undefined') return;
-		const url = `${window.location.origin}/overlay/avatar`;
-		void navigator.clipboard.writeText(url);
-		setCopied(true);
-		setTimeout(() => setCopied(false), 2000);
-		toast.success(`URL de OBS copiada: ${url}`);
+		try {
+			const url = supportPurchase
+				? await supportPurchase.createOverlayUrl('/overlay/avatar')
+				: `${window.location.origin}/overlay/avatar`;
+			await navigator.clipboard.writeText(url);
+			setCopied(true);
+			setTimeout(() => setCopied(false), 2000);
+			toast.success('Enlace de OBS copiado. Mantén privado el enlace vinculado a tu cuenta.');
+		} catch {
+			toast.error(
+				'No se pudo preparar el enlace. Comprueba tu conexión y los permisos del portapapeles.',
+			);
+		}
 	};
 	// Generar estilos visuales del fondo
 	const renderBackgroundLayer = () => {

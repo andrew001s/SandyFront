@@ -34,29 +34,40 @@ El script recorta las celdas, alinea los pies, exporta el GIF transparente y
 comprueba que haya varios fotogramas y que todos duren 150 ms. Usa la instalación
 de Sharp incluida por Next.js. Los originales generados permanecen intactos.
 
-## Propuesta: cuenta de apoyo sin aviso
+## Compra única sin marca: US$3
 
-La retirada de pago aún no está implementada. La opción inicial más acotada sería
-una compra única, asociada a la cuenta de Sandy Studio. Requiere trabajo de backend,
-persistencia y validación de pagos; no se resuelve con un interruptor en el navegador.
+La integración de frontend y backend está preparada y deshabilitada hasta configurar
+Ko-fi y aplicar las migraciones. El botón «Apoyar Sandy» prepara la compra y permite
+comprobar su estado. Los aportes voluntarios son independientes. El pago puede hacerse
+con cualquier correo verificado en la cuenta de Sandy; solo una confirmación válida del
+servidor retira la marca. No se guarda una bandera de pago en las preferencias editables
+ni en localStorage.
 
-1. Definir el producto y el importe. Separar este beneficio de los aportes
-   voluntarios existentes para no prometerlo a quienes hagan cualquier donación.
-2. Vincular la compra a la cuenta autenticada mediante una reclamación verificable
-   emitida por el servidor. No confiar solo en el nombre público del donante.
-3. Recibir y validar el webhook del proveedor, registrar cada evento una sola vez
-   y conceder un permiso de solo lectura para el cliente, como `watermark_free`.
-4. Consultar ese permiso en el estudio. Las fuentes de OBS necesitarían un enlace
-   firmado por el servidor que identifique el permiso sin exponer la sesión del usuario.
-5. Resolver compras duplicadas, soporte, devoluciones y revocación del beneficio.
+El proveedor `SupportPurchaseProvider` consulta el estado por cuenta y retira el GIF
+en cuanto el servidor confirma el beneficio. Descarta respuestas de cuentas anteriores,
+vuelve a comprobar permisos activos cada minuto y al recuperar foco o conexión.
+Si no puede verificar la compra, muestra la marca hasta poder comprobarla de nuevo.
+El usuario debe iniciar la compra desde Sandy antes de pagar; el backend vincula
+automáticamente el pago a cualquiera de sus correos verificados dentro de esa ventana.
+Ya no se solicita el identificador de transacción en la interfaz.
 
-Ko-fi ya permite notificar pagos mediante webhooks. Una membresía recurrente
-necesitaría controlar vencimientos: su documentación indica que los webhooks
-notifican pagos, pero no la terminación de una membresía. Por eso la compra única
-es una primera implementación más pequeña.
+Las acciones «Overlay OBS» de PNG, 2D y VRM generan enlaces con un permiso de lectura
+limitado en `#support=...`, sin exponer la sesión Clerk. Se genera también para cuentas
+gratuitas, de modo que la misma fuente se actualice después de comprar.
+`OverlaySupportProvider` limpia el fragmento y consulta el permiso cada minuto sin
+cookies. Las fuentes anteriores a esta función deben copiarse una vez. Desde «Mi apoyo»
+se pueden renovar los permisos, invalidando todos los enlaces previos de esa cuenta.
 
-Fuente consultada: [API y webhooks de Ko-fi](https://help.ko-fi.com/hc/en-us/articles/360004162298-Does-Ko-fi-have-an-API-or-webhook).
+La configuración del servidor, el producto fijo, las pruebas de activación
+y el comando de devolución están en [KO_FI_PAYMENTS.md](../../SandyCore/docs/KO_FI_PAYMENTS.md)
+del backend. No se han configurado credenciales ni hecho cobros reales.
 
-El control de pago impediría desactivar el aviso mediante opciones oficiales.
-Al ser contenido de una fuente de navegador, un usuario todavía puede recortar
-o modificar su captura de OBS; no debe anunciarse como una protección inviolable.
+Ko-fi ofrece notificaciones de pagos; no se presupone un evento automático de devolución.
+
+El operador debe verificar las devoluciones/disputas en el proveedor y registrar su
+revocación con la herramienta del backend. La marca reaparece en la siguiente consulta.
+Fuente: [webhooks de Ko-fi](https://help.ko-fi.com/hc/en-us/articles/360004162298-Does-Ko-fi-have-an-API-or-webhook).
+
+El control impide desactivar el aviso mediante las opciones gratuitas del producto.
+Una fuente de navegador puede modificarse o recortarse por el usuario: el beneficio
+no se anuncia como una protección inviolable contra la manipulación local.

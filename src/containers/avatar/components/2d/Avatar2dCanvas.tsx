@@ -21,6 +21,7 @@ import {
 } from '@/containers/avatar/components/common/StudioDock';
 import { SupportWatermark } from '@/containers/avatar/components/common/SupportWatermark';
 import { VrmStudioBackgroundPanel } from '@/containers/avatar/components/vrm/VrmStudioBackgroundPanel';
+import { useSupportPurchase } from '@/context/SupportPurchaseContext';
 import { AudioQueueManager } from '@/lib/audioQueueSingleton';
 import {
 	DEFAULT_VRM_BACKGROUND_STATE,
@@ -57,6 +58,7 @@ export function Avatar2dCanvas({
 	automaticReactions,
 	externalContent,
 }: Props) {
+	const supportPurchase = useSupportPurchase();
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<Avatar2dState>(avatar2dManager.getState());
 	const [activeTool, setActiveTool] = useState<StudioActiveTool>(null);
@@ -116,8 +118,10 @@ export function Avatar2dCanvas({
 		}
 	};
 	const copyOverlayUrl = async () => {
-		const overlayUrl = `${window.location.origin}/overlay/avatar2d`;
 		try {
+			const overlayUrl = supportPurchase
+				? await supportPurchase.createOverlayUrl('/overlay/avatar2d')
+				: `${window.location.origin}/overlay/avatar2d`;
 			await navigator.clipboard.writeText(overlayUrl);
 			setCopied(true);
 			toast.success('Enlace de Overlay 2D para OBS copiado al portapapeles', {
@@ -126,7 +130,7 @@ export function Avatar2dCanvas({
 			setTimeout(() => setCopied(false), 2500);
 		} catch {
 			toast.error('No se pudo copiar el enlace', {
-				description: overlayUrl,
+				description: 'Comprueba tu conexión y los permisos del portapapeles e inténtalo de nuevo.',
 			});
 		}
 	};

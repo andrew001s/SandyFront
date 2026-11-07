@@ -1,3 +1,5 @@
+import { OverlaySupportProvider } from '@/components/providers/OverlaySupportProvider';
+
 export default function OverlayLayout({
 	children,
 }: {
@@ -5,7 +7,7 @@ export default function OverlayLayout({
 }) {
 	return (
 		<div className='fixed inset-0 m-0 h-screen w-screen overflow-hidden bg-transparent p-0'>
-			{children}
+			<OverlaySupportProvider>{children}</OverlaySupportProvider>
 		</div>
 	);
 }

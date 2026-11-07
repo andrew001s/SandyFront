@@ -5,6 +5,7 @@ import { DASHBOARD_TOUR_STORAGE_KEY, dashboardTourSteps } from '@/components/tou
 import { MessagesProvider } from '@/context/MessagesContext';
 import { StatusProvider } from '@/context/StatusContext';
 import { StatusProviderBot } from '@/context/StatusContextBot';
+import { SupportPurchaseProvider } from '@/context/SupportPurchaseContext';
 import { useUser } from '@clerk/nextjs';
 import { useTheme } from 'next-themes';
 import { usePathname } from 'next/navigation';
@@ -77,8 +78,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
 	const { resolvedTheme, theme } = useTheme();
 	const activeTheme = resolvedTheme ?? theme ?? 'dark';
 	const isLightTheme = activeTheme === 'light';
+	if (pathname.startsWith('/overlay/')) return children;
 	return (
-		<>
+		<SupportPurchaseProvider>
 			<PostHogUserIdentification />
 			{isAppRoute ? (
 				<NextStepProvider>
@@ -119,6 +121,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
 			) : (
 				children
 			)}
-		</>
+		</SupportPurchaseProvider>
 	);
 }

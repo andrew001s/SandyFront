@@ -1,8 +1,8 @@
 'use client';
 
 import { openNewsModal } from '@/components/modals/NewsModal';
-import { KOFI_URL } from '@/lib/links';
-import { Coffee, HelpCircle, Moon, Star, Sun } from 'lucide-react';
+import { SupportPurchaseButton } from '@/components/support/SupportPurchaseButton';
+import { HelpCircle, Moon, Star, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useNextStep } from 'nextstepjs';
 import { useEffect, useState } from 'react';
@@ -14,18 +14,7 @@ export function DashboardActions({ studio = false }: { studio?: boolean }) {
 	useEffect(() => setMounted(true), []);
 	return (
 		<div id='studio-tour-community' className='flex shrink-0 items-center gap-1 sm:gap-2'>
-			<a
-				href={KOFI_URL}
-				target='_blank'
-				rel='noopener noreferrer'
-				aria-label='Invita un café al creador en Ko-fi'
-				title='Apoya el desarrollo de Sandy Studio en Ko-fi'
-				className='inline-flex h-8 items-center gap-1.5 rounded-lg bg-secondary px-2.5 font-semibold text-secondary-foreground text-xs transition-colors hover:bg-secondary/85 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 sm:h-9 sm:gap-2 sm:px-3'
-			>
-				<Coffee className='size-4' aria-hidden='true' />
-				<span className='sm:hidden'>Apoyar</span>
-				<span className='hidden sm:inline'>Invita un café</span>
-			</a>
+			<SupportPurchaseButton />
 			<button
 				type='button'
 				onClick={openNewsModal}

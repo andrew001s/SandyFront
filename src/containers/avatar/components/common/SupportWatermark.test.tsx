@@ -1,9 +1,26 @@
+import { WatermarkPermissionContext } from '@/context/SupportPurchaseContext';
 import { KOFI_URL } from '@/lib/links';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SupportWatermark, SUPPORT_WATERMARK_TIMING as timing } from './SupportWatermark';
 
 describe('periodic support watermark', () => {
+	it('removes the notice and its timers when purchase permission becomes active', () => {
+		const view = render(
+			<WatermarkPermissionContext.Provider value={false}>
+				<SupportWatermark />
+			</WatermarkPermissionContext.Provider>,
+		);
+		act(() => vi.advanceTimersByTime(timing.firstAppearanceMs));
+		expect(screen.getByRole('link')).toBeInTheDocument();
+		view.rerender(
+			<WatermarkPermissionContext.Provider value>
+				<SupportWatermark />
+			</WatermarkPermissionContext.Provider>,
+		);
+		expect(screen.queryByRole('link')).not.toBeInTheDocument();
+		expect(vi.getTimerCount()).toBe(0);
+	});
 	beforeEach(() => vi.useFakeTimers());
 	afterEach(() => {
 		cleanup();

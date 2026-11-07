@@ -1,5 +1,6 @@
 'use client';
 
+import { useWatermarkFree } from '@/context/SupportPurchaseContext';
 import { KOFI_URL } from '@/lib/links';
 import { ArrowUpRight } from 'lucide-react';
 import Image from 'next/image';
@@ -13,11 +14,16 @@ export const SUPPORT_WATERMARK_TIMING = {
 } as const;
 
 export function SupportWatermark({ dockVisible = false }: { dockVisible?: boolean }) {
+	const watermarkFree = useWatermarkFree();
 	const [visible, setVisible] = useState(false);
 	const linkRef = useRef<HTMLAnchorElement>(null);
 	const expiresAt = useRef(0);
 
 	useEffect(() => {
+		if (watermarkFree) {
+			setVisible(false);
+			return;
+		}
 		let showTimer: ReturnType<typeof setTimeout>;
 		let hideTimer: ReturnType<typeof setTimeout>;
 		const show = () => {
@@ -33,9 +39,9 @@ export function SupportWatermark({ dockVisible = false }: { dockVisible?: boolea
 			clearTimeout(showTimer);
 			clearTimeout(hideTimer);
 		};
-	}, []);
+	}, [watermarkFree]);
 
-	if (!visible) return null;
+	if (!visible || watermarkFree) return null;
 
 	return (
 		<div className={`${styles.root} ${dockVisible ? styles.withDock : ''}`} data-support-watermark>
