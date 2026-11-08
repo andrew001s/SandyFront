@@ -7,192 +7,330 @@ import { Input } from '@/components/ui/input';
 import { useSupportPurchase } from '@/context/SupportPurchaseContext';
 import { KOFI_URL } from '@/lib/links';
 import axios from 'axios';
-import { CheckCircle2, Coffee, ExternalLink } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft, CheckCircle2, Coffee, ExternalLink } from 'lucide-react';
+import Image from 'next/image';
+import { useEffect, useRef, useState } from 'react';
 
 const triggerClass =
 	'inline-flex h-8 items-center gap-1.5 rounded-lg bg-secondary px-2.5 font-semibold text-secondary-foreground text-xs transition-colors hover:bg-secondary/85 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 sm:h-9 sm:gap-2 sm:px-3';
+const primaryClass =
+	'min-h-12 w-full whitespace-normal bg-primary font-semibold text-primary-foreground hover:bg-[#5948D1] dark:hover:bg-[#A594FF] focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100';
 const failureMessage = (error: unknown) =>
 	axios.isAxiosError(error) && typeof error.response?.data?.detail === 'string'
 		? error.response.data.detail
-		: 'No se pudo completar la solicitud. Inténtalo de nuevo.';
+		: error instanceof Error
+			? error.message
+			: 'No se pudo completar la solicitud. Inténtalo de nuevo.';
 
-function PurchasePanel({
+type View = 'choice' | 'code';
+
+function SupportDialog({
 	purchase,
-}: { purchase: NonNullable<ReturnType<typeof useSupportPurchase>> }) {
-	const [checkout, setCheckout] = useState<SupportCheckout | null>(null);
+	open,
+	onOpenChange,
+}: {
+	purchase: NonNullable<ReturnType<typeof useSupportPurchase>>;
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+}) {
+	const [view, setView] = useState<View>('choice');
 	const [code, setCode] = useState('');
+	const [checkout, setCheckout] = useState<SupportCheckout | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const [notice, setNotice] = useState<string | null>(null);
-	const action = async (run: () => Promise<void>) => {
-		setBusy(true);
-		setError(null);
-		setNotice(null);
-		try {
-			await run();
-		} catch (failure) {
-			setError(failureMessage(failure));
-		} finally {
+	const inputRef = useRef<HTMLInputElement>(null);
+	const operation = useRef(0);
+	const buyRef = useRef<HTMLButtonElement>(null);
+	const returnFocus = useRef(false);
+
+	useEffect(
+		() => () => {
+			operation.current++;
+		},
+		[],
+	);
+
+	useEffect(() => {
+		if (open && view === 'code' && !busy) inputRef.current?.focus();
+		if (open && view === 'choice' && returnFocus.current) {
+			buyRef.current?.focus();
+			returnFocus.current = false;
+		}
+	}, [open, view, busy]);
+
+	const changeOpen = (next: boolean) => {
+		onOpenChange(next);
+		if (!next) {
+			operation.current++;
+			setView('choice');
+			setCode('');
+			setCheckout(null);
+			setError(null);
 			setBusy(false);
 		}
 	};
+
+	const run = async (action: (isCurrent: () => boolean) => Promise<void>) => {
+		const request = ++operation.current;
+		const isCurrent = () => request === operation.current;
+		setBusy(true);
+		setError(null);
+		try {
+			await action(isCurrent);
+		} catch (failure) {
+			if (isCurrent()) setError(failureMessage(failure));
+		} finally {
+			if (isCurrent()) setBusy(false);
+		}
+	};
+
+	const isActive = Boolean(purchase.status?.watermark_free);
+	const isReview = purchase.status?.state === 'review';
+	const isAvailable = Boolean(purchase.status?.available);
+	const startCheckout = () => {
+		if (busy) return;
+		// Reserve the tab during the click so browsers allow the asynchronous checkout redirect.
+		const tab = window.open('about:blank', '_blank');
+		if (tab) tab.opener = null;
+		void run(async (isCurrent) => {
+			try {
+				const result = await purchase.checkout();
+				if (!isCurrent()) {
+					tab?.close();
+					return;
+				}
+				if (result.already_owned) {
+					tab?.close();
+					return;
+				}
+				if (!result.checkout_url) throw new Error('No se pudo abrir Ko-fi. Inténtalo de nuevo.');
+				setCheckout(result);
+				setView('code');
+				if (tab && !tab.closed) tab.location.replace(result.checkout_url);
+			} catch (failure) {
+				tab?.close();
+				throw failure;
+			}
+		});
+	};
+
 	return (
-		<div className='space-y-5'>
-			{purchase.loading ? (
-				<p className='text-muted-foreground text-sm'>Comprobando tu compra…</p>
-			) : purchase.status?.watermark_free ? (
-				<div className='space-y-2'>
-					<p className='flex items-center gap-2 font-semibold'>
-						<CheckCircle2 aria-hidden className='size-5 text-emerald-700 dark:text-emerald-400' />{' '}
-						Beneficio sin marca activo
-					</p>
-					<p className='text-muted-foreground text-sm'>
-						Gracias por apoyar Sandy Studio. Tu cuenta ya funciona sin el aviso en PNG, 2D y 3D.
-					</p>
-					<p className='text-muted-foreground text-sm'>
-						Los enlaces de OBS vinculados se actualizan automáticamente. Si tu enlace es anterior a
-						esta función, cópialo de nuevo desde el visor una vez.
-					</p>
-				</div>
-			) : (
-				<div className='space-y-3'>
-					<div className='flex items-baseline justify-between gap-3'>
-						<h3 className='font-semibold'>Sandy sin marca de agua</h3>
-						<span className='shrink-0 font-semibold'>US$3</span>
-					</div>
-					<p className='text-muted-foreground text-sm'>
-						Un solo pago por tu cuenta. Retira el aviso de apoyo en PNG, 2D, 3D y tus fuentes de
-						OBS. Las funciones de Sandy siguen siendo gratuitas.
-					</p>
-					{purchase.status?.state === 'pending' && (
-						<output className='block text-sm'>
-							Esperando la confirmación de Ko-fi. Si pagaste con otro correo verificado en tu
-							cuenta, también se vinculará automáticamente. No vuelvas a pagar si ya completaste la
-							compra.
-						</output>
-					)}
-					{purchase.status?.state === 'review' && (
-						<p role='alert' className='text-sm'>
-							Tu pago necesita revisión. Contacta al creador con tu recibo y no repitas el pago.
-						</p>
-					)}
-					{purchase.status?.state === 'revoked' && (
-						<p className='text-muted-foreground text-sm'>
-							El beneficio se retiró por una devolución o reversión registrada. Si no corresponde,
-							solicita una revisión con tu recibo.
-						</p>
-					)}
-					{!purchase.status?.available ? (
-						<p className='text-muted-foreground text-sm'>
-							La compra todavía no está habilitada. Puedes seguir usando Sandy y apoyar
-							voluntariamente en Ko-fi.
-						</p>
-					) : checkout?.checkout_url ? (
-						<div className='space-y-3'>
-							<p className='text-muted-foreground text-xs'>
-								Ko-fi enviará tu código de Sandy Studio Plus al correo que uses en el pago.
-							</p>
-							<a
-								href={checkout.checkout_url}
-								target='_blank'
-								rel='noopener noreferrer'
-								className='inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 font-semibold text-primary-foreground text-sm focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2'
-							>
-								Pagar US$3 en Ko-fi <ExternalLink aria-hidden className='size-4' />
-							</a>
-							<label htmlFor='support-license-code' className='block font-medium text-sm'>
-								Código de Sandy Studio Plus
-							</label>
-							<Input
-								id='support-license-code'
-								value={code}
-								placeholder='SANDY-XXXX-XXXX-XXXX-XXXX'
-								onChange={(event) => setCode(event.target.value.toUpperCase())}
-								autoComplete='one-time-code'
-								maxLength={27}
-							/>
-							<Button
-								variant='outline'
-								disabled={busy || code.trim().length < 11}
-								onClick={() =>
-									void action(async () => {
-										await purchase.redeem(code);
-										setCode('');
-									})
-								}
-							>
-								Activar Sandy Studio Plus
-							</Button>
-						</div>
-					) : (
-						<Button
-							disabled={busy || purchase.status?.state === 'review'}
-							onClick={() => void action(async () => setCheckout(await purchase.checkout()))}
-							className='min-h-11'
-						>
-							{busy
-								? 'Preparando compra…'
-								: purchase.status?.state === 'pending'
-									? 'Ver instrucciones de pago'
-									: 'Preparar compra de US$3'}
-						</Button>
-					)}
-				</div>
-			)}
-			{(error || purchase.error) && (
-				<p role='alert' className='text-destructive text-sm'>
-					{error ?? purchase.error}
-				</p>
-			)}
-			{notice && <output className='block text-sm'>{notice}</output>}
-			<div className='flex flex-wrap gap-2'>
-				<Button
-					variant='outline'
-					disabled={busy || purchase.loading}
-					onClick={() =>
-						void action(async () => {
-							await purchase.refresh();
-						})
-					}
-				>
-					Comprobar estado
-				</Button>
-				<a
-					href={KOFI_URL}
-					target='_blank'
-					rel='noopener noreferrer'
-					className='inline-flex min-h-10 items-center gap-2 px-3 text-sm underline underline-offset-4'
-				>
-					Aportar voluntariamente <ExternalLink aria-hidden className='size-3.5' />
-				</a>
-			</div>
-			{purchase.status?.watermark_free && (
-				<details className='border-border border-t pt-4'>
-					<summary className='min-h-9 cursor-pointer font-medium text-sm'>
-						Seguridad de mis enlaces de OBS
-					</summary>
-					<p className='py-3 text-muted-foreground text-sm'>
-						Si compartiste un enlace, puedes renovarlos. Los anteriores volverán a mostrar el aviso;
-						tendrás que copiar los nuevos desde el visor.
-					</p>
-					<Button
-						variant='outline'
-						disabled={busy}
-						onClick={() =>
-							void action(async () => {
-								await purchase.rotateOverlayKey();
-								setNotice(
-									'Permisos renovados. Copia de nuevo tus enlaces de OBS desde los visores.',
-								);
-							})
+		<Dialog open={open} onOpenChange={changeOpen}>
+			<DialogContent className='max-h-[92dvh] w-[calc(100vw-1.5rem)] max-w-[510px] gap-0 overflow-y-auto overflow-x-hidden p-0 [&>button>svg]:mx-auto [&>button]:top-3.5 [&>button]:right-3.5 [&>button]:z-20 [&>button]:size-11 [&>button]:rounded-md [&>button]:bg-[#0E1022] [&>button]:text-white [&>button]:opacity-100 [&>button]:hover:bg-[#262A4D] [&>button]:hover:text-white'>
+				<div className='relative h-36 w-full overflow-hidden sm:h-44'>
+					<Image
+						src={
+							view === 'choice'
+								? '/support/sandy-plus-clouds.webp'
+								: '/support/sandy-plus-code.webp'
 						}
-					>
-						Renovar enlaces de OBS
-					</Button>
-				</details>
-			)}
-		</div>
+						alt={
+							view === 'choice'
+								? 'Sandy con una taza entre nubes, estrellas y una luna creciente'
+								: 'Sandy sostiene una estrella luminosa entre las nubes'
+						}
+						fill
+						sizes='(max-width: 640px) 92vw, 510px'
+						priority
+						className='select-none object-cover object-center'
+					/>
+				</div>
+
+				<div className='space-y-5 px-5 pt-5 pb-6 sm:px-6'>
+					{view === 'choice' ? (
+						<>
+							<div className='space-y-1.5'>
+								<DialogTitle className='font-display text-xl'>Apoya Sandy Studio</DialogTitle>
+								<DialogDescription className='text-sm leading-relaxed'>
+									Elige Sandy Plus para quitar el aviso de apoyo o aporta voluntariamente.
+								</DialogDescription>
+							</div>
+
+							{purchase.loading ? (
+								<p className='text-muted-foreground text-sm'>Comprobando tu cuenta…</p>
+							) : isActive ? (
+								<output className='flex items-start gap-2.5 rounded-lg border border-border bg-muted/40 p-3.5'>
+									<CheckCircle2
+										aria-hidden
+										className='mt-0.5 size-5 shrink-0 text-emerald-600 dark:text-emerald-400'
+									/>
+									<span>
+										<span className='block font-semibold text-sm'>Sandy Plus está activo</span>
+										<span className='mt-1 block text-muted-foreground text-sm'>
+											El aviso ya no aparece en tus visores PNG, 2D y 3D ni en sus fuentes de OBS.
+										</span>
+									</span>
+								</output>
+							) : (
+								<div className='space-y-3'>
+									<div className='space-y-1'>
+										<p className='font-semibold text-sm'>Un solo pago, en toda tu cuenta</p>
+										<p className='text-muted-foreground text-sm leading-relaxed'>
+											Retira el aviso de apoyo en PNG, 2D, 3D y OBS. Las funciones de Sandy siguen
+											siendo gratuitas.
+										</p>
+									</div>
+
+									{isReview && (
+										<p
+											role='alert'
+											className='rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm'
+										>
+											Tu pago necesita revisión. Contacta al creador con tu recibo antes de volver a
+											pagar.
+										</p>
+									)}
+									{!isAvailable && !purchase.loading && (
+										<p className='text-muted-foreground text-sm'>
+											Sandy Plus todavía no está disponible. Puedes seguir usando Sandy y apoyar
+											voluntariamente.
+										</p>
+									)}
+								</div>
+							)}
+
+							<div className='grid gap-2.5'>
+								{!isActive && (
+									<Button
+										ref={buyRef}
+										type='button'
+										disabled={busy || purchase.loading || !isAvailable}
+										aria-busy={busy}
+										onClick={startCheckout}
+										className={`${primaryClass} h-auto flex-wrap justify-between gap-x-3 gap-y-1 px-4 py-3`}
+									>
+										<span>Obtener Sandy Plus</span>
+										<span className='text-xs'>US$3 · pago único</span>
+									</Button>
+								)}
+								<a
+									href={KOFI_URL}
+									target='_blank'
+									rel='noopener noreferrer'
+									className='inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border bg-background px-4 font-medium text-foreground text-sm transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2'
+								>
+									<Coffee aria-hidden className='size-4 text-primary' />
+									Apoyar voluntariamente
+									<ExternalLink aria-hidden className='size-3.5 text-muted-foreground' />
+								</a>
+							</div>
+							{!isActive && (
+								<div className='text-center'>
+									<button
+										type='button'
+										disabled={busy}
+										onClick={() => {
+											setError(null);
+											setView('code');
+										}}
+										className='inline-flex min-h-11 items-center rounded-sm px-2 text-foreground text-sm underline underline-offset-4 hover:text-primary focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 disabled:opacity-60'
+									>
+										Ya tengo un código
+									</button>
+								</div>
+							)}
+							<p className='text-center text-muted-foreground text-xs'>
+								El aporte voluntario no activa Sandy Plus.
+							</p>
+						</>
+					) : (
+						<>
+							<button
+								type='button'
+								onClick={() => {
+									returnFocus.current = true;
+									setError(null);
+									setView('choice');
+								}}
+								disabled={busy}
+								className='inline-flex min-h-11 items-center gap-1.5 rounded-sm text-muted-foreground text-sm hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 disabled:opacity-60'
+							>
+								<ArrowLeft aria-hidden className='size-4' />
+								Volver
+							</button>
+
+							<div className='space-y-1.5'>
+								<DialogTitle className='font-display text-xl'>Canjear código</DialogTitle>
+								<DialogDescription className='text-sm leading-relaxed'>
+									Pega tu código de Sandy Plus para activar el beneficio en esta cuenta.
+								</DialogDescription>
+							</div>
+
+							<form
+								className='space-y-3'
+								onSubmit={(event) => {
+									event.preventDefault();
+									if (!code.trim() || busy) return;
+									void run(async (isCurrent) => {
+										await purchase.redeem(code);
+										if (!isCurrent()) return;
+										setCode('');
+										setCheckout(null);
+										setView('choice');
+									});
+								}}
+							>
+								<label htmlFor='support-license-code' className='block font-medium text-sm'>
+									Código de Sandy Studio Plus
+								</label>
+								<Input
+									ref={inputRef}
+									id='support-license-code'
+									value={code}
+									placeholder='SANDY-XXXX-XXXX-XXXX-XXXX'
+									onChange={(event) => {
+										setCode(event.target.value.toUpperCase());
+										setError(null);
+									}}
+									disabled={busy}
+									className='min-h-12 font-mono text-base'
+									spellCheck={false}
+									autoCapitalize='characters'
+									autoComplete='one-time-code'
+									maxLength={27}
+									aria-invalid={Boolean(error)}
+									aria-describedby={error ? 'support-code-error' : undefined}
+								/>
+								<Button
+									type='submit'
+									disabled={busy || code.trim().length < 11 || !isAvailable}
+									className={primaryClass}
+								>
+									{busy ? 'Activando…' : 'Activar Sandy Plus'}
+								</Button>
+							</form>
+
+							{checkout?.checkout_url && (
+								<div className='space-y-2 border-border border-t pt-3'>
+									<p className='text-muted-foreground text-sm'>
+										Completa el pago en la pestaña de Ko-fi. El código llegará al correo asociado al
+										pago. Si no se abrió, usa este enlace.
+									</p>
+									<a
+										href={checkout.checkout_url}
+										target='_blank'
+										rel='noopener noreferrer'
+										className='inline-flex min-h-11 items-center gap-2 rounded-sm text-foreground text-sm underline underline-offset-4 hover:text-primary focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2'
+									>
+										Continuar en Ko-fi
+										<ExternalLink aria-hidden className='size-4' />
+									</a>
+								</div>
+							)}
+						</>
+					)}
+					{(error || purchase.error) && (
+						<p
+							id='support-code-error'
+							role='alert'
+							className='break-words text-destructive text-sm'
+						>
+							{error || purchase.error}
+						</p>
+					)}
+				</div>
+			</DialogContent>
+		</Dialog>
 	);
 }
 
@@ -213,7 +351,7 @@ export function SupportPurchaseButton() {
 			</a>
 		);
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
+		<>
 			<button
 				type='button'
 				className={triggerClass}
@@ -226,13 +364,12 @@ export function SupportPurchaseButton() {
 					{purchase.status?.watermark_free ? 'Mi apoyo' : 'Apoyar Sandy'}
 				</span>
 			</button>
-			<DialogContent className='max-h-[90dvh] overflow-y-auto p-5 sm:max-w-lg sm:p-6'>
-				<DialogTitle className='pr-8'>Apoya Sandy Studio</DialogTitle>
-				<DialogDescription>
-					Elige un aporte voluntario o una compra única para retirar la marca.
-				</DialogDescription>
-				<PurchasePanel key={purchase.ownerId ?? 'signed-out'} purchase={purchase} />
-			</DialogContent>
-		</Dialog>
+			<SupportDialog
+				key={purchase.ownerId}
+				purchase={purchase}
+				open={open}
+				onOpenChange={setOpen}
+			/>
+		</>
 	);
 }
