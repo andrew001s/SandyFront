@@ -347,6 +347,7 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
 	// biome-ignore lint/suspicious/noExplicitAny: dynamic Pixi application instance
 	const appRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any -- Pixi application type is loaded dynamically on the client.
+	const appDestroyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	// biome-ignore lint/suspicious/noExplicitAny: dynamic Live2D model instance
 	const modelRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any -- Live2D model type is loaded dynamically on the client.
 	const visualBoundsRef = useRef<{ x: number; y: number; width: number; height: number } | null>(
@@ -621,6 +622,10 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 	// Inicializar PixiJS y compilar el modelo Live2D WebGL
 	useEffect(() => {
 		let isMounted = true;
+		if (appDestroyTimerRef.current) {
+			clearTimeout(appDestroyTimerRef.current);
+			appDestroyTimerRef.current = null;
+		}
 
 		async function initLive2D() {
 			if (!canvasRef.current || !containerRef.current || !pkg) {
@@ -638,12 +643,6 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				const { Live2DModel, Live2DFactory, Cubism4ExpressionManager } = await import(
 					'pixi-live2d-display/cubism4'
 				);
-
-				try {
-					Live2DModel.registerTicker(PIXI.Ticker);
-				} catch {
-					// Ya registrado
-				}
 
 				if (!isMounted) return;
 
@@ -739,6 +738,7 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				// Cargar modelo pasando la instancia de ModelSettings directamente
 				const model = await Live2DModel.from(settings, {
 					autoInteract: false,
+					ticker: PIXI.Ticker.shared,
 				});
 
 				if (!isMounted) {
@@ -807,8 +807,11 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 						);
 					}
 				};
-				if (typeof model.internalModel?.on === 'function') {
-					model.internalModel.on('beforeModelUpdate', onBeforeModelUpdate);
+				const internalModelEvents = model.internalModel as unknown as {
+					on?: (event: string, listener: () => void) => void;
+				};
+				if (typeof internalModelEvents?.on === 'function') {
+					internalModelEvents.on('beforeModelUpdate', onBeforeModelUpdate);
 				}
 
 				// Sincronizar expresiones activas
@@ -836,14 +839,20 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 			if (modelRef.current?.internalModel?.off) {
 				modelRef.current.internalModel.off('beforeModelUpdate');
 			}
-			const app = appRef.current;
-			appRef.current = null;
-			modelRef.current = null;
-			visualBoundsRef.current = null;
-			if (app) {
-				app.stop();
-				app.destroy(false, { children: true, texture: true, baseTexture: true });
-			}
+			// Pixi destroys the WebGL context with the renderer. Keep it alive across
+			// effect replays (StrictMode, HMR, or model changes) because a canvas
+			// cannot create a fresh context after its previous context was lost.
+			appDestroyTimerRef.current = setTimeout(() => {
+				const app = appRef.current;
+				appRef.current = null;
+				modelRef.current = null;
+				visualBoundsRef.current = null;
+				if (app) {
+					app.stop();
+					app.destroy(false, { children: true, texture: true, baseTexture: true });
+				}
+				appDestroyTimerRef.current = null;
+			}, 0);
 		};
 	}, [pkg]);
 
