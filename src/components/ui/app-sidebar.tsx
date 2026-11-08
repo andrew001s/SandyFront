@@ -30,7 +30,8 @@ export function AppSidebar() {
 	const pathname = usePathname();
 	const { isSignedIn, user } = useUser();
 	const { openSignIn } = useClerk();
-	const { state } = useSidebar();
+	const { state, isMobile } = useSidebar();
+	const isCollapsed = state === 'collapsed' && !isMobile;
 	const { theme, resolvedTheme } = useTheme();
 
 	const displayName = user?.fullName ?? user?.firstName ?? user?.username ?? 'Tu perfil';
@@ -42,28 +43,27 @@ export function AppSidebar() {
 		'S'
 	).toUpperCase();
 	const activeTheme = resolvedTheme ?? theme ?? 'dark';
-	const logoSrc =
-		state === 'collapsed'
-			? '/icons/icon.png'
-			: activeTheme === 'light'
-				? '/icons/sandyLight.png'
-				: '/icons/sandyDark.png';
+	const logoSrc = isCollapsed
+		? '/icons/icon.png'
+		: activeTheme === 'light'
+			? '/icons/sandyLight.png'
+			: '/icons/sandyDark.png';
 
 	return (
 		<Sidebar collapsible='icon' className='border-r border-sidebar-border bg-sidebar'>
-			<SidebarHeader className='p-3'>
+			<SidebarHeader className='p-3 group-data-[collapsible=icon]:px-2'>
 				<Link
 					href='/avatar'
 					aria-label='Sandy Studio'
 					title='Sandy Studio'
-					className='flex w-full items-center justify-center rounded-lg p-2 transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary'
+					className='flex w-full items-center justify-center rounded-lg p-2 transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-11 group-data-[collapsible=icon]:p-0'
 				>
 					<div className='relative h-11 w-full shrink-0 overflow-hidden group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:w-8'>
 						<Image
 							src={logoSrc}
 							alt='Sandy Studio'
 							fill
-							sizes={state === 'collapsed' ? '32px' : '200px'}
+							sizes={isCollapsed ? '32px' : '200px'}
 							className='object-contain'
 							priority
 						/>
@@ -71,12 +71,12 @@ export function AppSidebar() {
 				</Link>
 			</SidebarHeader>
 
-			<SidebarContent className='px-2.5 pb-2'>
-				<SidebarGroup className='rounded-xl border border-sidebar-border bg-card/60 p-2 shadow-xs'>
+			<SidebarContent className='px-2.5 pb-2 group-data-[collapsible=icon]:overflow-y-auto group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:[scrollbar-width:none]'>
+				<SidebarGroup className='rounded-xl border border-sidebar-border bg-card/60 p-2 shadow-xs group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:shadow-none'>
 					<SidebarGroupLabel className='px-2 font-mono text-[10px] text-muted-foreground uppercase tracking-wider group-data-[collapsible=icon]:hidden'>
 						Navegación
 					</SidebarGroupLabel>
-					<SidebarGroupContent className='mt-1'>
+					<SidebarGroupContent className='mt-1 group-data-[collapsible=icon]:mt-0'>
 						<SidebarMenu className='gap-1'>
 							{dashboardNavigation.map((item) => {
 								const isActive = pathname === item.href;
@@ -85,9 +85,11 @@ export function AppSidebar() {
 										<SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
 											<Link
 												href={item.href}
+												aria-label={item.label}
+												aria-current={isActive ? 'page' : undefined}
 												id={item.tourId}
 												className={cn(
-													'flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 font-sans text-xs transition-colors group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0',
+													'flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 font-sans text-xs transition-colors group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0',
 													isActive
 														? 'border border-primary/30 bg-primary/10 font-semibold text-primary'
 														: 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
@@ -106,7 +108,7 @@ export function AppSidebar() {
 			</SidebarContent>
 
 			<SidebarFooter className='mt-auto p-2.5'>
-				{state === 'collapsed' ? (
+				{isCollapsed ? (
 					<a
 						href={KOFI_URL}
 						target='_blank'
@@ -121,7 +123,7 @@ export function AppSidebar() {
 						<KoFiButton />
 					</div>
 				)}
-				<div className='rounded-xl border border-sidebar-border bg-card/80 p-2.5 shadow-xs'>
+				<div className='rounded-xl border border-sidebar-border bg-card/80 p-2.5 shadow-xs group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:shadow-none'>
 					<div className='flex items-center gap-2.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0'>
 						<Avatar className='size-8 shrink-0 border border-border shadow-xs'>
 							{isSignedIn && user?.imageUrl ? (
@@ -143,9 +145,10 @@ export function AppSidebar() {
 							<SignOutButton redirectUrl='/'>
 								<Button
 									type='button'
+									aria-label='Cerrar sesión'
 									variant='outline'
 									size='sm'
-									className='h-8 w-full justify-start gap-2 rounded-lg border-border/70 bg-background px-2.5 font-sans font-medium text-muted-foreground text-xs shadow-none hover:bg-muted/50 hover:text-foreground group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0'
+									className='h-8 w-full justify-start gap-2 rounded-lg border-border/70 bg-background px-2.5 font-sans font-medium text-muted-foreground text-xs shadow-none hover:bg-muted/50 hover:text-foreground group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-11 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0'
 								>
 									<LogOut className='size-3.5 shrink-0' />
 									<span className='group-data-[collapsible=icon]:hidden'>Cerrar sesión</span>
@@ -154,10 +157,11 @@ export function AppSidebar() {
 						) : (
 							<Button
 								type='button'
+								aria-label='Iniciar sesión'
 								variant='outline'
 								size='sm'
 								onClick={() => void openSignIn({ fallbackRedirectUrl: '/avatar' })}
-								className='h-8 w-full justify-start gap-2 rounded-lg border-border/70 bg-background px-2.5 font-sans font-medium text-muted-foreground text-xs shadow-none hover:bg-muted/50 hover:text-foreground group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0'
+								className='h-8 w-full justify-start gap-2 rounded-lg border-border/70 bg-background px-2.5 font-sans font-medium text-muted-foreground text-xs shadow-none hover:bg-muted/50 hover:text-foreground group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-11 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0'
 							>
 								<LogIn className='size-3.5 shrink-0' />
 								<span className='group-data-[collapsible=icon]:hidden'>Iniciar sesión</span>
