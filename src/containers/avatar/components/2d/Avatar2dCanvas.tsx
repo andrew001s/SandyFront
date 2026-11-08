@@ -119,9 +119,8 @@ export function Avatar2dCanvas({
 	};
 	const copyOverlayUrl = async () => {
 		try {
-			const overlayUrl = supportPurchase
-				? await supportPurchase.createOverlayUrl('/overlay/avatar2d')
-				: `${window.location.origin}/overlay/avatar2d`;
+			if (!supportPurchase) throw new Error('Inicia sesión para vincular tu overlay.');
+			const overlayUrl = await supportPurchase.createOverlayUrl('/overlay/avatar2d');
 			await navigator.clipboard.writeText(overlayUrl);
 			setCopied(true);
 			toast.success('Enlace de Overlay 2D para OBS copiado al portapapeles', {

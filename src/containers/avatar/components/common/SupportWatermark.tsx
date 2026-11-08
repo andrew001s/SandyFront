@@ -18,8 +18,11 @@ export function SupportWatermark({ dockVisible = false }: { dockVisible?: boolea
 	const [visible, setVisible] = useState(false);
 	const linkRef = useRef<HTMLAnchorElement>(null);
 	const expiresAt = useRef(0);
+	const previousPermission = useRef(watermarkFree);
 
 	useEffect(() => {
+		const revoked = previousPermission.current && !watermarkFree;
+		previousPermission.current = watermarkFree;
 		if (watermarkFree) {
 			setVisible(false);
 			return;
@@ -34,7 +37,8 @@ export function SupportWatermark({ dockVisible = false }: { dockVisible?: boolea
 			}, SUPPORT_WATERMARK_TIMING.visibleMs);
 			showTimer = setTimeout(show, SUPPORT_WATERMARK_TIMING.intervalMs);
 		};
-		showTimer = setTimeout(show, SUPPORT_WATERMARK_TIMING.firstAppearanceMs);
+		if (revoked) show();
+		else showTimer = setTimeout(show, SUPPORT_WATERMARK_TIMING.firstAppearanceMs);
 		return () => {
 			clearTimeout(showTimer);
 			clearTimeout(hideTimer);

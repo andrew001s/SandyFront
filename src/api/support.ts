@@ -32,7 +32,7 @@ export const getSupportStatus = async (
 	token: string,
 	signal?: AbortSignal,
 ): Promise<SupportStatus> =>
-	(await backendClient.get('/support/status', options(token, signal))).data;
+	(await backendClient.get('/support/status', { ...options(token, signal), timeout: 10_000 })).data;
 export const startSupportCheckout = async (token: string): Promise<SupportCheckout> =>
 	(await backendClient.post('/support/checkout', {}, options(token))).data;
 export const redeemSupportLicenseCode = async (
@@ -50,9 +50,16 @@ export const getOverlaySupportStatus = async (
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		credentials: 'omit',
+		cache: 'no-store',
 		signal,
 		body: JSON.stringify({ token }),
 	});
-	if (!response.ok) throw new Error('No se pudo comprobar el permiso de OBS.');
-	return response.json();
+	if (!response.ok)
+		throw Object.assign(new Error('No se pudo comprobar el permiso de OBS.'), {
+			status: response.status,
+		});
+	const result = await response.json();
+	if (typeof result?.watermark_free !== 'boolean')
+		throw new Error('Respuesta de permiso de OBS no válida.');
+	return { watermark_free: result.watermark_free };
 };

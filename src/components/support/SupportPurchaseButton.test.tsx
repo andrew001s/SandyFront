@@ -115,7 +115,7 @@ describe('support purchase dialog', () => {
 		});
 		fireEvent.click(screen.getByRole('button', { name: 'Activar Sandy Plus' }));
 		await waitFor(() =>
-			expect(screen.getByRole('status')).toHaveTextContent('Sandy Plus está activo'),
+			expect(screen.getByRole('status')).toHaveTextContent('Sandy Plus activado'),
 		);
 		mocks.purchase.status = { available: true, watermark_free: false, state: 'revoked' };
 		rerender(<SupportPurchaseButton />);

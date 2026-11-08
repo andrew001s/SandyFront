@@ -350,9 +350,8 @@ export function VrmCanvas({ className = '', automaticReactions }: Props) {
 	const copyOverlayUrl = async () => {
 		if (typeof window === 'undefined') return;
 		try {
-			const url = supportPurchase
-				? await supportPurchase.createOverlayUrl('/overlay/avatar')
-				: `${window.location.origin}/overlay/avatar`;
+			if (!supportPurchase) throw new Error('Inicia sesión para vincular tu overlay.');
+			const url = await supportPurchase.createOverlayUrl('/overlay/avatar');
 			await navigator.clipboard.writeText(url);
 			setCopied(true);
 			setTimeout(() => setCopied(false), 2000);

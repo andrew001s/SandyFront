@@ -155,9 +155,13 @@ function SupportDialog({
 										className='mt-0.5 size-5 shrink-0 text-emerald-600 dark:text-emerald-400'
 									/>
 									<span>
-										<span className='block font-semibold text-sm'>Sandy Plus está activo</span>
+										<span className='block font-semibold text-sm'>Sandy Plus activado</span>
 										<span className='mt-1 block text-muted-foreground text-sm'>
-											El aviso ya no aparece en tus visores PNG, 2D y 3D ni en sus fuentes de OBS.
+											La marca de agua se retirará automáticamente de tu estudio y de tus overlays
+											de OBS. No necesitas cambiar tus enlaces.
+										</span>
+										<span className='mt-2 block text-muted-foreground text-xs'>
+											La sincronización puede tardar hasta 15 segundos con conexión.
 										</span>
 									</span>
 								</output>

@@ -69,4 +69,18 @@ describe('periodic support watermark', () => {
 		unmount();
 		expect(vi.getTimerCount()).toBe(0);
 	});
+	it('restores the notice immediately when a verified Plus permission is revoked', () => {
+		const view = render(
+			<WatermarkPermissionContext.Provider value>
+				<SupportWatermark />
+			</WatermarkPermissionContext.Provider>,
+		);
+		expect(screen.queryByRole('link')).not.toBeInTheDocument();
+		view.rerender(
+			<WatermarkPermissionContext.Provider value={false}>
+				<SupportWatermark />
+			</WatermarkPermissionContext.Provider>,
+		);
+		expect(screen.getByRole('link')).toBeInTheDocument();
+	});
 });

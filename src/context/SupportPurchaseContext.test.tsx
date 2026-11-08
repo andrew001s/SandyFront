@@ -48,6 +48,8 @@ const mount = () =>
 describe('account purchase synchronization', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		localStorage.clear();
+		sessionStorage.clear();
 		mocks.auth.isSignedIn = true;
 		mocks.auth.userId = 'user-a';
 		mocks.status.mockResolvedValue(free);
@@ -94,14 +96,14 @@ describe('account purchase synchronization', () => {
 		expect(screen.getByText('free')).toBeInTheDocument();
 	});
 
-	it('fails closed when a previously active purchase cannot be verified', async () => {
+	it('keeps the last verified permission during a temporary connection error', async () => {
 		mocks.status.mockResolvedValueOnce(paid).mockRejectedValue(new Error('offline'));
 		mount();
 		await waitFor(() => expect(screen.getByText('paid')).toBeInTheDocument());
 		await act(async () => {
 			await purchase.refresh();
 		});
-		expect(screen.getByText('free')).toBeInTheDocument();
+		expect(screen.getByText('paid')).toBeInTheDocument();
 		expect(purchase.error).toContain('conexión');
 	});
 
@@ -130,18 +132,47 @@ describe('account purchase synchronization', () => {
 		});
 		expect(screen.getByText('paid')).toBeInTheDocument();
 		await act(async () => {
-			await vi.advanceTimersByTimeAsync(60000);
+			await vi.advanceTimersByTimeAsync(15000);
 		});
 		expect(screen.getByText('free')).toBeInTheDocument();
 	});
 
-	it('rejects link creation after a failed verification', async () => {
-		mocks.status.mockRejectedValue(new Error('offline'));
+	it('rejects link creation if a read-only credential cannot be issued', async () => {
+		mocks.key.mockRejectedValue(new Error('No se pudo verificar la credencial'));
 		mount();
-		await waitFor(() => expect(purchase.error).toBeTruthy());
+		await waitFor(() => expect(purchase.status?.state).toBe('free'));
 		await act(async () => {
 			await expect(purchase.createOverlayUrl('/overlay/avatar')).rejects.toThrow('verificar');
 		});
-		expect(mocks.key).not.toHaveBeenCalled();
+		expect(mocks.key).toHaveBeenCalled();
+	});
+	it('issues a private OBS link even before billing is enabled', async () => {
+		mocks.key.mockResolvedValue('readonly-key');
+		mocks.status.mockResolvedValue({ ...free, available: false, state: 'unavailable' });
+		mount();
+		await waitFor(() => expect(purchase.status?.available).toBe(false));
+		expect(new URL(await purchase.createOverlayUrl('/overlay/avatar')).hash).toBe(
+			'#support=readonly-key',
+		);
+	});
+	it('expires cached studio permissions after five minutes of repeated connection errors', async () => {
+		vi.useFakeTimers();
+		mocks.status.mockResolvedValueOnce(paid).mockRejectedValue(new Error('offline'));
+		mount();
+		await act(async () => {
+			await Promise.resolve();
+		});
+		expect(screen.getByText('paid')).toBeInTheDocument();
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(15000);
+		});
+		expect(screen.getByText('paid')).toBeInTheDocument();
+		for (let i = 0; i < 20; i++) {
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(15000);
+			});
+		}
+		expect(screen.getByText('free')).toBeInTheDocument();
+		expect(mocks.status.mock.calls.length).toBeGreaterThan(10);
 	});
 });
