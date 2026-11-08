@@ -5,6 +5,7 @@ import { Reveal } from '@/components/landing/Reveal';
 import { StarField } from '@/components/landing/StarField';
 import { Coffee, Heart } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export function Support() {
 	return (
@@ -30,10 +31,17 @@ export function Support() {
 									Si Sandy sumó a tu stream, apoya su desarrollo
 								</h2>
 								<p className='mt-2 font-sans text-muted-foreground text-xs leading-relaxed sm:text-sm'>
-									Sandy Studio se mantiene como herramienta abierta y gratuita. Tu apoyo en Ko-fi
-									ayuda a cubrir servidores, infraestructura de pruebas y el desarrollo continuo de
-									nuevas integraciones.
+									Sandy Studio mantiene sus funciones gratuitas. Cuando esté disponible, Sandy Plus
+									quita el aviso de apoyo de tus avatares y overlays de OBS por un pago único de USD
+									$3. También puedes apoyar voluntariamente el desarrollo; ese aporte es
+									independiente y no activa Plus.
 								</p>
+								<Link
+									href='/sign-in?redirect_url=%2Fhome'
+									className='mt-3 inline-flex min-h-10 items-center rounded-md border border-border bg-background px-4 font-semibold text-foreground text-sm transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2'
+								>
+									Ver Sandy Plus · US$3
+								</Link>
 							</div>
 
 							<div className='flex flex-col items-center gap-3 sm:items-end'>

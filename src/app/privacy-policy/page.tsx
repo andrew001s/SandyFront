@@ -169,6 +169,7 @@ const sections: LegalSection[] = [
 		list: [
 			'Clerk, para autenticación.',
 			'Supabase, para almacenamiento.',
+			'Ko-fi, para procesar pagos de Sandy Plus y aportes voluntarios.',
 			'Twitch, para chat, perfiles, moderación y eventos.',
 			'Kick, para chat, eventos y moderación.',
 			'YouTube / Google, para autenticación, chat en vivo, transmisiones y estadísticas.',
@@ -177,6 +178,15 @@ const sections: LegalSection[] = [
 		],
 		closing: [
 			'Cada tercero puede tratar los datos según sus propias políticas y términos. Te recomendamos revisar sus políticas de privacidad antes de conectar tus cuentas.',
+		],
+	},
+	{
+		id: 'pagos-y-sandy-plus',
+		title: 'Pagos y Sandy Plus',
+		body: [
+			'Si eliges Sandy Plus, Ko-fi procesa el pago y trata los datos necesarios para completarlo conforme a sus propias políticas. Sandy Studio no recibe ni almacena los datos completos de tu tarjeta.',
+			'Para verificar el pago y activar el beneficio, el servidor de Sandy Studio puede recibir de Ko-fi información de la transacción, su estado y el correo asociado al pago. El servicio compara ese correo con los correos verificados de tu cuenta para vincular Sandy Plus, y conserva el estado del beneficio y los identificadores de transacción necesarios para validarlo, atender consultas y gestionar devoluciones o disputas. El código de activación enviado tras la compra también permite vincular el beneficio a tu cuenta.',
+			'Los aportes voluntarios se procesan por separado y no activan Sandy Plus. Para consultas sobre los datos tratados por Ko-fi, revisa su política de privacidad.',
 		],
 	},
 	{
@@ -245,8 +255,8 @@ export default function PrivacyPolicyPage() {
 			title='Política de Privacidad'
 			badge='Privacidad'
 			icon='privacy'
-			effectiveDate='3 de agosto de 2026'
-			lastUpdated='3 de agosto de 2026'
+			effectiveDate='8 de noviembre de 2026'
+			lastUpdated='8 de noviembre de 2026'
 			description={`En ${sharedSiteName} recopilamos solo los datos necesarios para que el servicio funcione: conectarnos a tus canales de streaming, guardar tu configuración y generar respuestas con IA. Aquí explicamos qué datos tratamos, por qué lo hacemos y cómo los protegemos.`}
 			contactEmail='shandrewcontact@gmail.com'
 			sections={sections}
