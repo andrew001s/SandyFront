@@ -55,6 +55,10 @@ const createLimiter = (limit: number) => {
  */
 export function cleanSegmentForSpeech(text: string): string {
 	return text
+		.replace(
+			/\[\[\s*REACTION\s*:\s*(?:yes|no|none|happy|sad|angry|surprised|excited|sleepy|thinking|confused|shy)\s*\]\]/gi,
+			'',
+		)
 		.replace(/\*\*([^*]+)\*\*/g, '$1')
 		.replace(/\*([^*]+)\*/g, '$1')
 		.replace(/__([^_]+)__/g, '$1')
