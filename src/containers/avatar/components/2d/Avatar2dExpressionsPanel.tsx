@@ -1,5 +1,4 @@
 'use client';
-
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -15,11 +14,11 @@ import { motion } from 'framer-motion';
 import { Mic, Pencil, Plus, RotateCcw, Smile, Trash2, Upload, Volume2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-
+import { ExpressionConfiguration } from '../common/ExpressionConfiguration';
+import { ExpressionHotkeyStatus } from '../common/ExpressionHotkey';
 interface Props {
 	onClose: () => void;
 }
-
 export function Avatar2dExpressionsPanel({ onClose }: Props) {
 	const [state, setState] = useState<Avatar2dState>(avatar2dManager.getState());
 	const [isSpeaking, setIsSpeaking] = useState(avatar2dManager.getIsSpeaking());
@@ -33,7 +32,6 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 	const [uploadTarget, setUploadTarget] = useState<'idle' | 'speaking' | 'blink'>('idle');
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
-
 	useEffect(() => {
 		const unsubState = avatar2dManager.subscribe((next) => setState(next));
 		const unsubSpeaking = avatar2dManager.subscribeSpeaking((speaking) => setIsSpeaking(speaking));
@@ -42,26 +40,17 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 			unsubSpeaking();
 		};
 	}, []);
-
 	const activeEmotion = state.pngtuber.activeEmotion;
 	const emotions = state.pngtuber.emotions;
-
 	const handleSelectEmotion = (id: string) => {
-		avatar2dManager.setEmotion(id);
-		const selected = emotions.find((e) => e.id === id);
-		if (selected) {
-			toast.info(`Expresión activa: ${selected.label}`);
-		}
+		avatar2dManager.setEmotion(activeEmotion === id ? 'neutral' : id);
 	};
-
 	const handleToggleSpeaking = () => {
 		avatar2dManager.setSpeaking(!isSpeaking);
 	};
-
 	const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
 		if (!file) return;
-
 		const reader = new FileReader();
 		reader.onload = (event) => {
 			const result = event.target?.result as string;
@@ -79,7 +68,6 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 		reader.readAsDataURL(file);
 		e.target.value = '';
 	};
-
 	const handleCreateExpression = () => {
 		if (!newLabel.trim()) {
 			setErrorMessage('El nombre es obligatorio');
@@ -89,7 +77,6 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 			setErrorMessage('Selecciona una imagen para la expresión');
 			return;
 		}
-
 		try {
 			const created = avatar2dManager.addCustomEmotion(
 				newLabel.trim(),
@@ -110,7 +97,6 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 			setErrorMessage('No se pudo guardar la expresión. Prueba con una imagen más liviana.');
 		}
 	};
-
 	const handleCancelCreate = () => {
 		setNewLabel('');
 		setNewImage(null);
@@ -119,7 +105,6 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 		setErrorMessage(null);
 		setIsCreating(false);
 	};
-
 	const handleStartEdit = (em: PngTuberEmotion) => {
 		setIsCreating(false);
 		setEditingEmotion(em);
@@ -129,7 +114,6 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 		setNewBlinkImage(em.blink || null);
 		setErrorMessage(null);
 	};
-
 	const handleCancelEdit = () => {
 		setEditingEmotion(null);
 		setNewLabel('');
@@ -138,7 +122,6 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 		setNewBlinkImage(null);
 		setErrorMessage(null);
 	};
-
 	const handleSaveEdit = () => {
 		if (!editingEmotion) return;
 		if (!newLabel.trim()) {
@@ -149,7 +132,6 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 			setErrorMessage('Selecciona una imagen para la expresión');
 			return;
 		}
-
 		try {
 			const updated = avatar2dManager.updateCustomEmotion(editingEmotion.id, {
 				label: newLabel.trim(),
@@ -166,11 +148,9 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 			setErrorMessage('No se pudo actualizar la expresión.');
 		}
 	};
-
 	const handleDeleteClick = (em: PngTuberEmotion) => {
 		setEmotionToDelete(em);
 	};
-
 	const handleConfirmDelete = () => {
 		if (!emotionToDelete) return;
 		const target = emotionToDelete;
@@ -183,16 +163,15 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 			}
 		}
 	};
-
 	return (
 		<motion.div
 			initial={{ opacity: 0, scale: 0.96, x: 20 }}
 			animate={{ opacity: 1, scale: 1, x: 0 }}
 			exit={{ opacity: 0, scale: 0.96, x: 20 }}
 			transition={{ duration: 0.2, ease: 'easeOut' }}
-			className='pointer-events-auto absolute top-4 right-20 z-30 max-h-[calc(100%-2rem)] overflow-y-auto'
+			className='pointer-events-auto absolute right-3 bottom-20 left-3 z-30 max-h-[calc(100%-6rem)] overflow-y-auto [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin] md:top-4 md:right-20 md:bottom-auto md:left-auto md:max-h-[calc(100%-2rem)]'
 		>
-			<div className='flex w-80 max-w-[calc(100vw-5rem)] flex-col gap-3 rounded-2xl border border-border/80 bg-background/90 p-3.5 shadow-2xl backdrop-blur-xl sm:w-84'>
+			<div className='flex w-full max-w-[calc(100vw-1.5rem)] flex-col gap-3 rounded-2xl border border-border/80 bg-background p-3.5 shadow-lg md:w-84'>
 				{/* Cabecera del Panel */}
 				<div className='flex items-center justify-between border-border/60 border-b pb-2'>
 					<div className='flex items-center gap-2'>
@@ -210,7 +189,6 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 						<X className='size-3.5' />
 					</Button>
 				</div>
-
 				{/* Prueba rápida de estado hablando (boca abierta + rebote) */}
 				<div className='flex items-center justify-between rounded-xl border border-border/60 bg-muted/30 p-2.5'>
 					<div className='space-y-0.5'>
@@ -235,7 +213,6 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 						{isSpeaking ? 'Hablando' : 'Silencio'}
 					</Button>
 				</div>
-
 				{/* Grilla de Emociones y Formulario de Nueva/Editar Expresión */}
 				<div className='space-y-1.5'>
 					<div className='flex items-center justify-between'>
@@ -252,7 +229,6 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 							<Plus className='mr-1 size-3' /> Nueva expresión
 						</Button>
 					</div>
-
 					{/* Formulario de creación o edición */}
 					{(isCreating || editingEmotion) && (
 						<div className='space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-2.5'>
@@ -271,7 +247,6 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 								}}
 								className='h-7 w-full rounded-md border border-border/80 bg-background px-2 font-normal text-foreground text-xs placeholder:text-muted-foreground focus:border-primary focus:outline-none'
 							/>
-
 							{/* Selector de imagen + preview */}
 							<input
 								ref={fileInputRef}
@@ -308,7 +283,6 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 										</div>
 										<span className='font-medium text-[9px] text-foreground'>Reposo *</span>
 									</button>
-
 									{/* Hablando */}
 									<button
 										type='button'
@@ -340,7 +314,6 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 											Boca abierta
 										</span>
 									</button>
-
 									{/* Parpadeo */}
 									<button
 										type='button'
@@ -376,9 +349,7 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 									gestos predeterminados.
 								</p>
 							</div>
-
 							{errorMessage && <p className='text-[10px] text-destructive'>{errorMessage}</p>}
-
 							<div className='flex items-center justify-end gap-1.5 pt-1'>
 								<Button
 									type='button'
@@ -400,14 +371,13 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 							</div>
 						</div>
 					)}
-
-					<div className='grid grid-cols-2 gap-1.5'>
+					<div className='grid gap-1.5'>
 						{emotions.map((em) => {
 							const isSelected = activeEmotion === em.id;
 							return (
 								<div
 									key={em.id}
-									className={`flex items-center justify-between gap-1.5 rounded-xl border px-2.5 py-2 text-left text-xs transition-all ${
+									className={`flex flex-wrap items-center justify-between gap-1.5 rounded-lg border px-2.5 py-2 text-left text-xs transition-all ${
 										isSelected
 											? 'border-primary bg-primary/10 font-semibold text-primary shadow-xs ring-1 ring-primary/30'
 											: 'border-border/60 bg-card/60 text-muted-foreground hover:border-border hover:bg-muted/40 hover:text-foreground'
@@ -415,8 +385,10 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 								>
 									<button
 										type='button'
+										role='switch'
+										aria-checked={isSelected}
 										onClick={() => handleSelectEmotion(em.id)}
-										className='flex min-w-0 flex-1 items-center gap-1.5 text-left focus:outline-none'
+										className='flex min-h-11 min-w-0 flex-1 items-center gap-1.5 rounded-md text-left focus-visible:outline-2 focus-visible:outline-ring'
 									>
 										{em.idle && (
 											<div className='relative size-4.5 shrink-0 overflow-hidden rounded bg-black/20'>
@@ -428,7 +400,12 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 												/>
 											</div>
 										)}
-										<span className='truncate'>{em.label}</span>
+										<span className='min-w-0'>
+											<span className='block truncate'>{em.label}</span>
+											<span className='block text-[10px] text-muted-foreground'>
+												{isSelected ? (em.id === 'neutral' ? 'Base' : 'Activa') : 'Apagada'}
+											</span>
+										</span>
 									</button>
 									<div className='flex shrink-0 items-center gap-1'>
 										<button
@@ -457,24 +434,26 @@ export function Avatar2dExpressionsPanel({ onClose }: Props) {
 										</button>
 										{isSelected && <span className='size-1.5 shrink-0 rounded-full bg-primary' />}
 									</div>
+									<div className='shrink-0'>
+										<ExpressionConfiguration scope='pngtuber' id={em.id} label={em.label} />
+									</div>
 								</div>
 							);
 						})}
 					</div>
 				</div>
-
 				{/* Resetear a neutral */}
 				<Button
 					variant='outline'
 					size='sm'
-					onClick={() => handleSelectEmotion('neutral')}
+					onClick={() => avatar2dManager.setEmotion('neutral')}
 					className='h-7.5 w-full gap-1.5 text-muted-foreground text-xs hover:text-foreground'
 				>
 					<RotateCcw className='size-3' />
 					Restablecer a Neutral
 				</Button>
+				<ExpressionHotkeyStatus compact />
 			</div>
-
 			{/* Confirmación accesible de eliminación con Dialog */}
 			<Dialog
 				open={!!emotionToDelete}

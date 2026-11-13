@@ -1,12 +1,12 @@
 'use client';
 
 import { AiStep } from '@/components/onboarding/AiStep';
+import { AvatarSetupStep } from '@/components/onboarding/AvatarSetupStep';
 import { CompletedStep } from '@/components/onboarding/CompletedStep';
 import { ConnectionsStep } from '@/components/onboarding/ConnectionsStep';
 import { SandyCoreStep } from '@/components/onboarding/SandyCoreStep';
 import { SpeechRecognitionStep } from '@/components/onboarding/SpeechRecognitionStep';
 import { ThemeStep } from '@/components/onboarding/ThemeStep';
-import { VTubeStudioStep } from '@/components/onboarding/VTubeStudioStep';
 import { VoiceStep } from '@/components/onboarding/VoiceStep';
 import { WelcomeStep } from '@/components/onboarding/WelcomeStep';
 import type { SandyOnboardingContext } from '@/components/onboarding/onboarding.types';
@@ -34,47 +34,46 @@ const stepMeta = {
 	welcome: {
 		title: '¡Bienvenido a Sandy Studio!',
 		description:
-			'Vamos a dejar tu VTuber lista para hablar, responder y presentarse bien desde el primer inicio.',
+			'Prepara las respuestas, la voz y el formato de tu avatar. Puedes dejar cualquier decisión para después y probarlo en el estudio.',
 	},
 	connections: {
-		title: 'Tus conexiones',
+		title: '¿Dónde está tu comunidad?',
 		description:
-			'Conectar Twitch, Kick y YouTube permite que Sandy lea mensajes y reaccione desde donde ya está tu comunidad.',
+			'Conecta las plataformas cuyo chat quieres usar. Puedes probar a hablar con Sandy sin conectar un canal todavía.',
 	},
 	theme: {
-		title: 'Elegí el estilo de la app',
-		description:
-			'Selecciona el tema que prefieras para que Sandy Studio se sienta cómodo desde el primer uso.',
+		title: 'Un espacio cómodo para configurar',
+		description: 'Elige claro u oscuro. Puedes cambiarlo después desde el estudio.',
 	},
 	ai: {
 		title: 'Elige tu modelo de IA',
 		description:
-			'Este modelo entiende el chat y decide cómo responder, así que aquí defines el tono, la velocidad y el costo de cada mensaje.',
+			'La IA decide qué responder. Elige un proveedor y completa su acceso; la voz se configura en el siguiente bloque.',
 	},
 	'sandy-core': {
 		title: 'Personalidad de la VTuber',
 		description:
-			'Descarga la plantilla, completa cómo habla Sandy y vuelve a cargar el JSON para dejar su personalidad lista.',
+			'Descarga la plantilla, define cómo habla tu VTuber y carga su archivo JSON. Puedes completar este paso después.',
 	},
 	voice: {
-		title: 'Configurá su voz',
+		title: 'Así sonará Sandy',
 		description:
-			'La voz le da identidad al avatar. Aquí eliges cómo sonará para que la experiencia se sienta natural y coherente.',
+			'Elige Edge TTS, Fish Audio o tu servidor local. Escucha una frase de prueba antes de seguir.',
 	},
 	speech: {
-		title: 'Reconocimiento de voz',
+		title: 'Habla con Sandy',
 		description:
-			'Activa cómo Sandy escuchará tu voz para responderte en tiempo real mientras usas la app.',
+			'Esto convierte tu voz en texto. Es distinto de la voz con la que Sandy te responde.',
 	},
 	'vtube-studio': {
-		title: 'Conectá VTube Studio',
+		title: 'Elige el formato de tu avatar',
 		description:
-			'Conecta el avatar para que Sandy pueda mover la boca y reaccionar en tiempo real mientras habla.',
+			'PNGTuber, Live2D y VRM funcionan dentro del estudio. Allí cargarás el modelo y prepararás sus expresiones.',
 	},
 	completed: {
-		title: '¡Todo listo!',
+		title: 'Revisa antes de entrar al estudio',
 		description:
-			'Antes de entrar al dashboard, revisa qué quedó conectado y qué puedes completar después sin perder el avance.',
+			'Estos son los datos que preparaste y las comprobaciones que todavía quedan pendientes.',
 	},
 } as const;
 
@@ -133,7 +132,7 @@ export const steps: OnboardingStep<SandyOnboardingContext>[] = [
 	{
 		id: 'vtube-studio',
 		type: 'CUSTOM_COMPONENT',
-		component: VTubeStudioStep,
+		component: AvatarSetupStep,
 		payload: { ...stepMeta['vtube-studio'], componentKey: 'vtube-studio' },
 		nextStep: 'completed',
 		isSkippable: true,
@@ -149,6 +148,18 @@ export const steps: OnboardingStep<SandyOnboardingContext>[] = [
 ];
 
 export const stepOrder = steps.map((step) => step.id) as OnboardingStepId[];
+
+export const stepLabels: Record<OnboardingStepId, string> = {
+	welcome: 'Bienvenida',
+	theme: 'Apariencia',
+	connections: 'Conexiones',
+	ai: 'Respuestas de IA',
+	'sandy-core': 'Personalidad',
+	voice: 'Voz',
+	speech: 'Micrófono',
+	'vtube-studio': 'Avatar',
+	completed: 'Revisión',
+};
 
 export const onboardingStepsIcons: Record<OnboardingStepId, ReactNode> = {
 	welcome: <Sparkles className='size-4' />,

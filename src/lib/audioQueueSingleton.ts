@@ -26,6 +26,8 @@ export class AudioQueueManager {
 	private recentAudio = new Map<string, number>();
 	private static readonly DEDUPE_WINDOW_MS = 30_000;
 	private callbacks: Set<(isPlaying: boolean) => void> = new Set();
+	private speechSessions = 0;
+	private speechStateCallbacks = new Set<(active: boolean) => void>();
 	/** Manejador de Lip Sync con soporte de preparación sin retraso y reloj de alta resolución. */
 	private lipSyncHandler: LipSyncHandler | null = null;
 
@@ -159,6 +161,26 @@ export class AudioQueueManager {
 		this.lipSyncHandler = handler;
 	}
 
+	beginSpeechSession(): void {
+		this.speechSessions++;
+		this.notifySpeechStateChange();
+	}
+
+	endSpeechSession(): void {
+		this.speechSessions = Math.max(0, this.speechSessions - 1);
+		this.notifySpeechStateChange();
+	}
+
+	isSpeechActive(): boolean {
+		return this.speechSessions > 0 || this.isPlaying || this.queue.length > 0;
+	}
+
+	subscribeSpeechState(callback: (active: boolean) => void): () => void {
+		this.speechStateCallbacks.add(callback);
+		callback(this.isSpeechActive());
+		return () => this.speechStateCallbacks.delete(callback);
+	}
+
 	subscribe(callback: (isPlaying: boolean) => void) {
 		this.callbacks.add(callback);
 		return () => {
@@ -169,6 +191,14 @@ export class AudioQueueManager {
 	private notifyStateChange() {
 		for (const callback of this.callbacks) {
 			callback(this.isPlaying);
+		}
+		this.notifySpeechStateChange();
+	}
+
+	private notifySpeechStateChange() {
+		const active = this.isSpeechActive();
+		for (const callback of this.speechStateCallbacks) {
+			callback(active);
 		}
 	}
 

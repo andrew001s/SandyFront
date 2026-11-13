@@ -8,15 +8,7 @@ import type { VTSModel, VTSModelInfo } from '@/hooks/useVTubeStudio';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { useState } from 'react';
-import {
-	FiBox,
-	FiCheck,
-	FiChevronDown,
-	FiChevronUp,
-	FiFolder,
-	FiImage,
-	FiUser,
-} from 'react-icons/fi';
+import { FiCheck, FiChevronDown, FiChevronUp, FiFolder, FiImage, FiUser } from 'react-icons/fi';
 
 type AvatarModelDeckProps = {
 	connected: boolean;
@@ -40,13 +32,10 @@ export function AvatarModelDeck({
 	const [showTechDetails, setShowTechDetails] = useState(false);
 
 	return (
-		<Card className='rounded-xl border-border/60 bg-card'>
-			<CardHeader className='pb-3'>
+		<Card className='min-w-0 gap-4 rounded-xl border-border bg-card py-5 shadow-none'>
+			<CardHeader className='px-4 sm:px-5'>
 				<div className='flex items-center justify-between'>
 					<div className='flex items-center gap-3'>
-						<div className='rounded-lg bg-primary/10 p-2 text-primary'>
-							<FiBox className='size-5' />
-						</div>
 						<div>
 							<CardTitle className='font-display font-semibold text-base text-foreground'>
 								Modelo Live2D
@@ -81,7 +70,7 @@ export function AvatarModelDeck({
 				</div>
 			</CardHeader>
 
-			<CardContent className='space-y-4'>
+			<CardContent className='space-y-4 px-4 sm:px-5'>
 				{!connected ? (
 					<div className='flex flex-col items-center justify-center rounded-xl border border-border/60 border-dashed bg-background/30 p-8 text-center'>
 						<div className='mb-3 flex size-10 items-center justify-center rounded-full bg-muted/60 text-muted-foreground'>
@@ -163,7 +152,7 @@ export function AvatarModelDeck({
 						) : (
 							<div className='flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-xs'>
 								<span className='size-2 shrink-0 rounded-full bg-amber-400' />
-								<span className='text-amber-200'>
+								<span className='text-amber-900 dark:text-amber-200'>
 									No hay ningún modelo activo cargado en VTube Studio. Selecciona uno abajo.
 								</span>
 							</div>

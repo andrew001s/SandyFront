@@ -179,6 +179,9 @@ export function getAiErrorMessage(error: unknown): string {
 		return FALLBACK;
 	}
 	const code = payload.code as AiErrorCode;
+	if (payload.provider === 'openrouter' && code === 'error.insufficient-credits') {
+		return 'OpenRouter no tiene saldo o límite suficiente para esta solicitud. Revisa tus créditos y el límite de la clave, o usa un modelo más económico.';
+	}
 	if (payload.provider === VOICE_PROVIDER) {
 		const voice = VOICE_ERROR_MESSAGES[code];
 		if (voice) {

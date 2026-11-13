@@ -1,16 +1,15 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { KOFI_URL } from '@/lib/links';
-import { ArrowRight, Box, Coffee, ExternalLink, Heart, Settings, Sparkles, X } from 'lucide-react';
+import { ArrowRight, Box, Coffee, ExternalLink, Settings, X } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
 export const SANDY_NEWS_STORAGE_KEY = 'sandy_news_last_seen_version';
-export const CURRENT_NEWS_VERSION = '0.2.6';
+export const CURRENT_NEWS_VERSION = '0.2.7';
 export const OPEN_NEWS_MODAL_EVENT = 'open-sandy-news-modal';
 
 export const openNewsModal = () => {
@@ -76,173 +75,102 @@ export function NewsModal() {
 				else setIsOpen(true);
 			}}
 		>
-			<DialogContent className='max-h-[95vh] w-[92vw] max-w-[430px] overflow-hidden border-0 bg-transparent p-0 shadow-2xl sm:max-w-[460px] [&>button]:hidden'>
-				{/* Outer Poster Frame matching the reference illustration */}
-				<div className='relative flex flex-col overflow-hidden rounded-[32px] border border-indigo-400/20 bg-[#161233] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)]'>
-					{/* Close Button at top-right */}
+			<DialogContent className='max-h-[92dvh] w-[92vw] max-w-[430px] gap-0 overflow-y-auto border-0 bg-transparent p-0 shadow-2xl sm:max-w-[460px] [&>button]:hidden'>
+				<div className='relative flex flex-col overflow-hidden rounded-[32px] border border-indigo-400/20 bg-[#161233]'>
 					<button
 						type='button'
 						onClick={handleClose}
 						aria-label='Cerrar modal'
-						className='absolute top-3.5 right-3.5 z-20 flex size-8 items-center justify-center rounded-full bg-black/40 text-white/80 backdrop-blur-md transition-all hover:bg-black/60 hover:text-white active:scale-95'
+						className='absolute top-3 right-3 z-20 flex size-11 items-center justify-center rounded-full bg-[#0E1022] text-white transition-colors hover:bg-[#262A4D] focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2'
 					>
-						<X className='size-4' />
+						<X aria-hidden className='size-4' />
 					</button>
-
-					{/* Top Artwork Area with Custom VTuber Flat Banner */}
-					<div className='relative h-60 w-full overflow-hidden sm:h-64'>
+					<div className='relative h-44 w-full overflow-hidden sm:h-56'>
 						<Image
-							src='/news/avatar-studio-banner.png'
-							alt='Sandy Studio con herramientas para avatares Live2D, PNGTuber y VRM'
+							src='/news/sandy-plus-release-0.2.7.webp'
+							alt='Sandy con un café en su estudio nocturno, junto a pantallas de avatares conectadas entre nubes y estrellas'
 							fill
 							priority
+							sizes='(max-width: 640px) 92vw, 460px'
 							className='pointer-events-none select-none object-cover object-center'
 						/>
-						{/* Subtle top atmospheric shading */}
-						<div className='pointer-events-none absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-transparent' />
-
-						{/* Floating update pill badge */}
-						<div className='absolute top-4 left-4 z-10 flex items-center gap-1.5 rounded-full border border-white/20 bg-[#1e1b4b]/80 px-3 py-1 shadow-md backdrop-blur-md'>
-							<Sparkles className='size-3 text-cyan-400' />
-							<span className='font-bold text-[11px] text-white uppercase tracking-wide'>
-								Actualización
-							</span>
-							<span className='rounded-full bg-cyan-500/20 px-1.5 py-0.2 font-bold font-mono text-[10px] text-cyan-300'>
-								v{CURRENT_NEWS_VERSION}
-							</span>
-						</div>
+						<span className='absolute top-4 left-4 rounded-full border border-white/20 bg-[#0E1022] px-3 py-1.5 font-mono text-white text-xs'>
+							v{CURRENT_NEWS_VERSION}
+						</span>
 					</div>
-
-					{/* Cloud-integrated Notice Sheet (White / Light Clean Card) */}
-					<div className='-mt-8 relative mx-3 mb-3 flex flex-col rounded-[26px] bg-[#fbfbff] p-5 text-slate-800 shadow-xl sm:p-6'>
-						{/* Notice Header */}
-						<div className='flex items-center justify-between border-slate-100 border-b pb-3'>
-							<div>
-								<DialogTitle className='font-extrabold text-slate-900 text-xl tracking-tight sm:text-2xl'>
-									Tu VTuber Studio, en 2D y 3D
-								</DialogTitle>
-								<DialogDescription className='mt-0.5 font-medium text-slate-500 text-xs sm:text-sm'>
-									Live2D, PNGTuber y VRM en un solo espacio
-								</DialogDescription>
-							</div>
-
-							<Badge
-								variant='outline'
-								className='border-cyan-200 bg-cyan-50 font-bold font-mono text-[11px] text-cyan-700'
-							>
-								2D + 3D
-							</Badge>
+					<div className='-mt-5 relative mx-3 mb-3 rounded-[26px] bg-[#fbfbff] p-5 text-slate-800 sm:p-6'>
+						<div className='space-y-2 border-slate-200 border-b pb-4'>
+							<DialogTitle className='font-bold font-display text-slate-900 text-xl leading-tight sm:text-2xl'>
+								Sandy Plus llega al estudio
+							</DialogTitle>
+							<DialogDescription className='text-slate-600 text-sm'>
+								Apoyo opcional, nuevas expresiones y mejoras para tus directos.
+							</DialogDescription>
 						</div>
-
-						{/* Notice Body */}
-						<div className='mt-3.5 space-y-2.5 text-slate-600 text-xs sm:text-[13px] sm:leading-relaxed'>
-							<p className='font-semibold text-slate-800'>
-								¡Hola, streamers! Sandy Studio estrena un espacio completo para preparar y controlar
-								tu avatar, tanto si usas un modelo 2D como uno 3D:
+						<ul className='my-4 space-y-4 text-slate-700 text-sm leading-relaxed'>
+							<li>
+								<p className='font-semibold text-slate-900'>Sandy Plus, en toda tu cuenta</p>
+								<p>
+									Un pago de US$3 retira la marca de apoyo en PNGTuber, Live2D, VRM y OBS. Abre
+									«Apoyar Sandy» para obtener Plus o canjear tu código.
+								</p>
+							</li>
+							<li>
+								<p className='font-semibold text-slate-900'>Más control de tus expresiones</p>
+								<p>
+									Configura atajos con intensidad y reacciones automáticas para tus avatares. El
+									estudio VRM también incorpora ajustes de animación en reposo.
+								</p>
+							</li>
+							<li>
+								<p className='font-semibold text-slate-900'>Una configuración más clara</p>
+								<p>
+									Mejoramos la bienvenida, la selección de avatar y los controles del estudio, con
+									un panel dedicado a VTube Studio.
+								</p>
+							</li>
+						</ul>
+						<div className='flex flex-wrap gap-2'>
+							<Button
+								type='button'
+								onClick={handleGoToAvatar}
+								className='min-h-11 flex-1 gap-2 rounded-xl bg-violet-600 text-white hover:bg-violet-700 focus-visible:ring-violet-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white'
+							>
+								<Box aria-hidden className='size-4' />
+								<span>Abrir estudio</span>
+								<ArrowRight aria-hidden className='size-4' />
+							</Button>
+							<button
+								type='button'
+								onClick={handleGoToSettings}
+								className='inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 font-semibold text-slate-700 text-sm hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-violet-600 focus-visible:outline-offset-2'
+							>
+								<Settings aria-hidden className='size-4' />
+								<span>Ajustes</span>
+							</button>
+						</div>
+						<div className='mt-4 border-slate-200 border-t pt-3 text-center'>
+							<p className='text-slate-600 text-xs leading-relaxed'>
+								Las funciones de Sandy siguen siendo gratuitas. Los aportes voluntarios no activan
+								Sandy Plus.
 							</p>
-
-							{/* Numbered bullet list matching the reference layout */}
-							<div className='space-y-2 rounded-xl bg-slate-50/80 p-3 text-xs'>
-								<div className='flex items-start gap-2'>
-									<span className='flex size-4 shrink-0 items-center justify-center rounded-full bg-violet-600 font-bold text-[10px] text-white'>
-										1
-									</span>
-									<p className='text-slate-700'>
-										<strong className='text-slate-900'>Estudio 2D para Live2D y PNGTuber:</strong>{' '}
-										Ajusta la cámara, el encuadre y las expresiones; usa tus modelos Live2D o
-										sprites PNG con estados para hablar y parpadear.
-									</p>
-								</div>
-
-								<div className='flex items-start gap-2'>
-									<span className='flex size-4 shrink-0 items-center justify-center rounded-full bg-violet-600 font-bold text-[10px] text-white'>
-										2
-									</span>
-									<p className='text-slate-700'>
-										<strong className='text-slate-900'>Controles de estudio para tu avatar:</strong>{' '}
-										Organiza el panel de trabajo y prueba expresiones y sincronización labial
-										mientras ajustas tu personaje.
-									</p>
-								</div>
-
-								<div className='flex items-start gap-2'>
-									<span className='flex size-4 shrink-0 items-center justify-center rounded-full bg-violet-600 font-bold text-[10px] text-white'>
-										3
-									</span>
-									<p className='text-slate-700'>
-										<strong className='text-slate-900'>Escenario 3D para modelos VRM:</strong>{' '}
-										Continúa usando tu modelo VRM con controles de cámara, expresiones y fondos en
-										el estudio 3D.
-									</p>
-								</div>
-							</div>
-
-							{/* Call to action & button row */}
-							<div className='flex flex-col gap-2 pt-2'>
-								<div className='flex items-center gap-2'>
-									<Button
-										type='button'
-										onClick={handleGoToAvatar}
-										className='h-10 flex-1 gap-2 rounded-xl bg-violet-600 font-semibold text-white text-xs shadow-md transition-all hover:bg-violet-700 active:scale-[0.98]'
-									>
-										<Box className='size-3.5' />
-										<span>Abrir estudio de avatares</span>
-										<ArrowRight className='size-3.5' />
-									</Button>
-
-									<button
-										type='button'
-										onClick={handleGoToSettings}
-										className='inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-200/90 bg-white px-3.5 font-semibold text-slate-700 text-xs shadow-xs transition-all hover:border-slate-300 hover:bg-slate-100 hover:text-slate-900 active:scale-[0.98]'
-									>
-										<Settings className='size-3.5 text-slate-600' />
-										<span>Ajustes</span>
-									</button>
-								</div>
-							</div>
-
-							{/* High-visibility Ko-fi Community Support Card */}
-							<div className='relative mt-1 overflow-hidden rounded-2xl border-2 border-[#FF5E5B]/40 bg-gradient-to-r from-[#FF5E5B]/15 via-[#FF5E5B]/10 to-[#FFA14A]/15 p-3.5 shadow-sm'>
-								<div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-									<div className='flex items-start gap-2.5'>
-										<div className='flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#FF5E5B] to-[#ff423e] text-white shadow-[#FF5E5B]/30 shadow-md'>
-											<Coffee className='size-4 animate-bounce' />
-										</div>
-										<div className='space-y-0.5'>
-											<div className='flex items-center gap-1.5'>
-												<span className='font-extrabold text-slate-900 text-xs tracking-tight'>
-													¿Te gusta Sandy?
-												</span>
-												<Heart className='size-3 animate-pulse fill-[#FF5E5B] text-[#FF5E5B]' />
-											</div>
-											<p className='font-medium text-[11px] text-slate-600 leading-snug'>
-												Sandy es 100% gratuita. ¡Apóyanos con un cafecito para seguir mejorando!
-											</p>
-										</div>
-									</div>
-
-									<a
-										href={KOFI_URL}
-										target='_blank'
-										rel='noopener noreferrer'
-										className='inline-flex h-9 w-full shrink-0 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[#FF5E5B] to-[#ff423e] px-4 font-bold text-white text-xs shadow-[#FF5E5B]/30 shadow-md transition-all hover:scale-[1.02] hover:shadow-[#FF5E5B]/40 hover:shadow-lg active:scale-95 sm:w-auto'
-									>
-										<span>Invitar café</span>
-										<ExternalLink className='size-3 opacity-90' />
-									</a>
-								</div>
-							</div>
-
-							{/* Secondary dismiss */}
-							<div className='pt-1 text-center'>
-								<button
-									type='button'
-									onClick={handleClose}
-									className='h-7 w-full rounded-lg font-medium text-[11px] text-slate-400 transition-colors hover:bg-slate-100/80 hover:text-slate-600 active:text-slate-900'
-								>
-									¡Entendido, gracias!
-								</button>
-							</div>
+							<a
+								href={KOFI_URL}
+								target='_blank'
+								rel='noopener noreferrer'
+								className='mt-1 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-2 font-medium text-slate-700 text-sm underline underline-offset-4 hover:text-violet-700 focus-visible:outline-2 focus-visible:outline-violet-600 focus-visible:outline-offset-2'
+							>
+								<Coffee aria-hidden className='size-4' />
+								Apoyar voluntariamente
+								<ExternalLink aria-hidden className='size-3.5' />
+							</a>
+							<button
+								type='button'
+								onClick={handleClose}
+								className='mt-1 min-h-11 w-full rounded-lg font-medium text-slate-600 text-sm hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-violet-600 focus-visible:outline-offset-2'
+							>
+								Entendido
+							</button>
 						</div>
 					</div>
 				</div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { AudioQueueManager } from '@/lib/audioQueueSingleton';
+import { normalizeExpressionIntensity } from '@/lib/avatar/expressionIntensities';
 import { DEFAULT_SANDY_EMOTIONS, DEFAULT_SANDY_SPRITES } from '@/lib/avatar2d/defaultSprites';
 import type {
 	Avatar2dMode,
@@ -422,6 +423,29 @@ export class Avatar2dManager {
 		}
 	}
 
+	public setLive2dExpressionIntensities(
+		intensities: Record<string, number>,
+		broadcast = true,
+	): void {
+		const normalized = Object.fromEntries(
+			Object.entries(intensities).map(([id, value]) => [id, normalizeExpressionIntensity(value)]),
+		);
+		if (
+			JSON.stringify(this.state.live2d.expressionIntensities ?? {}) === JSON.stringify(normalized)
+		)
+			return;
+		this.state = {
+			...this.state,
+			live2d: { ...this.state.live2d, expressionIntensities: normalized },
+		};
+		this.save();
+		this.notify();
+		if (broadcast)
+			this.broadcastChannel?.postMessage({
+				type: 'live2dExpressionIntensities',
+				intensities: normalized,
+			});
+	}
 	public toggleLive2dExpression(expression: string, broadcast = true): void {
 		const currentList = this.state.live2d.activeExpressions || [];
 		const isCurrentlyActive = currentList.includes(expression);
@@ -450,7 +474,12 @@ export class Avatar2dManager {
 	}
 
 	public setLive2dExpression(expression: string | null, broadcast = true): void {
-		const nextExpressions = expression ? [expression] : [];
+		this.setLive2dExpressions(expression ? [expression] : [], broadcast);
+	}
+
+	public setLive2dExpressions(expressions: string[], broadcast = true): void {
+		const nextExpressions = [...new Set(expressions.filter(Boolean))];
+		const expression = nextExpressions[nextExpressions.length - 1] ?? null;
 		if (
 			this.state.live2d.activeExpression === expression &&
 			JSON.stringify(this.state.live2d.activeExpressions || []) === JSON.stringify(nextExpressions)
@@ -710,6 +739,9 @@ export class Avatar2dManager {
 					},
 				};
 				this.notify();
+				break;
+			case 'live2dExpressionIntensities':
+				this.setLive2dExpressionIntensities(msg.intensities, false);
 				break;
 			case 'live2dExpression': {
 				const nextExpressions = msg.expressions ?? (msg.expression ? [msg.expression] : []);

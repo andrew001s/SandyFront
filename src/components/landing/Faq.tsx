@@ -40,11 +40,11 @@ const faqs: Array<Faq> = [
 		icon: <BrainCircuit size={14} />,
 		question: '¿Qué modelos de lenguaje soporta Sandy Studio?',
 		answer:
-			'Sandy Studio adopta la filosofía BYOK (Bring Your Own Key). Puedes utilizar Google Gemini (con tier gratuito o de pago) o conectar OpenRouter para acceder a modelos como Claude 3.5 Sonnet, Llama 3 o Mistral.',
+			'Configura tu propia clave de Google Gemini u OpenRouter, o conecta un modelo local compatible. Elige el proveedor y el modelo desde Configuración.',
 		details: [
-			'Google Gemini: latencia mínima y muy económico',
-			'OpenRouter: acceso a más de 100 modelos de última generación',
-			'Cambio de modelo instantáneo desde la consola',
+			'Google Gemini con tu clave de API',
+			'Modelos disponibles a través de OpenRouter',
+			'IA local desde tu equipo',
 		],
 	},
 	{
@@ -64,10 +64,10 @@ const faqs: Array<Faq> = [
 		icon: <Sparkles size={14} />,
 		question: '¿Cómo funciona la sincronización de labios y movimiento?',
 		answer:
-			'Sandy Studio se conecta con VTube Studio (modelos Live2D) y con VNyan (avatares 3D VRM) vía WebSocket local. La síntesis de voz genera fonemas en tiempo real que se traducen en apertura de boca y expresiones a 60 FPS.',
+			'Sandy Studio renderiza PNGTuber, Live2D y VRM en el navegador. La voz mueve la boca del avatar y puedes asociar sus expresiones a las emociones que permitas a la IA.',
 		details: [
 			'Sincronización labial en tiempo real',
-			'Expresiones reactivas a comandos del chat o emociones del texto',
+			'Emociones automáticas que puedes activar, apagar y configurar',
 			'Compatible con Live2D y VRM 3D estándar',
 		],
 	},
@@ -76,10 +76,10 @@ const faqs: Array<Faq> = [
 		icon: <User size={14} />,
 		question: '¿Qué necesito tener listo para empezar?',
 		answer:
-			'Una cuenta de Twitch, Kick o YouTube, una clave de API de Gemini o OpenRouter, y una clave de Fish Audio para la síntesis de voz. Si deseas proyectar un avatar en pantalla, necesitas tener abierto VTube Studio o VNyan en tu equipo.',
+			'Una cuenta en Sandy Studio, tu proveedor de IA y una clave de Fish Audio para la voz. El avatar se carga en el estudio: imágenes PNG, un paquete Live2D o un archivo VRM. Copia el enlace del overlay para usarlo en OBS.',
 		details: [
 			'Canal en Twitch, Kick o YouTube activo',
-			'VTube Studio o VNyan abierto en tu PC para el renderizado del modelo',
+			'Tu avatar PNGTuber, Live2D o VRM cargado en el navegador',
 			'Micrófono si deseas que Sandy escuche lo que dices en vivo',
 		],
 	},
@@ -102,7 +102,7 @@ const faqs: Array<Faq> = [
 		icon: <MessageSquare size={14} />,
 		question: '¿Consume recursos de CPU o GPU en mi ordenador?',
 		answer:
-			'El procesamiento de IA, transcripción y síntesis de voz se ejecutan en la nube. En tu PC solo se ejecutan la pestaña del navegador y tu programa de avatar habitual (VTube Studio o VNyan), sin sobrecargar tus componentes durante el juego.',
+			'El navegador renderiza el avatar y consume recursos según el modelo y sus efectos. Si eliges un proveedor de IA o voz en la nube, ese procesamiento ocurre en sus servidores; un modelo de IA local también utiliza los recursos de tu equipo.',
 	},
 ];
 

@@ -38,7 +38,7 @@ export interface FooterProps {
 export const Footer = ({ forceRender = false, className }: FooterProps) => {
 	const pathname = usePathname();
 
-	if (pathname?.startsWith('/overlay')) {
+	if (pathname?.startsWith('/overlay') || pathname === '/onboarding') {
 		return null;
 	}
 

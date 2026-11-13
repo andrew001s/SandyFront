@@ -1,6 +1,5 @@
 'use client';
 
-import StreamChat from '@/components/Chat/Chat';
 import { FeatureFlagsPanel } from '@/components/FeatureFlags/FeatureFlagsPanel';
 import { MicrophoneTile } from '@/components/ServiceControl/MicrophoneTile';
 import { ServiceStartCard } from '@/components/ServiceControl/ServiceStartCard';
@@ -46,7 +45,6 @@ export const HomeContainer = () => {
 					</span>
 				</div>
 				<TerminalSandy />
-				<StreamChat />
 			</section>
 
 			{/* Módulos de Emisión (Feature Flags) */}

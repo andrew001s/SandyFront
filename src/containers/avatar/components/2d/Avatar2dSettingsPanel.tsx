@@ -3,8 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
-import { live2dStore } from '@/lib/avatar2d/live2dStore';
-import { unpackLive2dZip } from '@/lib/avatar2d/live2dZipLoader';
+import { loadLive2dModel, removeLive2dModel } from '@/lib/avatar2d/live2dModel';
 import type { Avatar2dMode, Avatar2dState, PngTuberSpriteKey } from '@/lib/avatar2d/types';
 import { motion } from 'framer-motion';
 import { Box, RotateCcw, Sparkles, Trash2, Upload, X } from 'lucide-react';
@@ -102,9 +101,11 @@ export function Avatar2dSettingsPanel({ mode: propMode, onClose }: Props) {
 
 		const toastId = toast.loading(`Cargando modelo Live2D: ${file.name}...`);
 		try {
-			const loadedPackage = await unpackLive2dZip(file);
-			live2dStore.setPackage(loadedPackage);
-			avatar2dManager.setLive2dModel('loaded', loadedPackage.modelName);
+			const loadedPackage = await loadLive2dModel(file);
+			if (!loadedPackage) {
+				toast.dismiss(toastId);
+				return;
+			}
 			toast.success(`Modelo "${loadedPackage.modelName}" listo en pantalla`, { id: toastId });
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : 'Error al procesar el archivo .ZIP';
@@ -356,10 +357,7 @@ export function Avatar2dSettingsPanel({ mode: propMode, onClose }: Props) {
 									<Button
 										variant='ghost'
 										size='icon'
-										onClick={() => {
-											live2dStore.setPackage(null);
-											avatar2dManager.setLive2dModel(null);
-										}}
+										onClick={() => void removeLive2dModel()}
 										className='size-6 text-muted-foreground hover:text-destructive'
 										title='Quitar modelo'
 									>

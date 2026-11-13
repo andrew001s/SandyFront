@@ -1,3 +1,5 @@
+import posthog from 'posthog-js';
+
 /**
  * Cliente para un modelo servido en local (Ollama, LM Studio, llama.cpp, vLLM...).
  *
@@ -11,11 +13,24 @@ export type LocalAiConfig = {
 	model?: string;
 };
 
+export type LocalAiObservabilityContext = {
+	traceId: string;
+	sessionId?: string;
+};
+
 export type LocalCompletionRequest = {
 	message: string;
 	systemPrompt?: string;
 	signal?: AbortSignal;
+	observability?: LocalAiObservabilityContext;
 };
+
+export function createLocalAiObservabilityContext(): LocalAiObservabilityContext {
+	return {
+		traceId: crypto.randomUUID(),
+		sessionId: posthog.get_session_id(),
+	};
+}
 
 /** Acepta la raíz (`http://localhost:11434`) o la ruta completa ya escrita. */
 export function buildLocalCompletionsUrl(baseUrl: string): string {
@@ -59,55 +74,88 @@ export async function* streamLocalCompletion(
 	}
 	messages.push({ role: 'user', content: request.message });
 
-	const response = await fetch(buildLocalCompletionsUrl(config.baseUrl), {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({
-			model: config.model?.trim() || 'local-model',
-			messages,
-			stream: true,
-		}),
-		signal: request.signal,
-	});
-
-	if (!response.ok || !response.body) {
-		throw new Error(`El modelo local respondió ${response.status}`);
-	}
-
-	const reader = response.body.getReader();
-	const decoder = new TextDecoder();
-	let buffer = '';
+	const observability = request.observability ?? createLocalAiObservabilityContext();
+	const startedAt = performance.now();
+	let firstTokenAt: number | undefined;
+	let status: number | undefined;
+	let errorType: string | undefined;
 
 	try {
-		while (true) {
-			const { done, value } = await reader.read();
-			if (done) break;
+		const response = await fetch(buildLocalCompletionsUrl(config.baseUrl), {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				model: config.model?.trim() || 'local-model',
+				messages,
+				stream: true,
+			}),
+			signal: request.signal,
+		});
+		status = response.status;
 
-			buffer += decoder.decode(value, { stream: true });
-			const lines = buffer.split('\n');
-			buffer = lines.pop() ?? '';
+		if (!response.ok || !response.body) {
+			throw new Error(`El modelo local respondió ${response.status}`);
+		}
 
-			for (const line of lines) {
-				const trimmed = line.trim();
-				if (!trimmed.startsWith('data:')) continue;
+		const reader = response.body.getReader();
+		const decoder = new TextDecoder();
+		let buffer = '';
 
-				const data = trimmed.slice(5).trim();
-				if (data === '[DONE]') return;
+		try {
+			while (true) {
+				const { done, value } = await reader.read();
+				if (done) break;
 
-				try {
-					const parsed = JSON.parse(data);
-					const delta = parsed?.choices?.[0]?.delta?.content;
-					if (typeof delta === 'string' && delta) {
-						yield delta;
+				buffer += decoder.decode(value, { stream: true });
+				const lines = buffer.split('\n');
+				buffer = lines.pop() ?? '';
+
+				for (const line of lines) {
+					const trimmed = line.trim();
+					if (!trimmed.startsWith('data:')) continue;
+
+					const data = trimmed.slice(5).trim();
+					if (data === '[DONE]') return;
+
+					try {
+						const parsed = JSON.parse(data);
+						const delta = parsed?.choices?.[0]?.delta?.content;
+						if (typeof delta === 'string' && delta) {
+							firstTokenAt ??= performance.now();
+							yield delta;
+						}
+					} catch {
+						// Línea de keep-alive o JSON partido: se ignora.
 					}
-				} catch {
-					// Línea de keep-alive o JSON partido: se ignora.
 				}
 			}
+		} finally {
+			await reader.cancel().catch(() => {
+				// El stream ya podía estar cerrado por el servidor o por el abort.
+			});
 		}
+	} catch (error) {
+		errorType = error instanceof Error ? error.name : 'unknown_error';
+		throw error;
 	} finally {
-		await reader.cancel().catch(() => {
-			// El stream ya podía estar cerrado por el servidor o por el abort.
-		});
+		try {
+			posthog.capture('$ai_generation', {
+				$ai_trace_id: observability.traceId,
+				...(observability.sessionId ? { $ai_session_id: observability.sessionId } : {}),
+				$ai_model: config.model?.trim() || 'local-model',
+				$ai_provider: 'openai-compatible',
+				$ai_input: [{ role: 'user', content: '[redacted]' }],
+				...(errorType
+					? {}
+					: { $ai_output_choices: [{ role: 'assistant', content: '[redacted]' }] }),
+				$ai_latency: (performance.now() - startedAt) / 1000,
+				...(firstTokenAt ? { $ai_time_to_first_token: (firstTokenAt - startedAt) / 1000 } : {}),
+				...(status ? { $ai_http_status: status } : {}),
+				$ai_is_error: Boolean(errorType),
+				...(errorType ? { $ai_error: errorType } : {}),
+			});
+		} catch {
+			// La observabilidad nunca debe interrumpir la respuesta del modelo.
+		}
 	}
 }

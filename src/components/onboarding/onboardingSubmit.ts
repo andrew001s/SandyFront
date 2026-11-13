@@ -1,6 +1,11 @@
-import { type SettingsUpdate, TTS_PROVIDER, saveSettings } from '@/api/settings';
+import { type SettingsUpdate, saveSettings } from '@/api/settings';
 import type { OnboardingFlowData } from '@/components/onboarding/onboarding.types';
+import { storeAiProvider } from '@/lib/ai-provider';
+import { AVATAR_SOFTWARE_STORAGE_KEY } from '@/lib/avatar/constants';
 import { type BannedContentPayload, toBannedContentPayload } from '@/lib/banned-content';
+import { getStoredLocalAiSettings, storeLocalAiSettings } from '@/lib/local-ai-config';
+import { storeSttProvider } from '@/lib/stt-provider';
+import { storeEdgeTtsConfig, storeLocalTtsConfig, storeTtsProvider } from '@/lib/tts-provider';
 
 export function buildOnboardingSettingsPayload(flowData: OnboardingFlowData): SettingsUpdate {
 	const payload: SettingsUpdate = {};
@@ -31,13 +36,14 @@ export function buildOnboardingSettingsPayload(flowData: OnboardingFlowData): Se
 
 	if (flowData.fishAudioKey !== undefined) {
 		payload.fish_audio_key = flowData.fishAudioKey;
-		payload.tts_provider = TTS_PROVIDER;
 	}
 
 	if (flowData.voiceId !== undefined) {
 		payload.voice_id = flowData.voiceId;
-		payload.tts_provider = TTS_PROVIDER;
 	}
+	if (flowData.ttsProvider !== undefined) payload.tts_provider = flowData.ttsProvider;
+	else if (flowData.fishAudioKey !== undefined || flowData.voiceId !== undefined)
+		payload.tts_provider = 'fish_audio';
 
 	if (flowData.sttProvider !== undefined) {
 		payload.stt_provider = flowData.sttProvider;
@@ -58,6 +64,7 @@ export function buildOnboardingSettingsPayload(flowData: OnboardingFlowData): Se
 	if (flowData.sandyCoreConfig?.persona_profile !== undefined) {
 		payload.persona_profile = flowData.sandyCoreConfig.persona_profile;
 	}
+	if (flowData.personaProfile !== undefined) payload.persona_profile = flowData.personaProfile;
 
 	if (flowData.sandyCoreConfig?.feature_flags !== undefined) {
 		payload.feature_flags = flowData.sandyCoreConfig.feature_flags;
@@ -79,12 +86,24 @@ export function buildOnboardingSettingsPayload(flowData: OnboardingFlowData): Se
 export async function submitOnboardingSettings(
 	flowData: OnboardingFlowData,
 	token?: string | null,
+	complete = false,
 ) {
 	const payload = buildOnboardingSettingsPayload(flowData);
+	if (flowData.avatarMode) localStorage.setItem(AVATAR_SOFTWARE_STORAGE_KEY, flowData.avatarMode);
 
-	if (Object.keys(payload).length === 0) {
-		return null;
+	if (complete) payload.onboarding_completed = true;
+	const result = Object.keys(payload).length ? await saveSettings(payload, { token }) : null;
+	if (flowData.aiProvider) storeAiProvider(flowData.aiProvider);
+	if (flowData.localApiUrl !== undefined || flowData.localModel !== undefined) {
+		const stored = getStoredLocalAiSettings();
+		storeLocalAiSettings({
+			baseUrl: flowData.localApiUrl ?? stored.baseUrl,
+			model: flowData.localModel ?? stored.model,
+		});
 	}
-
-	return saveSettings(payload, { token });
+	if (flowData.ttsProvider) storeTtsProvider(flowData.ttsProvider);
+	if (flowData.edgeTts) storeEdgeTtsConfig(flowData.edgeTts);
+	if (flowData.localTts) storeLocalTtsConfig(flowData.localTts);
+	if (flowData.sttProvider) storeSttProvider(flowData.sttProvider);
+	return result;
 }

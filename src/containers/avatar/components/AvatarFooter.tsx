@@ -1,29 +1,12 @@
-import { CardFooter } from '@/components/ui/card';
-import { ExternalLink } from 'lucide-react';
-
 export default function AvatarFooter({
 	isHudVisible,
 	isFullscreen,
 }: { isHudVisible: boolean; isFullscreen: boolean }) {
+	if (!isHudVisible || isFullscreen) return null;
+
 	return (
-		<div>
-			{isHudVisible && !isFullscreen && (
-				<CardFooter className='flex flex-wrap items-center justify-between gap-3 border-border/60 border-t bg-card/60 px-4 py-2.5 text-xs sm:px-5'>
-					<span className='font-mono text-[11px] text-muted-foreground'>
-						Rotar: Clic izq · Zoom: Rueda ratón · Desplazar: Clic der
-					</span>
-					<div className='flex items-center gap-3'>
-						<a
-							href='/overlay/avatar'
-							target='_blank'
-							rel='noopener noreferrer'
-							className='flex items-center gap-1.5 font-medium text-secondary text-xs hover:underline'
-						>
-							<ExternalLink className='size-3.5' /> Abrir Overlay OBS en ventana independiente
-						</a>
-					</div>
-				</CardFooter>
-			)}
-		</div>
+		<p className='pointer-events-none absolute bottom-3 left-3 hidden max-w-[calc(100%-7rem)] rounded-md bg-background/75 px-2 py-1 text-[10px] text-muted-foreground md:block'>
+			Arrastra para ajustar la vista · Rueda para acercar
+		</p>
 	);
 }

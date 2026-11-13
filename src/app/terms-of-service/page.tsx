@@ -149,6 +149,15 @@ const sections: LegalSection[] = [
 		],
 	},
 	{
+		id: 'sandy-plus-y-aportes',
+		title: 'Sandy Plus y aportes voluntarios',
+		body: [
+			'Sandy Studio ofrece sus funciones principales gratuitamente. Cuando esté habilitado, Sandy Plus es un beneficio opcional de pago único de US$3 que retira el aviso de apoyo de los visores de avatar compatibles y de sus overlays de OBS asociados a la cuenta. La disponibilidad puede variar y se informa en la aplicación.',
+			'Para activar Sandy Plus, inicia la compra desde tu cuenta de Sandy Studio y completa el pago en Ko-fi. El beneficio se activa cuando el servidor confirma el pago y queda asociado a la cuenta verificada usada durante el proceso. Si el pago requiere revisión, podemos pedirte el recibo antes de completar la activación.',
+			'Los aportes voluntarios a través de Ko-fi son independientes: no compran ni activan Sandy Plus. Los pagos se procesan mediante Ko-fi y están sujetos a las condiciones del proveedor. Si un pago se devuelve o disputa, el beneficio asociado puede revocarse.',
+		],
+	},
+	{
 		id: 'propiedad-y-contenido',
 		title: 'Propiedad y contenido',
 		body: [
@@ -220,8 +229,8 @@ export default function TermsOfServicePage() {
 			title='Términos del Servicio'
 			badge='Términos'
 			icon='terms'
-			effectiveDate='3 de agosto de 2026'
-			lastUpdated='3 de agosto de 2026'
+			effectiveDate='8 de noviembre de 2026'
+			lastUpdated='8 de noviembre de 2026'
 			description={`Estas condiciones regulan el uso de ${sharedSiteName}: tu cuenta, tus responsabilidades al conectar plataformas de streaming, el uso de la IA y los límites del servicio. Al usarlo aceptas lo que se describe a continuación.`}
 			contactEmail='shandrewcontact@gmail.com'
 			sections={sections}

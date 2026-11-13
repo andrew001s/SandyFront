@@ -1,19 +1,45 @@
 'use client';
 
-import { Box, Camera, Eye, EyeOff, Maximize2, Mic, Minimize2, Palette, Smile } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useServiceStatus } from '@/hooks/useServiceStatus';
+import {
+	Box,
+	Camera,
+	Eye,
+	EyeOff,
+	type LucideIcon,
+	Maximize2,
+	Mic,
+	Minimize2,
+	Palette,
+	Power,
+	SlidersHorizontal,
+	Smile,
+	Sparkles,
+	Waves,
+	Wind,
+	Zap,
+} from 'lucide-react';
+import { DropdownMenu } from 'radix-ui';
+import type { ReactElement } from 'react';
 
 export type StudioAvatarMode = 'vrm' | 'pngtuber' | 'live2d';
-
 export type StudioActiveTool =
 	| 'expressions'
+	| 'automaticReactions'
 	| 'emotions'
 	| 'lipsync'
 	| 'background'
 	| 'camera'
 	| 'model'
+	| 'idle'
+	| 'triggers'
 	| 'settings'
+	| 'microphone'
+	| 'services'
+	| 'features'
 	| null;
-
 export interface StudioDockProps {
 	mode: StudioAvatarMode;
 	activeTool: string | null;
@@ -26,13 +52,29 @@ export interface StudioDockProps {
 	hasCustomBackground: boolean;
 	position?: 'left' | 'right';
 	className?: string;
+	serviceControlsOnly?: boolean;
+}
+
+type Tool = { id: NonNullable<StudioActiveTool>; label: string; icon: LucideIcon };
+function DockTooltip({
+	label,
+	side,
+	children,
+}: { label: string; side: 'left' | 'right' | 'top'; children: ReactElement }) {
+	return (
+		<Tooltip>
+			<TooltipTrigger asChild>{children}</TooltipTrigger>
+			<TooltipContent side={side} className='pointer-events-none'>
+				{label}
+			</TooltipContent>
+		</Tooltip>
+	);
 }
 
 export function StudioDock({
 	mode,
 	activeTool,
 	onToggleTool,
-	isPlayingAudio,
 	isFullscreen,
 	onToggleFullscreen,
 	isHudVisible,
@@ -40,181 +82,211 @@ export function StudioDock({
 	hasCustomBackground,
 	position = 'right',
 	className = '',
+	serviceControlsOnly = false,
 }: StudioDockProps) {
-	const posClass = position === 'left' ? 'top-4 left-4' : 'top-4 right-4';
-
-	if (!isHudVisible) {
+	const { serviceStatus } = useServiceStatus();
+	const isMobile = useMediaQuery('(max-width: 767px)');
+	const side = isMobile ? 'top' : position === 'left' ? 'right' : 'left';
+	const posClass =
+		position === 'left'
+			? 'bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-3 right-3 md:top-4 md:right-auto md:bottom-4 md:left-4 md:my-auto'
+			: 'bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-3 right-3 md:top-4 md:right-4 md:bottom-4 md:left-auto md:my-auto';
+	const buttonClass = (active: boolean) =>
+		`relative flex size-11 shrink-0 items-center justify-center rounded-xl border transition-colors focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-[-2px] ${active ? 'border-primary/50 bg-primary/15 text-primary' : 'border-transparent text-muted-foreground hover:bg-muted hover:text-foreground'}`;
+	const toggle = (tool: NonNullable<StudioActiveTool>) =>
+		onToggleTool(
+			activeTool === tool || (tool === 'expressions' && activeTool === 'emotions') ? null : tool,
+		);
+	const avatarTools: Tool[] = [{ id: 'expressions', label: 'Expresiones manuales', icon: Smile }];
+	if (mode === 'vrm')
+		avatarTools.push(
+			{ id: 'model', label: 'Avatar VRM', icon: Box },
+			{ id: 'idle', label: 'Idle del avatar', icon: Wind },
+			{ id: 'triggers', label: 'Nodos activables', icon: Zap },
+		);
+	else
+		avatarTools.push({
+			id: 'settings',
+			label: mode === 'pngtuber' ? 'Ajustes PNGTuber' : 'Ajustes Live2D',
+			icon: Box,
+		});
+	const groups: {
+		label: string;
+		tourId: string;
+		icon: LucideIcon;
+		tools: Tool[];
+		indicator?: string;
+	}[] = [
+		{ label: 'Avatar', tourId: 'studio-tour-avatar', icon: Smile, tools: avatarTools },
+		{
+			label: 'Escenario',
+			tourId: 'studio-tour-scene',
+			icon: Palette,
+			tools: [
+				{ id: 'background', label: 'Fondo y Escenario', icon: Palette },
+				{ id: 'camera', label: 'Cámara y Encuadre', icon: Camera },
+			],
+			indicator: hasCustomBackground ? 'bg-primary' : undefined,
+		},
+		{
+			label: 'Opciones avanzadas',
+			tourId: 'studio-tour-controls',
+			icon: SlidersHorizontal,
+			tools: [
+				{ id: 'lipsync', label: 'Prueba de lip sync y voz', icon: Waves },
+				{ id: 'features', label: 'Funciones del dashboard', icon: SlidersHorizontal },
+			],
+		},
+	];
+	if (!isHudVisible)
 		return (
-			<div className={`pointer-events-auto absolute ${posClass} z-30 ${className}`}>
-				<button
-					type='button'
-					onClick={onToggleHud}
-					className='flex size-9.5 items-center justify-center rounded-full border border-border/70 bg-background/80 text-muted-foreground shadow-lg backdrop-blur-md transition-all hover:bg-card hover:text-foreground sm:size-10'
-					title='Mostrar controles de estudio'
-					aria-label='Mostrar controles de estudio'
-				>
-					<Eye className='size-4' />
-				</button>
+			<div className={`pointer-events-auto absolute ${posClass} z-30 h-fit w-fit ${className}`}>
+				<DockTooltip label='Mostrar controles de estudio' side={side}>
+					<button
+						type='button'
+						onClick={onToggleHud}
+						className={`${buttonClass(false)} border-border bg-background`}
+						aria-label='Mostrar controles de estudio'
+					>
+						<Eye className='size-4' />
+					</button>
+				</DockTooltip>
 			</div>
 		);
-	}
-
 	return (
 		<div
-			className={`pointer-events-auto absolute ${posClass} z-30 flex select-none flex-col items-center gap-2 ${className}`}
+			id='studio-tour-dock'
+			className={`pointer-events-auto absolute ${posClass} z-30 flex min-h-0 select-none items-center gap-1 rounded-2xl border border-border/80 bg-background p-1.5 shadow-lg md:h-fit md:max-h-[calc(100%-2rem)] md:w-[4.25rem] md:flex-col ${className}`}
 		>
-			<div className='flex flex-col items-center gap-1.5 rounded-2xl border border-border/80 bg-background/85 p-1.5 shadow-2xl backdrop-blur-xl'>
-				{/* 1. Expresiones */}
-				<button
-					type='button'
-					onClick={() =>
-						onToggleTool(
-							activeTool === 'expressions' || activeTool === 'emotions' ? null : 'expressions',
-						)
-					}
-					className={`relative flex size-9.5 items-center justify-center rounded-xl border transition-all sm:size-10 ${
-						activeTool === 'expressions' || activeTool === 'emotions'
-							? 'scale-105 border-secondary/50 bg-secondary/20 text-secondary shadow-md ring-1 ring-border/50'
-							: 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'
-					}`}
-					title='Expresiones'
-					aria-label='Expresiones'
+			<div className='flex shrink-0 items-center gap-1 md:w-full md:flex-col'>
+				{(
+					[
+						{
+							id: 'services',
+							label: 'Servicio de emisión',
+							icon: Power,
+							tourId: 'studio-tour-services',
+						},
+						{
+							id: 'microphone',
+							label: 'Hablar con la VTuber',
+							icon: Mic,
+							tourId: 'studio-tour-voice',
+						},
+					] as const
+				).map((tool) => (
+					<DockTooltip key={tool.id} label={tool.label} side={side}>
+						<button
+							id={tool.tourId}
+							type='button'
+							aria-label={tool.label}
+							aria-pressed={activeTool === tool.id}
+							onClick={() => toggle(tool.id)}
+							className={buttonClass(activeTool === tool.id)}
+						>
+							<tool.icon className='size-4.5' />
+							{tool.id === 'services' && serviceStatus?.running && (
+								<span
+									aria-hidden='true'
+									className={`absolute top-1 right-1 size-2 rounded-full ${tool.id === 'services' ? 'bg-emerald-400' : 'bg-secondary'}`}
+								/>
+							)}
+						</button>
+					</DockTooltip>
+				))}
+			</div>
+			<div className='flex min-h-0 min-w-0 flex-1 items-center gap-1 overflow-x-auto overscroll-contain [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin] md:w-full md:flex-auto md:flex-col md:overflow-y-auto md:overflow-x-hidden [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar]:size-1'>
+				{groups
+					.filter((group) => !serviceControlsOnly || group.tourId === 'studio-tour-controls')
+					.map((group) => (
+						<DropdownMenu.Root key={group.label} modal={false}>
+							<DockTooltip label={group.label} side={side}>
+								<DropdownMenu.Trigger asChild>
+									<button
+										id={group.tourId}
+										type='button'
+										aria-label={group.label}
+										className={buttonClass(
+											group.tools.some((tool) => activeTool === tool.id) ||
+												(group.label === 'Avatar' && activeTool === 'emotions'),
+										)}
+									>
+										<group.icon className='size-4.5' />
+										{group.indicator && (
+											<span
+												aria-hidden='true'
+												className={`absolute top-1 right-1 size-2 rounded-full ${group.indicator}`}
+											/>
+										)}
+									</button>
+								</DropdownMenu.Trigger>
+							</DockTooltip>
+							<DropdownMenu.Portal>
+								<DropdownMenu.Content
+									side={side}
+									sideOffset={12}
+									collisionPadding={12}
+									className='z-50 min-w-52 rounded-xl border border-border bg-popover p-1.5 text-popover-foreground shadow-lg'
+								>
+									<DropdownMenu.Label className='px-3 py-2 font-semibold text-sm'>
+										{group.label}
+									</DropdownMenu.Label>
+									{group.tools
+										.filter((tool) => !serviceControlsOnly || tool.id === 'features')
+										.map((tool) => (
+											<DropdownMenu.Item
+												key={tool.id}
+												onSelect={() => toggle(tool.id)}
+												className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm outline-none focus:bg-muted ${activeTool === tool.id ? 'bg-primary/10 text-primary' : ''}`}
+											>
+												<tool.icon className='size-4' />
+												<span>{tool.label}</span>
+											</DropdownMenu.Item>
+										))}
+								</DropdownMenu.Content>
+							</DropdownMenu.Portal>
+						</DropdownMenu.Root>
+					))}
+				{!serviceControlsOnly && (
+					<DockTooltip label='Reacciones automáticas' side={side}>
+						<button
+							id='studio-tour-reactions'
+							type='button'
+							onClick={() => toggle('automaticReactions')}
+							aria-label='Reacciones automáticas'
+							aria-pressed={activeTool === 'automaticReactions'}
+							className={buttonClass(activeTool === 'automaticReactions')}
+						>
+							<Sparkles className='size-4.5' />
+						</button>
+					</DockTooltip>
+				)}
+			</div>
+			<div className='h-6 w-px shrink-0 bg-border/70 md:h-px md:w-6' />
+			<div className='flex shrink-0 items-center gap-1 md:flex-col'>
+				<DockTooltip
+					label={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
+					side={side}
 				>
-					<Smile className='size-4.5' />
-				</button>
-
-				{/* 2. Lip Sync & Voz */}
-				<button
-					type='button'
-					onClick={() => onToggleTool(activeTool === 'lipsync' ? null : 'lipsync')}
-					className={`relative flex size-9.5 items-center justify-center rounded-xl border transition-all sm:size-10 ${
-						activeTool === 'lipsync'
-							? 'scale-105 border-primary/50 bg-primary/20 text-primary shadow-md ring-1 ring-border/50'
-							: 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'
-					}`}
-					title='Lip Sync & Voz'
-					aria-label='Lip Sync & Voz'
-				>
-					<Mic className='size-4.5' />
-					{isPlayingAudio && (
-						<span className='-top-0.5 -right-0.5 absolute flex size-2.5'>
-							<span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75' />
-							<span className='relative inline-flex size-2.5 rounded-full bg-primary' />
-						</span>
-					)}
-				</button>
-
-				{/* 3. Fondo */}
-				<button
-					type='button'
-					onClick={() => onToggleTool(activeTool === 'background' ? null : 'background')}
-					className={`relative flex size-9.5 items-center justify-center rounded-xl border transition-all sm:size-10 ${
-						activeTool === 'background'
-							? 'scale-105 border-emerald-500/50 bg-emerald-500/20 text-emerald-400 shadow-md ring-1 ring-border/50'
-							: 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'
-					}`}
-					title='Fondo y Escenario'
-					aria-label='Fondo y Escenario'
-				>
-					<Palette className='size-4.5' />
-					{hasCustomBackground && (
-						<span className='-top-0.5 -right-0.5 absolute size-2 rounded-full bg-emerald-400' />
-					)}
-				</button>
-
-				{/* 4. Cámara y Encuadre (Disponible en 3D, PNGTuber y Live2D) */}
-				<button
-					type='button'
-					onClick={() => onToggleTool(activeTool === 'camera' ? null : 'camera')}
-					className={`relative flex size-9.5 items-center justify-center rounded-xl border transition-all sm:size-10 ${
-						activeTool === 'camera'
-							? 'scale-105 border-amber-500/50 bg-amber-500/20 text-amber-400 shadow-md ring-1 ring-border/50'
-							: 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'
-					}`}
-					title='Cámara y Encuadre'
-					aria-label='Cámara y Encuadre'
-				>
-					<Camera className='size-4.5' />
-				</button>
-
-				{/* Herramientas específicas 3D VRM */}
-				{mode === 'vrm' && (
 					<button
 						type='button'
-						onClick={() => onToggleTool(activeTool === 'model' ? null : 'model')}
-						className={`relative flex size-9.5 items-center justify-center rounded-xl border transition-all sm:size-10 ${
-							activeTool === 'model'
-								? 'scale-105 border-cyan-500/50 bg-cyan-500/20 text-cyan-400 shadow-md ring-1 ring-border/50'
-								: 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'
-						}`}
-						title='Avatar VRM'
-						aria-label='Avatar VRM'
+						onClick={onToggleFullscreen}
+						aria-label={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
+						className={buttonClass(isFullscreen)}
 					>
-						<Box className='size-4.5' />
+						{isFullscreen ? <Minimize2 className='size-4' /> : <Maximize2 className='size-4' />}
 					</button>
-				)}
-
-				{/* Herramientas específicas PNGTuber */}
-				{mode === 'pngtuber' && (
+				</DockTooltip>
+				<DockTooltip label='Ocultar interfaz gráfica' side={side}>
 					<button
 						type='button'
-						onClick={() => onToggleTool(activeTool === 'settings' ? null : 'settings')}
-						className={`relative flex size-9.5 items-center justify-center rounded-xl border transition-all sm:size-10 ${
-							activeTool === 'settings'
-								? 'scale-105 border-primary/50 bg-primary/20 text-primary shadow-md ring-1 ring-border/50'
-								: 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'
-						}`}
-						title='Ajustes PNGTuber'
-						aria-label='Ajustes PNGTuber'
+						onClick={onToggleHud}
+						aria-label='Ocultar interfaz gráfica'
+						className={buttonClass(false)}
 					>
-						<Box className='size-4.5' />
+						<EyeOff className='size-4' />
 					</button>
-				)}
-
-				{/* Herramientas específicas Live2D */}
-				{mode === 'live2d' && (
-					<button
-						type='button'
-						onClick={() => onToggleTool(activeTool === 'settings' ? null : 'settings')}
-						className={`relative flex size-9.5 items-center justify-center rounded-xl border transition-all sm:size-10 ${
-							activeTool === 'settings'
-								? 'scale-105 border-cyan-500/50 bg-cyan-500/20 text-cyan-400 shadow-md ring-1 ring-border/50'
-								: 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'
-						}`}
-						title='Ajustes Live2D'
-						aria-label='Ajustes Live2D'
-					>
-						<Box className='size-4.5' />
-					</button>
-				)}
-
-				<div className='my-0.5 h-px w-6 bg-border/70' />
-
-				{/* Pantalla Completa */}
-				<button
-					type='button'
-					onClick={onToggleFullscreen}
-					className={`flex size-9.5 items-center justify-center rounded-xl border transition-all sm:size-10 ${
-						isFullscreen
-							? 'border-primary/50 bg-primary/20 text-primary shadow-xs'
-							: 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/70 hover:text-foreground'
-					}`}
-					title={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
-					aria-label={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
-				>
-					{isFullscreen ? <Minimize2 className='size-4' /> : <Maximize2 className='size-4' />}
-				</button>
-
-				{/* Ocultar interfaz */}
-				<button
-					type='button'
-					onClick={onToggleHud}
-					className='flex size-9.5 items-center justify-center rounded-xl border border-transparent text-muted-foreground transition-all hover:border-border/60 hover:bg-card/70 hover:text-foreground sm:size-10'
-					title='Ocultar interfaz gráfica'
-					aria-label='Ocultar interfaz gráfica'
-				>
-					<EyeOff className='size-4' />
-				</button>
+				</DockTooltip>
 			</div>
 		</div>
 	);

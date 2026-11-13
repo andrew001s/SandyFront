@@ -9,6 +9,7 @@ import {
 	findExpressionUrlInFileMap,
 	parseLive2dExpressionParams,
 	resetLive2dExpressionParams,
+	resolveLive2dExpressionId,
 	stepLive2dFocusDecay,
 } from './Live2dRenderer';
 
@@ -149,6 +150,21 @@ describe('Live2dRenderer phonetic mouth parameter injection', () => {
 		expect(setParamSpy).toHaveBeenCalledWith('FangedSmile', 1.0);
 	});
 
+	it('passes each expression weight to the Cubism Add, Multiply and Overwrite operations', () => {
+		const core = {
+			addParameterValueById: vi.fn(),
+			multiplyParameterValueById: vi.fn(),
+			setParameterValueById: vi.fn(),
+		};
+		applyLive2dExpressionParams(core, [
+			{ Id: 'Blush', Value: 1, Blend: 'Add', Weight: 0.2 },
+			{ Id: 'EyeScale', Value: 2, Blend: 'Multiply', Weight: 0.6 },
+			{ Id: 'FangedSmile', Value: 1, Blend: 'Overwrite', Weight: 0.85 },
+		]);
+		expect(core.addParameterValueById).toHaveBeenCalledWith('Blush', 1, 0.2);
+		expect(core.multiplyParameterValueById).toHaveBeenCalledWith('EyeScale', 2, 0.6);
+		expect(core.setParameterValueById).toHaveBeenCalledWith('FangedSmile', 1, 0.85);
+	});
 	it('finds expression blob url in fileMap by matching basename, filename, or id', () => {
 		const fileMap = {
 			'RetrynowMiku/VTS Model File/Blush.exp3.json': 'blob:http://localhost/blush-full',
@@ -201,5 +217,33 @@ describe('Live2dRenderer phonetic mouth parameter injection', () => {
 		expect(parseLive2dExpressionParams(cubism2Data)).toEqual([
 			{ Id: 'PARAM_CHEEK', Value: 0.8, Blend: 'Add' },
 		]);
+	});
+
+	it('resolves backend emotion and expression-file IDs to the model native expression name', () => {
+		const definitions = [
+			{ Name: 'AngryFace', File: 'Expressions/AngryFace.exp3.json' },
+			{ Name: 'HappyFace', File: 'Expressions/HappyFace.exp3.json' },
+		];
+
+		expect(resolveLive2dExpressionId('angryface', definitions)).toBe('AngryFace');
+		expect(resolveLive2dExpressionId('happyface.exp3.json', definitions)).toBe('HappyFace');
+		expect(
+			resolveLive2dExpressionId('angry', [
+				{ Name: 'F01_angry', File: 'Expressions/F01_angry.exp3.json' },
+			]),
+		).toBe('F01_angry');
+		expect(resolveLive2dExpressionId('not-in-model', definitions)).toBeNull();
+		expect(
+			resolveLive2dExpressionId('angry', [{ Name: 'F01_angry' }, { Name: 'F02_angry' }]),
+		).toBeNull();
+	});
+
+	it('applies the resolved native expression name to the Live2D model', () => {
+		const expressionSpy = vi.fn();
+		const model = { expression: expressionSpy };
+
+		applyLive2dExpression(model, 'angry', [{ Name: 'Angry', File: 'angry.exp3.json' }]);
+
+		expect(expressionSpy).toHaveBeenCalledWith('Angry');
 	});
 });

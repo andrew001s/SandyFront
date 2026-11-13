@@ -1,7 +1,11 @@
-import { type LocalAiConfig, streamLocalCompletion } from '@/api/localAi';
+import {
+	type LocalAiConfig,
+	createLocalAiObservabilityContext,
+	streamLocalCompletion,
+} from '@/api/localAi';
 import { fetchLocalAiContext } from '@/api/localAiContext';
 import { classifyLocalMessage, executeLocalOrder, fetchLocalStats } from '@/api/localOrders';
-import { streamResponseGemini } from '@/api/streamGemini';
+import { type AvatarReactionDecision, streamResponseGemini } from '@/api/streamGemini';
 import type { AiProvider } from '@/lib/ai-provider';
 
 export type AiStreamRequest = {
@@ -9,6 +13,7 @@ export type AiStreamRequest = {
 	message: string;
 	local?: LocalAiConfig;
 	signal?: AbortSignal;
+	onReaction?: (decision: AvatarReactionDecision) => void;
 };
 
 /**
@@ -38,6 +43,7 @@ export async function* streamAiResponse(request: AiStreamRequest): AsyncGenerato
 
 		let systemPrompt = contexto?.systemPrompt ?? '';
 		let entrada = request.message;
+		const observability = createLocalAiObservabilityContext();
 
 		// Mismo paso que el backend hace con Gemini y OpenRouter: decidir si el
 		// creador está pidiendo cambiar algo del canal en vez de charlando.
@@ -46,6 +52,7 @@ export async function* streamAiResponse(request: AiStreamRequest): AsyncGenerato
 			request.message,
 			contexto?.prompts.assist ?? '',
 			request.signal,
+			observability,
 		);
 
 		if (intencion.type === 'orden') {
@@ -62,9 +69,10 @@ export async function* streamAiResponse(request: AiStreamRequest): AsyncGenerato
 			message: entrada,
 			systemPrompt,
 			signal: request.signal,
+			observability,
 		});
 		return;
 	}
 
-	yield* streamResponseGemini(request.message, request.signal);
+	yield* streamResponseGemini(request.message, request.signal, request.onReaction);
 }

@@ -1,123 +1,92 @@
 'use client';
-
-import { CircleUserRound, LayoutDashboard, Plug, Settings2, ShieldCheck, Tv } from 'lucide-react';
+import {
+	Box,
+	Coffee,
+	Mic,
+	Palette,
+	PanelLeft,
+	SlidersHorizontal,
+	Smile,
+	Sparkles,
+	Tv,
+} from 'lucide-react';
 import type { Tour } from 'nextstepjs';
-
-export const DASHBOARD_TOUR_STORAGE_KEY = 'sandy-dashboard-tour-seen';
-
+export const DASHBOARD_TOUR_STORAGE_KEY = 'sandy-studio-tour-v3-seen';
 export const dashboardTourSteps: Tour[] = [
 	{
 		tour: 'dashboard-tour',
 		steps: [
 			{
-				icon: <LayoutDashboard className='size-4' />,
-				title: 'Tu dashboard',
-				content: (
-					<>
-						Aquí ves el estado general de Sandy y los accesos rápidos para operar sin salir del
-						panel.
-					</>
-				),
-				selector: '#home-tour-overview',
-				side: 'bottom',
-				showControls: true,
-				showSkip: true,
-				pointerPadding: 12,
-				pointerRadius: 14,
-				selectorRetryAttempts: 8,
-			},
-			{
-				icon: <LayoutDashboard className='size-4' />,
-				title: 'Controles principales',
-				content: (
-					<>
-						Desde esta sección enciendes las funciones clave del sistema y revisas el panel de
-						control.
-					</>
-				),
-				selector: '#home-tour-controls',
-				side: 'top',
-				showControls: true,
-				showSkip: true,
-				pointerPadding: 12,
-				pointerRadius: 14,
-				selectorRetryAttempts: 8,
-			},
-			{
-				icon: <Plug className='size-4' />,
-				title: 'Conexiones',
-				content: (
-					<>
-						Usa esta pestaña para conectar Twitch, Kick y YouTube y centralizar la interacción con
-						tu comunidad.
-					</>
-				),
-				selector: '#sidebar-tour-conexiones',
-				side: 'right',
-				showControls: true,
-				showSkip: true,
-				pointerPadding: 10,
-				pointerRadius: 12,
-				selectorRetryAttempts: 8,
-			},
-			{
-				icon: <ShieldCheck className='size-4' />,
-				title: 'Moderación',
-				content: (
-					<>Aquí puedes controlar filtros, bloqueos y reglas para mantener limpio el chat.</>
-				),
-				selector: '#sidebar-tour-moderacion',
-				side: 'right',
-				showControls: true,
-				showSkip: true,
-				pointerPadding: 10,
-				pointerRadius: 12,
-				selectorRetryAttempts: 8,
-			},
-			{
+				title: 'Tu estudio de emisión',
+				selector: '#studio-tour-header',
 				icon: <Tv className='size-4' />,
-				title: 'VTube Studio',
-				content: (
-					<>
-						Esta pestaña conecta el avatar con Sandy para mover boca y expresiones en tiempo real.
-					</>
-				),
-				selector: '#sidebar-tour-avatar',
-				side: 'right',
-				showControls: true,
-				showSkip: true,
-				pointerPadding: 10,
-				pointerRadius: 12,
-				selectorRetryAttempts: 8,
+				content:
+					'El estudio es tu nueva pantalla de inicio. Aquí controlas el avatar, la voz y la emisión.',
 			},
 			{
-				icon: <Settings2 className='size-4' />,
-				title: 'Configuración',
-				content: (
-					<>
-						Ajusta voz, IA, reconocimiento y detalles finos del comportamiento desde esta sección.
-					</>
-				),
-				selector: '#sidebar-tour-settings',
-				side: 'right',
-				showControls: true,
-				showSkip: true,
-				pointerPadding: 10,
-				pointerRadius: 12,
-				selectorRetryAttempts: 8,
+				title: 'PNGTuber, Avatar 2D y Avatar 3D',
+				selector: '#studio-tour-formats',
+				icon: <Box className='size-4' />,
+				content:
+					'Cambia de formato desde estas pestañas. Carga tus imágenes PNG, tu modelo Live2D o tu archivo VRM directamente en el navegador.',
 			},
 			{
-				icon: <CircleUserRound className='size-4' />,
-				title: 'Tu cuenta',
-				content: <>Desde aquí revisas tus datos de acceso y la información de tu perfil.</>,
-				selector: '#sidebar-tour-account',
-				side: 'right',
-				showControls: true,
-				showSkip: true,
-				pointerPadding: 10,
-				pointerRadius: 12,
-				selectorRetryAttempts: 8,
+				title: 'Herramientas del avatar',
+				selector: '#studio-tour-avatar',
+				icon: <Smile className='size-4' />,
+				content:
+					'Activa y apaga las expresiones desde Avatar y asigna atajos a las que más uses. En VRM también encontrarás idle y nodos activables.',
 			},
-		],
+			{
+				title: 'Emociones que puede elegir la IA',
+				selector: '#studio-tour-reactions',
+				icon: <Sparkles className='size-4' />,
+				content:
+					'Activa solo las emociones que quieras permitir a la IA. Asigna expresiones del modelo y arrastra la ventana de edición desde su encabezado para probarlas sin tapar el avatar.',
+			},
+			{
+				title: 'Habla con tu VTuber',
+				selector: '#studio-tour-voice',
+				icon: <Mic className='size-4' />,
+				content:
+					'El micrófono siempre está a mano en el dock. Abre este control para hablar con tu VTuber. La prueba de lip sync está en Opciones avanzadas.',
+			},
+			{
+				title: 'Fondo y encuadre',
+				selector: '#studio-tour-scene',
+				icon: <Palette className='size-4' />,
+				content:
+					'Escenario agrupa el fondo y la cámara. Prepara tu encuadre y copia el enlace del overlay para OBS desde el visor.',
+			},
+			{
+				title: 'Inicia la emisión',
+				selector: '#studio-tour-services',
+				icon: <SlidersHorizontal className='size-4' />,
+				content:
+					'Este acceso fijo abre los servicios para iniciar o detener la interacción de Sandy con el chat. Las funciones secundarias están en Opciones avanzadas.',
+			},
+			{
+				title: 'Novedades y apoyo',
+				selector: '#studio-tour-community',
+				icon: <Coffee className='size-4' />,
+				content:
+					'Consulta las novedades y encuentra el enlace de apoyo voluntario en Ko-fi desde el estudio.',
+			},
+			{
+				title: 'El resto de tu configuración',
+				selector: '#studio-tour-navigation',
+				icon: <PanelLeft className='size-4' />,
+				content:
+					'Abre el menú lateral para ir a Conexiones, Recompensas, Moderación, Configuración y Cuenta. El estudio seguirá siendo tu punto de partida.',
+			},
+		].map((step) => ({
+			...step,
+			side: 'bottom' as const,
+			showControls: true,
+			showSkip: true,
+			pointerPadding: 8,
+			pointerRadius: 12,
+			selectorRetryAttempts: 12,
+		})),
 	},
 ];

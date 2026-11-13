@@ -1,149 +1,108 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { StudioDock } from './StudioDock';
+import { StudioDock, type StudioDockProps } from './StudioDock';
+
+vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: () => false }));
+
+vi.mock('@/hooks/useServiceStatus', () => ({
+	useServiceStatus: () => ({ serviceStatus: null, hasLoaded: true, hasError: false }),
+}));
+
+const props = (): StudioDockProps => ({
+	mode: 'vrm',
+	activeTool: null,
+	onToggleTool: vi.fn(),
+	isPlayingAudio: false,
+	isFullscreen: false,
+	onToggleFullscreen: vi.fn(),
+	isHudVisible: true,
+	onToggleHud: vi.fn(),
+	hasCustomBackground: false,
+});
+const openGroup = (name: string) =>
+	fireEvent.keyDown(screen.getByRole('button', { name }), { key: 'ArrowDown' });
 
 describe('StudioDock', () => {
-	it('StudioDock renders base dock container with common studio actions (expressions, lipsync, background, fullscreen, toggle HUD)', () => {
-		render(
-			<StudioDock
-				mode='vrm'
-				activeTool={null}
-				onToggleTool={vi.fn()}
-				isPlayingAudio={false}
-				isFullscreen={false}
-				onToggleFullscreen={vi.fn()}
-				isHudVisible={true}
-				onToggleHud={vi.fn()}
-				hasCustomBackground={false}
-			/>,
-		);
-
-		expect(screen.getByRole('button', { name: /expresiones/i })).toBeInTheDocument();
-		expect(screen.getByRole('button', { name: /lip sync/i })).toBeInTheDocument();
-		expect(screen.getByRole('button', { name: /fondo/i })).toBeInTheDocument();
-		expect(screen.getByRole('button', { name: /pantalla completa/i })).toBeInTheDocument();
-		expect(screen.getByRole('button', { name: /ocultar/i })).toBeInTheDocument();
+	it('shows eight top-level controls while keeping the emission actions reachable', () => {
+		render(<StudioDock {...props()} />);
+		expect(screen.getAllByRole('button')).toHaveLength(8);
+		for (const name of [
+			'Avatar',
+			'Servicio de emisión',
+			'Hablar con la VTuber',
+			'Escenario',
+			'Opciones avanzadas',
+			'Reacciones automáticas',
+			'Pantalla completa',
+			'Ocultar interfaz gráfica',
+		])
+			expect(screen.getByRole('button', { name })).toBeInTheDocument();
 	});
-
-	it('StudioDock displays 3D-specific tools (camera and 3D model) when mode is vrm', () => {
-		render(
-			<StudioDock
-				mode='vrm'
-				activeTool={null}
-				onToggleTool={vi.fn()}
-				isPlayingAudio={false}
-				isFullscreen={false}
-				onToggleFullscreen={vi.fn()}
-				isHudVisible={true}
-				onToggleHud={vi.fn()}
-				hasCustomBackground={false}
-			/>,
-		);
-
-		expect(screen.getByRole('button', { name: /cámara/i })).toBeInTheDocument();
-		expect(screen.getByRole('button', { name: /avatar vrm/i })).toBeInTheDocument();
+	it.each(['vrm', 'pngtuber', 'live2d'] as const)(
+		'retains the avatar tools available for %s',
+		(mode) => {
+			const dock = props();
+			render(<StudioDock {...dock} mode={mode} />);
+			openGroup('Avatar');
+			expect(screen.getByRole('menuitem', { name: 'Expresiones manuales' })).toBeInTheDocument();
+			expect(
+				screen.getByRole('menuitem', {
+					name:
+						mode === 'vrm'
+							? 'Avatar VRM'
+							: mode === 'pngtuber'
+								? 'Ajustes PNGTuber'
+								: 'Ajustes Live2D',
+				}),
+			).toBeInTheDocument();
+			if (mode === 'vrm') {
+				expect(screen.getByRole('menuitem', { name: 'Idle del avatar' })).toBeInTheDocument();
+				expect(screen.getByRole('menuitem', { name: 'Nodos activables' })).toBeInTheDocument();
+			}
+			fireEvent.click(screen.getByRole('menuitem', { name: 'Expresiones manuales' }));
+			expect(dock.onToggleTool).toHaveBeenCalledWith('expressions');
+		},
+	);
+	it.each([
+		['Opciones avanzadas', 'Prueba de lip sync y voz', 'lipsync'],
+		['Escenario', 'Fondo y Escenario', 'background'],
+		['Escenario', 'Cámara y Encuadre', 'camera'],
+		['Opciones avanzadas', 'Funciones del dashboard', 'features'],
+	])('opens %s and dispatches %s', (group, name, tool) => {
+		const dock = props();
+		render(<StudioDock {...dock} />);
+		openGroup(group);
+		fireEvent.click(screen.getByRole('menuitem', { name }));
+		expect(dock.onToggleTool).toHaveBeenCalledWith(tool);
 	});
-
-	it('StudioDock displays PNGTuber-specific tools (sprites and bounce settings) and camera when mode is pngtuber', () => {
-		render(
-			<StudioDock
-				mode='pngtuber'
-				activeTool={null}
-				onToggleTool={vi.fn()}
-				isPlayingAudio={false}
-				isFullscreen={false}
-				onToggleFullscreen={vi.fn()}
-				isHudVisible={true}
-				onToggleHud={vi.fn()}
-				hasCustomBackground={false}
-			/>,
-		);
-
-		expect(screen.getByRole('button', { name: /ajustes pngtuber/i })).toBeInTheDocument();
-		expect(screen.getByRole('button', { name: /cámara/i })).toBeInTheDocument();
-		expect(screen.queryByRole('button', { name: /avatar vrm/i })).not.toBeInTheDocument();
+	it('keeps emission and microphone as direct actions in every format', () => {
+		const dock = props();
+		render(<StudioDock {...dock} />);
+		fireEvent.click(screen.getByRole('button', { name: 'Servicio de emisión' }));
+		expect(dock.onToggleTool).toHaveBeenCalledWith('services');
+		fireEvent.click(screen.getByRole('button', { name: 'Hablar con la VTuber' }));
+		expect(dock.onToggleTool).toHaveBeenCalledWith('microphone');
 	});
-
-	it('StudioDock displays Live2D-specific tools (Live2D model and parameters) and camera when mode is live2d', () => {
-		render(
-			<StudioDock
-				mode='live2d'
-				activeTool={null}
-				onToggleTool={vi.fn()}
-				isPlayingAudio={false}
-				isFullscreen={false}
-				onToggleFullscreen={vi.fn()}
-				isHudVisible={true}
-				onToggleHud={vi.fn()}
-				hasCustomBackground={false}
-			/>,
-		);
-
-		expect(screen.getByRole('button', { name: /ajustes live2d/i })).toBeInTheDocument();
-		expect(screen.getByRole('button', { name: /cámara/i })).toBeInTheDocument();
-		expect(screen.queryByRole('button', { name: /avatar vrm/i })).not.toBeInTheDocument();
+	it('toggles the active tool off from its group', () => {
+		const dock = props();
+		render(<StudioDock {...dock} activeTool='expressions' />);
+		openGroup('Avatar');
+		fireEvent.click(screen.getByRole('menuitem', { name: 'Expresiones manuales' }));
+		expect(dock.onToggleTool).toHaveBeenCalledWith(null);
 	});
-
-	it('StudioDock triggers onToggleTool with the clicked tool id and toggles off on re-click', () => {
-		const onToggleTool = vi.fn();
-		const { rerender } = render(
-			<StudioDock
-				mode='vrm'
-				activeTool={null}
-				onToggleTool={onToggleTool}
-				isPlayingAudio={false}
-				isFullscreen={false}
-				onToggleFullscreen={vi.fn()}
-				isHudVisible={true}
-				onToggleHud={vi.fn()}
-				hasCustomBackground={false}
-			/>,
-		);
-
-		const expressionsBtn = screen.getByRole('button', { name: /expresiones/i });
-		fireEvent.click(expressionsBtn);
-		expect(onToggleTool).toHaveBeenCalledWith('expressions');
-
-		// Re-render con activeTool activo
-		rerender(
-			<StudioDock
-				mode='vrm'
-				activeTool='expressions'
-				onToggleTool={onToggleTool}
-				isPlayingAudio={false}
-				isFullscreen={false}
-				onToggleFullscreen={vi.fn()}
-				isHudVisible={true}
-				onToggleHud={vi.fn()}
-				hasCustomBackground={false}
-			/>,
-		);
-
-		fireEvent.click(expressionsBtn);
-		expect(onToggleTool).toHaveBeenCalledWith(null);
+	it('keeps automatic reactions and fullscreen as direct actions', () => {
+		const dock = props();
+		render(<StudioDock {...dock} />);
+		fireEvent.click(screen.getByRole('button', { name: 'Reacciones automáticas' }));
+		expect(dock.onToggleTool).toHaveBeenCalledWith('automaticReactions');
+		fireEvent.click(screen.getByRole('button', { name: 'Pantalla completa' }));
+		expect(dock.onToggleFullscreen).toHaveBeenCalledOnce();
 	});
-
-	it('StudioDock renders only the discrete restore button when HUD is hidden and triggers onToggleHud on click', () => {
-		const onToggleHud = vi.fn();
-		render(
-			<StudioDock
-				mode='vrm'
-				activeTool={null}
-				onToggleTool={vi.fn()}
-				isPlayingAudio={false}
-				isFullscreen={false}
-				onToggleFullscreen={vi.fn()}
-				isHudVisible={false}
-				onToggleHud={onToggleHud}
-				hasCustomBackground={false}
-			/>,
-		);
-
-		expect(screen.queryByRole('button', { name: /expresiones/i })).not.toBeInTheDocument();
-		const restoreBtn = screen.getByRole('button', { name: /mostrar controles/i });
-		expect(restoreBtn).toBeInTheDocument();
-
-		fireEvent.click(restoreBtn);
-		expect(onToggleHud).toHaveBeenCalledTimes(1);
+	it('restores the hidden HUD', () => {
+		const dock = props();
+		render(<StudioDock {...dock} isHudVisible={false} />);
+		expect(screen.queryByRole('button', { name: 'Avatar' })).not.toBeInTheDocument();
+		fireEvent.click(screen.getByRole('button', { name: 'Mostrar controles de estudio' }));
+		expect(dock.onToggleHud).toHaveBeenCalledOnce();
 	});
 });

@@ -11,9 +11,9 @@ if (projectToken && host) {
 		debug: process.env.NODE_ENV === 'development',
 	});
 } else if (process.env.NODE_ENV === 'development') {
-	const missingVariable = !projectToken
-		? 'NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN'
-		: 'NEXT_PUBLIC_POSTHOG_HOST';
+	const missingVariable = projectToken
+		? 'NEXT_PUBLIC_POSTHOG_HOST'
+		: 'NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN';
 	console.error(
 		`${missingVariable} variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once ${missingVariable} is configured`,
 	);

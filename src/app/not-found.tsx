@@ -9,7 +9,7 @@ export default function NotFound() {
 				La página que buscas no existe o ha sido movida.
 			</p>
 			<Link
-				href='/home'
+				href='/avatar'
 				className='rounded-md bg-foreground px-4 py-2 font-medium text-background text-sm transition-opacity hover:opacity-90'
 			>
 				Volver al inicio

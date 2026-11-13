@@ -2,6 +2,7 @@
 
 import { Reveal } from '@/components/landing/Reveal';
 import { StarField } from '@/components/landing/StarField';
+import { StudioPreview } from '@/components/landing/StudioPreview';
 import {
 	AudioLines,
 	Check,
@@ -84,45 +85,7 @@ function ChatMock() {
 }
 
 function AvatarMock() {
-	return (
-		<div className='relative overflow-hidden rounded-lg border border-border bg-background/80 shadow-inner'>
-			<div className='flex items-center justify-between border-border border-b bg-card/90 px-3 py-2'>
-				<div className='flex items-center gap-1.5 font-mono text-foreground text-xs'>
-					<Sparkles size={12} className='text-primary' />
-					<span className='font-semibold'>VMC / OSC Protocol</span>
-				</div>
-				<span className='flex items-center gap-1 rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[9px] text-emerald-400'>
-					<span className='size-1.5 animate-pulse rounded-full bg-emerald-400' />
-					SYNC
-				</span>
-			</div>
-
-			<div className='flex flex-col items-center py-5'>
-				<div className='relative flex size-16 items-center justify-center rounded-xl border border-primary/30 bg-card shadow-sm'>
-					<div className='flex flex-col items-center gap-1.5'>
-						<div className='flex gap-2'>
-							<span className='size-1.5 rounded-full bg-primary' />
-							<span className='size-1.5 rounded-full bg-primary' />
-						</div>
-						<div className='flex h-3 w-8 items-center justify-center gap-1'>
-							{[20, 80, 100, 70, 30].map((h, i) => (
-								<span
-									key={i}
-									style={{ height: `${h}%`, animationDelay: `${i * 0.1}s` }}
-									className='w-1 animate-pulse rounded-full bg-primary'
-								/>
-							))}
-						</div>
-					</div>
-				</div>
-				<p className='mt-3 font-mono text-[11px] text-muted-foreground'>Live2D & 3D VRM a 60 FPS</p>
-				<div className='mt-2 inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2 py-0.5 font-mono text-[10px] text-foreground'>
-					<Zap size={10} className='text-primary' />
-					<span>VTube Studio & VNyan</span>
-				</div>
-			</div>
-		</div>
-	);
+	return <StudioPreview />;
 }
 
 function VoiceMock() {
@@ -312,9 +275,9 @@ const features: Feature[] = [
 		span: 'lg:col-span-4',
 	},
 	{
-		title: 'Lip sync 2D y 3D en tiempo real',
+		title: 'Tu avatar dentro del estudio',
 		description:
-			'Sincroniza labios y expresiones faciales en VTube Studio (Live2D) o VNyan (VRM 3D) mediante WebSocket con latencia imperceptible.',
+			'Carga PNGTuber, Live2D o VRM en el navegador. Ajusta voz, cámara y fondo, elige las emociones permitidas a la IA y lleva el resultado a OBS.',
 		mockup: <AvatarMock />,
 		span: 'lg:col-span-2',
 	},
@@ -342,7 +305,7 @@ const features: Feature[] = [
 	{
 		title: 'El cerebro que tú elijas',
 		description:
-			'Modelo BYOK (Bring Your Own Key): tú decides qué modelo de lenguaje usar (Google Gemini o cualquier modelo de OpenRouter) sin sobreprecios.',
+			'Usa tus claves de Gemini o de OpenRouter, o conecta un modelo local. Tú eliges el proveedor y controlas su consumo.',
 		mockup: <ModelMock />,
 		span: 'lg:col-span-6',
 	},

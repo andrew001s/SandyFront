@@ -16,16 +16,21 @@ export function AppClarityProvider({ children }: { children: ReactNode }) {
 	const pathname = usePathname();
 
 	useEffect(() => {
-		if (!canInitializeClarity || clarityInitialized || !clarityProjectId) {
+		if (
+			pathname.startsWith('/overlay/') ||
+			!canInitializeClarity ||
+			clarityInitialized ||
+			!clarityProjectId
+		) {
 			return;
 		}
 
 		Clarity.init(clarityProjectId);
 		clarityInitialized = true;
-	}, []);
+	}, [pathname]);
 
 	useEffect(() => {
-		if (!clarityInitialized) {
+		if (pathname.startsWith('/overlay/') || !clarityInitialized) {
 			return;
 		}
 

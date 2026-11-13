@@ -1,6 +1,5 @@
 'use client';
 
-import { saveSettings } from '@/api/settings';
 import { OpenRouterModelDialog } from '@/components/Settings/OpenRouterModelDialog';
 import { sortOpenRouterModels } from '@/components/Settings/settings.constants';
 import type { OpenRouterModel, OpenRouterSort } from '@/components/Settings/settings.types';
@@ -14,18 +13,16 @@ import type {
 } from '@/components/onboarding/onboarding.types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { type AiProvider, storeAiProvider } from '@/lib/ai-provider';
-import { getStoredLocalAiSettings, storeLocalAiSettings } from '@/lib/local-ai-config';
-import { useAuth } from '@clerk/nextjs';
+import type { AiProvider } from '@/lib/ai-provider';
+import { getStoredLocalAiSettings } from '@/lib/local-ai-config';
 import { useOnboarding } from '@onboardjs/react';
-import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
-import { type UIEvent, useCallback, useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { type UIEvent, useCallback, useEffect, useState } from 'react';
+import { useOnboardingDraft } from './useOnboardingDraft';
 
 export function AiStep({ payload }: StepProps) {
-	const { state, updateContext } = useOnboarding<SandyOnboardingContext>();
-	const { getToken } = useAuth();
+	const { state } = useOnboarding<SandyOnboardingContext>();
+	const { update } = useOnboardingDraft();
 	const flowData = state?.context.flowData;
 	const [provider, setProvider] = useState<AiProvider>(flowData?.aiProvider ?? 'gemini');
 	const [geminiKey, setGeminiKey] = useState(flowData?.geminiApiKey ?? '');
@@ -45,52 +42,30 @@ export function AiStep({ payload }: StepProps) {
 	const [visibleOpenRouterCount, setVisibleOpenRouterCount] = useState(24);
 	const [isLoadingOpenRouterModels, setIsLoadingOpenRouterModels] = useState(false);
 	const [openRouterModelError, setOpenRouterModelError] = useState<string | null>(null);
-	const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+	useEffect(() => {
+		if (!flowData?.aiProvider || (provider === 'local' && flowData.localApiUrl === undefined))
+			void update({
+				aiProvider: provider,
+				...(provider === 'local' ? { localApiUrl, localModel } : {}),
+			});
+	}, [flowData?.aiProvider, flowData?.localApiUrl, provider, localApiUrl, localModel, update]);
 
 	const handleProviderChange = useCallback(
 		(nextProvider: AiProvider) => {
-			storeAiProvider(nextProvider);
 			setProvider(nextProvider);
-			void updateContext({
-				flowData: { ...state?.context.flowData, aiProvider: nextProvider },
+			void update({
+				aiProvider: nextProvider,
+				...(nextProvider === 'local' ? { localApiUrl, localModel } : {}),
 			});
 		},
-		[state?.context.flowData, updateContext],
+		[update, localApiUrl, localModel],
 	);
 
 	const persist = useCallback(
 		async (patch: Partial<OnboardingFlowData>) => {
-			const nextFlow = { ...state?.context.flowData, ...patch };
-			void updateContext({ flowData: nextFlow });
-			if (saveTimer.current) clearTimeout(saveTimer.current);
-			saveTimer.current = setTimeout(async () => {
-				try {
-					const token = await getToken();
-					// El backend no devuelve los campos del modelo local, así que se
-					// conservan también en el navegador (igual que en Ajustes).
-					storeLocalAiSettings({
-						baseUrl: nextFlow.aiProvider === 'local' ? (nextFlow.localApiUrl ?? '') : '',
-						model: nextFlow.aiProvider === 'local' ? (nextFlow.localModel ?? '') : '',
-					});
-
-					await saveSettings(
-						{
-							ai_provider: nextFlow.aiProvider,
-							gemini_api_key: nextFlow.aiProvider === 'gemini' ? nextFlow.geminiApiKey : '',
-							openrouter_api_key:
-								nextFlow.aiProvider === 'openrouter' ? nextFlow.openrouterApiKey : '',
-							openrouter_model: nextFlow.openrouterModel,
-							local_api_url: nextFlow.aiProvider === 'local' ? nextFlow.localApiUrl : '',
-							local_model: nextFlow.aiProvider === 'local' ? nextFlow.localModel : '',
-						},
-						{ token },
-					);
-				} catch {
-					toast.error('No se pudo guardar la configuración de IA');
-				}
-			}, 500);
+			await update({ aiProvider: provider, ...patch });
 		},
-		[getToken, state?.context.flowData, updateContext],
+		[provider, update],
 	);
 
 	const loadOpenRouterModels = useCallback(
@@ -190,18 +165,19 @@ export function AiStep({ payload }: StepProps) {
 		{
 			id: 'gemini',
 			label: 'Gemini',
-			description: 'Gratuito y rápido. Introduce tu API key de Google AI Studio.',
+			description:
+				'Usa una clave de Google AI Studio. La disponibilidad depende de tu cuenta y del modelo.',
 		},
 		{
 			id: 'openrouter',
 			label: 'OpenRouter',
-			description: 'Cientos de modelos (GPT, Claude, Llama...) con una sola key.',
+			description: 'Elige entre varios modelos con una clave de OpenRouter.',
 		},
 		{
 			id: 'local',
 			label: 'Modelo local',
 			description:
-				'Tu propio servidor (Ollama, LM Studio...). Sin coste y con respuesta en streaming.',
+				'Conecta Ollama, LM Studio u otro servidor compatible que ya tengas funcionando.',
 		},
 	];
 	const officialDocs =
@@ -228,14 +204,14 @@ export function AiStep({ payload }: StepProps) {
 						{
 							label: 'Claves de API',
 							href: 'https://ai.google.dev/gemini-api/docs/api-key?hl=es-419',
-							description: 'Guía oficial para entender el uso de la key.',
+							description: 'Guía oficial para crear y utilizar la clave.',
 						},
 					]
 				: [
 						{
-							label: 'Crear API key',
+							label: 'Crear clave de API',
 							href: 'https://openrouter.ai/workspaces/default/keys',
-							description: 'Generar una key nueva en OpenRouter.',
+							description: 'Generar una clave nueva en OpenRouter.',
 						},
 						{
 							label: 'Modelos',
@@ -247,7 +223,7 @@ export function AiStep({ payload }: StepProps) {
 	return (
 		<OnboardingStepFrame title={payload.title} description={payload.description}>
 			<div className='space-y-4'>
-				<div className='grid grid-cols-1 gap-3 sm:grid-cols-3'>
+				<fieldset aria-label='Proveedor de IA' className='grid grid-cols-1 gap-3'>
 					{providers.map((option, index) => (
 						<OnboardingSelectableCard
 							key={option.id}
@@ -258,15 +234,10 @@ export function AiStep({ payload }: StepProps) {
 							onClick={() => void handleProviderChange(option.id)}
 						/>
 					))}
-				</div>
+				</fieldset>
 
 				{provider === 'local' ? (
-					<motion.div
-						initial={{ opacity: 0, y: 10 }}
-						animate={{ opacity: 1, y: 0 }}
-						transition={{ duration: 0.28 }}
-						className='space-y-4'
-					>
+					<div className='space-y-4'>
 						<div className='space-y-2'>
 							<label htmlFor='local-api-url' className='font-medium text-muted-foreground text-sm'>
 								URL de la API
@@ -280,7 +251,7 @@ export function AiStep({ payload }: StepProps) {
 									void persist({ localApiUrl: event.target.value });
 								}}
 								placeholder='http://localhost:11434'
-								className='max-w-md'
+								className='min-h-11 w-full'
 							/>
 							<p className='text-muted-foreground text-xs'>
 								Cualquier servidor compatible con la API de OpenAI. Pega la raíz y se completa{' '}
@@ -299,7 +270,7 @@ export function AiStep({ payload }: StepProps) {
 									void persist({ localModel: event.target.value });
 								}}
 								placeholder='llama3.1'
-								className='max-w-md'
+								className='min-h-11 w-full'
 							/>
 							<p className='text-muted-foreground text-xs'>
 								Solo hace falta si tu servidor tiene varios modelos cargados.
@@ -315,16 +286,11 @@ export function AiStep({ payload }: StepProps) {
 								CORS.
 							</p>
 						</div>
-					</motion.div>
+					</div>
 				) : provider === 'gemini' ? (
-					<motion.div
-						initial={{ opacity: 0, y: 10 }}
-						animate={{ opacity: 1, y: 0 }}
-						transition={{ duration: 0.28 }}
-						className='space-y-2'
-					>
+					<div className='space-y-2'>
 						<label htmlFor='gemini-key' className='font-medium text-muted-foreground text-sm'>
-							API key de Gemini
+							Clave de API de Gemini
 						</label>
 						<Input
 							id='gemini-key'
@@ -335,19 +301,14 @@ export function AiStep({ payload }: StepProps) {
 								void persist({ geminiApiKey: event.target.value });
 							}}
 							placeholder='AIza...'
-							className='max-w-md'
+							className='min-h-11 w-full'
 						/>
-					</motion.div>
+					</div>
 				) : (
-					<motion.div
-						initial={{ opacity: 0, y: 10 }}
-						animate={{ opacity: 1, y: 0 }}
-						transition={{ duration: 0.28 }}
-						className='space-y-4'
-					>
+					<div className='space-y-4'>
 						<div className='space-y-2'>
 							<label htmlFor='openrouter-key' className='font-medium text-muted-foreground text-sm'>
-								API key de OpenRouter
+								Clave de API de OpenRouter
 							</label>
 							<Input
 								id='openrouter-key'
@@ -358,17 +319,18 @@ export function AiStep({ payload }: StepProps) {
 									void persist({ openrouterApiKey: event.target.value });
 								}}
 								placeholder='sk-or-v1-...'
-								className='max-w-md'
+								className='min-h-11 w-full'
 							/>
 						</div>
-						<div className='space-y-2'>
+						<div className='flex flex-col gap-2'>
 							<label
 								htmlFor='openrouter-model'
 								className='font-medium text-muted-foreground text-sm'
 							>
-								Modelo (opcional, por defecto el mejor disponible)
+								Modelo (opcional)
 							</label>
 							<Button
+								id='openrouter-model'
 								type='button'
 								variant='outline'
 								onClick={() => setIsOpenRouterModalOpen(true)}
@@ -377,20 +339,22 @@ export function AiStep({ payload }: StepProps) {
 								<div className='min-w-0 text-left'>
 									<p className='truncate font-medium'>{openrouterModel || 'Elegir modelo'}</p>
 									<p className='truncate text-muted-foreground text-xs'>
-										{openrouterModel
-											? 'Haz clic para cambiarlo desde el modal.'
-											: 'Se abrirá el selector de OpenRouter.'}
+										{openrouterModel ? 'Cambiar modelo.' : 'Se abrirá el selector de OpenRouter.'}
 									</p>
 								</div>
 								<ChevronRight className='size-4 shrink-0 text-muted-foreground' />
 							</Button>
 						</div>
-					</motion.div>
+					</div>
 				)}
 
 				<OnboardingOfficialDocs
-					title='Documentación oficial'
-					description='Abre la guía correcta si necesitas crear la clave o revisar cómo funciona la integración.'
+					title={provider === 'local' ? 'conectar mi servidor local' : 'conseguir mi clave de API'}
+					description={
+						provider === 'local'
+							? 'Arranca tu servidor y permite el acceso desde este navegador antes de probarlo en el estudio.'
+							: 'La clave se crea en la cuenta del proveedor. Pégala arriba y guarda para seguir. Cada servicio aplica sus propias condiciones de uso.'
+					}
 					links={officialDocs}
 					className='pt-2'
 				/>

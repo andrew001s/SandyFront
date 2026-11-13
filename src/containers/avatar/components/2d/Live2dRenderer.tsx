@@ -1,14 +1,15 @@
 'use client';
 
+import { normalizeExpressionIntensity } from '@/lib/avatar/expressionIntensities';
 import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
+import { loadLive2dModel } from '@/lib/avatar2d/live2dModel';
 import { type Live2dPackage, live2dStore } from '@/lib/avatar2d/live2dStore';
-import { unpackLive2dZip } from '@/lib/avatar2d/live2dZipLoader';
 import type { Avatar2dTransform, Live2dConfig } from '@/lib/avatar2d/types';
 import { AlertCircle, Loader2, Sparkles, Upload } from 'lucide-react';
 import type { Cubism4ModelSettings } from 'pixi-live2d-display/cubism4';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { extractLive2dExpressions } from './Live2dExpressionsPanel';
+import { extractLive2dExpressions, formatLive2dExpressionLabel } from './Live2dExpressionsPanel';
 
 interface Props {
 	config: Live2dConfig;
@@ -144,16 +145,63 @@ export function applyLive2dFocusPoint(
  * Si se pasa un identificador de expresión, la activa.
  * Si se pasa null, resetea la expresión al estado neutral.
  */
+export function resolveLive2dExpressionId(
+	expressionId: string | null | undefined,
+	definitions?: readonly unknown[] | null,
+): string | null {
+	if (!expressionId?.trim()) return null;
+	if (!definitions?.length) return expressionId;
+
+	const normalize = (value: unknown): string => {
+		if (typeof value !== 'string') return '';
+		const basename = value.split(/[/\\]/).pop() ?? value;
+		return basename
+			.replace(/\.(exp3|exp)?\.json$/i, '')
+			.trim()
+			.toLowerCase();
+	};
+	const requested = normalize(expressionId);
+	const matchingDefinitions = definitions.filter((item) => {
+		if (!item || typeof item !== 'object') return false;
+		const definition = item as Record<string, unknown>;
+		const name = definition.Name ?? definition.name;
+		const file = definition.File ?? definition.file;
+		return (
+			normalize(name) === requested ||
+			normalize(file) === requested ||
+			(typeof name === 'string' && normalize(formatLive2dExpressionLabel(name)) === requested) ||
+			(typeof file === 'string' && normalize(formatLive2dExpressionLabel(file)) === requested)
+		);
+	});
+	if (matchingDefinitions.length !== 1) return null;
+
+	const definition = matchingDefinitions[0] as Record<string, unknown>;
+	const nativeName = definition.Name ?? definition.name;
+	if (typeof nativeName === 'string' && nativeName.trim()) return nativeName.trim();
+
+	const file = definition.File ?? definition.file;
+	if (typeof file !== 'string') return null;
+	return (
+		file
+			.split(/[/\\]/)
+			.pop()
+			?.replace(/\.(exp3|exp)?\.json$/i, '') ?? null
+	);
+}
+
 export function applyLive2dExpression(
 	// biome-ignore lint/suspicious/noExplicitAny: dynamic Live2D model instance
 	model: any, // eslint-disable-line @typescript-eslint/no-explicit-any -- pixi-live2d-display exposes runtime-specific model internals.
 	expressionId: string | null | undefined,
+	definitions?: readonly unknown[] | null,
 ): void {
 	if (!model) return;
 	try {
 		if (expressionId) {
 			if (typeof model.expression === 'function') {
-				const res = model.expression(expressionId);
+				const resolvedExpressionId = resolveLive2dExpressionId(expressionId, definitions);
+				if (!resolvedExpressionId) return;
+				const res = model.expression(resolvedExpressionId);
 				if (res && typeof res.catch === 'function') {
 					res.catch(() => {
 						// Ignorar fallo de expresión nativa si el modelo no la define
@@ -174,6 +222,7 @@ export interface Live2dExpressionParameter {
 	Id: string;
 	Value: number;
 	Blend?: 'Add' | 'Multiply' | 'Overwrite' | string;
+	Weight?: number;
 }
 
 /**
@@ -277,11 +326,14 @@ export function applyLive2dExpressionParams(
 	for (const p of params) {
 		try {
 			if (p.Blend === 'Add' && typeof core.addParameterValueById === 'function') {
-				core.addParameterValueById(p.Id, p.Value);
+				if (p.Weight === undefined) core.addParameterValueById(p.Id, p.Value);
+				else core.addParameterValueById(p.Id, p.Value, normalizeExpressionIntensity(p.Weight));
 			} else if (p.Blend === 'Multiply' && typeof core.multiplyParameterValueById === 'function') {
-				core.multiplyParameterValueById(p.Id, p.Value);
+				if (p.Weight === undefined) core.multiplyParameterValueById(p.Id, p.Value);
+				else core.multiplyParameterValueById(p.Id, p.Value, normalizeExpressionIntensity(p.Weight));
 			} else if (typeof core.setParameterValueById === 'function') {
-				core.setParameterValueById(p.Id, p.Value);
+				if (p.Weight === undefined) core.setParameterValueById(p.Id, p.Value);
+				else core.setParameterValueById(p.Id, p.Value, normalizeExpressionIntensity(p.Weight));
 			}
 		} catch {
 			// Ignorar si el modelo no tiene este parámetro específico
@@ -295,6 +347,7 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
 	// biome-ignore lint/suspicious/noExplicitAny: dynamic Pixi application instance
 	const appRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any -- Pixi application type is loaded dynamically on the client.
+	const appDestroyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	// biome-ignore lint/suspicious/noExplicitAny: dynamic Live2D model instance
 	const modelRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any -- Live2D model type is loaded dynamically on the client.
 	const visualBoundsRef = useRef<{ x: number; y: number; width: number; height: number } | null>(
@@ -362,7 +415,10 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 	const previouslyAppliedParamsRef = useRef<Live2dExpressionParameter[]>([]);
 
 	const syncExpressions = useCallback(
-		(activeIds: string[]) => {
+		(
+			activeIds: string[],
+			intensities = avatar2dManager.getState().live2d.expressionIntensities ?? {},
+		) => {
 			const model = modelRef.current;
 			if (!model) return;
 
@@ -379,16 +435,18 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				return;
 			}
 
-			// Compatibilidad con motion manager nativo (última expresión activada)
-			applyLive2dExpression(model, activeIds[activeIds.length - 1]);
-
 			// Consolidar parámetros de todas las expresiones activas
 			const consolidatedParams: Live2dExpressionParameter[] = [];
 
 			for (const id of activeIds) {
 				const cached = expressionParamsCacheRef.current.get(id);
 				if (cached) {
-					consolidatedParams.push(...cached);
+					consolidatedParams.push(
+						...cached.map((parameter) => ({
+							...parameter,
+							Weight: normalizeExpressionIntensity(intensities[id]),
+						})),
+					);
 				} else if (pkg?.fileMap) {
 					const targetUrl = findExpressionUrlInFileMap(pkg.fileMap, id);
 					if (targetUrl) {
@@ -410,6 +468,19 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				}
 			}
 
+			// El gestor nativo aplicaría la última expresión al 100 % sobre la mezcla ponderada.
+			const allParametersAvailable = activeIds.every((id) =>
+				expressionParamsCacheRef.current.has(id),
+			);
+			const hasIndividualIntensity = activeIds.some(
+				(id) => normalizeExpressionIntensity(intensities[id]) !== 1,
+			);
+			applyLive2dExpression(
+				model,
+				allParametersAvailable || hasIndividualIntensity ? null : activeIds[activeIds.length - 1],
+				pkg?.modelSettingsJson.FileReferences?.Expressions,
+			);
+
 			// Resetear parámetros que ya no están en ninguna expresión activa
 			const activeParamIds = new Set(consolidatedParams.map((p) => p.Id));
 			const paramsToReset = previouslyAppliedParamsRef.current.filter(
@@ -421,13 +492,8 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 
 			previouslyAppliedParamsRef.current = consolidatedParams;
 			activeExpressionParamsRef.current = consolidatedParams;
-
-			// Inyección inmediata sobre el coreModel
-			if (consolidatedParams.length > 0 && model.internalModel?.coreModel) {
-				applyLive2dExpressionParams(model.internalModel.coreModel, consolidatedParams);
-			}
 		},
-		[pkg?.fileMap],
+		[pkg?.fileMap, pkg?.modelSettingsJson.FileReferences?.Expressions],
 	);
 
 	useEffect(() => {
@@ -436,15 +502,20 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 			(config.activeExpression ? [config.activeExpression] : undefined) ??
 			avatar2dManager.getState().live2d.activeExpressions ??
 			[];
-		syncExpressions(currentExpressions);
-	}, [config.activeExpressions, config.activeExpression, syncExpressions]);
+		syncExpressions(currentExpressions, config.expressionIntensities);
+	}, [
+		config.activeExpressions,
+		config.activeExpression,
+		config.expressionIntensities,
+		syncExpressions,
+	]);
 
 	useEffect(() => {
 		const unsub = avatar2dManager.subscribe((state) => {
 			const expressions =
 				state.live2d.activeExpressions ??
 				(state.live2d.activeExpression ? [state.live2d.activeExpression] : []);
-			syncExpressions(expressions);
+			syncExpressions(expressions, state.live2d.expressionIntensities);
 		});
 		return () => unsub();
 	}, [syncExpressions]);
@@ -551,6 +622,10 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 	// Inicializar PixiJS y compilar el modelo Live2D WebGL
 	useEffect(() => {
 		let isMounted = true;
+		if (appDestroyTimerRef.current) {
+			clearTimeout(appDestroyTimerRef.current);
+			appDestroyTimerRef.current = null;
+		}
 
 		async function initLive2D() {
 			if (!canvasRef.current || !containerRef.current || !pkg) {
@@ -568,12 +643,6 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				const { Live2DModel, Live2DFactory, Cubism4ExpressionManager } = await import(
 					'pixi-live2d-display/cubism4'
 				);
-
-				try {
-					Live2DModel.registerTicker(PIXI.Ticker);
-				} catch {
-					// Ya registrado
-				}
 
 				if (!isMounted) return;
 
@@ -669,10 +738,11 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				// Cargar modelo pasando la instancia de ModelSettings directamente
 				const model = await Live2DModel.from(settings, {
 					autoInteract: false,
+					ticker: PIXI.Ticker.shared,
 				});
 
 				if (!isMounted) {
-					model.destroy();
+					model.destroy({ children: true, texture: true, baseTexture: true });
 					return;
 				}
 
@@ -728,7 +798,7 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				// Aplicar transformación inicial centrada
 				applyModelTransform(dragPosition.x, dragPosition.y, scale);
 
-				// Inyectar parámetros de expresiones en beforeModelUpdate en cada tick
+				// Cubism guarda la base antes de este evento; inyectar fuera de él acumularía los pesos.
 				const onBeforeModelUpdate = () => {
 					if (activeExpressionParamsRef.current.length > 0 && model.internalModel?.coreModel) {
 						applyLive2dExpressionParams(
@@ -737,8 +807,11 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 						);
 					}
 				};
-				if (typeof model.internalModel?.on === 'function') {
-					model.internalModel.on('beforeModelUpdate', onBeforeModelUpdate);
+				const internalModelEvents = model.internalModel as unknown as {
+					on?: (event: string, listener: () => void) => void;
+				};
+				if (typeof internalModelEvents?.on === 'function') {
+					internalModelEvents.on('beforeModelUpdate', onBeforeModelUpdate);
 				}
 
 				// Sincronizar expresiones activas
@@ -766,6 +839,20 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 			if (modelRef.current?.internalModel?.off) {
 				modelRef.current.internalModel.off('beforeModelUpdate');
 			}
+			// Pixi destroys the WebGL context with the renderer. Keep it alive across
+			// effect replays (StrictMode, HMR, or model changes) because a canvas
+			// cannot create a fresh context after its previous context was lost.
+			appDestroyTimerRef.current = setTimeout(() => {
+				const app = appRef.current;
+				appRef.current = null;
+				modelRef.current = null;
+				visualBoundsRef.current = null;
+				if (app) {
+					app.stop();
+					app.destroy(false, { children: true, texture: true, baseTexture: true });
+				}
+				appDestroyTimerRef.current = null;
+			}, 0);
 		};
 	}, [pkg]);
 
@@ -827,14 +914,6 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				currentFocusRef.current = nextFocus;
 
 				applyLive2dFocusPoint(model, nextFocus);
-
-				// 3. Modulación gestual de expresión activa directamente en el coreModel
-				if (activeExpressionParamsRef.current.length > 0 && model.internalModel?.coreModel) {
-					applyLive2dExpressionParams(
-						model.internalModel.coreModel,
-						activeExpressionParamsRef.current,
-					);
-				}
 			}
 			frameId = requestAnimationFrame(animateFrame);
 		};
@@ -943,9 +1022,11 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 
 		const toastId = toast.loading(`Desempaquetando ${file.name}...`);
 		try {
-			const loadedPackage = await unpackLive2dZip(file);
-			live2dStore.setPackage(loadedPackage);
-			avatar2dManager.setLive2dModel('loaded', loadedPackage.modelName);
+			const loadedPackage = await loadLive2dModel(file);
+			if (!loadedPackage) {
+				toast.dismiss(toastId);
+				return;
+			}
 			toast.success(`Modelo "${loadedPackage.modelName}" listo en WebGL`, { id: toastId });
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : 'Error al procesar el archivo .ZIP';
@@ -963,7 +1044,7 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 			onPointerMove={handlePointerMove}
 			onPointerUp={handlePointerUp}
 			onPointerCancel={handlePointerUp}
-			className={`relative h-full w-full touch-none select-none overflow-hidden overscroll-contain ${
+			className={`absolute inset-0 touch-none select-none overflow-hidden overscroll-contain ${
 				interactive ? 'cursor-grab active:cursor-grabbing' : ''
 			}`}
 		>

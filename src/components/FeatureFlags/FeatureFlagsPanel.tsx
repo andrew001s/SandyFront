@@ -1,6 +1,6 @@
 'use client';
 
-import { type SettingsUpdate, TTS_PROVIDER, saveSettings } from '@/api/settings';
+import { type SettingsUpdate, saveSettings } from '@/api/settings';
 import { FeatureFlagsSkeleton } from '@/components/loading/dashboard-skeletons';
 import { Button } from '@/components/ui/button';
 import { useAppSettings } from '@/context/AppSettingsContext';
@@ -23,7 +23,9 @@ import {
 	Sliders,
 	Volume2,
 	Wand2,
+	X,
 } from 'lucide-react';
+import posthog from 'posthog-js';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -36,7 +38,7 @@ const FEATURE_FLAG_ICONS: Record<FeatureFlagKey, LucideIcon> = {
 	assist: Wand2,
 };
 
-export function FeatureFlagsPanel() {
+export function FeatureFlagsPanel({ onClose }: { onClose?: () => void }) {
 	const { getToken } = useAuth();
 	const { settings, isLoading: settingsLoading, refreshSettings } = useAppSettings();
 	const [flags, setFlags] = useState<FeatureFlags>({ ...DEFAULT_FEATURE_FLAGS });
@@ -73,12 +75,14 @@ export function FeatureFlagsPanel() {
 			const token = await getToken();
 			const payload: SettingsUpdate = {
 				...settings,
-				tts_provider: TTS_PROVIDER,
 				feature_flags: flags,
 			};
 			await saveSettings(payload, { token });
 			await refreshSettings();
 			setHasLocalChanges(false);
+			posthog.capture('broadcast_modules_saved', {
+				enabled_modules: FEATURE_FLAG_KEYS.filter((key) => flags[key]),
+			});
 			toast.success('Módulos de emisión guardados');
 		} catch (error) {
 			console.error('Error al guardar funciones:', error);
@@ -88,15 +92,36 @@ export function FeatureFlagsPanel() {
 		}
 	};
 
+	const closeButton = onClose && (
+		<button
+			type='button'
+			onClick={onClose}
+			aria-label='Cerrar módulos de emisión'
+			className='absolute top-3 right-3 flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring'
+		>
+			<X className='size-4' />
+		</button>
+	);
 	if (settingsLoading) {
-		return <FeatureFlagsSkeleton />;
+		return (
+			<div className='relative'>
+				<FeatureFlagsSkeleton />
+				{closeButton}
+			</div>
+		);
 	}
 
 	return (
-		<div className='overflow-hidden rounded-xl border border-border bg-card shadow-xs transition-all'>
-			<div className='flex flex-col gap-3 border-border border-b bg-card/90 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5'>
+		<div className='relative overflow-hidden rounded-xl border border-border bg-card shadow-xs'>
+			{closeButton}
+			<div
+				className={cn(
+					'flex flex-col gap-3 border-border border-b bg-card/90 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5',
+					onClose && 'pr-14 sm:flex-wrap sm:pr-14',
+				)}
+			>
 				<div className='flex items-center gap-2.5'>
-					<span className='flex size-8 items-center justify-center rounded-lg border border-border bg-background text-primary'>
+					<span className='flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-background text-primary'>
 						<Sliders size={15} />
 					</span>
 					<div>

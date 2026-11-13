@@ -5,16 +5,19 @@ import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
 import { useAvatar } from '@/hooks/useAvatar';
 import { useVoiceErrorReporter } from '@/hooks/useVoiceErrorReporter';
+import { getAiErrorMessage } from '@/lib/ai-errors';
+import { vrmManager } from '@/lib/avatar/vrmManager';
 import { singleChunkStream, speakTextStream, speechDeduplicator } from '@/lib/speechPipeline';
 import type { AvatarBackendPayload } from '@/lib/vtsAvatarPayload';
 import { useAuth } from '@clerk/nextjs';
 import { type MutableRefObject, useCallback, useEffect, useRef } from 'react';
+import { toast } from 'sonner';
 
 type StreamEventPayload = AvatarBackendPayload & {
 	client_id?: number;
 };
 
-type StreamEventName = 'speech' | 'reaction' | 'system';
+type StreamEventName = 'speech' | 'reaction' | 'system' | 'avatar_trigger';
 
 const backendUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
 const RECONNECT_BASE_DELAY_MS = 1500;
@@ -220,12 +223,40 @@ const StreamChat = () => {
 					return;
 				}
 
+				if (normalizedType === 'avatar_trigger') {
+					processedMessages.current.add(messageKey);
+					trimProcessedMessages(processedMessages);
+					vrmManager.handleAvatarTrigger(
+						parsedData as StreamEventPayload & {
+							trigger?: string;
+							data?: Record<string, unknown>;
+						},
+					);
+					return;
+				}
+
 				if (normalizedType === 'system') {
 					processedMessages.current.add(messageKey);
 					trimProcessedMessages(processedMessages);
+					let message = reactionText || 'Evento del sistema recibido';
+					const aiError = parsedData.metadata?.error;
+					if (
+						parsedData.metadata?.source === 'ai_error' &&
+						aiError !== null &&
+						typeof aiError === 'object' &&
+						'code' in aiError &&
+						typeof aiError.code === 'string'
+					) {
+						const provider =
+							'provider' in aiError && typeof aiError.provider === 'string'
+								? aiError.provider
+								: null;
+						message = getAiErrorMessage({ payload: { code: aiError.code, provider } });
+						toast.error(message, { id: `ai-error-${provider ?? 'unknown'}-${aiError.code}` });
+					}
 					addMessageRef.current({
 						type: 'system',
-						content: reactionText || 'Evento del sistema recibido',
+						content: message,
 						timestamp: parsedData.timestamp || new Date().toISOString(),
 					});
 				}
@@ -249,6 +280,12 @@ const StreamChat = () => {
 					event: 'reaction',
 					handler: (event) => {
 						void handleStreamPayload('reaction', event.data);
+					},
+				},
+				{
+					event: 'avatar_trigger',
+					handler: (event) => {
+						void handleStreamPayload('avatar_trigger', event.data);
 					},
 				},
 				{
@@ -322,7 +359,7 @@ const StreamChat = () => {
 		};
 	}, [getToken, isLoaded, isSignedIn, pushSystemMessage]);
 
-	return <div className='mx-auto space-y-4 p-4' />;
+	return null;
 };
 
 export default StreamChat;

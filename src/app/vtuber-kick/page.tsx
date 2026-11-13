@@ -67,7 +67,7 @@ const sections: ContentSection[] = [
 		list: [
 			'Lee cada mensaje del chat de Kick y responde con la IA que elijas.',
 			'Reacciona a suscripciones, seguidores y otros eventos de tu canal.',
-			'Responde con su voz (Fish Audio) y mueve tu avatar en VTube Studio.',
+			'Responde con su voz (Fish Audio) y mueve tu avatar en el estudio del navegador.',
 			'Modera el chat automáticamente según tus reglas.',
 			'Gestiona el inicio y la parada automática de la transmisión desde el panel.',
 		],
@@ -85,7 +85,7 @@ const sections: ContentSection[] = [
 		list: [
 			'Una cuenta de Kick (gratis).',
 			'Una cuenta en Sandy Studio.',
-			'Opcional: VTube Studio en tu PC para el avatar animado.',
+			'Opcional: imágenes PNG, un paquete Live2D o un archivo VRM para el avatar del estudio.',
 			'Opcional: una clave de API para el modelo de IA y la voz que prefieras.',
 		],
 	},
@@ -100,7 +100,7 @@ const faqs: ContentFaq[] = [
 	{
 		question: '¿Necesito una PC potente para usarlo en Kick?',
 		answer:
-			'No. La IA y el procesamiento corren en la nube. Solo necesitas un navegador y, si usas el avatar animado, VTube Studio funcionando con fluidez.',
+			'El navegador renderiza tu avatar PNGTuber, Live2D o VRM. El consumo depende del modelo y sus efectos. Puedes usar IA y voz en la nube; si eliges IA local, también utilizará los recursos de tu equipo.',
 	},
 	{
 		question: '¿Qué modelo de IA puedo usar?',

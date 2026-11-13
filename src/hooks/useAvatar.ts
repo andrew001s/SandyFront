@@ -8,7 +8,7 @@ import {
 	AVATAR_SOFTWARE_STORAGE_KEY,
 	DEFAULT_SOFTWARE_CONFIGS,
 } from '@/lib/avatar/constants';
-import { vnyanClient } from '@/lib/avatar/vnyanClient';
+import { getScopedAutomaticReactionConfig } from '@/lib/avatar/reactionMappings';
 import { createVrmLipSyncHandler } from '@/lib/avatar/vrmLipSync';
 import { vrmManager } from '@/lib/avatar/vrmManager';
 import { createAvatar2dLipSyncHandler } from '@/lib/avatar2d/avatar2dLipSync';
@@ -24,15 +24,25 @@ import type {
 } from '@/types/avatar';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+const AVATAR_SOFTWARE_CHANGE_EVENT = 'sandy:avatar-software-change';
+const SUPPORTED_AVATAR_SOFTWARES: AvatarSoftware[] = ['pngtuber', 'live2d', 'vtubestudio', 'vrm'];
+
 export function useAvatar() {
 	const vts = useVTubeStudio();
 
 	const [activeSoftware, setActiveSoftware] = useState<AvatarSoftware>('pngtuber');
 	const [configs, setConfigs] = useState<AvatarSoftwareConfigs>(DEFAULT_SOFTWARE_CONFIGS);
-	const [vnyanState, setVnyanState] = useState(vnyanClient.getState());
-
-	const hasAutoConnectedRef = useRef(false);
-	const manualDisconnectedRef = useRef(false);
+	const activeVtsReactionsRef = useRef<string[]>([]);
+	const automaticReactionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const automaticReactionPendingRef = useRef(false);
+	const automaticReactionHasSpeechRef = useRef(false);
+	const resetEmotionsRef = useRef<() => Promise<void>>(async () => undefined);
+	useEffect(
+		() => () => {
+			if (automaticReactionTimerRef.current) clearTimeout(automaticReactionTimerRef.current);
+		},
+		[],
+	);
 
 	// Cargar configuración guardada al montar
 	useEffect(() => {
@@ -57,63 +67,110 @@ export function useAvatar() {
 				}
 			}
 		}
-
 		try {
 			const storedConfigs = window.localStorage.getItem(AVATAR_CONFIGS_STORAGE_KEY);
 			if (storedConfigs) {
 				const parsed = JSON.parse(storedConfigs);
 				setConfigs((prev) => ({ ...prev, ...parsed }));
-				if (parsed.vnyan?.transitionDurationMs !== undefined) {
-					vnyanClient.setTransitionDuration(parsed.vnyan.transitionDurationMs);
-				}
 			}
 		} catch {
 			// Ignorar JSON corrupto
 		}
 	}, []);
 
-	// Suscribirse a cambios de VNyan
+	// AvatarContainer, Chat y otros consumidores tienen instancias independientes del hook.
+	// El evento sincroniza el formato activo entre ellas dentro de la misma pestaña.
 	useEffect(() => {
-		const unsubscribe = vnyanClient.subscribe(() => {
-			setVnyanState(vnyanClient.getState());
-		});
-		return unsubscribe;
+		const handleSoftwareChange = (event: Event) => {
+			const software = (event as CustomEvent<AvatarSoftware>).detail;
+			if (!SUPPORTED_AVATAR_SOFTWARES.includes(software)) return;
+			setActiveSoftware(software);
+			if (software === 'pngtuber' || software === 'live2d') {
+				avatar2dManager.setMode(software);
+			}
+		};
+
+		window.addEventListener(AVATAR_SOFTWARE_CHANGE_EVENT, handleSoftwareChange);
+		return () => window.removeEventListener(AVATAR_SOFTWARE_CHANGE_EVENT, handleSoftwareChange);
 	}, []);
 
 	// Cambiar software activo
 	const setSoftware = useCallback(
 		(software: AvatarSoftware) => {
-			manualDisconnectedRef.current = false;
-			const targetSoftware = software === 'vseeface' ? 'vnyan' : software;
+			const targetSoftware = software === 'vseeface' || software === 'vnyan' ? 'vrm' : software;
+			automaticReactionPendingRef.current = false;
+			automaticReactionHasSpeechRef.current = false;
+			if (automaticReactionTimerRef.current) {
+				clearTimeout(automaticReactionTimerRef.current);
+				automaticReactionTimerRef.current = null;
+			}
+			const baseConfig = getScopedAutomaticReactionConfig('neutral', activeSoftware);
+			if (activeSoftware === 'vrm') {
+				if (baseConfig.expressions.length) {
+					vrmManager.setEmotions(baseConfig.expressions, baseConfig.intensity);
+				} else {
+					vrmManager.resetEmotions();
+				}
+			} else if (activeSoftware === 'pngtuber') {
+				avatar2dManager.setEmotion(baseConfig.expressions[0] ?? 'neutral');
+			} else if (activeSoftware === 'live2d') {
+				avatar2dManager.setLive2dExpressions(baseConfig.expressions);
+			} else if (activeSoftware === 'vtubestudio') {
+				for (const expression of activeVtsReactionsRef.current) {
+					void vts.setExpressionActive(expression, false);
+				}
+				activeVtsReactionsRef.current = [];
+				for (const expression of baseConfig.expressions) {
+					void vts.activateExpression(expression);
+					activeVtsReactionsRef.current.push(expression);
+				}
+			}
+
+			const targetBaseConfig = getScopedAutomaticReactionConfig('neutral', targetSoftware);
+			if (targetSoftware === 'vrm') {
+				if (targetBaseConfig.expressions.length) {
+					vrmManager.setEmotions(targetBaseConfig.expressions, targetBaseConfig.intensity);
+				} else {
+					vrmManager.resetEmotions();
+				}
+			} else if (targetSoftware === 'pngtuber') {
+				avatar2dManager.setEmotion(targetBaseConfig.expressions[0] ?? 'neutral');
+			} else if (targetSoftware === 'live2d') {
+				avatar2dManager.setLive2dExpressions(targetBaseConfig.expressions);
+			} else if (targetSoftware === 'vtubestudio') {
+				activeVtsReactionsRef.current = [];
+				for (const expression of targetBaseConfig.expressions) {
+					void vts.activateExpression(expression);
+					activeVtsReactionsRef.current.push(expression);
+				}
+			}
 			setActiveSoftware(targetSoftware);
 			if (typeof window !== 'undefined') {
 				window.localStorage.setItem(AVATAR_SOFTWARE_STORAGE_KEY, targetSoftware);
+				window.dispatchEvent(
+					new CustomEvent<AvatarSoftware>(AVATAR_SOFTWARE_CHANGE_EVENT, {
+						detail: targetSoftware,
+					}),
+				);
 			}
 
 			if (targetSoftware === 'pngtuber' || targetSoftware === 'live2d') {
 				avatar2dManager.setMode(targetSoftware);
 			}
 
-			// Desconectar el otro software al alternar
-			if (activeSoftware === 'vtubestudio' && targetSoftware === 'vnyan') {
+			// Desconectar VTube Studio al alternar a otro software
+			if (activeSoftware === 'vtubestudio' && targetSoftware !== 'vtubestudio') {
 				if (vts.connected) {
 					void vts.disconnect();
 				}
-			} else if (activeSoftware === 'vnyan' && targetSoftware === 'vtubestudio') {
-				if (vnyanState.connected) {
-					vnyanClient.disconnect();
-				}
 			}
 		},
-		[activeSoftware, vnyanState.connected, vts],
+		[activeSoftware, vts],
 	);
 
 	// Actualizar configuración
 	const updateConfig = useCallback((software: AvatarSoftware, updates: Partial<SoftwareConfig>) => {
-		const targetSoftware = software === 'vseeface' ? 'vnyan' : software;
-		if (targetSoftware === 'vnyan' && updates.transitionDurationMs !== undefined) {
-			vnyanClient.setTransitionDuration(updates.transitionDurationMs);
-		}
+		const targetSoftware = software === 'vseeface' || software === 'vnyan' ? 'vrm' : software;
 		setConfigs((prev) => {
 			const updated = {
 				...prev,
@@ -126,53 +183,37 @@ export function useAvatar() {
 		});
 	}, []);
 
-	const is3D =
-		activeSoftware === 'vrm' || activeSoftware === 'vnyan' || activeSoftware === 'vseeface';
+	const is3D = activeSoftware === 'vrm';
 	const activeConfig = useMemo(
-		() => configs[activeSoftware] ?? configs.vrm ?? configs.vnyan,
+		() => configs[activeSoftware] ?? configs.vrm,
 		[configs, activeSoftware],
 	);
 	const softwareMeta = useMemo<SoftwareMeta>(() => {
 		return AVATAR_SOFTWARE_LIST.find((s) => s.id === activeSoftware) ?? AVATAR_SOFTWARE_LIST[0];
 	}, [activeSoftware]);
 
-	const connected = activeSoftware === 'vrm' ? true : is3D ? vnyanState.connected : vts.connected;
-	const connecting =
-		activeSoftware === 'vrm' ? false : is3D ? vnyanState.connecting : vts.connecting;
-	const error = activeSoftware === 'vrm' ? null : is3D ? vnyanState.error : vts.error;
+	const connected = activeSoftware === 'vtubestudio' ? vts.connected : true;
+	const connecting = activeSoftware === 'vtubestudio' ? vts.connecting : false;
+	const error = activeSoftware === 'vtubestudio' ? vts.error : null;
 
 	// Conectar
 	const connect = useCallback(
 		async (portOrOptions?: number | { port?: number; host?: string }) => {
-			manualDisconnectedRef.current = false;
+			if (activeSoftware !== 'vtubestudio') return;
 			const targetPort =
 				typeof portOrOptions === 'number'
 					? portOrOptions
 					: (portOrOptions?.port ?? activeConfig.port);
 
-			if (activeSoftware === 'vtubestudio') {
-				await vts.connect(targetPort);
-			} else {
-				await vnyanClient.connect({
-					port: targetPort,
-					host:
-						typeof portOrOptions === 'object' && portOrOptions.host
-							? portOrOptions.host
-							: activeConfig.host,
-					transitionDurationMs: activeConfig.transitionDurationMs,
-				});
-			}
+			await vts.connect(targetPort);
 		},
 		[activeConfig, activeSoftware, vts],
 	);
 
 	// Desconectar
 	const disconnect = useCallback(async () => {
-		manualDisconnectedRef.current = true;
 		if (activeSoftware === 'vtubestudio') {
 			await vts.disconnect();
-		} else {
-			vnyanClient.disconnect();
 		}
 	}, [activeSoftware, vts]);
 
@@ -181,31 +222,93 @@ export function useAvatar() {
 		async (emotion: string, intensity = 1.0): Promise<void> => {
 			if (activeSoftware === 'vrm') {
 				vrmManager.setEmotion(emotion, intensity);
-			} else if (is3D) {
-				await vnyanClient.setEmotion(emotion, intensity);
+			} else if (activeSoftware === 'pngtuber') {
+				avatar2dManager.setEmotion(emotion);
+			} else if (activeSoftware === 'live2d') {
+				avatar2dManager.setLive2dExpression(emotion);
 			} else {
+				if (activeSoftware === 'vtubestudio') {
+					activeVtsReactionsRef.current = [emotion];
+				}
 				await vts.activateExpression(emotion);
 			}
 		},
-		[activeSoftware, is3D, vts],
+		[activeSoftware, vts],
 	);
 
 	// Resetear emociones
 	const resetEmotions = useCallback(async (): Promise<void> => {
-		if (activeSoftware === 'vrm') {
-			vrmManager.resetEmotions();
-		} else if (is3D) {
-			await vnyanClient.resetEmotions();
+		if (automaticReactionTimerRef.current) {
+			clearTimeout(automaticReactionTimerRef.current);
+			automaticReactionTimerRef.current = null;
 		}
-	}, [activeSoftware, is3D]);
+		automaticReactionPendingRef.current = false;
+		automaticReactionHasSpeechRef.current = false;
+		const baseConfig = getScopedAutomaticReactionConfig('neutral', activeSoftware);
+		if (activeSoftware === 'vrm') {
+			if (baseConfig.expressions.length) {
+				vrmManager.setEmotions(baseConfig.expressions, baseConfig.intensity);
+			} else {
+				vrmManager.resetEmotions();
+			}
+		} else if (activeSoftware === 'pngtuber') {
+			avatar2dManager.setEmotion(baseConfig.expressions[0] ?? 'neutral');
+		} else if (activeSoftware === 'live2d') {
+			avatar2dManager.setLive2dExpressions(baseConfig.expressions);
+		} else if (activeSoftware === 'vtubestudio') {
+			for (const expression of activeVtsReactionsRef.current) {
+				await vts.setExpressionActive(expression, false);
+			}
+			activeVtsReactionsRef.current = [];
+			for (const expression of baseConfig.expressions) {
+				await vts.activateExpression(expression);
+				activeVtsReactionsRef.current.push(expression);
+			}
+		}
+	}, [activeSoftware, vts]);
+
+	useEffect(() => {
+		resetEmotionsRef.current = resetEmotions;
+	}, [resetEmotions]);
+
+	useEffect(() => {
+		if (activeSoftware === 'pngtuber' || activeSoftware === 'live2d') {
+			void resetEmotionsRef.current();
+		}
+	}, [activeSoftware]);
+
+	useEffect(() => {
+		const audioQueue = AudioQueueManager.getInstance();
+		return audioQueue.subscribeSpeechState((active) => {
+			if (active) {
+				if (!automaticReactionPendingRef.current) return;
+				automaticReactionHasSpeechRef.current = true;
+				if (automaticReactionTimerRef.current) {
+					clearTimeout(automaticReactionTimerRef.current);
+					automaticReactionTimerRef.current = null;
+				}
+				return;
+			}
+
+			if (automaticReactionPendingRef.current && automaticReactionHasSpeechRef.current) {
+				automaticReactionPendingRef.current = false;
+				automaticReactionHasSpeechRef.current = false;
+				if (automaticReactionTimerRef.current) {
+					clearTimeout(automaticReactionTimerRef.current);
+					automaticReactionTimerRef.current = null;
+				}
+				void resetEmotionsRef.current();
+			}
+		});
+	}, []);
 
 	// Inyectar boca de forma unificada (2D y 3D)
 	const injectMouth = useCallback(
 		async (open: number, smile: number): Promise<void> => {
 			if (activeSoftware === 'vrm') {
 				vrmManager.setVowels({ A: open, I: smile });
-			} else if (is3D) {
-				await vnyanClient.injectMouth(open, smile);
+			} else if (activeSoftware === 'pngtuber' || activeSoftware === 'live2d') {
+				avatar2dManager.setMouthParams(open, smile);
 			} else {
 				await vts.injectParameters([
 					{ id: 'SandyLipOpen', value: open },
@@ -213,23 +316,120 @@ export function useAvatar() {
 				]);
 			}
 		},
-		[activeSoftware, is3D, vts],
+		[activeSoftware, vts],
 	);
 
 	// Despacho unificado de payload (speech, reaction, emotion)
 	const sendAvatarPayload = useCallback(
 		async (payload: AvatarBackendPayload): Promise<boolean> => {
-			if (activeSoftware === 'vrm') {
-				const emotion = String(payload.emotion ?? 'neutral').toLowerCase();
-				vrmManager.setEmotion(emotion, payload.intensity ?? 1.0);
+			const emotion = String(payload.emotion ?? payload.expression ?? '').toLowerCase();
+			if (emotion && getScopedAutomaticReactionConfig(emotion, activeSoftware).enabled === false) {
+				await resetEmotions();
 				return true;
 			}
-			if (activeSoftware === 'vtubestudio') {
-				return vts.sendAvatarPayload(payload);
+			const selectedConfig =
+				payload.reaction && payload.emotion
+					? getScopedAutomaticReactionConfig(payload.emotion, activeSoftware)
+					: { expressions: [], intensity: 1 };
+			const selectedExpressions = selectedConfig.expressions;
+			const selectedExpression = selectedExpressions[0];
+			const fallbackReactionExpression =
+				payload.reaction === true &&
+				(activeSoftware === 'pngtuber' || activeSoftware === 'live2d') &&
+				String(payload.expression ?? payload.emotion ?? '').toLowerCase() !== 'neutral'
+					? (payload.expression ?? payload.emotion ?? undefined)
+					: undefined;
+			const resolvedReactionExpression = selectedExpression ?? fallbackReactionExpression;
+			const hasReactionDecision = typeof payload.reaction === 'boolean';
+			if (hasReactionDecision) {
+				if (automaticReactionTimerRef.current) {
+					clearTimeout(automaticReactionTimerRef.current);
+					automaticReactionTimerRef.current = null;
+				}
+				automaticReactionPendingRef.current = false;
+				automaticReactionHasSpeechRef.current = false;
+				await resetEmotions();
+				if (!payload.reaction || !resolvedReactionExpression) return true;
 			}
-			return vnyanClient.sendAvatarPayload(payload);
+			const resolvedPayload = hasReactionDecision
+				? resolvedReactionExpression
+					? {
+							...payload,
+							emotion: resolvedReactionExpression,
+							expression: resolvedReactionExpression,
+						}
+					: { ...payload, emotion: undefined, expression: null }
+				: payload;
+			if (
+				activeSoftware === 'vtubestudio' &&
+				hasReactionDecision &&
+				selectedExpressions.length > 0 &&
+				activeVtsReactionsRef.current.length > 0
+			) {
+				for (const expression of activeVtsReactionsRef.current) {
+					await vts.setExpressionActive(expression, false);
+				}
+				activeVtsReactionsRef.current = [];
+			}
+
+			let sent = false;
+			switch (activeSoftware) {
+				case 'vrm': {
+					if (hasReactionDecision && selectedExpressions.length > 0) {
+						vrmManager.setEmotions(selectedExpressions, selectedConfig.intensity);
+					} else {
+						const emotion = String(resolvedPayload.emotion ?? 'neutral').toLowerCase();
+						vrmManager.setEmotion(emotion, resolvedPayload.intensity ?? 1.0);
+					}
+					sent = true;
+					break;
+				}
+				case 'pngtuber': {
+					const emotion = String(resolvedPayload.emotion ?? 'neutral').toLowerCase();
+					avatar2dManager.setEmotion(emotion);
+					sent = true;
+					break;
+				}
+				case 'live2d': {
+					if (hasReactionDecision && selectedExpressions.length > 0) {
+						avatar2dManager.setLive2dExpressions(selectedExpressions);
+					} else {
+						const expression = resolvedPayload.expression ?? resolvedPayload.emotion ?? null;
+						avatar2dManager.setLive2dExpression(expression ? String(expression) : null);
+					}
+					sent = true;
+					break;
+				}
+				case 'vtubestudio': {
+					sent = await vts.sendAvatarPayload(resolvedPayload);
+					if (sent && hasReactionDecision && selectedExpressions.length > 0) {
+						for (const expression of selectedExpressions.slice(1)) {
+							await vts.activateExpression(expression);
+						}
+						activeVtsReactionsRef.current = selectedExpressions;
+					}
+					break;
+				}
+				case 'vnyan':
+				case 'vseeface':
+					return false;
+			}
+
+			if (hasReactionDecision && selectedExpression && sent) {
+				automaticReactionPendingRef.current = true;
+				automaticReactionHasSpeechRef.current = AudioQueueManager.getInstance().isSpeechActive();
+				const durationMs = Math.max(3000, payload.durationMs ?? 3000);
+				automaticReactionTimerRef.current = setTimeout(() => {
+					automaticReactionTimerRef.current = null;
+					if (automaticReactionPendingRef.current && !automaticReactionHasSpeechRef.current) {
+						automaticReactionPendingRef.current = false;
+						void resetEmotionsRef.current();
+					}
+				}, durationMs);
+			}
+			return sent;
 		},
-		[activeSoftware, vts],
+		[activeSoftware, resetEmotions, vts],
 	);
 
 	const triggerHotkey = useCallback(
@@ -255,42 +455,25 @@ export function useAvatar() {
 			if (activeSoftware === 'vtubestudio') {
 				return vts.setExpressionActive(nameOrFile, active);
 			}
-			if (active) {
-				await vnyanClient.setEmotion(nameOrFile, 1.0);
-			} else {
-				await vnyanClient.resetEmotions();
+			if (activeSoftware === 'pngtuber') {
+				avatar2dManager.setEmotion(active ? nameOrFile : 'neutral');
+				return true;
 			}
-			return true;
+			if (activeSoftware === 'live2d') {
+				avatar2dManager.setLive2dExpression(active ? nameOrFile : null);
+				return true;
+			}
+			return false;
 		},
 		[activeSoftware, vts],
 	);
-
-	// Auto-conectar a VNyan solo si está seleccionado ese modo
-	useEffect(() => {
-		if (
-			!hasAutoConnectedRef.current &&
-			!manualDisconnectedRef.current &&
-			activeSoftware === 'vnyan' &&
-			!vnyanState.connected &&
-			!vnyanState.connecting
-		) {
-			hasAutoConnectedRef.current = true;
-			void vnyanClient.connect(configs.vnyan).catch(() => {
-				// Silencioso en auto-conexión inicial
-			});
-		}
-	}, [activeSoftware, vnyanState.connected, vnyanState.connecting, configs.vnyan]);
 
 	// Coordinación de Lip Sync en tiempo real con AudioQueueManager
 	const { connected: vtsConnected, injectParameters: vtsInjectParameters } = vts;
 
 	useEffect(() => {
-		const vrmHandler = createVrmLipSyncHandler(async (vowels) => {
-			if (activeSoftware === 'vrm') {
-				vrmManager.setVowels(vowels);
-			} else {
-				await vnyanClient.injectVrmVowels(vowels);
-			}
+		const vrmHandler = createVrmLipSyncHandler((vowels) => {
+			vrmManager.setVowels(vowels);
 		});
 
 		const vtsHandler = createVtsLipSyncHandler(async (params) => {
@@ -308,40 +491,28 @@ export function useAvatar() {
 
 		AudioQueueManager.getInstance().setLipSyncHandler({
 			prepare: async (blob) => {
-				if (
-					activeSoftware === 'vrm' ||
-					activeSoftware === 'vnyan' ||
-					activeSoftware === 'vseeface'
-				) {
+				if (activeSoftware === 'vrm') {
 					await vrmHandler.prepare(blob);
 				} else if (activeSoftware === 'pngtuber') {
 					await avatar2dHandler.prepare(blob);
-				} else if (activeSoftware === 'live2d') {
+				} else if (activeSoftware === 'live2d' && !vtsConnected) {
 					await live2dHandler.prepare(blob);
 				}
 			},
 			start: async (blob, clock) => {
 				if (activeSoftware === 'vrm') {
 					await vrmHandler.start(blob, clock);
-				} else if (
-					(activeSoftware === 'vnyan' || activeSoftware === 'vseeface') &&
-					vnyanState.connected
-				) {
-					await vrmHandler.start(blob, clock);
 				} else if (activeSoftware === 'vtubestudio' && vtsConnected) {
 					await vtsHandler(blob, clock);
 				} else if (activeSoftware === 'pngtuber') {
 					await avatar2dHandler.start(blob, clock);
 				} else if (activeSoftware === 'live2d') {
-					await live2dHandler.start(blob, clock);
+					if (vtsConnected) await vtsHandler(blob, clock);
+					else await live2dHandler.start(blob, clock);
 				}
 			},
 			stop: () => {
-				if (
-					activeSoftware === 'vrm' ||
-					activeSoftware === 'vnyan' ||
-					activeSoftware === 'vseeface'
-				) {
+				if (activeSoftware === 'vrm') {
 					vrmHandler.stop();
 				} else if (activeSoftware === 'vtubestudio') {
 					stopVtsLipSync();
@@ -349,6 +520,7 @@ export function useAvatar() {
 					avatar2dHandler.stop();
 				} else if (activeSoftware === 'live2d') {
 					live2dHandler.stop();
+					if (vtsConnected) stopVtsLipSync();
 				}
 			},
 		});
@@ -359,7 +531,7 @@ export function useAvatar() {
 			avatar2dHandler.stop();
 			live2dHandler.stop();
 		};
-	}, [activeSoftware, vnyanState.connected, vtsConnected, vtsInjectParameters]);
+	}, [activeSoftware, vtsConnected, vtsInjectParameters]);
 
 	return {
 		activeSoftware,
@@ -383,10 +555,15 @@ export function useAvatar() {
 		resetEmotions,
 		injectMouth,
 
-		stats: is3D ? vnyanState.stats : vts.stats,
+		stats: vts.stats,
 
 		// Propiedades específicas de 2D VTube Studio
 		vts: {
+			connected: vts.connected,
+			connecting: vts.connecting,
+			error: vts.error,
+			connect: vts.connect,
+			disconnect: vts.disconnect,
 			stats: vts.stats,
 			models: vts.models,
 			currentModel: vts.currentModel,
