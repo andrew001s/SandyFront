@@ -25,6 +25,7 @@ import {
 	Wand2,
 	X,
 } from 'lucide-react';
+import posthog from 'posthog-js';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -79,6 +80,9 @@ export function FeatureFlagsPanel({ onClose }: { onClose?: () => void }) {
 			await saveSettings(payload, { token });
 			await refreshSettings();
 			setHasLocalChanges(false);
+			posthog.capture('broadcast_modules_saved', {
+				enabled_modules: FEATURE_FLAG_KEYS.filter((key) => flags[key]),
+			});
 			toast.success('Módulos de emisión guardados');
 		} catch (error) {
 			console.error('Error al guardar funciones:', error);

@@ -5,6 +5,7 @@ import { markOnboardingComplete } from '@/lib/onboarding/keys';
 import { useAuth } from '@clerk/nextjs';
 import { useOnboarding } from '@onboardjs/react';
 import Image from 'next/image';
+import posthog from 'posthog-js';
 import { useRef, useState } from 'react';
 import { OnboardingFireworks } from './OnboardingFireworks';
 import { OnboardingStepFrame } from './OnboardingStepFrame';
@@ -26,6 +27,7 @@ export function CompletedStep() {
 		try {
 			await submitOnboardingSettings(state?.context.flowData ?? {}, await getToken(), true);
 			markOnboardingComplete(userId);
+			posthog.capture('onboarding_completed');
 			window.location.replace('/avatar');
 		} catch {
 			setError(

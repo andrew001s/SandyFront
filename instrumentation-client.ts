@@ -1,18 +1,20 @@
 import posthog from 'posthog-js';
 
 const projectToken = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
-const host = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
+const host = process.env.NEXT_PUBLIC_POSTHOG_HOST;
 
-if (projectToken) {
+if (projectToken && host) {
 	posthog.init(projectToken, {
 		api_host: host,
 		defaults: '2026-01-30',
-		disable_session_recording: false,
 		capture_exceptions: true,
 		debug: process.env.NODE_ENV === 'development',
 	});
 } else if (process.env.NODE_ENV === 'development') {
+	const missingVariable = projectToken
+		? 'NEXT_PUBLIC_POSTHOG_HOST'
+		: 'NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN';
 	console.error(
-		'NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN is missing or un-configured, so PostHog will not initialize.',
+		`${missingVariable} variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once ${missingVariable} is configured`,
 	);
 }

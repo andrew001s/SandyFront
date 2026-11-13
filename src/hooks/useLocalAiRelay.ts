@@ -8,7 +8,7 @@ import {
 	sendTaskResult,
 } from '@/api/aiRelay';
 import { getBackendUrl } from '@/api/backendClient';
-import { streamLocalCompletion } from '@/api/localAi';
+import { createLocalAiObservabilityContext, streamLocalCompletion } from '@/api/localAi';
 import { fetchStreamToken } from '@/api/streamToken';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useMessages } from '@/context/MessagesContext';
@@ -114,7 +114,11 @@ export function useLocalAiRelay(): void {
 
 			const deltas = streamLocalCompletion(
 				{ baseUrl, model },
-				{ message: task.message, systemPrompt: task.systemInstruction },
+				{
+					message: task.message,
+					systemPrompt: task.systemInstruction,
+					observability: createLocalAiObservabilityContext(),
+				},
 			);
 
 			try {
@@ -167,7 +171,11 @@ export function useLocalAiRelay(): void {
 			try {
 				const deltas = streamLocalCompletion(
 					{ baseUrl, model },
-					{ message: request.message, systemPrompt: request.systemInstruction },
+					{
+						message: request.message,
+						systemPrompt: request.systemInstruction,
+						observability: createLocalAiObservabilityContext(),
+					},
 				);
 
 				// Respuestas de una sola pieza: la clasificación necesita el JSON entero

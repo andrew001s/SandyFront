@@ -78,7 +78,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
 	const { resolvedTheme, theme } = useTheme();
 	const activeTheme = resolvedTheme ?? theme ?? 'dark';
 	const isLightTheme = activeTheme === 'light';
-	if (pathname.startsWith('/overlay/')) return children;
+	if (pathname.startsWith('/overlay/')) {
+		return (
+			<>
+				<PostHogUserIdentification />
+				{children}
+			</>
+		);
+	}
 	return (
 		<SupportPurchaseProvider>
 			<PostHogUserIdentification />

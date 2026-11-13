@@ -9,6 +9,7 @@ import { KOFI_URL } from '@/lib/links';
 import axios from 'axios';
 import { ArrowLeft, CheckCircle2, Coffee, ExternalLink } from 'lucide-react';
 import Image from 'next/image';
+import posthog from 'posthog-js';
 import { useEffect, useRef, useState } from 'react';
 
 const triggerClass =
@@ -106,6 +107,7 @@ function SupportDialog({
 				if (!result.checkout_url) throw new Error('No se pudo abrir Ko-fi. Inténtalo de nuevo.');
 				setCheckout(result);
 				setView('code');
+				posthog.capture('support_checkout_started');
 				if (tab && !tab.closed) tab.location.replace(result.checkout_url);
 			} catch (failure) {
 				tab?.close();
@@ -268,6 +270,7 @@ function SupportDialog({
 									void run(async (isCurrent) => {
 										await purchase.redeem(code);
 										if (!isCurrent()) return;
+										posthog.capture('support_license_redeemed');
 										setCode('');
 										setCheckout(null);
 										setView('choice');

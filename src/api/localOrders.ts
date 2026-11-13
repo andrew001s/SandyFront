@@ -1,5 +1,9 @@
 import { backendClient } from '@/api/backendClient';
-import { type LocalAiConfig, streamLocalCompletion } from '@/api/localAi';
+import {
+	type LocalAiConfig,
+	type LocalAiObservabilityContext,
+	streamLocalCompletion,
+} from '@/api/localAi';
 
 /** Lo que el clasificador puede decidir sobre un mensaje del creador. */
 export type LocalIntent =
@@ -96,6 +100,7 @@ export async function classifyLocalMessage(
 	message: string,
 	assistPrompt: string,
 	signal?: AbortSignal,
+	observability?: LocalAiObservabilityContext,
 ): Promise<LocalIntent> {
 	if (!assistPrompt) return { type: 'interaccion' };
 
@@ -104,6 +109,7 @@ export async function classifyLocalMessage(
 		for await (const delta of streamLocalCompletion(config, {
 			message: assistPrompt + message,
 			signal,
+			observability,
 		})) {
 			salida += delta;
 			// El JSON de una orden es corto; si el modelo se enrolla, no lo es.
