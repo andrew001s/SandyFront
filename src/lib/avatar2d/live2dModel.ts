@@ -1,5 +1,6 @@
 'use client';
 
+import { sendOverlayTransfer } from '@/lib/overlayRealtime';
 import { avatar2dManager } from './avatar2dManager';
 import {
 	clearSavedLive2dArchive,
@@ -13,10 +14,10 @@ let restorePromise: Promise<Live2dPackage | null> | null = null;
 let latestOperation = 0;
 let storageQueue = Promise.resolve();
 
-function activatePackage(loadedPackage: Live2dPackage): Live2dPackage {
+function activatePackage(loadedPackage: Live2dPackage, broadcast = true): Live2dPackage {
 	live2dStore.setPackage(loadedPackage);
-	avatar2dManager.setLive2dModel('loaded', loadedPackage.modelName);
-	avatar2dManager.setMode('live2d');
+	avatar2dManager.setLive2dModel('loaded', loadedPackage.modelName, broadcast);
+	avatar2dManager.setMode('live2d', broadcast);
 	return loadedPackage;
 }
 
@@ -26,10 +27,21 @@ export async function loadLive2dModel(file: File): Promise<Live2dPackage | null>
 	if (operation !== latestOperation) return null;
 	await enqueueStorageOperation(operation, () => saveLive2dArchive(file));
 	if (operation !== latestOperation) return null;
-	return activatePackage(loadedPackage);
+	const result = activatePackage(loadedPackage);
+	void file
+		.arrayBuffer()
+		.then((buffer) =>
+			sendOverlayTransfer(
+				'sandy_avatar2d_sync',
+				`live2d-${file.name}-${file.size}`,
+				{ name: file.name },
+				buffer,
+			),
+		);
+	return result;
 }
 
-export async function restoreSavedLive2dModel(): Promise<Live2dPackage | null> {
+export async function restoreSavedLive2dModel(broadcast = true): Promise<Live2dPackage | null> {
 	const currentPackage = live2dStore.getPackage();
 	if (currentPackage) return currentPackage;
 	if (restorePromise) return restorePromise;
@@ -44,13 +56,42 @@ export async function restoreSavedLive2dModel(): Promise<Live2dPackage | null> {
 		if (operation !== latestOperation || live2dStore.getPackage()) {
 			return live2dStore.getPackage();
 		}
-		return activatePackage(loadedPackage);
+		return activatePackage(loadedPackage, broadcast);
 	})();
 	try {
 		return await restorePromise;
 	} finally {
 		restorePromise = null;
 	}
+}
+
+export async function sendSavedLive2dArchiveToOverlay(): Promise<void> {
+	const saved = await loadSavedLive2dArchive();
+	if (!saved) return;
+	const buffer = await saved.blob.arrayBuffer();
+	sendOverlayTransfer(
+		'sandy_avatar2d_sync',
+		`live2d-${saved.name}-${saved.blob.size}`,
+		{ name: saved.name },
+		buffer,
+	);
+}
+
+export async function applyTransferredLive2dArchive(
+	name: string,
+	buffer: ArrayBuffer,
+): Promise<void> {
+	latestOperation++;
+	live2dStore.setPackage(null);
+	restorePromise = null;
+	const file = new File([buffer], name, { type: 'application/zip' });
+	try {
+		await saveLive2dArchive(file);
+	} catch {
+		// Render from memory when OBS disables IndexedDB persistence.
+	}
+	const loadedPackage = await unpackLive2dZip(file);
+	activatePackage(loadedPackage, false);
 }
 
 export async function removeLive2dModel(): Promise<void> {

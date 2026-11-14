@@ -29,7 +29,7 @@ import type {
 	VrmFallingEmote,
 	VrmViewer,
 } from '@/lib/avatar/vrmViewer';
-import { bridgeOverlayChannel } from '@/lib/overlayRealtime';
+import { bridgeOverlayChannel, sendOverlayTransfer } from '@/lib/overlayRealtime';
 import { expressionWeights, normalizeExpressionIntensity } from './expressionIntensities';
 export type VrmSyncMessage =
 	| { type: 'vowels'; vowels: { A?: number; I?: number; U?: number; E?: number; O?: number } }
@@ -58,6 +58,14 @@ export type VrmSyncMessage =
 	| { type: 'slime'; enabled: boolean; color?: string }
 	| { type: 'slimeColor'; color: string }
 	| { type: 'requestState' }
+	| {
+			type: 'assetTransferStart';
+			transferId: string;
+			totalChunks: number;
+			meta: Record<string, unknown>;
+	  }
+	| { type: 'assetTransferChunk'; transferId: string; index: number; data: string }
+	| { type: 'assetTransferEnd'; transferId: string }
 	| {
 			type: 'fullState';
 			emotion: string;
@@ -100,6 +108,7 @@ export class VrmManager {
 	private idleOffTimer: ReturnType<typeof setTimeout> | null = null;
 	private bonePoseTimers = new Map<string, ReturnType<typeof setTimeout>>();
 	private boneScaleTimers = new Map<string, ReturnType<typeof setTimeout>>();
+	private modelTransfers = new Map<string, { chunks: string[]; meta: Record<string, unknown> }>();
 	private constructor() {
 		if (typeof window !== 'undefined') {
 			try {
@@ -267,6 +276,7 @@ export class VrmManager {
 		}
 		// Notificar a otras pestañas (como overlay OBS)
 		this.broadcastChannel?.postMessage({ type: 'modelUpdated' });
+		this.sendCurrentModelToOverlay();
 		this.notify();
 	}
 	public getAvailableExpressions(): string[] {
@@ -782,6 +792,22 @@ export class VrmManager {
 					slimeColor: this.currentSlimeColor,
 					idleSettings: this.currentIdleSettings,
 				});
+				void this.restoreSavedModel().then(() => this.sendCurrentModelToOverlay());
+				break;
+			case 'assetTransferStart':
+				this.modelTransfers.set(msg.transferId, {
+					chunks: new Array(msg.totalChunks),
+					meta: msg.meta,
+				});
+				break;
+			case 'assetTransferChunk': {
+				const transfer = this.modelTransfers.get(msg.transferId);
+				if (transfer && msg.index >= 0 && msg.index < transfer.chunks.length)
+					transfer.chunks[msg.index] = msg.data;
+				break;
+			}
+			case 'assetTransferEnd':
+				void this.finishModelTransfer(msg.transferId);
 				break;
 			case 'fullState':
 				if (this.expressionOffTimer) clearTimeout(this.expressionOffTimer);
@@ -848,6 +874,48 @@ export class VrmManager {
 					}
 				});
 				break;
+		}
+	}
+	private sendCurrentModelToOverlay(): void {
+		if (!this.currentBuffer || !this.currentMeta) return;
+		sendOverlayTransfer(
+			'sandy_vrm_sync',
+			`vrm-${this.currentMeta.updatedAt}-${crypto.randomUUID()}`,
+			{ ...this.currentMeta },
+			this.currentBuffer,
+		);
+	}
+	private async finishModelTransfer(transferId: string): Promise<void> {
+		const transfer = this.modelTransfers.get(transferId);
+		this.modelTransfers.delete(transferId);
+		if (!transfer || transfer.chunks.some((chunk) => !chunk)) return;
+		try {
+			if (transfer.meta.kind === 'vrm-background-image') {
+				const imageUrl = `data:${String(transfer.meta.mime || 'image/png')};base64,${transfer.chunks.join('')}`;
+				this.currentBackground = {
+					...this.getBackground(),
+					mode: 'image',
+					imageUrl,
+				};
+				storeBackgroundState(this.currentBackground);
+				this.notifyBg(this.currentBackground);
+				return;
+			}
+			const binary = atob(transfer.chunks.join(''));
+			const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+			const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+			const meta = transfer.meta as unknown as VrmModelMeta;
+			this.currentBuffer = buffer;
+			this.currentMeta = meta;
+			for (const viewer of this.activeViewers) await viewer.loadModel(buffer.slice(0));
+			try {
+				await saveVrmModel(buffer.slice(0), meta);
+			} catch {
+				// Keep the transferred model active for this OBS session if storage is unavailable.
+			}
+			this.notify();
+		} catch (error) {
+			console.error('No se pudo recibir el modelo VRM del estudio:', error);
 		}
 	}
 }

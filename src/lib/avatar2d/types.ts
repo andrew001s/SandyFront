@@ -73,4 +73,12 @@ export type Avatar2dSyncMessage =
 	| { type: 'mouth'; mouthOpenY: number; mouthForm: number }
 	| { type: 'eyeTracking'; enabled: boolean }
 	| { type: 'requestState' }
+	| {
+			type: 'assetTransferStart';
+			transferId: string;
+			totalChunks: number;
+			meta: Record<string, unknown>;
+	  }
+	| { type: 'assetTransferChunk'; transferId: string; index: number; data: string }
+	| { type: 'assetTransferEnd'; transferId: string }
 	| { type: 'fullState'; state: Avatar2dState };

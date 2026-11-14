@@ -37,7 +37,7 @@ export function OverlaySupportProvider({ children }: { children: ReactNode }) {
 		const adoptCredential = (next: string, legacy = false) => {
 			if (!next || next === credential) return;
 			credential = next;
-			connectOverlayRealtime(next);
+			connectOverlayRealtime(next, 'viewer');
 			clearTimeout(expiryTimer);
 			setAllowed(false);
 			try {

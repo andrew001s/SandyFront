@@ -61,6 +61,7 @@ export class Avatar2dManager {
 	private listeners = new Set<(state: Avatar2dState) => void>();
 	private speakingListeners = new Set<(isSpeaking: boolean) => void>();
 	private mouthListeners = new Set<(mouthOpenY: number, mouthForm: number) => void>();
+	private assetTransfers = new Map<string, { chunks: string[]; meta: Record<string, unknown> }>();
 
 	private constructor() {
 		if (typeof window !== 'undefined') {
@@ -192,11 +193,11 @@ export class Avatar2dManager {
 		}
 	}
 
-	public setMode(mode: Avatar2dMode): void {
+	public setMode(mode: Avatar2dMode, broadcast = true): void {
 		this.state = { ...this.state, mode };
 		this.save();
 		this.notify();
-		this.broadcastChannel?.postMessage({ type: 'mode', mode });
+		if (broadcast) this.broadcastChannel?.postMessage({ type: 'mode', mode });
 	}
 
 	public setEmotion(emotion: string): void {
@@ -727,7 +728,46 @@ export class Avatar2dManager {
 					type: 'fullState',
 					state: this.state,
 				});
+				void import('@/lib/avatar2d/live2dModel').then((module) =>
+					module.sendSavedLive2dArchiveToOverlay(),
+				);
 				break;
+			case 'assetTransferStart':
+				this.assetTransfers.set(msg.transferId, {
+					chunks: new Array(msg.totalChunks),
+					meta: msg.meta,
+				});
+				break;
+			case 'assetTransferChunk': {
+				const transfer = this.assetTransfers.get(msg.transferId);
+				if (transfer && msg.index >= 0 && msg.index < transfer.chunks.length)
+					transfer.chunks[msg.index] = msg.data;
+				break;
+			}
+			case 'assetTransferEnd': {
+				const transfer = this.assetTransfers.get(msg.transferId);
+				this.assetTransfers.delete(msg.transferId);
+				if (!transfer || transfer.chunks.some((chunk) => !chunk)) break;
+				void (async () => {
+					try {
+						const binary = atob(transfer.chunks.join(''));
+						const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+						const buffer = bytes.buffer.slice(
+							bytes.byteOffset,
+							bytes.byteOffset + bytes.byteLength,
+						);
+						await import('@/lib/avatar2d/live2dModel').then((module) =>
+							module.applyTransferredLive2dArchive(
+								String(transfer.meta.name || 'avatar.zip'),
+								buffer,
+							),
+						);
+					} catch (error) {
+						console.error('No se pudo recibir el modelo Live2D del estudio:', error);
+					}
+				})();
+				break;
+			}
 			case 'mouth':
 				this.mouthParams = { mouthOpenY: msg.mouthOpenY, mouthForm: msg.mouthForm };
 				this.notifyMouth();
