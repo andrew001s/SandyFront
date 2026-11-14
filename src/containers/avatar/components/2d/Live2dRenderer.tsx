@@ -350,6 +350,7 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 	const appDestroyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	// biome-ignore lint/suspicious/noExplicitAny: dynamic Live2D model instance
 	const modelRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any -- Live2D model type is loaded dynamically on the client.
+	const modelUpdateListenerRef = useRef<(() => void) | null>(null);
 	const visualBoundsRef = useRef<{ x: number; y: number; width: number; height: number } | null>(
 		null,
 	);
@@ -357,6 +358,7 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 	const [pkg, setPkg] = useState<Live2dPackage | null>(live2dStore.getPackage());
 	const [isSpeaking, setIsSpeaking] = useState(avatar2dManager.getIsSpeaking());
 	const [isLoading, setIsLoading] = useState(false);
+	const [modelReady, setModelReady] = useState(false);
 	const [loadError, setLoadError] = useState<string | null>(null);
 
 	const [dragPosition, setDragPosition] = useState({
@@ -622,13 +624,42 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 	// Inicializar PixiJS y compilar el modelo Live2D WebGL
 	useEffect(() => {
 		let isMounted = true;
+		const packageToLoad = pkg;
+		if (!packageToLoad) {
+			if (appDestroyTimerRef.current) {
+				clearTimeout(appDestroyTimerRef.current);
+				appDestroyTimerRef.current = null;
+			}
+			setModelReady(false);
+			setIsLoading(false);
+			const app = appRef.current;
+			const model = modelRef.current;
+			if (model) {
+				try {
+					if (modelUpdateListenerRef.current) {
+						model.internalModel?.off?.('beforeModelUpdate', modelUpdateListenerRef.current);
+					}
+					app?.stage.removeChild(model);
+					model.destroy({ children: true, texture: true, baseTexture: true });
+				} catch {
+					// Ignore cleanup errors while keeping the renderer reusable.
+				}
+			}
+			modelUpdateListenerRef.current = null;
+			modelRef.current = null;
+			visualBoundsRef.current = null;
+			app?.stop();
+			return;
+		}
+		const activePackage = packageToLoad as Live2dPackage;
 		if (appDestroyTimerRef.current) {
 			clearTimeout(appDestroyTimerRef.current);
 			appDestroyTimerRef.current = null;
 		}
+		setModelReady(false);
 
 		async function initLive2D() {
-			if (!canvasRef.current || !containerRef.current || !pkg) {
+			if (!canvasRef.current || !containerRef.current) {
 				return;
 			}
 
@@ -669,8 +700,16 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				// Destruir modelo previo si existía
 				if (modelRef.current) {
 					try {
-						app.stage.removeChild(modelRef.current);
-						modelRef.current.destroy();
+						const previousModel = modelRef.current;
+						if (modelUpdateListenerRef.current) {
+							previousModel.internalModel?.off?.(
+								'beforeModelUpdate',
+								modelUpdateListenerRef.current,
+							);
+						}
+						modelUpdateListenerRef.current = null;
+						app.stage.removeChild(previousModel);
+						previousModel.destroy({ children: true, texture: true, baseTexture: true });
 					} catch {
 						// Ignorar
 					}
@@ -678,16 +717,19 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				}
 
 				// Auto-descubrir y enriquecer expresiones en modelSettingsJson para que Cubism4ExpressionManager se instancie
-				const discovered = extractLive2dExpressions(pkg.modelSettingsJson, pkg.fileMap);
+				const discovered = extractLive2dExpressions(
+					activePackage.modelSettingsJson,
+					activePackage.fileMap,
+				);
 				if (discovered.length > 0) {
-					if (!pkg.modelSettingsJson.FileReferences) {
-						pkg.modelSettingsJson.FileReferences = {};
+					if (!activePackage.modelSettingsJson.FileReferences) {
+						activePackage.modelSettingsJson.FileReferences = {};
 					}
 					if (
-						!Array.isArray(pkg.modelSettingsJson.FileReferences.Expressions) ||
-						pkg.modelSettingsJson.FileReferences.Expressions.length === 0
+						!Array.isArray(activePackage.modelSettingsJson.FileReferences.Expressions) ||
+						activePackage.modelSettingsJson.FileReferences.Expressions.length === 0
 					) {
-						pkg.modelSettingsJson.FileReferences.Expressions = discovered.map((e) => ({
+						activePackage.modelSettingsJson.FileReferences.Expressions = discovered.map((e) => ({
 							Name: e.id,
 							File: e.file || `${e.id}.exp3.json`,
 						}));
@@ -695,14 +737,16 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				}
 
 				// Obtener el runtime correspondiente e instanciar ModelSettings
-				const runtime = Live2DFactory.findRuntime(pkg.modelSettingsJson);
+				const runtime = Live2DFactory.findRuntime(activePackage.modelSettingsJson);
 				if (!runtime) {
 					throw new Error(
 						'No se pudo encontrar el motor Cubism adecuado para este modelo .model3.json.',
 					);
 				}
 
-				const settings = runtime.createModelSettings(pkg.modelSettingsJson) as Cubism4ModelSettings;
+				const settings = runtime.createModelSettings(
+					activePackage.modelSettingsJson,
+				) as Cubism4ModelSettings;
 				if (!settings.expressions && discovered.length > 0) {
 					settings.expressions = discovered.map((e) => ({
 						Name: e.id,
@@ -719,13 +763,13 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 						// Ignorar
 					}
 					const norm = decoded.replace(/\\/g, '/').replace(/^\.?\//, '');
-					if (pkg.fileMap[norm]) return pkg.fileMap[norm];
+					if (activePackage.fileMap[norm]) return activePackage.fileMap[norm];
 
 					const fname = norm.split('/').pop() || norm;
-					if (pkg.fileMap[fname]) return pkg.fileMap[fname];
+					if (activePackage.fileMap[fname]) return activePackage.fileMap[fname];
 
 					const lowerFname = fname.toLowerCase();
-					for (const [k, v] of Object.entries(pkg.fileMap)) {
+					for (const [k, v] of Object.entries(activePackage.fileMap)) {
 						const lowerK = k.toLowerCase();
 						if (lowerK === lowerFname || lowerK.endsWith(`/${lowerFname}`)) {
 							return v;
@@ -795,6 +839,7 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				visualBoundsRef.current = bounds;
 				app.stage.addChild(model);
 				modelRef.current = model;
+				app.start();
 				// Aplicar transformación inicial centrada
 				applyModelTransform(dragPosition.x, dragPosition.y, scale);
 
@@ -812,6 +857,7 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 				};
 				if (typeof internalModelEvents?.on === 'function') {
 					internalModelEvents.on('beforeModelUpdate', onBeforeModelUpdate);
+					modelUpdateListenerRef.current = onBeforeModelUpdate;
 				}
 
 				// Sincronizar expresiones activas
@@ -821,6 +867,7 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 					avatar2dManager.getState().live2d.activeExpressions ??
 					[];
 				syncExpressions(initialExpressions);
+				setModelReady(true);
 				setIsLoading(false);
 			} catch (err) {
 				if (!isMounted) return;
@@ -836,8 +883,9 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 
 		return () => {
 			isMounted = false;
-			if (modelRef.current?.internalModel?.off) {
-				modelRef.current.internalModel.off('beforeModelUpdate');
+			if (modelUpdateListenerRef.current && modelRef.current?.internalModel?.off) {
+				modelRef.current.internalModel.off('beforeModelUpdate', modelUpdateListenerRef.current);
+				modelUpdateListenerRef.current = null;
 			}
 			// Pixi destroys the WebGL context with the renderer. Keep it alive across
 			// effect replays (StrictMode, HMR, or model changes) because a canvas
@@ -880,41 +928,41 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 
 	// Animar el habla (Lip Sync) y seguimiento de cursor en cada frame
 	useEffect(() => {
+		if (!modelReady) return;
 		let frameId: number;
 		let isRunning = true;
 
 		const animateFrame = () => {
 			if (!isRunning) return;
 			const model = modelRef.current;
-			if (model) {
-				// 1. Modulación labial
-				if (model.internalModel?.coreModel) {
-					const core = model.internalModel.coreModel;
-					try {
-						if (isSpeaking) {
-							const currentParams = mouthParamsRef.current;
-							if (currentParams.mouthOpenY > 0 || currentParams.mouthForm !== 0) {
-								applyLive2dMouthParams(core, currentParams);
-							} else {
-								const fallbackOpen = 0.35 + Math.sin(Date.now() / 90) * 0.45;
-								applyLive2dMouthParams(core, { mouthOpenY: fallbackOpen, mouthForm: 0 });
-							}
+			if (!model) return;
+			// 1. Modulación labial
+			if (model.internalModel?.coreModel) {
+				const core = model.internalModel.coreModel;
+				try {
+					if (isSpeaking) {
+						const currentParams = mouthParamsRef.current;
+						if (currentParams.mouthOpenY > 0 || currentParams.mouthForm !== 0) {
+							applyLive2dMouthParams(core, currentParams);
 						} else {
-							applyLive2dMouthParams(core, { mouthOpenY: 0, mouthForm: 0 });
+							const fallbackOpen = 0.35 + Math.sin(Date.now() / 90) * 0.45;
+							applyLive2dMouthParams(core, { mouthOpenY: fallbackOpen, mouthForm: 0 });
 						}
-					} catch {
-						// Parámetro no soportado en este modelo
+					} else {
+						applyLive2dMouthParams(core, { mouthOpenY: 0, mouthForm: 0 });
 					}
+				} catch {
+					// Parámetro no soportado en este modelo
 				}
-
-				// 2. Seguimiento suave de cursor con amortiguación continua (easing hacia target)
-				const target =
-					config.eyeTracking && !isDraggingRef.current ? targetFocusRef.current : { x: 0, y: 0 };
-				const nextFocus = stepLive2dFocusDecay(currentFocusRef.current, target, 0.12);
-				currentFocusRef.current = nextFocus;
-
-				applyLive2dFocusPoint(model, nextFocus);
 			}
+
+			// 2. Seguimiento suave de cursor con amortiguación continua (easing hacia target)
+			const target =
+				config.eyeTracking && !isDraggingRef.current ? targetFocusRef.current : { x: 0, y: 0 };
+			const nextFocus = stepLive2dFocusDecay(currentFocusRef.current, target, 0.12);
+			currentFocusRef.current = nextFocus;
+
+			applyLive2dFocusPoint(model, nextFocus);
 			frameId = requestAnimationFrame(animateFrame);
 		};
 
@@ -923,7 +971,7 @@ export function Live2dRenderer({ config, onTransformChange, interactive = true }
 			isRunning = false;
 			cancelAnimationFrame(frameId);
 		};
-	}, [isSpeaking, config.eyeTracking]);
+	}, [isSpeaking, config.eyeTracking, modelReady]);
 
 	// Seguimiento de cursor (Eye tracking) y Arrastre del Modelo
 	const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {

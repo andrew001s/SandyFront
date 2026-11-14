@@ -82,7 +82,6 @@ export async function applyTransferredLive2dArchive(
 	buffer: ArrayBuffer,
 ): Promise<void> {
 	latestOperation++;
-	live2dStore.setPackage(null);
 	restorePromise = null;
 	const file = new File([buffer], name, { type: 'application/zip' });
 	try {

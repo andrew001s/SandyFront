@@ -30,6 +30,7 @@ import {
 	getStoredBackgroundState,
 	storeBackgroundState,
 } from '@/lib/avatar/vrmBackground';
+import { vrmManager } from '@/lib/avatar/vrmManager';
 import { avatar2dManager } from '@/lib/avatar2d/avatar2dManager';
 import { loadLive2dModel, restoreSavedLive2dModel } from '@/lib/avatar2d/live2dModel';
 import type { Avatar2dMode, Avatar2dState } from '@/lib/avatar2d/types';
@@ -135,6 +136,7 @@ export function Avatar2dCanvas({
 	};
 	const handleBackgroundChange = (next: VrmBackgroundState) => {
 		setBgState(next);
+		vrmManager.setBackground(next);
 		storeBackgroundState(next);
 	};
 	const handleFileUpload = async (file: File) => {
