@@ -29,6 +29,7 @@ import type {
 	VrmFallingEmote,
 	VrmViewer,
 } from '@/lib/avatar/vrmViewer';
+import { bridgeOverlayChannel } from '@/lib/overlayRealtime';
 import { expressionWeights, normalizeExpressionIntensity } from './expressionIntensities';
 export type VrmSyncMessage =
 	| { type: 'vowels'; vowels: { A?: number; I?: number; U?: number; E?: number; O?: number } }
@@ -123,6 +124,7 @@ export class VrmManager {
 				this.broadcastChannel.onmessage = (event: MessageEvent<VrmSyncMessage>) => {
 					this.handleSyncMessage(event.data);
 				};
+				bridgeOverlayChannel(this.broadcastChannel, 'sandy_vrm_sync');
 				// Solicitar estado a cualquier pestaña abierta
 				setTimeout(() => {
 					this.broadcastChannel?.postMessage({ type: 'requestState' });

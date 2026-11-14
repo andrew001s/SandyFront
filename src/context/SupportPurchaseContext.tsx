@@ -7,6 +7,7 @@ import {
 	redeemSupportLicenseCode,
 	startSupportCheckout,
 } from '@/api/support';
+import { connectOverlayRealtime } from '@/lib/overlayRealtime';
 import {
 	SUPPORT_OVERLAY_CHANNEL,
 	SUPPORT_OVERLAY_OWNER_KEY,
@@ -126,6 +127,7 @@ export function SupportPurchaseProvider({ children }: { children: ReactNode }) {
 					const result = await createSupportOverlayKey(token);
 					if (disposed || owner.current !== userId) return;
 					overlayCredential.current = result;
+					connectOverlayRealtime(result);
 				}
 				try {
 					localStorage.setItem(SUPPORT_OVERLAY_OWNER_KEY, overlayCredential.current);
@@ -236,6 +238,7 @@ export function SupportPurchaseProvider({ children }: { children: ReactNode }) {
 			const key = await createSupportOverlayKey(token, true);
 			if (owner.current !== expectedOwner) throw new Error('La sesión cambió.');
 			overlayCredential.current = key;
+			connectOverlayRealtime(key);
 			try {
 				localStorage.setItem(SUPPORT_OVERLAY_OWNER_KEY, key);
 			} catch {

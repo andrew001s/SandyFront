@@ -2,6 +2,7 @@
 
 import { getOverlaySupportStatus } from '@/api/support';
 import { WatermarkPermissionContext } from '@/context/SupportPurchaseContext';
+import { connectOverlayRealtime } from '@/lib/overlayRealtime';
 import {
 	SUPPORT_OVERLAY_CHANNEL,
 	SUPPORT_OVERLAY_OWNER_KEY,
@@ -36,6 +37,7 @@ export function OverlaySupportProvider({ children }: { children: ReactNode }) {
 		const adoptCredential = (next: string, legacy = false) => {
 			if (!next || next === credential) return;
 			credential = next;
+			connectOverlayRealtime(next);
 			clearTimeout(expiryTimer);
 			setAllowed(false);
 			try {

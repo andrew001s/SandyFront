@@ -12,6 +12,7 @@ import type {
 	PngTuberPhysics,
 	PngTuberSpriteKey,
 } from '@/lib/avatar2d/types';
+import { bridgeOverlayChannel } from '@/lib/overlayRealtime';
 
 const STORAGE_KEY = 'sandy_avatar2d_state';
 
@@ -71,6 +72,7 @@ export class Avatar2dManager {
 				this.broadcastChannel.onmessage = (event: MessageEvent<Avatar2dSyncMessage>) => {
 					this.handleSyncMessage(event.data);
 				};
+				bridgeOverlayChannel(this.broadcastChannel, 'sandy_avatar2d_sync');
 
 				// Solicitar sincronización inicial
 				setTimeout(() => {
