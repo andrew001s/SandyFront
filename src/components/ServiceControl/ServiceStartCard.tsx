@@ -53,6 +53,7 @@ export function ServiceStartCard() {
 			setIsBusy(true);
 			await start(false);
 			posthog.capture('twitch_service_started');
+			posthog.capture('vtuber_session_started');
 			markServiceStarted();
 			setStatus(true);
 			await refreshStatus();
