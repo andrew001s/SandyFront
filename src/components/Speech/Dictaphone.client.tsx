@@ -144,6 +144,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 				for await (const delta of stream) {
 					text += delta;
 				}
+				if (text.trim()) posthog.capture('ai_response_succeeded', { provider: effectiveAiProvider, mode: 'text' });
 				addMessage({
 					type: 'transcription',
 					content: `${vtuberName}: ${text}`,
@@ -163,6 +164,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 				onSegmentError: reportVoiceError,
 			});
 
+			if (fullText.trim()) posthog.capture('ai_response_succeeded', { provider: effectiveAiProvider, mode: 'voice' });
 			addMessage({
 				type: 'transcription',
 				content: `${vtuberName}: ${fullText}`,
