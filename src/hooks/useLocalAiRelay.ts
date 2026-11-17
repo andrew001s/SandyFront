@@ -1,6 +1,7 @@
 'use client';
 
 import {
+	isDuplicateAiTask,
 	parseAiTask,
 	parseRelayRequest,
 	sendRelayError,
@@ -16,6 +17,7 @@ import { useVoiceErrorReporter } from '@/hooks/useVoiceErrorReporter';
 import { getAiErrorCode, getAiErrorMessage } from '@/lib/ai-errors';
 import { getStoredAiProvider } from '@/lib/ai-provider';
 import { resolveLocalAiSettings } from '@/lib/local-ai-config';
+import { trackAiResponseSucceeded } from '@/lib/posthog-activation';
 import { speakTextStream } from '@/lib/speechPipeline';
 import { getStoredTtsProvider } from '@/lib/tts-provider';
 import { useAuth } from '@clerk/nextjs';
@@ -57,6 +59,7 @@ export function useLocalAiRelay(): void {
 	const attemptRef = useRef(0);
 	const configRef = useRef({ baseUrl: '', model: '' });
 	const settingsRef = useRef(settings);
+	const seenTaskIds = useRef(new Set<string>());
 
 	const provider = getStoredAiProvider() ?? settings?.ai_provider ?? 'gemini';
 	const isLocal = provider === 'local';
@@ -96,6 +99,7 @@ export function useLocalAiRelay(): void {
 		const handleTask = async (raw: string) => {
 			const task = parseAiTask(JSON.parse(raw));
 			if (!task) return;
+			if (isDuplicateAiTask(task.id, seenTaskIds.current)) return;
 
 			const { baseUrl, model } = configRef.current;
 			const ajustes = settingsRef.current;
@@ -111,6 +115,9 @@ export function useLocalAiRelay(): void {
 				(ttsProvider === 'edge_tts' ||
 					ttsProvider === 'local_tts' ||
 					(ttsProvider === 'fish_audio' && Boolean(apiKey && voiceId)));
+			const interactionStartedAt = performance.now();
+			let llmLatencyMs: number | undefined;
+			let ttsGenerationMs = 0;
 
 			const deltas = streamLocalCompletion(
 				{ baseUrl, model },
@@ -128,13 +135,27 @@ export function useLocalAiRelay(): void {
 					texto = await speakTextStream(deltas, {
 						provider: ttsProvider,
 						fish: { apiKey, voiceId },
-						onSegmentError: reportVoiceError,
+						onTextComplete: (_text, durationMs) => {
+							llmLatencyMs = durationMs;
+						},
+						onSynthesisDuration: (durationMs) => {
+							ttsGenerationMs += durationMs;
+						},
+						onSegmentError: (segment, error) => reportVoiceError(segment, error, ttsProvider),
 					});
 				} else {
 					for await (const delta of deltas) {
 						texto += delta;
 					}
+					llmLatencyMs = performance.now() - interactionStartedAt;
 				}
+
+				trackAiResponseSucceeded(texto, 'local', canVoice ? 'voice' : 'text', task.kind, {
+					llmLatencyMs,
+					ttsGenerationMs,
+					totalLatencyMs: performance.now() - interactionStartedAt,
+					ttsProvider: canVoice ? ttsProvider : undefined,
+				});
 
 				// Un solo mensaje en la transcripción, no uno por frase.
 				addMessage({
@@ -143,14 +164,29 @@ export function useLocalAiRelay(): void {
 					timestamp: new Date().toISOString(),
 				});
 
-				// El backend solo necesita el texto para el historial.
-				await sendTaskResult(task.message, texto);
+				// El backend solo necesita el texto para el historial. Un fallo aquí
+				// no invalida una respuesta que ya se generó y mostró correctamente.
+				try {
+					await sendTaskResult(task.message, texto);
+				} catch (error) {
+					console.error('No se pudo guardar el resultado local:', error);
+					posthog.capture('ai_task_result_delivery_failed', {
+						code: getAiErrorCode(error),
+						provider: 'local',
+						kind: task.kind,
+					});
+				}
 			} catch (error) {
 				// El chat y los eventos no los origina el usuario, así que sin aviso
 				// el fallo es invisible: la VTuber se queda muda y nadie sabe por qué.
 				console.error('No se pudo resolver la tarea local:', error);
 				toast.error(getAiErrorMessage(error));
-				posthog.capture('ai_task_failed', { code: getAiErrorCode(error), kind: task.kind });
+				posthog.capture('ai_task_failed', {
+					code: getAiErrorCode(error),
+					provider: 'local',
+					kind: task.kind,
+					latency_ms: Math.round(performance.now() - interactionStartedAt),
+				});
 			}
 		};
 

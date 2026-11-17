@@ -1,5 +1,5 @@
-import { act, render } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, render } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Dictaphone from './Dictaphone.client';
 
 const mocks = vi.hoisted(() => ({
@@ -10,14 +10,18 @@ const mocks = vi.hoisted(() => ({
 		reaction: boolean;
 		emotion: string | null;
 	},
+	responseText: 'Hola.' as string,
+	streamError: null as Error | null,
+	capture: vi.fn(),
 }));
 
 vi.mock('@/api/aiResponse', () => ({
 	streamAiResponse: vi.fn(async function* (request: {
 		onReaction?: (decision: { reaction: boolean; emotion: string | null }) => void;
 	}) {
+		if (mocks.streamError) throw mocks.streamError;
 		request.onReaction?.(mocks.decision);
-		yield 'Hola.';
+		yield mocks.responseText;
 	}),
 }));
 vi.mock('@/components/Speech/VoiceSetupDialog', () => ({ VoiceSetupDialog: () => null }));
@@ -66,7 +70,7 @@ vi.mock('react-speech-recognition', () => ({
 		};
 	},
 }));
-vi.mock('posthog-js', () => ({ default: { capture: vi.fn() } }));
+vi.mock('posthog-js', () => ({ default: { capture: mocks.capture } }));
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), info: vi.fn(), success: vi.fn() } }));
 vi.mock('thinking-orbs', () => ({ ThinkingOrb: () => null }));
 
@@ -75,6 +79,37 @@ describe('Dictaphone avatar reactions', () => {
 		vi.useFakeTimers();
 		vi.clearAllMocks();
 		mocks.decision = { reaction: true, emotion: 'surprised' };
+		mocks.responseText = 'Hola.';
+		mocks.streamError = null;
+		localStorage.removeItem('sandy_ai_provider');
+	});
+	afterEach(() => {
+		cleanup();
+		vi.useRealTimers();
+	});
+	it('tracks one successful microphone response after text generation completes', async () => {
+		render(<Dictaphone variant='tile' />);
+		act(() => mocks.commands[0]?.callback());
+		await act(async () => vi.advanceTimersByTimeAsync(2000));
+		expect(mocks.capture).toHaveBeenCalledWith(
+			'ai_response_succeeded',
+			expect.objectContaining({ provider: 'gemini', mode: 'text', interaction_type: 'microphone' }),
+		);
+	});
+	it('does not track a successful response when generation fails', async () => {
+		mocks.streamError = new Error('provider failed');
+		render(<Dictaphone variant='tile' />);
+		act(() => mocks.commands[0]?.callback());
+		await act(async () => vi.advanceTimersByTimeAsync(2000));
+		expect(mocks.capture).toHaveBeenCalledWith('ai_request_failed', expect.any(Object));
+		expect(mocks.capture).not.toHaveBeenCalledWith('ai_response_succeeded', expect.anything());
+	});
+	it('does not track an empty response as successful', async () => {
+		mocks.responseText = '  \n';
+		render(<Dictaphone variant='tile' />);
+		act(() => mocks.commands[0]?.callback());
+		await act(async () => vi.advanceTimersByTimeAsync(2000));
+		expect(mocks.capture).not.toHaveBeenCalledWith('ai_response_succeeded', expect.anything());
 	});
 	it('forwards the AI reaction to the shared avatar dispatcher', async () => {
 		render(<Dictaphone variant='tile' />);

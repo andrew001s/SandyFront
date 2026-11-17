@@ -6,12 +6,15 @@ const mocks = vi.hoisted(() => ({
 	addMessage: vi.fn(),
 	getToken: vi.fn(async () => 'clerk-token'),
 	toastError: vi.fn(),
+	capturePosthog: vi.fn(),
 }));
 
 vi.mock('@/api/streamToken', () => ({
 	fetchStreamToken: vi.fn(async () => ({ token: 'stream-token' })),
 }));
-vi.mock('@/context/AppSettingsContext', () => ({ useAppSettings: () => ({ settings: {} }) }));
+vi.mock('@/context/AppSettingsContext', () => ({
+	useAppSettings: () => ({ settings: { ai_provider: 'gemini' } }),
+}));
 vi.mock('@/context/MessagesContext', () => ({
 	useMessages: () => ({ addMessage: mocks.addMessage }),
 }));
@@ -29,13 +32,22 @@ vi.mock('@/hooks/useVoiceErrorReporter', () => ({
 vi.mock('@/lib/avatar/vrmManager', () => ({ vrmManager: { handleAvatarTrigger: vi.fn() } }));
 vi.mock('@/lib/speechPipeline', () => ({
 	singleChunkStream: vi.fn(),
-	speakTextStream: vi.fn(),
+	speakTextStream: vi.fn(
+		async (
+			_stream: AsyncIterable<string>,
+			options: { onSynthesisDuration?: (durationMs: number) => void },
+		) => {
+			options.onSynthesisDuration?.(42);
+			return 'respuesta privada';
+		},
+	),
 	speechDeduplicator: { isDuplicateOrRecent: vi.fn() },
 }));
 vi.mock('@clerk/nextjs', () => ({
 	useAuth: () => ({ getToken: mocks.getToken, isLoaded: true, isSignedIn: true }),
 }));
 vi.mock('sonner', () => ({ toast: { error: mocks.toastError } }));
+vi.mock('posthog-js', () => ({ default: { capture: mocks.capturePosthog } }));
 
 class FakeEventSource {
 	static instance: FakeEventSource;
@@ -61,6 +73,7 @@ class FakeEventSource {
 describe('StreamChat AI errors', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		localStorage.removeItem('sandy_ai_provider');
 		vi.stubGlobal('EventSource', FakeEventSource);
 	});
 
@@ -99,5 +112,43 @@ describe('StreamChat AI errors', () => {
 		expect(mocks.addMessage).toHaveBeenCalledWith(
 			expect.objectContaining({ type: 'system', content: 'Chat conectado' }),
 		);
+		expect(mocks.capturePosthog).toHaveBeenCalledWith(
+			'ai_request_failed',
+			expect.objectContaining({ code: 'error.insufficient-credits', provider: 'openrouter' }),
+		);
+	});
+
+	it('tracks an AI speech response once without including its text or prompt', async () => {
+		render(<StreamChat />);
+		await waitFor(() => expect(FakeEventSource.instance?.listeners.has('speech')).toBe(true));
+
+		const speech = {
+			id: 'speech-1',
+			type: 'speech',
+			text: 'respuesta privada',
+			metadata: {
+				source: 'eventsub',
+				eventKind: 'speech',
+				message: 'prompt privado',
+				response: 'respuesta privada',
+			},
+		};
+		act(() => {
+			FakeEventSource.instance.emit('speech', speech);
+			FakeEventSource.instance.emit('speech', speech);
+		});
+		await waitFor(() => expect(mocks.capturePosthog).toHaveBeenCalledOnce());
+		expect(mocks.capturePosthog).toHaveBeenCalledWith(
+			'ai_response_succeeded',
+			expect.objectContaining({
+				provider: 'gemini',
+				mode: 'voice',
+				interaction_type: 'chat',
+				tts_generation_ms: 42,
+				tts_provider: 'edge_tts',
+			}),
+		);
+		expect(JSON.stringify(mocks.capturePosthog.mock.calls)).not.toContain('prompt privado');
+		expect(JSON.stringify(mocks.capturePosthog.mock.calls)).not.toContain('respuesta privada');
 	});
 });

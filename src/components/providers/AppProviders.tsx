@@ -10,35 +10,8 @@ import { useUser } from '@clerk/nextjs';
 import { useTheme } from 'next-themes';
 import { usePathname } from 'next/navigation';
 import { NextStep, NextStepProvider, useNextStep } from 'nextstepjs';
-import posthog from 'posthog-js';
 import { type ReactNode, useEffect, useRef } from 'react';
-function PostHogUserIdentification() {
-	const { isLoaded, isSignedIn, user } = useUser();
-	const identifiedUserId = useRef<string | null>(null);
-	useEffect(() => {
-		if (!isLoaded) return;
-		if (!isSignedIn || !user) {
-			if (identifiedUserId.current) {
-				posthog.reset();
-				identifiedUserId.current = null;
-			}
-			return;
-		}
-		if (identifiedUserId.current && identifiedUserId.current !== user.id) {
-			posthog.reset();
-		}
-		if (identifiedUserId.current !== user.id) {
-			posthog.identify(user.id, {
-				...(user.primaryEmailAddress?.emailAddress
-					? { email: user.primaryEmailAddress.emailAddress }
-					: {}),
-				...(user.fullName ? { name: user.fullName } : {}),
-			});
-			identifiedUserId.current = user.id;
-		}
-	}, [isLoaded, isSignedIn, user]);
-	return null;
-}
+import { PostHogUserIdentification } from './PostHogUserIdentification';
 function DashboardTourLauncher() {
 	const pathname = usePathname();
 	const { isLoaded, isSignedIn, user } = useUser();

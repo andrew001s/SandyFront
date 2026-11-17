@@ -6,10 +6,14 @@ import { useMessages } from '@/context/MessagesContext';
 import { useAvatar } from '@/hooks/useAvatar';
 import { useVoiceErrorReporter } from '@/hooks/useVoiceErrorReporter';
 import { getAiErrorMessage } from '@/lib/ai-errors';
+import { getStoredAiProvider } from '@/lib/ai-provider';
 import { vrmManager } from '@/lib/avatar/vrmManager';
+import { trackAiResponseSucceeded } from '@/lib/posthog-activation';
 import { singleChunkStream, speakTextStream, speechDeduplicator } from '@/lib/speechPipeline';
+import { getStoredTtsProvider } from '@/lib/tts-provider';
 import type { AvatarBackendPayload } from '@/lib/vtsAvatarPayload';
 import { useAuth } from '@clerk/nextjs';
+import posthog from 'posthog-js';
 import { type MutableRefObject, useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 
@@ -76,11 +80,13 @@ const StreamChat = () => {
 	const { report: reportVoiceError, reset: resetVoiceErrors } = useVoiceErrorReporter();
 
 	const queueVoice = useCallback(
-		async (text: string) => {
+		async (text: string, trackAiSuccess = false) => {
 			if (settings?.feature_flags?.voice_replies === false) {
 				return;
 			}
 			resetVoiceErrors();
+			const ttsProvider = getStoredTtsProvider();
+			let ttsGenerationMs = 0;
 			// El backend manda la respuesta ya completa, pero trocearla en frases
 			// permite empezar a sonar tras sintetizar la primera en vez de esperar
 			// al audio de todo el texto.
@@ -89,13 +95,26 @@ const StreamChat = () => {
 					apiKey: settings?.fish_audio_key ?? '',
 					voiceId: settings?.voice_id ?? '',
 				},
-				onSegmentError: reportVoiceError,
+				onSynthesisDuration: (durationMs) => {
+					ttsGenerationMs += durationMs;
+				},
+				onSegmentError: (segment, error) => reportVoiceError(segment, error, ttsProvider),
 			});
+			if (trackAiSuccess) {
+				trackAiResponseSucceeded(
+					text,
+					getStoredAiProvider() ?? settings?.ai_provider ?? 'unknown',
+					'voice',
+					'chat',
+					{ ttsGenerationMs, ttsProvider },
+				);
+			}
 		},
 		[
 			settings?.feature_flags?.voice_replies,
 			settings?.fish_audio_key,
 			settings?.voice_id,
+			settings?.ai_provider,
 			reportVoiceError,
 			resetVoiceErrors,
 		],
@@ -178,6 +197,9 @@ const StreamChat = () => {
 
 					processedMessages.current.add(messageKey);
 					trimProcessedMessages(processedMessages);
+					const isAiChatSpeech =
+						parsedData.metadata?.source === 'eventsub' &&
+						parsedData.metadata?.eventKind === 'speech';
 
 					// Evitar síntesis duplicada y mensajes repetidos en chat si el streaming
 					// de Dictaphone o IA local ya está reproduciendo o reprodujo esta frase recientemente
@@ -198,10 +220,17 @@ const StreamChat = () => {
 					});
 
 					if (!isDuplicateSpeech) {
-						queueVoiceRef.current(speechText).catch((error) => {
+						queueVoiceRef.current(speechText, isAiChatSpeech).catch((error) => {
 							processedMessages.current.delete(messageKey);
 							console.error('Error al procesar el audio:', error);
 						});
+					} else if (isAiChatSpeech) {
+						trackAiResponseSucceeded(
+							speechText,
+							getStoredAiProvider() ?? settings?.ai_provider ?? 'unknown',
+							'voice',
+							'chat',
+						);
 					}
 					return;
 				}
@@ -253,6 +282,16 @@ const StreamChat = () => {
 								: null;
 						message = getAiErrorMessage({ payload: { code: aiError.code, provider } });
 						toast.error(message, { id: `ai-error-${provider ?? 'unknown'}-${aiError.code}` });
+						try {
+							posthog.capture('ai_request_failed', {
+								code: aiError.code,
+								provider: provider ?? getStoredAiProvider() ?? settings?.ai_provider ?? 'unknown',
+								mode: 'voice',
+								interaction_type: 'chat',
+							});
+						} catch {
+							// Reporting must not interrupt the incoming stream message.
+						}
 					}
 					addMessageRef.current({
 						type: 'system',
@@ -357,7 +396,7 @@ const StreamChat = () => {
 			streamRef.current?.close();
 			streamRef.current = null;
 		};
-	}, [getToken, isLoaded, isSignedIn, pushSystemMessage]);
+	}, [getToken, isLoaded, isSignedIn, pushSystemMessage, settings?.ai_provider]);
 
 	return null;
 };
