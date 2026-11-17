@@ -14,6 +14,7 @@ import {
 import { useStatus } from '@/context/StatusContext';
 import { useServiceStatus } from '@/hooks/useServiceStatus';
 import { getAiErrorCode, getAiErrorMessage } from '@/lib/ai-errors';
+import { shouldTrackVtuberStart } from '@/lib/posthog-activation';
 import { markServiceStarted, stopServiceRuntime } from '@/lib/serviceRuntime';
 import { cn } from '@/lib/utils';
 import { AlertTriangle, Pause, Play, Power } from 'lucide-react';
@@ -53,10 +54,12 @@ export function ServiceStartCard() {
 			setIsBusy(true);
 			await start(false);
 			posthog.capture('twitch_service_started');
-			posthog.capture('vtuber_session_started');
 			markServiceStarted();
 			setStatus(true);
-			await refreshStatus();
+			const confirmedStatus = await refreshStatus();
+			if (shouldTrackVtuberStart(isRunning, confirmedStatus?.running === true)) {
+				posthog.capture('vtuber_session_started');
+			}
 			toast.success('Servicios iniciados');
 		} catch (error) {
 			console.error('Error al iniciar servicios:', error);
