@@ -21,6 +21,10 @@ export type SpeechPipelineOptions = {
 	/** Se llama con cada segmento en cuanto se corta, antes de sintetizarlo. */
 	onSegment?: (segment: string) => void;
 	onSegmentError?: (segment: string, error: unknown) => void;
+	/** Tiempo desde el inicio hasta el final de la generación completa de texto. */
+	onTextComplete?: (text: string, durationMs: number) => void;
+	/** Informa el tiempo acumulado de cada solicitud de síntesis, incluso si falla. */
+	onSynthesisDuration?: (durationMs: number) => void;
 	signal?: AbortSignal;
 	/** Peticiones de TTS simultáneas. Más alto no acelera y arriesga rate limit. */
 	concurrency?: number;
@@ -98,6 +102,8 @@ export async function speakTextStream(
 		local,
 		onSegment,
 		onSegmentError,
+		onTextComplete,
+		onSynthesisDuration,
 		signal,
 		concurrency = 2,
 	} = options;
@@ -119,18 +125,27 @@ export async function speakTextStream(
 			return null;
 		}
 
-		switch (effectiveProvider) {
-			case 'edge_tts':
-				return getVoiceEdge(cleaned, edgeConfig, { signal });
-			case 'local_tts':
-				return getVoiceLocal(cleaned, localConfig, { signal });
-			case 'fish_audio':
-				if (!fish?.apiKey || !fish?.voiceId) {
-					throw new Error('Faltan las credenciales de Fish Audio');
-				}
-				return getVoiceSandy(cleaned, fish, { latency: 'low', signal });
-			default:
-				return getVoiceEdge(cleaned, edgeConfig, { signal });
+		const startedAt = performance.now();
+		try {
+			switch (effectiveProvider) {
+				case 'edge_tts':
+					return await getVoiceEdge(cleaned, edgeConfig, { signal });
+				case 'local_tts':
+					return await getVoiceLocal(cleaned, localConfig, { signal });
+				case 'fish_audio':
+					if (!fish?.apiKey || !fish?.voiceId) {
+						throw new Error('Faltan las credenciales de Fish Audio');
+					}
+					return await getVoiceSandy(cleaned, fish, { latency: 'low', signal });
+				default:
+					return await getVoiceEdge(cleaned, edgeConfig, { signal });
+			}
+		} finally {
+			try {
+				onSynthesisDuration?.(performance.now() - startedAt);
+			} catch {
+				// Analytics observers must not turn successful synthesis into a failure.
+			}
 		}
 	};
 
@@ -155,6 +170,7 @@ export async function speakTextStream(
 		});
 	};
 
+	const llmStartedAt = performance.now();
 	try {
 		for await (const delta of stream) {
 			if (signal?.aborted) break;
@@ -168,6 +184,7 @@ export async function speakTextStream(
 		if (tail && !signal?.aborted) {
 			enqueueSegment(tail);
 		}
+		onTextComplete?.(fullText, performance.now() - llmStartedAt);
 
 		await chain;
 		if (fullText) {

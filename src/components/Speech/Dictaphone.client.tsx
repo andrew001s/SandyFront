@@ -12,8 +12,10 @@ import { useVoiceErrorReporter } from '@/hooks/useVoiceErrorReporter';
 import { getAiErrorCode, getAiErrorMessage } from '@/lib/ai-errors';
 import { getStoredAiProvider } from '@/lib/ai-provider';
 import { resolveLocalAiSettings } from '@/lib/local-ai-config';
+import { trackAiResponseSucceeded } from '@/lib/posthog-activation';
 import { speakTextStream } from '@/lib/speechPipeline';
 import { getStoredSttProvider } from '@/lib/stt-provider';
+import { getStoredTtsProvider } from '@/lib/tts-provider';
 import { cn } from '@/lib/utils';
 import { type VoiceRequirement, getMissingVoiceRequirements } from '@/lib/voice-requirements';
 import { Mic } from 'lucide-react';
@@ -125,6 +127,10 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 			});
 
 			const localAi = resolveLocalAiSettings(settings ?? null);
+			const interactionStartedAt = performance.now();
+			let llmLatencyMs: number | undefined;
+			let ttsGenerationMs = 0;
+			const ttsProvider = getStoredTtsProvider();
 			const stream = streamAiResponse({
 				provider: getStoredAiProvider() ?? settings?.ai_provider ?? 'gemini',
 				message: pending,
@@ -144,6 +150,11 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 				for await (const delta of stream) {
 					text += delta;
 				}
+				llmLatencyMs = performance.now() - interactionStartedAt;
+				trackAiResponseSucceeded(text, effectiveAiProvider, 'text', 'microphone', {
+					llmLatencyMs,
+					totalLatencyMs: llmLatencyMs,
+				});
 				addMessage({
 					type: 'transcription',
 					content: `${vtuberName}: ${text}`,
@@ -160,9 +171,22 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 					apiKey: settings?.fish_audio_key ?? '',
 					voiceId: settings?.voice_id ?? '',
 				},
-				onSegmentError: reportVoiceError,
+				onTextComplete: (_text, durationMs) => {
+					llmLatencyMs = durationMs;
+				},
+				onSynthesisDuration: (durationMs) => {
+					ttsGenerationMs += durationMs;
+				},
+				onSegmentError: (segment, error) => reportVoiceError(segment, error, ttsProvider),
 			});
 
+			// Éxito de generación de texto; un fallo de TTS se reporta por separado.
+			trackAiResponseSucceeded(fullText, effectiveAiProvider, 'voice', 'microphone', {
+				llmLatencyMs,
+				ttsGenerationMs,
+				totalLatencyMs: performance.now() - interactionStartedAt,
+				ttsProvider,
+			});
 			addMessage({
 				type: 'transcription',
 				content: `${vtuberName}: ${fullText}`,
@@ -173,7 +197,12 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 			// El backend devuelve un código estable; el texto sale del catálogo
 			// local para que el usuario sepa qué hacer, no solo que falló.
 			toast.error(getAiErrorMessage(error));
-			posthog.capture('ai_request_failed', { code: getAiErrorCode(error) });
+			posthog.capture('ai_request_failed', {
+				code: getAiErrorCode(error),
+				provider: effectiveAiProvider,
+				mode: settings?.feature_flags?.voice_replies === false ? 'text' : 'voice',
+				interaction_type: 'microphone',
+			});
 		} finally {
 			if (reactionEmotionTask) {
 				await Promise.resolve(reactionEmotionTask).catch((error) => {
@@ -186,6 +215,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 		addMessage,
 		resetTranscript,
 		settings,
+		effectiveAiProvider,
 		reportVoiceError,
 		resetVoiceErrors,
 		sendAvatarPayload,

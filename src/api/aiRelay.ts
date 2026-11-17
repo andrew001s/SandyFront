@@ -52,12 +52,26 @@ export async function sendRelayError(
 }
 
 export type AiTask = {
+	/** Identificador generado por backend para ignorar reenvíos del mismo SSE. */
+	id: string | null;
 	/** 'chat', 'reaction' o 'speech': de dónde vino el evento. */
 	kind: string;
 	message: string;
 	systemInstruction: string;
 	stop: string[];
 };
+
+/** Recuerda IDs SSE para que una reconexión no procese dos veces la misma tarea. */
+export function isDuplicateAiTask(taskId: string | null, seen: Set<string>): boolean {
+	if (!taskId) return false;
+	if (seen.has(taskId)) return true;
+	seen.add(taskId);
+	if (seen.size > 256) {
+		const oldest = seen.values().next().value;
+		if (oldest) seen.delete(oldest);
+	}
+	return false;
+}
 
 export function parseAiTask(raw: unknown): AiTask | null {
 	if (!raw || typeof raw !== 'object') {
@@ -68,6 +82,7 @@ export function parseAiTask(raw: unknown): AiTask | null {
 		return null;
 	}
 	return {
+		id: typeof data.id === 'string' ? data.id : null,
 		kind: typeof data.kind === 'string' ? data.kind : 'chat',
 		message: data.message,
 		systemInstruction: typeof data.systemInstruction === 'string' ? data.systemInstruction : '',

@@ -1,13 +1,14 @@
 'use client';
 
 import { getAiErrorCode, getAiErrorMessage } from '@/lib/ai-errors';
+import type { TtsProvider } from '@/lib/tts-provider';
 import { useRollbar } from '@rollbar/react';
 import posthog from 'posthog-js';
 import { useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 
 /**
- * Reporte único de los fallos de síntesis de voz.
+ * Reporte único por código de los fallos de síntesis de voz.
  *
  * Vive aquí y no en cada componente porque hay más de un sitio que sintetiza
  * —el dictáfono y las respuestas que llegan del backend por SSE— y basta con
@@ -15,12 +16,12 @@ import { toast } from 'sonner';
  */
 export function useVoiceErrorReporter() {
 	const rollbar = useRollbar();
-	// Un fallo de Fish Audio se repite en cada frase de la misma respuesta: se
+	// Un fallo del proveedor se repite en cada frase de la misma respuesta: se
 	// avisa una vez por código, no una por segmento.
 	const reported = useRef(new Set<string>());
 
 	const report = useCallback(
-		(segment: string, error: unknown) => {
+		(segment: string, error: unknown, provider: TtsProvider) => {
 			const code = getAiErrorCode(error);
 
 			if (reported.current.has(code)) {
@@ -29,8 +30,12 @@ export function useVoiceErrorReporter() {
 			reported.current.add(code);
 
 			toast.error(getAiErrorMessage(error));
-			posthog.capture('tts_request_failed', { code, provider: 'fish_audio' });
-			rollbar.error('Fallo de síntesis de voz (Fish Audio)', error as Error, {
+			try {
+				posthog.capture('tts_request_failed', { code, provider });
+			} catch {
+				// Analytics failures must not suppress the local error report.
+			}
+			rollbar.error('Fallo de síntesis de voz', error as Error, {
 				code,
 				segment: segment.slice(0, 120),
 			});

@@ -14,12 +14,13 @@ import {
 import { useStatus } from '@/context/StatusContext';
 import { useServiceStatus } from '@/hooks/useServiceStatus';
 import { getAiErrorCode, getAiErrorMessage } from '@/lib/ai-errors';
+import { trackVtuberStart } from '@/lib/posthog-activation';
 import { markServiceStarted, stopServiceRuntime } from '@/lib/serviceRuntime';
 import { cn } from '@/lib/utils';
 import { AlertTriangle, Pause, Play, Power } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import posthog from 'posthog-js';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { ThinkingOrb } from 'thinking-orbs';
 
@@ -28,6 +29,7 @@ export function ServiceStartCard() {
 	const { setStatus } = useStatus();
 	const [isBusy, setIsBusy] = useState(false);
 	const [isStopConfirmOpen, setIsStopConfirmOpen] = useState(false);
+	const startAttemptInFlight = useRef(false);
 	const {
 		serviceStatus,
 		isRunning,
@@ -49,19 +51,23 @@ export function ServiceStartCard() {
 			: null;
 
 	const handleStart = async () => {
+		if (startAttemptInFlight.current) return;
+		startAttemptInFlight.current = true;
 		try {
 			setIsBusy(true);
 			await start(false);
 			posthog.capture('twitch_service_started');
 			markServiceStarted();
 			setStatus(true);
-			await refreshStatus();
+			const confirmedStatus = await refreshStatus();
+			trackVtuberStart(isRunning, confirmedStatus?.running === true);
 			toast.success('Servicios iniciados');
 		} catch (error) {
 			console.error('Error al iniciar servicios:', error);
 			toast.error(getAiErrorMessage(error));
 			posthog.capture('twitch_service_start_failed', { code: getAiErrorCode(error) });
 		} finally {
+			startAttemptInFlight.current = false;
 			setIsBusy(false);
 		}
 	};
