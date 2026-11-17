@@ -10,6 +10,7 @@ import { useAvatar } from '@/hooks/useAvatar';
 import { useServiceStatus } from '@/hooks/useServiceStatus';
 import { useVoiceErrorReporter } from '@/hooks/useVoiceErrorReporter';
 import { getAiErrorCode, getAiErrorMessage } from '@/lib/ai-errors';
+import { aiSuccessProperties, shouldTrackAiSuccess } from '@/lib/posthog-activation';
 import { getStoredAiProvider } from '@/lib/ai-provider';
 import { resolveLocalAiSettings } from '@/lib/local-ai-config';
 import { speakTextStream } from '@/lib/speechPipeline';
@@ -144,7 +145,7 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 				for await (const delta of stream) {
 					text += delta;
 				}
-				if (text.trim()) posthog.capture('ai_response_succeeded', { provider: effectiveAiProvider, mode: 'text' });
+				if (shouldTrackAiSuccess(text)) posthog.capture('ai_response_succeeded', aiSuccessProperties(effectiveAiProvider, 'text'));
 				addMessage({
 					type: 'transcription',
 					content: `${vtuberName}: ${text}`,
@@ -164,7 +165,8 @@ const Dictaphone = ({ variant = 'bar' }: { variant?: 'bar' | 'tile' } = {}) => {
 				onSegmentError: reportVoiceError,
 			});
 
-			if (fullText.trim()) posthog.capture('ai_response_succeeded', { provider: effectiveAiProvider, mode: 'voice' });
+			// Éxito de generación de texto; un fallo de TTS se reporta por separado.
+			if (shouldTrackAiSuccess(fullText)) posthog.capture('ai_response_succeeded', aiSuccessProperties(effectiveAiProvider, 'voice'));
 			addMessage({
 				type: 'transcription',
 				content: `${vtuberName}: ${fullText}`,
